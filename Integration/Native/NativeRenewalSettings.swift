@@ -38,7 +38,7 @@ struct NativeRenewalSettings: View {
             Text("2. Select On-Device Anisette in Settings. Background renewal will not use a remote fallback or toggle cellular data.")
             Text("3. In Shortcuts, create a daily Time of Day automation. Add Renew Managed Apps and choose Run Immediately. Do not add Open App.")
             Text("4. Lock the phone and let that automation run. A manual test is not the same evidence.")
-            Toggle("Allow unattended profile renewal", isOn: $enabled)
+            SwiftUI.Toggle("Allow unattended profile renewal", isOn: $enabled)
                 .accessibilityIdentifier("renewal.allowUnattended")
                 .onChange(of: enabled) { _, active in
                     if active { NativeRenewalBackground.schedule() }
@@ -50,11 +50,11 @@ struct NativeRenewalSettings: View {
 
     private var verification: some View {
         SwiftUI.Section {
-            Button("Run an explicit renewal check") {
+            SwiftUI.Button("Run an explicit renewal check") {
                 perform { _ = try await NativeRenewalRuntime.shared.run(trigger: .manual, force: true) }
             }
             .disabled(working).accessibilityIdentifier("renewal.manualCheck")
-            Button("Recheck after repairing login or pairing") {
+            SwiftUI.Button("Recheck after repairing login or pairing") {
                 perform { try await NativeRenewalRuntime.shared.confirmRepair() }
             }
             .disabled(working).accessibilityIdentifier("renewal.recheckRepair")
@@ -65,7 +65,7 @@ struct NativeRenewalSettings: View {
                 Text("Profile-store readback: \(value.verified); unverified: \(value.unverified); deferred: \(value.deferred).")
                 Text("This does not attest lock state or prove an app launch beyond its original expiry.")
             }
-            Button("Reload evidence") { reload() }.disabled(working)
+            SwiftUI.Button("Reload evidence") { reload() }.disabled(working)
         } header: { Text("Verification and recovery") }
     }
 
@@ -103,7 +103,7 @@ struct NativeRenewalSettings: View {
 private struct TestCadenceToggle: View {
     @AppStorage("tetherless.test.twoHourCadence") private var accelerated = false
     var body: some View {
-        Toggle("Use two-hour eligibility (not a timer)", isOn: $accelerated)
+        SwiftUI.Toggle("Use two-hour eligibility (not a timer)", isOn: $accelerated)
         Text("This changes eligibility, not Apple's signed expiry or iOS scheduling.")
     }
 }
