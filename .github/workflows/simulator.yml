@@ -1,0 +1,79 @@
+name: iOS Simulator core tests
+on:
+  push:
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - '.github/workflows/simulator.yml'
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: simulator-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  simulator-tests:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Record toolchain and select an installed iPhone simulator
+        run: |
+          xcodebuild -version
+          xcodebuild -list -json > simulator-schemes.json
+          xcrun simctl list devices available --json > simulator-devices.json
+          python3 - <<'PY'
+          import json, os, re
+          devices = json.load(open('simulator-devices.json'))['devices']
+          choices = []
+          for runtime, values in devices.items():
+              match = re.search(r'iOS-(\d+(?:-\d+)*)$', runtime)
+              if not match:
+                  continue
+              version = tuple(map(int, match[1].split('-')))
+              if version[0] < 17:
+                  continue
+              for device in values:
+                  if device.get('isAvailable') and device['name'].startswith('iPhone'):
+                      choices.append((version, device['name'], device['udid']))
+          if not choices:
+              raise SystemExit('No installed iOS 17+ iPhone simulator; test has NOT run')
+          version, name, identifier = max(choices)
+          print('Selected simulator:', name, version, identifier)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('SIMULATOR_ID=' + identifier + '\n')
+          PY
+      - name: Run package tests on iOS Simulator, not macOS
+        run: |
+          xcodebuild test -scheme TetherlessCore \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -resultBundlePath simulator-tests.xcresult \
+            -derivedDataPath .simulator-derived \
+            CODE_SIGNING_ALLOWED=NO > simulator-tests.log 2>&1
+      - name: Summarize simulator result
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('simulator-tests.log')
+          if p.exists():
+              lines = p.read_text(errors='replace').splitlines()
+              selected = [line for line in lines if 'error:' in line or 'Test run with' in line or 'TEST SUCCEEDED' in line or 'TEST FAILED' in line]
+              print('\n'.join(selected[-100:] if selected else lines[-50:]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: simulator-core-${{ github.sha }}
+          path: |
+            simulator-tests.log
+            simulator-tests.xcresult
+            simulator-schemes.json
+            simulator-devices.json
+          if-no-files-found: error
+          retention-days: 14
