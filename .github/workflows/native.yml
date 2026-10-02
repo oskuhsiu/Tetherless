@@ -17,6 +17,10 @@ jobs:
   unsigned-build:
     runs-on: macos-15
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -42,15 +46,23 @@ jobs:
       - name: Verify pins and prepare native sources
         run: python3 Integration/prepare.py
       - name: Compile unsigned iOS app (not device validation)
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
         run: |
           set -o pipefail
           xcodebuild build \
             -project .generated/SideStore/AltStore.xcodeproj \
             -scheme SideStore \
-            -configuration Debug \
+            -configuration "$CONFIGURATION" \
             -destination 'generic/platform=iOS' \
             -derivedDataPath .generated/DerivedData \
             -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
-            ORG_IDENTIFIER=com.SideStore
+            ORG_IDENTIFIER=com.SideStore 2>&1 | tee native-build.log
+      - name: Summarize native compiler diagnostics
+        if: always()
+        run: |
+          if [ -f native-build.log ]; then
+            grep -E 'error:|warning:|BUILD SUCCEEDED|BUILD FAILED|SwiftCompile.*Tetherless' native-build.log || true
+          fi

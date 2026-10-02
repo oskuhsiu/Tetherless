@@ -1,22 +1,36 @@
 #!/usr/bin/env python3
-"""Prepare a disposable, pinned native tree without modifying Vendor/SideStore.
+"""Prepare a disposable pinned native app with Tetherless's live renewal adapter.
 
-This integrates compilation and narrow correctness fixes only. It does NOT
-connect RenewalEngine to iOS or prove unattended refresh is implemented.
+Source/patch verification and successful compilation are not device validation.
 """
 from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import plistlib
+import re
 import shutil
 import subprocess
 
 BASELINE = "0dd743f75afc358b0ba4a002feb5f19474492371"
 PROFILE_PATH = "SideStore/Core/Operations/PipelineOperations/RefreshAppOperation.swift"
 INTENT_PATH = "AltStore/Intents/App Intents/RefreshAllAppsIntent.swift"
+RUNNER_PATH = "SideStore/Core/Operations/PipelineRunner.swift"
+PORTAL_PATH = "SideStore/Core/Auth/DeveloperPortalProxy.swift"
+APP_PATH = "AltStore/AppDelegate.swift"
+TAB_PATH = "AltStore/TabBarController.swift"
+BOOT_PATH = "SideStore/AppBootManager.swift"
+SERVICE_PATH = "SideStore/Core/BackgroundServices/BackgroundService.swift"
 BLOBS = {
     PROFILE_PATH: "bf23bf8b2d98364f7f3e94aaae27ae626439c2f1",
     INTENT_PATH: "11b9bfb6ae823fd6acee0fe31c21be283b45eb52",
+    RUNNER_PATH: "a76344edcf8ed2518f52cff5b19de68fe1d0a991",
+    PORTAL_PATH: "97ac67f578dddb5a8fb1eb720511e553bda279fa",
+    APP_PATH: "eb41f3e35f9e27feeb1d7137b7aca74b6263e254",
+    TAB_PATH: "83d6fb4ee8f03831db1ea65be6cbce147f19447f",
+    BOOT_PATH: "ec9becb434c4a8736f202055fb84fa782f795419",
+    SERVICE_PATH: "9dae8c7b91141eec0282939b91cd1545a70575eb",
+    "AltStore/Info.plist": "868efe81e61393ccab1b6538e7f18439570aebdb",
     "AltStore.xcodeproj/project.pbxproj": "a511c447bd71311bffb6d116a3cb0025a75561d4",
 }
 
@@ -28,47 +42,152 @@ def replace_once(source: str, old: str, new: str) -> str:
 
 
 def patch_profile(source: str) -> str:
-    # FetchProvisioningProfilesOperation keys the main entry by targetBundleIdentifier,
-    # not dictionary order and not necessarily the original/resigned bundle ID.
-    source = replace_once(
-        source,
+    source = replace_once(source,
         "        installedApp.update(provisioningProfile: profiles.values.first!)",
         "        let mainProfile = try ProfileSelection.requireMainProfile(\n"
         "            in: profiles, bundleID: self.context.targetBundleIdentifier)\n"
-        "        installedApp.update(provisioningProfile: mainProfile)",
-    )
-    # Validate before mutating the device as well as when updating Core Data.
-    return replace_once(
-        source,
-        "        self.setProgress(10)",
+        "        installedApp.update(provisioningProfile: mainProfile)")
+    return replace_once(source, "        self.setProgress(10)",
         "        _ = try ProfileSelection.requireMainProfile(\n"
         "            in: profiles, bundleID: self.context.targetBundleIdentifier)\n"
-        "        self.setProgress(10)",
-    )
+        "        self.setProgress(10)")
 
 
 def patch_intent(source: str) -> str:
-    # Preserve the original thrown error; never strand the continuation when the
-    # operation initializer fails. Foreground fallback is intentionally NOT
-    # presented as the new unattended entry point; it remains a pending gate.
-    source = replace_once(
-        source,
-        "            let operation = try? AppManager.shared.backgroundRefresh",
-        "            let operation: BackgroundRefreshAppsOperation\n"
-        "            do {\n"
-        "                operation = try AppManager.shared.backgroundRefresh",
-    )
-    return replace_once(
-        source,
-        '            guard let operation else {\n'
-        '                debugLog("[RefreshAllAppsIntent] backgroundRefresh instance is nil")\n'
-        '                return \n'
-        '            }',
-        '            } catch {\n'
-        '                continuation.resume(throwing: error)\n'
-        '                return\n'
-        '            }',
-    )
+    # Keep IntentError and InstallIPAIntent; replace the inherited renewal intent
+    # with Integration/Native/TetherlessRefreshIntent.swift, not a foreground shim.
+    marker = "@available(iOS 17.0, tvOS 17.0, *)\nextension RefreshAllAppsIntent\n"
+    if source.count(marker) != 1:
+        raise ValueError("Inherited intent boundary changed")
+    result = source.split(marker)[0]
+    if "struct InstallIPAIntent" not in result or "class IntentError" not in result:
+        raise ValueError("Required existing IPA intent declarations missing")
+    return result
+
+
+def patch_runner(source: str) -> str:
+    signature = ("    func perform(_ operations: [AppOperation],\n"
+                 "                 handler: PipelineExecutionHandler,\n"
+                 "                 group: RefreshGroup) async throws -> RefreshGroup\n    {")
+    replacement = signature + "\n        try await NativeMutationGate.withLease {\n" \
+        "            try await self.performWithNativeLease(operations, handler: handler, group: group)\n" \
+        "        }\n    }\n\n" + signature.replace("func perform(", "private func performWithNativeLease(")
+    source = replace_once(source, signature, replacement)
+    # Serial device operations also avoid same-group parallel profile writes.
+    parallel = """        try await withThrowingTaskGroup(of: Void.self) { taskGroup in
+            for operation in operations {
+                taskGroup.addTask {
+                    try await self.performOperation(for: operation, handler: handler, group: group, operationsCount: operationsCount)
+                }
+            }
+            while let _ = try await taskGroup.next() {}
+        }"""
+    source = replace_once(source, parallel, """        for operation in operations {
+            try Task.checkCancellation()
+            try await self.performOperation(for: operation, handler: handler, group: group, operationsCount: operationsCount)
+        }""")
+    return replace_once(source,
+        '                debugLog("[AppManager] perform(): Failed to save InstalledApp to database. \\(error.localizedDescription)")',
+        '                throw RenewalFailure.storageUnavailable')
+
+
+def patch_portal(source: str) -> str:
+    methods = {"addCertificate", "revokeCertificate", "registerDevice", "updateDevice", "disableDevice",
+               "deleteDevice", "addAppID", "updateAppID", "deleteAppID", "addAppGroup", "updateAppGroup",
+               "assign", "deleteAppGroup", "createProvisioningProfile", "updateProvisioningProfile", "deleteProvisioningProfile"}
+    count = 0
+    lines = []
+    for line in source.splitlines(keepends=True):
+        match = re.fullmatch(r"(\s*)return try await (ALTAppleAPI\.shared\.([A-Za-z]+)\([^\n]+\))\n", line)
+        if match and match[3] in methods:
+            line = f"{match[1]}return try await NativeMutationGate.withLease {{ try await {match[2]} }}\n"
+            count += 1
+        lines.append(line)
+    if count != 18:
+        raise ValueError(f"Expected 18 reviewed portal mutation calls, found {count}")
+    return "".join(lines)
+
+
+def patch_app(source: str) -> str:
+    source = replace_once(source, "        UserDefaults.registerDefaults()", """        UserDefaults.registerDefaults()
+        if UserDefaults.standard.firstLaunch == nil { UserDefaults.standard.useOnDeviceAnisette = true }
+        #if os(iOS)
+        if #available(iOS 17.0, *) { NativeRenewalBackground.register() }
+        #endif""")
+    # Remove lifecycle calls as well as disabling the shared service implementation.
+    call = "        BackgroundServiceManager.ensureBackgroundServicesStarted()"
+    if source.count(call) != 3:
+        raise ValueError("Background service lifecycle call count changed")
+    source = source.replace(call, "        // Tetherless does not use audio/location keepalive.")
+    source = replace_once(source, "        consoleLog.startCapturing()", "        // Persistent full-console capture disabled in Tetherless.")
+    source = replace_once(source, "        UserDefaults.enableGlobalLogging()", "        // Do not enable verbose credential-adjacent logs on debug launches.")
+    return source
+
+
+def patch_tabs(source: str) -> str:
+    source = replace_once(source, "@preconcurrency import UIKit", "@preconcurrency import UIKit\nimport SwiftUI")
+    marker = "        self.sourcesViewController = sourcesNavigationController.viewControllers.first as? SourcesViewController"
+    return replace_once(source, marker, marker + """
+        #if os(iOS)
+        if #available(iOS 17.0, *) {
+            let renewal = UIHostingController(rootView: NativeRenewalSettings())
+            renewal.tabBarItem = UITabBarItem(title: "Auto Renewal", image: UIImage(systemName: "arrow.triangle.2.circlepath"), tag: 0)
+            self.viewControllers?[Tab.news.rawValue] = renewal
+        }
+        #endif""")
+
+
+def patch_boot(source: str) -> str:
+    marker = "    public nonisolated func performBootSequence() async {"
+    if source.count(marker) != 1 or not source.rstrip().endswith("}\n}"):
+        raise ValueError("Boot function boundary changed")
+    return source.split(marker)[0] + """    public nonisolated func performBootSequence() async {
+        // The ordinary UI boot must not race the headless adapter or probe JIT servers.
+        do {
+            try await NativeMutationGate.withLease {
+                guard let pairing = PairingFileManager.shared.fetchPairingFile() else {
+                    self.needsPairingPrompt = true
+                    return
+                }
+                try await self.startMinimuxer(pairingFile: pairing)
+            }
+        } catch {
+            // A headless operation may already own the device. Do not reset it.
+        }
+    }
+}
+"""
+
+
+def patch_services(source: str) -> str:
+    marker = "public final class BackgroundServiceManager: @unchecked Sendable {"
+    if source.count(marker) != 1:
+        raise ValueError("Background service manager boundary changed")
+    return source.split(marker)[0] + """// Tetherless deliberately disables both fake keepalive implementations.
+// Central no-op also covers Settings and SceneDelegate, not only AppDelegate.
+private struct TetherlessDisabledBackgroundService: BackgroundService {
+    var isRunning: Bool { false }
+    func start() -> Bool { false }
+    func stop() {}
+    func prepare() async -> Bool { false }
+}
+public final class BackgroundServiceManager: @unchecked Sendable {
+    public static var shared: any BackgroundService { TetherlessDisabledBackgroundService() }
+    public static func service(for mode: BackgroundServiceMode) -> any BackgroundService { shared }
+    public static func stop() {}
+    public static func switchTo(mode: BackgroundServiceMode) {
+        UserDefaults.standard.isBackgroundServiceEnabled = false
+    }
+    public static func setEnabled(_ enabled: Bool) {
+        UserDefaults.standard.isBackgroundServiceEnabled = false
+    }
+    @discardableResult public static func ensureBackgroundServicesStarted() -> Bool {
+        UserDefaults.standard.isBackgroundServiceEnabled = false
+        return false
+    }
+    private init() {}
+}
+"""
 
 
 def git_blob(data: bytes) -> str:
@@ -82,41 +201,44 @@ def git(cwd: Path, *args: str) -> str:
 def prepare(root: Path) -> Path:
     vendor = root / "Vendor/SideStore"
     if git(vendor, "rev-parse", "HEAD") != BASELINE:
-        raise ValueError("Unexpected upstream revision; do not track a moving branch")
+        raise ValueError("Unexpected upstream revision")
     if git(vendor, "status", "--porcelain", "--untracked-files=all"):
-        raise ValueError("Upstream tree is dirty; refusing to copy unreviewed changes")
+        raise ValueError("Upstream tree is dirty")
     statuses = git(vendor, "submodule", "status", "--recursive")
     if any(line.startswith(("-", "+", "U")) for line in statuses.splitlines()):
-        raise ValueError("Dependencies must be initialized at their recorded revisions")
+        raise ValueError("Dependencies must be initialized at recorded revisions")
     for path, expected in BLOBS.items():
         if git_blob((vendor / path).read_bytes()) != expected:
             raise ValueError(f"Unreviewed source content: {path}")
     output = root / ".generated/SideStore"
     if output.exists() or output.is_symlink():
-        raise ValueError("Output exists; preserve/review it, then remove .generated/SideStore explicitly")
+        raise ValueError("Output exists; review/remove it explicitly")
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.parent.is_symlink():
         raise ValueError("Generated directory must not be a symlink")
     shutil.copytree(vendor, output, symlinks=True,
                     ignore=shutil.ignore_patterns(".git", ".build", "DerivedData", "xcuserdata"))
-    try:
-        for path, patch in ((PROFILE_PATH, patch_profile), (INTENT_PATH, patch_intent)):
-            destination = output / path
-            destination.write_text(patch(destination.read_text()), encoding="utf-8")
-        # This folder is automatically included in the pinned native app target.
-        shutil.copytree(root / "Sources/TetherlessCore", output / "SideStore/TetherlessCore")
-        sample = output / "CodeSigning.xcconfig.sample"
-        if sample.exists():
-            shutil.copyfile(sample, output / "CodeSigning.xcconfig")
-        (output / "TETHERLESS_PREPARATION.json").write_text(json.dumps({
-            "upstream": BASELINE,
-            "reviewed_blobs": BLOBS,
-            "runtime_adapter_integrated": False,
-            "device_validated": False,
-        }, indent=2) + "\n")
-    except Exception:
-        # Keep an unsuccessful output for diagnosis, but never call it prepared.
-        raise
+    for path, patch in ((PROFILE_PATH, patch_profile), (INTENT_PATH, patch_intent),
+                        (RUNNER_PATH, patch_runner), (PORTAL_PATH, patch_portal),
+                        (APP_PATH, patch_app), (TAB_PATH, patch_tabs), (BOOT_PATH, patch_boot),
+                        (SERVICE_PATH, patch_services)):
+        destination = output / path
+        destination.write_text(patch(destination.read_text()), encoding="utf-8")
+    shutil.copytree(root / "Sources/TetherlessCore", output / "SideStore/TetherlessCore")
+    shutil.copytree(root / "Integration/Native", output / "SideStore/TetherlessNative")
+    info_path = output / "AltStore/Info.plist"
+    info = plistlib.loads(info_path.read_bytes())
+    info["CFBundleDisplayName"] = "Tetherless"
+    info["BGTaskSchedulerPermittedIdentifiers"] = ["org.tetherless.profile-renewal"]
+    info["UIBackgroundModes"] = ["fetch", "processing"]
+    info_path.write_bytes(plistlib.dumps(info, sort_keys=False))
+    sample = output / "CodeSigning.xcconfig.sample"
+    if sample.exists():
+        shutil.copyfile(sample, output / "CodeSigning.xcconfig")
+    (output / "TETHERLESS_PREPARATION.json").write_text(json.dumps({
+        "upstream": BASELINE, "reviewed_blobs": BLOBS,
+        "runtime_adapter_integrated": True, "device_validated": False,
+    }, indent=2) + "\n")
     return output
 
 
