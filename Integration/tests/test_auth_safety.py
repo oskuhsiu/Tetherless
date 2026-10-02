@@ -10,7 +10,7 @@ m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 class AuthenticationIntegrationTests(unittest.TestCase):
     def test_guarded_hashes_cover_all_reviewed_routes(self):
         self.assertEqual(set(m.PATCHES), set(m.BLOBS))
-        self.assertEqual(len(m.BLOBS), 10)
+        self.assertEqual(len(m.BLOBS), 11)
         self.assertTrue(all(re.fullmatch('[a-f0-9]{40}', value) for value in m.BLOBS.values()))
     def test_mismatch_cannot_partially_mutate_tree(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,6 +67,28 @@ private struct AssociatedKeys {
         self.assertIn('"org.tetherless.session."',source)
         self.assertNotIn('try!',source)
         self.assertIn('ready().generation == record.generation',source)
+    def test_portal_sessions_are_read_only_inside_the_mutation_lease(self):
+        source = '        if let team { return team }\n'
+        for index in range(18):
+            source += f"""    public func change{index}() async throws -> Bool {{
+        let session = try await self.getSession()
+        let team = try await self.getTeam(team)
+        return try await NativeMutationGate.withLease {{ try await ALTAppleAPI.shared.mutate(team: team, session: session) }}
+    }}
+"""
+        for index in range(2):
+            source += f"""    public func downloadProvisioningProfile(for appID: AppID, mode: Mode{index}) async throws -> Profile {{
+        let session = try await self.getSession()
+        let team = try await self.getTeam(team)
+        return try await ALTAppleAPI.shared.downloadProvisioningProfile(team: team, session: session)
+    }}
+"""
+        result = m.patch_portal(source)
+        self.assertEqual(result.count('return try await NativeMutationGate.withLease {'),20)
+        self.assertEqual(result.count('            let session = try await self.getSession()'),20)
+        self.assertIn('NativeAuthenticationStore.ready().teamID == team.identifier',result)
+        self.assertNotIn('return try await NativeMutationGate.withLease { try await ALTAppleAPI', result)
+
     def test_preparation_invokes_auth_after_other_hash_locked_boundaries(self):
         source=(ROOT/'network_safety.py').read_text()
         self.assertLess(source.index('file.write_text('),source.index('with_name("auth_safety.py")'))

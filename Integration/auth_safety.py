@@ -3,7 +3,9 @@
 from pathlib import Path
 import hashlib
 import sys
+import re
 
+PORTAL = 'SideStore/Core/Auth/DeveloperPortalProxy.swift'
 AUTH = 'SideStore/Core/Auth/AuthManager.swift'
 LOGIN = 'SideStore/Core/Operations/StandaloneOperations/SignInOperation.swift'
 KEYCHAIN = 'AltStore/Core/Components/Keychain.swift'
@@ -147,7 +149,7 @@ def patch_login(source):
     return source
 
 def patch_keychain(source):
-    source = once(source, 'import Foundation', 'import Foundation\nimport Security')
+    source = once(source, 'import Foundation', 'import Foundation\nimport Security\nimport LocalAuthentication')
     marker = '    public func clearCertificates()'
     return once(source, marker, '''    // Checked removal is used by the serialized account transaction.
     private func removeVerified(_ keys: [String]) throws {
@@ -169,10 +171,12 @@ def patch_keychain(source):
     }
     func clearAllVerified() throws {
         try self.keychain.removeAll()
+        let context = LAContext()
+        context.interactionNotAllowed = true
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "org.tetherless.credentials." + Bundle.Info.appbundleIdentifier,
             kSecAttrSynchronizable as String: false, kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnAttributes as String: true, kSecUseAuthenticationUI as String: kSecUseAuthenticationUIFail]
+            kSecReturnAttributes as String: true, kSecUseAuthenticationContext as String: context]
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         guard status == errSecItemNotFound else { throw AuthenticationStorageFailure.unavailable }
     }
@@ -264,11 +268,43 @@ def patch_backup(source):
 
 ''')
 
-PATCHES = {AUTH: patch_auth, LOGIN: patch_login, KEYCHAIN: patch_keychain,
+def patch_portal(source):
+    source = once(source, '        if let team { return team }', """        if let team {
+            guard try NativeAuthenticationStore.ready().teamID == team.identifier else {
+                throw AuthenticationStorageFailure.staleAttempt
+            }
+            return team
+        }""")
+    pattern = re.compile(r'(    public func [^\n]+\{\n)(.*?)(    \}\n)', re.S)
+    count = 0
+    def replace(match):
+        nonlocal count
+        body = match[2]
+        # Dynamic team profiles are a portal mutation despite the download name.
+        if 'NativeMutationGate.withLease' not in body and not (
+            'downloadProvisioningProfile(for ' in match[1]
+        ):
+            return match[0]
+        guarded = re.sub(r'        return try await NativeMutationGate.withLease \{ try await (ALTAppleAPI[^\n]+) \}\n',
+                         r'        return try await \1\n', body)
+        if 'NativeMutationGate.withLease' in guarded:
+            raise ValueError('Unreviewed nested portal mutation wrapper')
+        if guarded.count('let session = try await self.getSession()') != 1:
+            raise ValueError('Portal account boundary changed')
+        count += 1
+        return match[1] + '        return try await NativeMutationGate.withLease {\n' + \
+               ''.join('    '+line if line.strip() else line for line in guarded.splitlines(keepends=True)) + \
+               '        }\n' + match[3]
+    result = pattern.sub(replace, source)
+    if count != 20:
+        raise ValueError(f'Expected 20 portal mutations, found {count}')
+    return result
+
+PATCHES = {PORTAL: patch_portal, AUTH: patch_auth, LOGIN: patch_login, KEYCHAIN: patch_keychain,
            APP: lambda s: once(s, '                    await AuthManager.shared.signOut()', '                    try await AuthManager.shared.initializeAccountStorageIfNeeded()'),
            MAINT: patch_maintenance, SETTINGS: patch_settings, CUSTOM: patch_custom,
            DEV: patch_developer, ARCHIVE: patch_archive, BACKUP: patch_backup}
-BLOBS = {'SideStore/Core/Auth/AuthManager.swift': 'c426783db44eda9a183562cddbd446f57cecc93a', 'SideStore/Core/Operations/StandaloneOperations/SignInOperation.swift': '1ff9135ea725cc45481d82a96af1de8418726ef8', 'AltStore/Core/Components/Keychain.swift': '440f4a763cc3a95b10c696f432129f8570b4116a', 'AltStore/AppDelegate.swift': '466ba57a35e67b1a93961b5d4553d24d7c5e73ff', 'SideStore/MaintenanceManager.swift': '55dbd051aeff41e6f2859ca1ebe357c76f378bf5', 'AltStore/Settings/SettingsViewController.swift': '6b7a4c28ed942089a38c8f1a870345b57e47bad6', 'SideStore/Views/Settings/Advanced/UserCustomizations/UserCustomizationsView.swift': '6d6a72327aa0d19dab23e63576abadccc6909c61', 'SideStore/Views/Settings/Diagnostics/DeveloperOptionsView.swift': '5826d7d2ecca2776ac823ae516322016ba8eb944', 'SideStore/Utils/importexport/ImportExport.swift': '509c0ef993239e0ef61eff19fc8cc1f86d854b92', 'SideStore/Views/Settings/Advanced/BackupRestore/BackupAndRestoreView.swift': '861f17b0fa0abb4ead5f679b021747c985bd9598'}  # Filled from the reviewed prepared baseline, not the evolving remote branch.
+BLOBS = {PORTAL: '702759f52dae5dfc7e3a88f57668d7a83e30f354', 'SideStore/Core/Auth/AuthManager.swift': 'c426783db44eda9a183562cddbd446f57cecc93a', 'SideStore/Core/Operations/StandaloneOperations/SignInOperation.swift': '1ff9135ea725cc45481d82a96af1de8418726ef8', 'AltStore/Core/Components/Keychain.swift': '440f4a763cc3a95b10c696f432129f8570b4116a', 'AltStore/AppDelegate.swift': '466ba57a35e67b1a93961b5d4553d24d7c5e73ff', 'SideStore/MaintenanceManager.swift': '55dbd051aeff41e6f2859ca1ebe357c76f378bf5', 'AltStore/Settings/SettingsViewController.swift': '6b7a4c28ed942089a38c8f1a870345b57e47bad6', 'SideStore/Views/Settings/Advanced/UserCustomizations/UserCustomizationsView.swift': '6d6a72327aa0d19dab23e63576abadccc6909c61', 'SideStore/Views/Settings/Diagnostics/DeveloperOptionsView.swift': '5826d7d2ecca2776ac823ae516322016ba8eb944', 'SideStore/Utils/importexport/ImportExport.swift': '509c0ef993239e0ef61eff19fc8cc1f86d854b92', 'SideStore/Views/Settings/Advanced/BackupRestore/BackupAndRestoreView.swift': '861f17b0fa0abb4ead5f679b021747c985bd9598'}  # Filled from the reviewed prepared baseline, not the evolving remote branch.
 
 def apply(root: Path):
     outputs = {}

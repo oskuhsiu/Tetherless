@@ -2,6 +2,7 @@
 #if canImport(Security)
 import Foundation
 import Security
+import LocalAuthentication
 
 /// System Keychain adapter. Never interacts with shared/synchronizing items;
 /// no prompt fallback is allowed during an unattended read.
@@ -14,9 +15,11 @@ public struct KeychainAuthenticationStorage: AuthenticationRecordStorage {
         self.service = service; self.account = account
     }
     private var query: [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+        let context = LAContext()
+        context.interactionNotAllowed = true
+        return [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
          kSecAttrAccount as String: account, kSecAttrSynchronizable as String: false,
-         kSecUseAuthenticationUI as String: kSecUseAuthenticationUIFail]
+         kSecUseAuthenticationContext as String: context]
     }
     public func read() throws -> Data? {
         var query = query
@@ -38,7 +41,7 @@ public struct KeychainAuthenticationStorage: AuthenticationRecordStorage {
         if updated == errSecSuccess { return }
         guard updated == errSecItemNotFound else { throw AuthenticationStorageFailure.unavailable }
         var add = query
-        add.removeValue(forKey: kSecUseAuthenticationUI as String)
+        add.removeValue(forKey: kSecUseAuthenticationContext as String)
         for (key, value) in attributes { add[key] = value }
         guard SecItemAdd(add as CFDictionary, nil) == errSecSuccess else {
             throw AuthenticationStorageFailure.unavailable
