@@ -17,6 +17,8 @@ Finish implementation, integration and feasible non-device verification before r
 - Partial-batch recovery, write-ahead journaling, cross-process mutation exclusion, per-app fault isolation and persistent authentication/backoff gates.
 - A replacement `Renew Managed Apps` App Intent without foreground continuation; supplementary iOS background processing/fetch.
 - An Auto Renewal screen with setup instructions, consent, explicit repair, observed expiry/history, advance warnings and privacy-whitelisted diagnostics.
+- Protected, bounded pairing storage with atomic replacement, conflict-safe legacy migration, durable full-reset markers and serialized wireless import.
+- Shared streaming IPA extraction with ZIP structure/CRC/path/expansion limits and nested bundle metadata checks; real adversarial archive tests use the production extractor.
 - Distinct `org.tetherless.Tetherless` product identity. Private signing keys are no longer embedded by the target-app or manager signing paths; only public certificate material crosses that boundary.
 
 A failure requiring user interaction is not counted as unattended success. Manager version updates, identity rotation and first installation are separate from everyday profile renewal. A clean phone's fully computer-free first installation is not claimed to be solved.
@@ -31,6 +33,8 @@ git submodule update --init --recursive
 swift test
 swift test -c release
 python3 -m unittest discover -s Integration/tests -v
+swift test --package-path Packages/TetherlessArchive --force-resolved-versions
+swift test --package-path Packages/TetherlessArchive --force-resolved-versions -c release
 python3 Integration/prepare.py
 ```
 
@@ -47,12 +51,14 @@ CI retains source revisions, build logs, prepared review sources and unsigned IP
 | `Sources/TetherlessCore` | Policy, identity/evidence, journal, batch recovery, mutation lifetime and diagnostics |
 | `Tests/TetherlessCoreTests` | Fault injection, real filesystem/process tests and output-boundary tests |
 | `Integration/Native` | Actual SideSign/minimuxer adapter, runtime, intents, scheduling and UI |
-| `Integration/prepare.py`, `harden.py` | Hash-locked, reviewable transformations of the pinned native app |
+| `Integration/Overrides` | Reviewed native replacements, including the protected pairing manager |
+| `Integration/prepare.py`, `harden.py`, `input_safety.py`, `archive_safety.py` | Hash-locked transformations of the pinned native app |
+| `Packages/TetherlessArchive` | Production streaming extractor and real ZIP adversarial tests |
 | `Vendor/SideStore` | Native upstream gitlink; dependencies retain their licenses |
 | `docs/STATUS.md` | Verified evidence and remaining implementation gates |
 
 ## Security and licensing
 
-Tetherless uses its own non-synchronizing Keychain namespace. Renewal never silently falls back to remote anisette, revokes a certificate, reinstalls the manager, enables fake audio/location keepalive or turns off another VPN. Diagnostic export excludes credentials and identifiers. These safeguards are not a completed independent security audit: inherited import, pairing storage, maintenance and explicit repair paths still have release gates in the status document.
+Tetherless uses its own non-synchronizing Keychain namespace. Renewal never silently falls back to remote anisette, revokes a certificate, reinstalls the manager, enables fake audio/location keepalive or turns off another VPN. Diagnostic export excludes credentials and identifiers. These safeguards are not a completed independent security audit: remaining authentication, maintenance, bootstrap, download-resource and lifecycle paths still have release gates in the status document. [Input-safety notes](docs/INPUT_SAFETY.md) distinguish implemented protections from unverified platform behavior. ZIP64/encrypted/link-bearing archives and unpacked .app imports are explicitly unsupported in v1; there is no unsafe fallback.
 
 Original Tetherless code is AGPL-3.0-only. Preserve upstream copyrights and licenses; the full upstream license is retained in `Vendor/SideStore/LICENSE` after initialization. See [pinned source audit](docs/UPSTREAM_AUDIT.md) before distributing a product. Do not submit automated contributions/issues to upstream maintainers.

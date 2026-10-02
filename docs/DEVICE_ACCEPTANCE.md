@@ -41,3 +41,10 @@ Both the target-app and manager signing output must exclude the inherited signin
 After the next-day mechanism works, observe recurring renewals across the original expiry. Keep the scheduling observation separate from manual/debug fault testing. Never advance the device clock to impersonate an Apple-issued authorization period. Unattended observations should not be repeatedly disturbed by opening the manager merely to inspect its status.
 
 Record the precise device/OS, app/profile conditions and every intervention. A multi-day pass is evidence for those conditions, not a universal reliability guarantee. Remaining unsupported conditions belong in the user-facing support matrix.
+
+
+## Protected input acceptance (after the non-device gates)
+
+Read back the Data Protection class on the actual protected pairing file and check backup exclusion; the Simulator's missing hardware protection attribute was not treated as a pass. Verify that importing a replacement record preserves the previous valid record on a pre-promotion failure, full reset survives a restart, a new validated import clears the reset marker, and the wireless library releases its mutation lease after success/cancellation. Secrets stay on the device.
+
+Try a normal small trusted IPA and confirm unsupported ZIP64/encrypted/link-bearing or unpacked-directory inputs produce an explicit rejection, not an unsafe fallback. These import checks do not replace the next-day unattended renewal acceptance.

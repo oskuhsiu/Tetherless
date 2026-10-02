@@ -30,11 +30,17 @@ Preparation and hardening retain original project/module names but change the pr
 
 The target-app signing operation and manager re-sign operation write only the chosen public certificate DER, removing the known inherited `ALTCertificate.p12` metadata resource. Unrelated application-owned P12 assets are not indiscriminately deleted. The embedded-private-key recovery fallback is disabled; the manager's authorized private signing material belongs in its own Keychain. URL-triggered certificate/pairing exports are disabled. Explicit foreground export functionality is a separate user-controlled path, not an unattended export.
 
+## Pairing and archive boundaries
+
+`input_safety.py` installs the protected pairing-store override and updates native import, reset, migration, protocol switch and wireless pairing call sites. The same synchronous/async mutation scope prevents these operations from racing profile renewal. Bootstrap legacy records are migrated before cold boot decides pairing is missing; a durable reset marker cannot be bypassed by migration. New imports clear that marker only after readback and cleanup of reset leftovers.
+
+`archive_safety.py` redirects the shared SideSign unzip functions to the exact production sources tested by `Packages/TetherlessArchive`. Extraction is streamed into private staging with complete ZIP32 preflight, path/type/collision checks, independent expanded-byte limits, CRC verification and main/nested bundle metadata checks. It does not merge over existing data or fall back to the old extractor. Unpacked .app directory imports are deliberately rejected. See INPUT_SAFETY.md for supported formats, size limits and unresolved resource/lifecycle boundaries.
+
 ## Boundaries still requiring validation
 
 - SideSign metadata parsing is not an independent CMS trust/chain validation. Exact profile-store readback proves returned bytes, not kernel launch acceptance or all future revocation state.
 - Simulator installation methods throw; upstream simulator no-ops cannot become `.deviceReadback` evidence. Simulator tests use scripted transports and are not a physical installation.
 - Non-manager identities depend on recorded successful-install metadata. External replacements and unsupported shared/wildcard profiles require explicit repair/enrollment.
-- The primary pipeline, portal mutations and ordinary boot use shared locking. Remaining standalone maintenance/settings/pairing mutations need an exhaustive ownership/lifetime audit.
+- The primary pipeline, portal mutations, ordinary boot and reviewed pairing import/reset/migration/protocol-switch paths use shared locking. Wireless callbacks retain a session lease. Remaining settings/authentication operations and callback lifetime/cancellation behavior still need an exhaustive ownership audit.
 - First-install credential initialization and explicit manager identity rotation must be checked after disabling embedded-key import. A software update feed is not the daily profile-renewal mechanism and is not implemented by pointing at a GitHub release page.
 - See STATUS.md for remaining input-security, storage, distribution and UI-test gates. Do not request the owner's device to bypass these implementation tasks.

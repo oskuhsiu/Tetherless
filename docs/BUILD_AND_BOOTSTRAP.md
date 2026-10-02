@@ -4,7 +4,7 @@ Development instructions only. No physical-device handoff is requested yet.
 
 ## Rebuild the exact source
 
-Use `develop` or a recorded full implementation commit. Initialize the pinned recursive submodules without `--remote`, run the core and Python tests, then run `python3 Integration/prepare.py`. That script invokes `harden.py`; skipping the hardening step is not the supported Tetherless build.
+Use `develop` or a recorded full implementation commit. Initialize the pinned recursive submodules without `--remote`, run the core and Python tests, then run `python3 Integration/prepare.py`. That script invokes `harden.py`, `input_safety.py` and `archive_safety.py`; skipping any transformation is not the supported Tetherless build. Test the standalone archive package as well as the core. Pairing bootstrap compatibility and actual device acceptance remain separate from compiling these paths.
 
 Native targets keep upstream internal names:
 
@@ -29,7 +29,7 @@ The legacy organization/target names do not set the new base identity: the hash-
 
 The user must authorize signing and installation with their own Apple Account or valid registered-device credentials. A CI build does not contain a usable provisioning profile or private key. Existing desktop bootstrap tools are candidates for the first installation only; their exact compatibility with Tetherless's changed product identity still requires the consolidated acceptance pass. Do not assume a tool's SideStore-specific installation button recognizes an independently named app.
 
-A clean device still needs an initial trusted installation path, system confirmations and pairing. On-device wireless pairing on supported systems does not itself solve initial app delivery. Daily renewal must not depend on the bootstrap computer remaining on or reconnecting later.
+A clean device still needs an initial trusted installation path, system confirmations and pairing. On-device wireless pairing on supported systems does not itself solve initial app delivery. Daily renewal must not depend on the bootstrap computer remaining on or reconnecting later. Known legacy pairing files initially placed in Documents are migrated into the protected Application Support store. Conflicting records and durable reset markers are not bypassed by a migration; repair is explicit. Do not instruct users to export pairing files to a server or issue attachment.
 
 ## Private-key change and recovery
 
