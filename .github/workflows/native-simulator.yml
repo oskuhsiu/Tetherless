@@ -1,0 +1,118 @@
+name: Native simulator launch
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'Sources/**'
+      - 'Integration/**'
+      - 'Packages/**'
+      - 'Vendor/**'
+      - '.github/workflows/native-simulator.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-simulator-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  whole-app-launch:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Select installed stable toolchain and simulator
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          choices=[]
+          for path in Path('/Applications').glob('Xcode*.app'):
+              match=re.fullmatch(r'Xcode_(\d+(?:\.\d+)*)\.app',path.name)
+              if match: choices.append((tuple(map(int,match[1].split('.'))),path))
+          if choices:
+              subprocess.run(['sudo','xcode-select','-s',str(max(choices)[1]/'Contents/Developer')],check=True)
+          PY
+          xcodebuild -version
+          xcrun simctl list devices available --json > native-simulator-devices.json
+          python3 - <<'PY'
+          import json, re, os
+          choices=[]
+          for runtime,devices in json.load(open('native-simulator-devices.json'))['devices'].items():
+              match=re.search(r'iOS-(\d+(?:-\d+)*)$',runtime)
+              if not match: continue
+              version=tuple(map(int,match[1].split('-')))
+              for device in devices:
+                  if version[0]>=17 and device.get('isAvailable') and device['name'].startswith('iPhone'):
+                      choices.append((version,device['name'],device['udid']))
+          if not choices: raise SystemExit('No simulator: whole-app launch has NOT run')
+          version,name,identifier=max(choices)
+          print('Selected native simulator:',name,version,identifier)
+          with open(os.environ['GITHUB_ENV'],'a') as file: file.write('SIMULATOR_ID='+identifier+'\n')
+          PY
+      - name: Prepare the same production integration
+        run: python3 Integration/prepare.py
+      - name: Build complete app for Simulator (no Apple account)
+        run: |
+          xcodebuild build \
+            -project .generated/SideStore/AltStore.xcodeproj \
+            -scheme SideStore -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath .generated/SimulatorDerived \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            ORG_IDENTIFIER=com.SideStore > native-simulator-build.log 2>&1
+      - name: Install and launch the complete app in a fresh simulator
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess, plistlib, os, json, re, time
+          identifier=os.environ['SIMULATOR_ID']
+          app=Path('.generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app')
+          info=plistlib.loads((app/'Info.plist').read_bytes())
+          bundle=info['CFBundleIdentifier']
+          if not bundle.startswith('org.tetherless.Tetherless'): raise SystemExit('Unexpected app identity')
+          subprocess.run(['xcrun','simctl','boot',identifier],check=False)
+          subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=180)
+          subprocess.run(['xcrun','simctl','install',identifier,str(app)],check=True,timeout=60)
+          result=subprocess.run(['xcrun','simctl','launch','--terminate-running-process',identifier,bundle],check=True,capture_output=True,text=True,timeout=60)
+          Path('native-simulator-launch.log').write_text(result.stdout+result.stderr)
+          match=re.search(r':\s*(\d+)\s*$',result.stdout.strip())
+          if not match: raise SystemExit('Launch did not return a process ID')
+          pid=int(match[1])
+          # A successful launch command alone does not prove the app stayed alive.
+          time.sleep(5)
+          os.kill(pid,0)
+          process=subprocess.check_output(['ps','-p',str(pid),'-o','comm='],text=True).strip()
+          if '.app/'+info['CFBundleExecutable'] not in process: raise SystemExit('Unexpected process after launch')
+          subprocess.run(['xcrun','simctl','io',identifier,'screenshot','native-first-launch.png'],check=True,timeout=30)
+          Path('native-launch-evidence.json').write_text(json.dumps({'bundleID':bundle,'pid':pid,'launchAliveAfterSeconds':5,
+              'sourceCommit':os.environ['GITHUB_SHA'],'deviceValidated':False,'unattendedRenewalValidated':False,
+              'uiFlowsTested':False,'scope':'whole app build, install and initial launch only'},indent=2))
+          PY
+      - name: Summarize actual compiler diagnostics
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('native-simulator-build.log')
+          if path.exists():
+              lines=path.read_text(errors='replace').splitlines()
+              selected=[line for line in lines if 'error:' in line or 'BUILD SUCCEEDED' in line or 'BUILD FAILED' in line]
+              print('\n'.join(selected[-80:] if selected else lines[-40:]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-launch-${{ github.sha }}
+          path: |
+            native-simulator-build.log
+            native-simulator-launch.log
+            native-simulator-devices.json
+            native-launch-evidence.json
+            native-first-launch.png
+          if-no-files-found: error
+          retention-days: 14
