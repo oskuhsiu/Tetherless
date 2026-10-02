@@ -106,3 +106,15 @@ func finishLaunching() {
         self.assertIn('observationGeneration == generation',text)
         self.assertIn('!Task.isCancelled',text)
         self.assertIn('onboarding.readinessDetail',text)
+
+    def test_virtualized_renewal_controls_are_scrolled_before_asserting(self):
+        text=(ROOT/'UITests/TetherlessUITests.swift').read_text()
+        for control in ['setup', 'install', 'resume', 'enabled']:
+            self.assertIn('XCTAssertTrue(revealRenewalControl('+control+', in: app))',text)
+        self.assertIn('app.collectionViews.firstMatch',text)
+        self.assertIn('for _ in 0..<6',text)
+        self.assertIn('element.exists && element.isHittable',text)
+        self.assertIn('form.swipeDown()',text)
+        self.assertIn('form.swipeUp()',text)
+        self.assertNotIn('coordinate(withNormalizedOffset:',text)
+        self.assertIn('failure-unreachable-renewal-control',text)

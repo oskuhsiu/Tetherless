@@ -63,17 +63,16 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(renewal.waitForExistence(timeout: 15), "Dismissed wizard must lead to the real app")
         renewal.tap()
         let setup = app.buttons["renewal.openSetup"]
-        XCTAssertTrue(setup.waitForExistence(timeout: 10))
+        XCTAssertTrue(revealRenewalControl(setup, in: app))
         setup.tap()
         XCTAssertTrue(app.tabBars.buttons["Settings"].isSelected)
         renewal.tap()
         let install = app.buttons["Install or manage an IPA"]
-        XCTAssertTrue(install.waitForExistence(timeout: 5)); install.tap()
+        XCTAssertTrue(revealRenewalControl(install, in: app)); install.tap()
         XCTAssertTrue(app.tabBars.buttons["My Apps"].isSelected)
         renewal.tap()
         let resume = app.buttons["renewal.resumeSetup"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
-        if !resume.isHittable { app.swipeUp() }
+        XCTAssertTrue(revealRenewalControl(resume, in: app))
         resume.tap()
         XCTAssertTrue(title.waitForExistence(timeout: 10))
         XCTAssertEqual(title.label, "Review setup")
@@ -92,9 +91,35 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(renewal.waitForExistence(timeout: 15)); renewal.tap()
         XCTAssertFalse(title.exists)
         let enabled = app.switches["renewal.allowUnattended"]
-        if !enabled.isHittable { app.swipeUp() }
-        XCTAssertTrue(enabled.waitForExistence(timeout: 5))
+        XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
+    }
+    /// SwiftUI Form virtualizes offscreen rows. Waiting for an absent row
+    /// cannot reveal it on the SE-sized test device: scroll the actual Form,
+    /// then require the exact control to exist and be hittable before tapping.
+    /// Return-scroll positions vary when switching tabs, so search both ways
+    /// with a hard bound. Never tap a coordinate or silently skip an assertion.
+    @MainActor private func revealRenewalControl(_ element: XCUIElement,
+                                                 in app: XCUIApplication) -> Bool {
+        guard app.tabBars.buttons["Auto Renewal"].isSelected,
+              app.navigationBars["Auto Renewal"].waitForExistence(timeout: 5) else {
+            capture(app, "failure-wrong-renewal-screen")
+            return false
+        }
+        let form = app.collectionViews.firstMatch
+        guard form.waitForExistence(timeout: 5) else {
+            capture(app, "failure-missing-renewal-form")
+            return false
+        }
+        if element.exists && element.isHittable { return true }
+        for scrollDown in [false, true] {
+            for _ in 0..<6 {
+                if scrollDown { form.swipeDown() } else { form.swipeUp() }
+                if element.exists && element.isHittable { return true }
+            }
+        }
+        capture(app, "failure-unreachable-renewal-control")
+        return false
     }
     @MainActor private func dismissPairingPrompt(_ app: XCUIApplication) {
         let prompt = app.alerts["Pairing File"]
