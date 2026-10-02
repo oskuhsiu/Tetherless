@@ -98,8 +98,14 @@ final class PairingFileManager: NSObject {
         let value = try store()
         try value.write(record.xml, named: name(mode))
         guard try value.read(name(mode)) == record.xml else { throw PrivateFileError.changedDuringRead }
+        try PairingReset.finishImport(in: value, name: name(mode), expected: record.xml) {
+            let other: PairingProtocol = mode == .lockdown ? .rppairing : .lockdown
+            try value.remove(name(other))
+            for url in legacyURLs {
+                if try PrivateFileStore.readExternal(url) != nil { try FileManager.default.removeItem(at: url) }
+            }
+        }
         persistedActiveProtocol = mode
-        try PairingReset.finishImport(in: value, name: name(mode), expected: record.xml)
         UserDefaults.standard.isPairingReset = false
         return parsed
     }

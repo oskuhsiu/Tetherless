@@ -17,9 +17,15 @@ public enum PairingReset {
         for name in names { try store.remove(name) }
     }
     /// Only after a new record has been durably committed and read back.
-    public static func finishImport(in store: PrivateFileStore, name: String, expected: Data) throws {
+    public static func finishImport(in store: PrivateFileStore, name: String, expected: Data,
+                                    cleanupAfterReset: () throws -> Void = {}) throws {
         guard PrivateFileStore.validName(name), name != marker,
               !expected.isEmpty, try store.read(name) == expected else { throw PrivateFileError.invalidContent }
+        guard try isMarked(in: store) else { return }
+        // A new valid import must not reactivate leftovers from a failed reset.
+        // The native caller owns the list of legacy/protocol-specific files.
+        try cleanupAfterReset()
+        guard try store.read(name) == expected else { throw PrivateFileError.changedDuringRead }
         try store.remove(marker)
     }
 }

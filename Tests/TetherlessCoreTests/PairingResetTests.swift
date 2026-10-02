@@ -42,4 +42,36 @@ struct PairingResetTests {
             #expect(try store.read("pairing") == Data([1]))
         }
     }
+    @Test func failedLegacyCleanupCannotReactivateOldPairing() throws {
+        try fixture { store in
+            try PairingReset.begin(in: store, deleting: ["new"])
+            try store.write(Data([1]), named: "legacy-leftover")
+            try store.write(Data([2]), named: "new")
+            do {
+                try PairingReset.finishImport(in: store, name: "new", expected: Data([2])) {
+                    throw PrivateFileError.unavailable
+                }
+                Issue.record("Expected cleanup failure to preserve reset marker")
+            } catch let error as PrivateFileError {
+                #expect(error == .unavailable)
+            }
+            #expect(try PairingReset.isMarked(in: store))
+            #expect(try store.read("legacy-leftover") == Data([1]))
+            try PairingReset.finishImport(in: store, name: "new", expected: Data([2])) {
+                try store.remove("legacy-leftover")
+            }
+            #expect(try !PairingReset.isMarked(in: store))
+            #expect(try store.read("legacy-leftover") == nil)
+            #expect(try store.read("new") == Data([2]))
+        }
+    }
+    @Test func ordinaryReplacementDoesNotRunResetCleanup() throws {
+        try fixture { store in
+            try store.write(Data([1]), named: "pairing")
+            try PairingReset.finishImport(in: store, name: "pairing", expected: Data([1])) {
+                throw PrivateFileError.unavailable
+            }
+            #expect(try store.read("pairing") == Data([1]))
+        }
+    }
 }
