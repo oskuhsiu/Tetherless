@@ -29,6 +29,13 @@ struct NativeProfileTransport: ProfileBatchTransport {
               location.resolvingSymlinksInPath().path == location.path else {
             throw RenewalFailure.invalidEvidence
         }
+        return try readDump(at: location)
+        #endif
+    }
+
+    // DirectoryEnumerator is synchronous and must not cross an await boundary.
+    // Keep it outside the async function so Swift 6's noasync contract is met.
+    private func readDump(at location: URL) throws -> [Data] {
         var enumerationFailed = false
         guard let iterator = FileManager.default.enumerator(at: location,
                      includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey],
@@ -50,7 +57,6 @@ struct NativeProfileTransport: ProfileBatchTransport {
         }
         guard !enumerationFailed else { throw RenewalFailure.unavailable }
         return result
-        #endif
     }
 
     func installProfileBytes(_ bytes: Data) async throws {
