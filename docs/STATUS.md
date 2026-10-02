@@ -8,7 +8,17 @@ Setup navigation now persists a stable step name. A normal relaunch resumes the 
 
 The real-app XCUITest has been extended to terminate/relaunch in the pairing step, check that Continue remains disabled without pairing, reopen setup from Auto Renewal, and confirm that consent remains off. These are test definitions, not yet executed UI evidence for this increment.
 
-## Verification at commit time
+## Follow-up: simulator signing and observed UI failures
+
+`1a4831d` run 37019229377 really executed the UI flow. Its log records a failure on the review page: actual "Setup status could not be read", expected "Setup is not finished". It had already failed that assertion before being cancelled by a later push. The downloaded artifact SHA-256 was verified as `06678321e264191e6d18d7a71c794bd94191562a4fc76f62889190e22254e4a1`. Do not classify this as merely a timeout or a passing UI flow.
+
+`d5b2938` native Debug/Release passed (run 37021324336). Its whole-app/UI run 37021324491 failed during simulator screen initialization, before building or running the app. This is a separate failure, not evidence about the changed resume behavior.
+
+The simulator-only workflow now enables ordinary ad-hoc code signing and checks the actual built signature/application-identifier before launching. The previous workflow disabled signing even though the UI reads Keychain. This removes a suspect test-environment deficiency; the exact cause of the earlier read error is not yet proven. No Keychain check, UI assertion or production security error was weakened. The distributable native workflow remains unsigned. Local Python checks including the new inspector tests: **93 passed**. The signed simulator rerun is pending for this checkpoint.
+
+If the same review assertion fails after the signature gate passes, collect the failing local-read stage/OSStatus without secrets and fix that cause. Do not accept unreadable setup as a normal empty installation.
+
+## Original increment verification at commit time
 
 - Local Linux core Debug and Release: 175 tests passed each.
 - Local Python integration checks: 88 passed.

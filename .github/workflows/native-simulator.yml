@@ -64,9 +64,14 @@ jobs:
             -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
             -derivedDataPath .generated/SimulatorDerived \
             -onlyUsePackageVersionsFromResolvedFile \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
             ORG_IDENTIFIER=com.SideStore > native-simulator-build.log 2>&1
+      - name: Verify actual simulator signature and Keychain identity
+        run: |
+          python3 Integration/simulator_signing.py \
+            .generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app \
+            --team XYZ0123456 --output native-simulator-signing.json
       - name: Install and launch the complete app in a fresh simulator
         run: |
           python3 Integration/simulator_smoke.py launch --simulator "$SIMULATOR_ID" \
@@ -83,8 +88,8 @@ jobs:
             -resultBundlePath native-ui.xcresult \
             -parallel-testing-enabled NO \
             -onlyUsePackageVersionsFromResolvedFile \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
             ORG_IDENTIFIER=com.SideStore > native-ui.log 2>&1
       - name: Export actual UI screenshots
         if: always()
@@ -109,6 +114,7 @@ jobs:
         with:
           name: native-launch-${{ github.sha }}
           path: |
+            native-simulator-signing.json
             native-ui.log
             native-ui.xcresult
             native-ui-attachments
