@@ -1,0 +1,17 @@
+.build/
+.generated/
+.swiftpm/
+.DS_Store
+DerivedData/
+*.xcuserstate
+xcuserdata/
+CodeSigning.xcconfig
+*.p12
+*.p8
+*.pem
+*.mobileprovision
+*.mobiledevicepairing
+*.ipa
+.env
+.env.*
+__pycache__/
