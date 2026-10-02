@@ -49,7 +49,6 @@ jobs:
         env:
           CONFIGURATION: ${{ matrix.configuration }}
         run: |
-          set -o pipefail
           xcodebuild build \
             -project .generated/SideStore/AltStore.xcodeproj \
             -scheme SideStore \
@@ -59,10 +58,21 @@ jobs:
             -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
-            ORG_IDENTIFIER=com.SideStore 2>&1 | tee native-build.log
+            ORG_IDENTIFIER=com.SideStore > native-build.log 2>&1
       - name: Summarize native compiler diagnostics
         if: always()
         run: |
-          if [ -f native-build.log ]; then
-            grep -E 'error:|warning:|BUILD SUCCEEDED|BUILD FAILED|SwiftCompile.*Tetherless' native-build.log || true
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('native-build.log')
+          if p.exists():
+              lines = p.read_text(errors='replace').splitlines()
+              indices = set()
+              for i, line in enumerate(lines):
+                  if 'error:' in line or 'BUILD SUCCEEDED' in line or 'BUILD FAILED' in line:
+                      indices.update(range(max(0, i-1), min(len(lines), i+5)))
+              for i in sorted(indices)[:300]:
+                  print(lines[i])
+              if not indices:
+                  print('\n'.join(lines[-50:]))
+          PY
