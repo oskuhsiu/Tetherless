@@ -33,6 +33,19 @@ public enum MutationScope {
     }
     @TaskLocal private static var token: Token?
 
+    public static func withSynchronousLease<T>(identity: String,
+                 acquire: () throws -> (@Sendable () -> Void),
+                 body: () throws -> T) throws -> T {
+        if let active = token, active.identity == identity, active.claim() {
+            defer { active.finish() }
+            return try body()
+        }
+        let release = try acquire()
+        let scope = Token(identity: identity, release: release)
+        defer { scope.finish(owner: true) }
+        return try $token.withValue(scope) { try body() }
+    }
+
     public static func withLease<T>(identity: String,
                  acquire: () throws -> (@Sendable () -> Void),
                  body: () async throws -> T) async throws -> T {

@@ -270,6 +270,7 @@ def prepare(root: Path) -> Path:
     info["UIBackgroundModes"] = ["fetch", "processing"]
     info_path.write_bytes(plistlib.dumps(info, sort_keys=False))
     subprocess.run([sys.executable, str(Path(__file__).with_name("harden.py")), str(output)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("input_safety.py")), str(output)], check=True)
     sample = output / "CodeSigning.xcconfig.sample"
     if sample.exists():
         shutil.copyfile(sample, output / "CodeSigning.xcconfig")
