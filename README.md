@@ -1,44 +1,58 @@
 # Tetherless
 
-Mobile-first iOS sideloading with proactive, unattended renewal using a personal Apple account.
+Mobile-first iOS sideloading with proactive profile renewal using the user's own Apple Account. Independently maintained from a pinned SideStore baseline; not an official SideStore release.
 
-**Development branch — not a finished or device-validated app.** The standalone renewal core is implemented and locally tested. Integration and release gates are tracked separately; passing mocks is not evidence of iOS execution or Apple authorization.
+**Integrated development build, not a device-validated release.** The native renewal backend, no-foreground App Intent, background entry points and Auto Renewal screen are connected. Debug/Release native builds and tests are tracked in [implementation status](docs/STATUS.md). Passing compilation or a scripted test is not proof of Apple authorization or unattended execution on an iPhone.
 
-## Development contract
+## Development workflow
 
-Finish implementation, integration and all available non-device checks before asking the owner to connect an iPhone. Collect device-dependent checks into one acceptance pass; do not stop unrelated work to request a device. Renewal is daily by default, not a job that waits until day seven. Accelerated testing never alters Apple's signed expiry dates. Never request account passwords, 2FA codes, pairing records, private keys or device identifiers in chat or GitHub.
+Work goes directly to `develop`, or through development PRs merged into `develop`. The owner authorized this workflow; `main` remains the stable/release branch and is not automatically promoted. PR #1 was merged into `develop`.
 
-## Test the core
+Finish implementation, integration and feasible non-device verification before requesting one consolidated device acceptance pass. Do not ask the owner to connect an iPhone at each development step. Do not request passwords, verification codes, keys, UDIDs or pairing records in chat or GitHub.
 
-Requires Swift 6.0+ and Python 3 (the cross-process lock test uses a separate Python process).
+## Implemented
+
+- Daily proactive renewal, with Debug-only two-hour eligibility; neither setting changes Apple's signed expiry or guarantees an OS wakeup.
+- Local-only renewal authentication and profile transport, manager-first ordering, required-extension/identity checks and exact profile-store readback.
+- Partial-batch recovery, write-ahead journaling, cross-process mutation exclusion, per-app fault isolation and persistent authentication/backoff gates.
+- A replacement `Renew Managed Apps` App Intent without foreground continuation; supplementary iOS background processing/fetch.
+- An Auto Renewal screen with setup instructions, consent, explicit repair, observed expiry/history, advance warnings and privacy-whitelisted diagnostics.
+- Distinct `org.tetherless.Tetherless` product identity. Private signing keys are no longer embedded by the target-app or manager signing paths; only public certificate material crosses that boundary.
+
+A failure requiring user interaction is not counted as unattended success. Manager version updates, identity rotation and first installation are separate from everyday profile renewal. A clean phone's fully computer-free first installation is not claimed to be solved.
+
+## Test and build
+
+The core requires Swift 6.0+ and Python 3 for its host cross-process test. Native compilation requires a compatible macOS/Xcode installation.
 
 ```sh
+git switch develop
+git submodule update --init --recursive
 swift test
 swift test -c release
+python3 -m unittest discover -s Integration/tests -v
+python3 Integration/prepare.py
 ```
 
-The test backend is intentionally synthetic. Tests cover policy, identity/evidence selection, write-ahead recovery, bounded retry, cancellation, durable commit and real filesystem/process exclusion. They do not call Apple or validate background execution.
+Do not use `git submodule update --remote`. Preparation rejects changed source hashes, dirty dependencies and an existing generated output; inspect that directory before removing it for a fresh preparation. Do not edit `Vendor/SideStore` or `.generated` as the authoritative source of Tetherless changes.
 
-## Upstream baseline
+The native CI builds the generated `AltStore.xcodeproj` / `SideStore` scheme in both configurations. Internal target names are retained to keep the derivative patch small; the product's bundle identity is separate. The simulator workflow executes the Swift core tests on an installed iOS Simulator runtime, not on a macOS host masquerading as iOS.
 
-`Vendor/SideStore` is pinned to `0dd743f75afc358b0ba4a002feb5f19474492371`. This is a candidate source baseline, not a security endorsement or stable-release claim. Initialize pinned dependencies with:
+CI retains source revisions, build logs, prepared review sources and unsigned IPA manifests. **An unsigned IPA is input to an authorized signing/bootstrap process, not directly installable and not a stable release.** See [build and bootstrap notes](docs/BUILD_AND_BOOTSTRAP.md).
 
-```sh
-git submodule update --init --recursive
-```
+## Structure
 
-Do not use `--remote`. This repository is independently maintained and is not an official SideStore release. Upstream names, copyrights and licenses are retained. Do not submit automated issues or contributions to upstream maintainers.
+| Path | Purpose |
+| --- | --- |
+| `Sources/TetherlessCore` | Policy, identity/evidence, journal, batch recovery, mutation lifetime and diagnostics |
+| `Tests/TetherlessCoreTests` | Fault injection, real filesystem/process tests and output-boundary tests |
+| `Integration/Native` | Actual SideSign/minimuxer adapter, runtime, intents, scheduling and UI |
+| `Integration/prepare.py`, `harden.py` | Hash-locked, reviewable transformations of the pinned native app |
+| `Vendor/SideStore` | Native upstream gitlink; dependencies retain their licenses |
+| `docs/STATUS.md` | Verified evidence and remaining implementation gates |
 
-## Architecture
+## Security and licensing
 
-- `Sources/TetherlessCore`: dependency-free policy, evidence, journal and coordinator.
-- `Tests/TetherlessCoreTests`: executable fault-injection and filesystem tests.
-- `Vendor/SideStore`: pinned native app, authentication, signing and device stack.
-- `Integration`: reviewed native integration and deterministic source patches.
-- `docs`: verification evidence, remaining gates and consolidated device acceptance.
+Tetherless uses its own non-synchronizing Keychain namespace. Renewal never silently falls back to remote anisette, revokes a certificate, reinstalls the manager, enables fake audio/location keepalive or turns off another VPN. Diagnostic export excludes credentials and identifiers. These safeguards are not a completed independent security audit: inherited import, pairing storage, maintenance and explicit repair paths still have release gates in the status document.
 
-A native adapter must provide real snapshot, refresh and readback implementations. It may report `appliedUnverified` when installation was acknowledged but device readback cannot establish effective expiry. It must never invent readback evidence, silently rotate certificates, revoke another tool's certificates or switch an unattended run to foreground.
-
-## Licensing
-
-Original Tetherless code is AGPL-3.0-only. The complete AGPL text is retained in `Vendor/SideStore/LICENSE` after submodule initialization and is available at https://www.gnu.org/licenses/agpl-3.0.txt. Dependencies retain their respective licenses; see the integration audit before distributing binaries.
+Original Tetherless code is AGPL-3.0-only. Preserve upstream copyrights and licenses; the full upstream license is retained in `Vendor/SideStore/LICENSE` after initialization. See [pinned source audit](docs/UPSTREAM_AUDIT.md) before distributing a product. Do not submit automated contributions/issues to upstream maintainers.

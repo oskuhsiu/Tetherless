@@ -20,7 +20,7 @@ A personal/free Apple Account is primary. After first-time authorized setup, nor
 ## Evidence and safety
 
 - Build passing, scripted tests, simulator results, device readback and device launch are DIFFERENT evidence levels.
-- Never mark a module complete because a stub/mocked backend returns success. The current package is a core, not a finished app.
+- Never mark a module complete because a stub/mocked backend returns success. Connected native routes still need their integration and acceptance evidence; scripted results do not prove real-device behavior.
 - `appliedUnverified` is not `verified`. Unchanged or merely displayed expiry is not renewal.
 - Recover interrupted transactions by readback before retrying mutation. Preserve the write-ahead journal.
 - Serialize all native mutation paths (including old foreground routes), not only calls to the actor. File locks must not be unlinked while in use.
