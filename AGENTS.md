@@ -33,3 +33,10 @@ A personal/free Apple Account is primary. After first-time authorized setup, nor
 Work directly on `develop` or use short-lived development PRs that are merged into `develop` after checks. In-progress integration is allowed; stable-release and device-acceptance claims still require their evidence. Preserve upstream licenses, copyrights and branding attribution; this is an independent derivative, not an official SideStore release. Do not submit automated contributions/issues to upstream maintainers. Never run upstream `make update` (`--remote`) or curl-to-shell recipes. Pin and review all dependency updates.
 
 Run `swift test`, `swift test -c release`, and `python3 -m unittest discover -s Integration/tests -v`. Run the unsigned native CI separately. Inspect actual logs and report failures precisely; do not call queued workflows successful. Keep `docs/STATUS.md` accurate and include a single consolidated acceptance procedure before device handoff.
+
+## Interruption-safe checkpoints
+
+- Keep `docs/STATUS.md` as the current recovery entry point; keep superseded evidence clearly historical.
+- Save each coherent code change and a concrete next step before expanding to another feature or waiting on a long native/UI run. Do not accumulate an entire session in an uncommitted workspace.
+- If a session is interrupted, first inspect the actual `develop` head and CI, preserve source artifacts and failures, and checkpoint any narrow repair. Do not restart a large feature batch as part of recovery.
+- Tie every verification claim to its implementation SHA. Pending or failed native/UI work remains pending or failed; prior green commits do not validate new code.

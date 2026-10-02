@@ -49,3 +49,50 @@ class OnboardingIntegrationTests(unittest.TestCase):
         self.assertLess(result.index('if #available(iOS 17.0, *)'),result.index('OnboardingView('))
         self.assertIn('requires iOS 17 or later',result)
         with self.assertRaises(ValueError): module.patch_replay('drift')
+
+    def test_launch_presentation_and_completion_share_availability(self):
+        spec=importlib.util.spec_from_file_location('onboarding',ROOT/'onboarding.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        original='''func present() {
+    if !UserDefaults.standard.hasCompletedOnboarding { presentWizard() }
+}
+func finishLaunching() {
+    if !UserDefaults.standard.hasCompletedOnboarding { return }
+    transitionToMainInterface()
+}'''
+        result=module.patch_launch(original)
+        guard='if #available(iOS 17.0, *), !UserDefaults.standard.hasCompletedOnboarding {'
+        self.assertEqual(result.count(guard),2)
+        self.assertNotIn('if !UserDefaults.standard.hasCompletedOnboarding {',result)
+        self.assertIn('transitionToMainInterface()',result)
+        self.assertNotIn('hasCompletedOnboarding = true',result)
+        self.assertNotIn('renewalPermitted = true',result)
+
+    def test_launch_drift_or_reapplication_is_rejected(self):
+        spec=importlib.util.spec_from_file_location('onboarding',ROOT/'onboarding.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        anchor='if !UserDefaults.standard.hasCompletedOnboarding {'
+        for text in ['', anchor, anchor*3, module.patch_launch(anchor*2)]:
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                module.patch_launch(text)
+
+    def test_launch_hash_mismatch_does_not_modify_other_sources(self):
+        import hashlib
+        import tempfile
+        from unittest.mock import patch
+        spec=importlib.util.spec_from_file_location('onboarding',ROOT/'onboarding.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        def blob(data):
+            return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            before={module.PATH:b'original onboarding',module.REPLAY:b'original replay',
+                    module.LAUNCH:b'unreviewed launch'}
+            for path,data in before.items():
+                target=root/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
+            with patch.object(module,'EXPECTED',blob(before[module.PATH])), \
+                 patch.object(module,'REPLAY_HASH',blob(before[module.REPLAY])):
+                with self.assertRaisesRegex(ValueError,'Unreviewed onboarding source'):
+                    module.apply(root)
+            for path,data in before.items():
+                self.assertEqual((root/path).read_bytes(),data)
