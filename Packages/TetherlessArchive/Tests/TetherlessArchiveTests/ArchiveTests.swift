@@ -198,4 +198,46 @@ struct ArchiveTests {
             #expect(throws: SafeArchiveError.unsupportedFormat) { try SafeArchive.extract(at: source, toDirectory: output) }
         }
     }
+    @Test func compressedBombWithForgedSizeIsStoppedAndCleaned() throws {
+        try fixture { _, source, output in
+            let payload = Data(repeating: 0, count: 200_000)
+            do {
+                let zip = try ZIPFoundation.Archive(url: source, accessMode: .create)
+                try zip.addEntry(with: "bomb", type: .file, uncompressedSize: Int64(payload.count), compressionMethod: .deflate) { pos, count in
+                    payload.subdata(in: Int(pos)..<Int(pos)+count)
+                }
+            }
+            var bytes = try Data(contentsOf: source)
+            let at = bytes.count - 6
+            let cd = Int(bytes[at]) | Int(bytes[at+1]) << 8 | Int(bytes[at+2]) << 16 | Int(bytes[at+3]) << 24
+            for start in [22, cd+24] {
+                bytes[start] = 1
+                for j in 1...3 { bytes[start+j] = 0 }
+            }
+            try bytes.write(to: source)
+            #expect(throws: SafeArchiveError.limitExceeded) { try SafeArchive.extract(at: source, toDirectory: output) }
+            #expect(!FileManager.default.fileExists(atPath: output.path))
+        }
+    }
+    @Test func maliciousBundleIdentifierAndInfoEntitiesNeverPublish() throws {
+        try fixture { _, source, output in
+            let info = try PropertyListSerialization.data(fromPropertyList: ["CFBundleIdentifier":"../pairing", "CFBundleExecutable":"Test"], format: .xml, options: 0)
+            var entries = try ipaEntries(); entries[0].bytes = info
+            try zipBytes(entries).write(to: source)
+            #expect(throws: SafeArchiveError.invalidApp) { try SafeArchive.extractIPA(at: source, toDirectory: output) }
+            entries[0].bytes = Data("<!DOCTYPE plist [<!ENTITY x 'bad'>]><plist/>".utf8)
+            try zipBytes(entries).write(to: source)
+            #expect(throws: SafeArchiveError.invalidApp) { try SafeArchive.extractIPA(at: source, toDirectory: output) }
+            #expect(!FileManager.default.fileExists(atPath: output.path))
+        }
+    }
+    @Test func extensionCannotEscapeViaExecutableName() throws {
+        try fixture { _, source, output in
+            let info = try PropertyListSerialization.data(fromPropertyList: ["CFBundleIdentifier":"example.test.ext", "CFBundleExecutable":"../../Test"], format: .binary, options: 0)
+            try zipBytes(ipaEntries() + [RawEntry(name: "Payload/Test.app/PlugIns/Ext.appex/Info.plist", bytes: info)]).write(to: source)
+            #expect(throws: (any Error).self) { try SafeArchive.extractIPA(at: source, toDirectory: output) }
+            #expect(!FileManager.default.fileExists(atPath: output.path))
+        }
+    }
+
 }

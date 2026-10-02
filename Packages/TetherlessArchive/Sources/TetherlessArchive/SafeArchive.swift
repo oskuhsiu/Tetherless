@@ -18,7 +18,7 @@ public enum SafeArchive {
             let apps = try FileManager.default.contentsOfDirectory(at: payload, includingPropertiesForKeys: [.isDirectoryKey])
             guard apps.count == 1, let app = apps.first, app.pathExtension == "app",
                   try app.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else { throw SafeArchiveError.invalidApp }
-            try validateApp(at: app)
+            try ArchiveBundleMetadata.validateTree(at: app)
             let final = destination.appendingPathComponent(app.lastPathComponent, isDirectory: true)
             guard !exists(final) else { throw SafeArchiveError.destinationConflict }
             try FileManager.default.moveItem(at: app, to: final)
@@ -128,23 +128,6 @@ public enum SafeArchive {
         let value = try publish(extracted)
         complete = true
         return value
-    }
-
-    private static func validateApp(at app: URL) throws {
-        let infoURL = app.appendingPathComponent("Info.plist")
-        let attrs = try FileManager.default.attributesOfItem(atPath: infoURL.path)
-        guard let size = attrs[.size] as? NSNumber, size.uint64Value <= 1_048_576 else { throw SafeArchiveError.invalidApp }
-        let bytes = try Data(contentsOf: infoURL)
-        guard let dict = try PropertyListSerialization.propertyList(from: bytes, format: nil) as? [String: Any],
-              let executable = dict["CFBundleExecutable"] as? String,
-              let identifier = dict["CFBundleIdentifier"] as? String, !identifier.isEmpty else { throw SafeArchiveError.invalidApp }
-        var paths = ArchivePaths()
-        guard try paths.accept(executable, directory: false) == executable, !executable.contains("/") else { throw SafeArchiveError.invalidApp }
-        let file = app.appendingPathComponent(executable)
-        let values = try file.resourceValues(forKeys: [.isRegularFileKey])
-        guard values.isRegularFile == true else { throw SafeArchiveError.invalidApp }
-        // Preserve executable permission even for archives produced on Windows.
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: file.path)
     }
 
     private static func copySnapshot(_ source: URL, to destination: URL, limit: UInt64, progress: Progress?) throws {

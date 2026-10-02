@@ -66,7 +66,9 @@ final class PairingFileManager: NSObject {
     nonisolated func fetchPairingFile(for mode: PairingProtocol) -> String? {
         guard !UserDefaults.standard.isPairingReset else { return nil }
         do {
-            guard let bytes = try store().read(name(mode)) else { return nil }
+            let value = try store()
+            guard try !PairingReset.isMarked(in: value),
+                  let bytes = try value.read(name(mode)) else { return nil }
             return try PairingRecord(data: bytes, expected: expected(mode)).content
         } catch { return nil } // Fail closed; never fall back to Documents or logs.
     }
@@ -97,6 +99,7 @@ final class PairingFileManager: NSObject {
         try value.write(record.xml, named: name(mode))
         guard try value.read(name(mode)) == record.xml else { throw PrivateFileError.changedDuringRead }
         persistedActiveProtocol = mode
+        try PairingReset.finishImport(in: value, name: name(mode), expected: record.xml)
         UserDefaults.standard.isPairingReset = false
         return parsed
     }
@@ -125,12 +128,12 @@ final class PairingFileManager: NSObject {
     }
     func resetAllPairingFiles() throws {
         try NativeMutationGate.withSynchronousLease {
-            // Tombstone first: partial deletion must never reactivate old data.
+            let value = try store()
+            try PairingReset.begin(in: value, deleting: [name(.lockdown), name(.rppairing)])
+            // Durable marker precedes deleting either current or legacy records.
             UserDefaults.standard.isPairingReset = true
             persistedActiveProtocol = nil
             preferredProtocol = nil
-            let value = try store()
-            for mode in [PairingProtocol.lockdown, .rppairing] { try value.remove(name(mode)) }
             for url in legacyURLs {
                 if try PrivateFileStore.readExternal(url) != nil { try FileManager.default.removeItem(at: url) }
             }
@@ -144,6 +147,7 @@ final class PairingFileManager: NSObject {
         guard !UserDefaults.standard.isPairingReset else { return }
         try NativeMutationGate.withSynchronousLease {
             let value = try store()
+            guard try !PairingReset.isMarked(in: value) else { return }
             for source in legacyURLs {
                 guard let bytes = try PrivateFileStore.readExternal(source) else { continue }
                 let record = try PairingRecord(data: bytes)
@@ -163,6 +167,7 @@ final class NativePairingSession: @unchecked Sendable {
     private let lease: ProcessLease
     init() throws {
         lease = try NativeRenewalStorage.acquire()
+        _ = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let parent = PairingFileManager.protectedRoot
         try PrivateFileStore(root: parent).prepare()
         directory = parent.appendingPathComponent("incoming-" + UUID().uuidString, isDirectory: true)
