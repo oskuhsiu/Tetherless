@@ -52,6 +52,8 @@ jobs:
           print('Selected native simulator:',name,version,identifier)
           with open(os.environ['GITHUB_ENV'],'a') as file: file.write('SIMULATOR_ID='+identifier+'\n')
           PY
+      - name: Initialize simulator and verify its screen surface
+        run: python3 Integration/simulator_smoke.py prepare --simulator "$SIMULATOR_ID"
       - name: Prepare the same production integration
         run: python3 Integration/prepare.py
       - name: Build complete app for Simulator (no Apple account)
@@ -67,53 +69,8 @@ jobs:
             ORG_IDENTIFIER=com.SideStore > native-simulator-build.log 2>&1
       - name: Install and launch the complete app in a fresh simulator
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import subprocess, plistlib, os, json, re, time
-          identifier=os.environ['SIMULATOR_ID']
-          app=Path('.generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app')
-          info=plistlib.loads((app/'Info.plist').read_bytes())
-          bundle=info['CFBundleIdentifier']
-          if not bundle.startswith('org.tetherless.Tetherless'): raise SystemExit('Unexpected app identity')
-          subprocess.run(['xcrun','simctl','boot',identifier],check=False)
-          subprocess.run(['xcrun','simctl','bootstatus',identifier,'-b'],check=True,timeout=180)
-          subprocess.run(['xcrun','simctl','install',identifier,str(app)],check=True,timeout=60)
-          result=subprocess.run(['xcrun','simctl','launch','--terminate-running-process',identifier,bundle],check=True,capture_output=True,text=True,timeout=60)
-          Path('native-simulator-launch.log').write_text(result.stdout+result.stderr)
-          match=re.search(r':\s*(\d+)\s*$',result.stdout.strip())
-          if not match: raise SystemExit('Launch did not return a process ID')
-          pid=int(match[1])
-          # A successful launch command alone does not prove the app stayed alive.
-          time.sleep(5)
-          os.kill(pid,0)
-          process=subprocess.check_output(['ps','-p',str(pid),'-o','comm='],text=True).strip()
-          if '.app/'+info['CFBundleExecutable'] not in process: raise SystemExit('Unexpected process after launch')
-          Path('native-launch-evidence.json').write_text(json.dumps({'bundleID':bundle,'pid':pid,'launchAliveAfterSeconds':5,
-              'sourceCommit':os.environ['GITHUB_SHA'],'deviceValidated':False,'unattendedRenewalValidated':False,
-              'uiFlowsTested':False,'screenshotCaptured':False,'scope':'whole app build, install and initial launch only'},indent=2))
-          # Cold simulator rendering can lag behind process launch. Never lose
-          # the already-observed launch evidence when screenshot capture fails.
-          capture_log=[]
-          for attempt in range(2):
-              try:
-                  captured=subprocess.run(['xcrun','simctl','io',identifier,'screenshot','native-first-launch.png'],
-                      check=True,capture_output=True,text=True,timeout=120)
-                  capture_log.append(captured.stdout+captured.stderr)
-                  image=Path('native-first-launch.png').read_bytes()
-                  if len(image)<100 or not image.startswith(b'\x89PNG\r\n\x1a\n'):
-                      raise RuntimeError('Simulator did not produce a PNG')
-                  os.kill(pid,0)
-                  evidence=json.loads(Path('native-launch-evidence.json').read_text())
-                  evidence['screenshotCaptured']=True
-                  evidence['captureAttempt']=attempt+1
-                  Path('native-launch-evidence.json').write_text(json.dumps(evidence,indent=2))
-                  break
-              except (subprocess.TimeoutExpired,subprocess.CalledProcessError) as error:
-                  capture_log.append(type(error).__name__+': '+str(error))
-                  if attempt == 1: raise
-              finally:
-                  Path('native-screenshot.log').write_text('\n'.join(capture_log))
-          PY
+          python3 Integration/simulator_smoke.py launch --simulator "$SIMULATOR_ID" \
+            --app .generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app
       - name: Summarize actual compiler diagnostics
         if: always()
         run: |
@@ -136,5 +93,8 @@ jobs:
             native-launch-evidence.json
             native-first-launch.png
             native-screenshot.log
+            native-simulator-prepare.log
+            native-simulator-install.log
+            native-simulator-home.png
           if-no-files-found: error
           retention-days: 14

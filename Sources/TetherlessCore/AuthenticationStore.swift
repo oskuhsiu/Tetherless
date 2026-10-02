@@ -90,7 +90,11 @@ public struct VerifiedAuthenticationStore: Sendable {
     @discardableResult
     public func stage(_ credentials: AuthenticationCredentials) throws -> UUID {
         try credentials.validate()
-        let record = AuthenticationRecord(phase: .staged, credentials: credentials)
+        // Persist only the session needed for renewal, not the entered Apple
+        // password. The optional field remains readable for old dev records.
+        let session = try AuthenticationCredentials(email: credentials.email, password: nil,
+            dsid: credentials.dsid, token: credentials.token)
+        let record = AuthenticationRecord(phase: .staged, credentials: session)
         try commit(record)
         return record.generation
     }
@@ -99,6 +103,17 @@ public struct VerifiedAuthenticationStore: Sendable {
             throw AuthenticationStorageFailure.staleAttempt
         }
         try commit(AuthenticationRecord(generation: generation, phase: .ready, credentials: current.credentials, teamID: teamID))
+    }
+    /// Called under the native mutation lease during startup/maintenance.
+    /// Retain the valid token/team/generation while removing a password kept by
+    /// an earlier development build. Failure is surfaced, never called success.
+    public func discardRetainedPassword() throws {
+        guard let record = try read(), let credentials = record.credentials,
+              credentials.password != nil else { return }
+        let session = try AuthenticationCredentials(email: credentials.email, password: nil,
+            dsid: credentials.dsid, token: credentials.token)
+        try commit(AuthenticationRecord(generation: record.generation, phase: record.phase,
+            credentials: session, teamID: record.teamID))
     }
     public func signOut() throws {
         // A tombstone is authoritative: leftover legacy fields cannot resurrect

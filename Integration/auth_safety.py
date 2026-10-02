@@ -41,7 +41,10 @@ def patch_auth(source):
     /// Never destroy a new coherent record merely because an old counter is absent.
     func initializeAccountStorageIfNeeded() async throws {
         try await NativeMutationGate.withLease {
-            if try NativeAuthenticationStore.make().read() != nil { return }
+            if try NativeAuthenticationStore.make().read() != nil {
+                try NativeAuthenticationStore.make().discardRetainedPassword()
+                return
+            }
             try NativeAuthenticationStore.make().signOut()
             try Keychain.shared.removeLegacyAuthentication(keepAnisetteData: true)
         }

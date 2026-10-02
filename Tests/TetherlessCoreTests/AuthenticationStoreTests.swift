@@ -85,6 +85,33 @@ struct AuthenticationStoreTests {
         storage.failRead = true
         #expect(throws: AuthenticationStorageFailure.unavailable) { try store.read() }
     }
+    @Test func enteredPasswordIsNeverRetainedByANewSession() throws {
+        let storage = AuthFixtureStore(); let store = VerifiedAuthenticationStore(storage: storage)
+        let generation = try store.stage(credentials())
+        #expect(try store.read()?.credentials?.password == nil)
+        #expect(!String(decoding: storage.data!, as: UTF8.self).contains("synthetic"))
+        try store.activate(generation: generation, teamID: "TEAM")
+        #expect(try store.requireReady().credentials?.password == nil)
+        #expect(try store.requireReady().credentials?.token == "fixture-token")
+    }
+    @Test func oldPasswordRemovalRetainsTheExistingReadySession() throws {
+        let storage = AuthFixtureStore(); let store = VerifiedAuthenticationStore(storage: storage)
+        let old = AuthenticationRecord(phase: .ready, credentials: try credentials(), teamID: "TEAM")
+        storage.data = try JSONEncoder().encode(old)
+        storage.failWrite = true
+        #expect(throws: AuthenticationStorageFailure.unavailable) { try store.discardRetainedPassword() }
+        #expect(try store.requireReady().credentials?.password == "synthetic")
+        storage.failWrite = false
+        try store.discardRetainedPassword()
+        let after = try store.requireReady()
+        #expect(after.generation == old.generation)
+        #expect(after.teamID == old.teamID)
+        #expect(after.credentials?.password == nil)
+        #expect(after.credentials?.token == old.credentials?.token)
+        let bytes = storage.data
+        try store.discardRetainedPassword()
+        #expect(storage.data == bytes)
+    }
     @Test func invalidInputCannotReplaceAValidSession() throws {
         let storage = AuthFixtureStore(); let store = VerifiedAuthenticationStore(storage: storage)
         try store.activate(generation: store.stage(credentials()), teamID: "TEAM")

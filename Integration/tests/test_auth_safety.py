@@ -39,7 +39,8 @@ OLD DATABASE SAVE SWALLOWING
         self.assertLess(signout.index('make().signOut()'),signout.index('removeLegacyAuthentication('))
         self.assertLess(signout.index('make().signOut()'),signout.index('deactivateActiveAccountAndTeam()'))
         self.assertIn('try context.save()',result)
-        self.assertIn('make().read() != nil { return }',result)
+        self.assertIn('make().read() != nil {',result)
+        self.assertIn('discardRetainedPassword()',result)
     def test_account_archive_routes_fail_without_decrypting_or_writing(self):
         source='''    public static func exportAccount(password:
 UNSAFE P12/JSON EXPORT OR IMPORT
