@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare a disposable pinned native app with Tetherless's live renewal adapter.
-
-Source/patch verification and successful compilation are not device validation.
-"""
+"""Prepare a disposable pinned native app. Compilation is not device validation."""
 from __future__ import annotations
 import hashlib
 import json
@@ -21,7 +18,9 @@ APP_PATH = "AltStore/AppDelegate.swift"
 TAB_PATH = "AltStore/TabBarController.swift"
 BOOT_PATH = "SideStore/AppBootManager.swift"
 SERVICE_PATH = "SideStore/Core/BackgroundServices/BackgroundService.swift"
+KEYCHAIN_PATH = "AltStore/Core/Components/Keychain.swift"
 BLOBS = {
+    KEYCHAIN_PATH: "bb4133fdea00db6ac3f86c062e326adf36c0eda7",
     PROFILE_PATH: "bf23bf8b2d98364f7f3e94aaae27ae626439c2f1",
     INTENT_PATH: "11b9bfb6ae823fd6acee0fe31c21be283b45eb52",
     RUNNER_PATH: "a76344edcf8ed2518f52cff5b19de68fe1d0a991",
@@ -54,8 +53,6 @@ def patch_profile(source: str) -> str:
 
 
 def patch_intent(source: str) -> str:
-    # Keep IntentError and InstallIPAIntent; replace the inherited renewal intent
-    # with Integration/Native/TetherlessRefreshIntent.swift, not a foreground shim.
     marker = "@available(iOS 17.0, tvOS 17.0, *)\nextension RefreshAllAppsIntent\n"
     if source.count(marker) != 1:
         raise ValueError("Inherited intent boundary changed")
@@ -113,7 +110,6 @@ def patch_app(source: str) -> str:
         #if os(iOS)
         if #available(iOS 17.0, *) { NativeRenewalBackground.register() }
         #endif""")
-    # Includes the legacy background fetch callback, not just UI lifecycle calls.
     call = "        BackgroundServiceManager.ensureBackgroundServicesStarted()"
     if source.count(call) != 4:
         raise ValueError("Background service lifecycle call count changed")
@@ -141,7 +137,7 @@ def patch_boot(source: str) -> str:
     if source.count(marker) != 1 or not source.rstrip().endswith("}\n}"):
         raise ValueError("Boot function boundary changed")
     return source.split(marker)[0] + """    public nonisolated func performBootSequence() async {
-        // The ordinary UI boot must not race the headless adapter or probe JIT servers.
+        // Ordinary UI boot must not race headless work or probe JIT servers.
         do {
             try await NativeMutationGate.withLease {
                 guard let pairing = PairingFileManager.shared.fetchPairingFile() else {
@@ -191,8 +187,7 @@ def patch_services(source: str) -> str:
     marker = "public final class BackgroundServiceManager: @unchecked Sendable {"
     if source.count(marker) != 1:
         raise ValueError("Background service manager boundary changed")
-    return source.split(marker)[0] + """// Tetherless deliberately disables both fake keepalive implementations.
-// Central no-op also covers Settings and SceneDelegate, not only AppDelegate.
+    return source.split(marker)[0] + """// Tetherless disables audio/location keepalive across all callers.
 private struct TetherlessDisabledBackgroundService: BackgroundService {
     var isRunning: Bool { false }
     func start() -> Bool { false }
@@ -216,6 +211,16 @@ public final class BackgroundServiceManager: @unchecked Sendable {
     private init() {}
 }
 """
+
+
+def patch_keychain(source: str) -> str:
+    source = replace_once(source,
+        "KeychainAccess.Keychain(service: Bundle.Info.appbundleIdentifier)",
+        'KeychainAccess.Keychain(service: "org.tetherless.credentials." + Bundle.Info.appbundleIdentifier)')
+    source = replace_once(source, ".accessibility(.afterFirstUnlock)",
+                          ".accessibility(.afterFirstUnlockThisDeviceOnly)")
+    # Never silently copy or remove another app's synchronized credentials.
+    return replace_once(source, ".synchronizable(true)", ".synchronizable(false)")
 
 
 def git_blob(data: bytes) -> str:
@@ -248,8 +253,9 @@ def prepare(root: Path) -> Path:
                     ignore=shutil.ignore_patterns(".git", ".build", "DerivedData", "xcuserdata"))
     for path, patch in ((PROFILE_PATH, patch_profile), (INTENT_PATH, patch_intent),
                         (RUNNER_PATH, patch_runner), (PORTAL_PATH, patch_portal),
-                        (APP_PATH, lambda text: patch_legacy_fetch(patch_app(text))), (TAB_PATH, patch_tabs), (BOOT_PATH, patch_boot),
-                        (SERVICE_PATH, patch_services)):
+                        (APP_PATH, lambda text: patch_legacy_fetch(patch_app(text))),
+                        (TAB_PATH, patch_tabs), (BOOT_PATH, patch_boot),
+                        (SERVICE_PATH, patch_services), (KEYCHAIN_PATH, patch_keychain)):
         destination = output / path
         destination.write_text(patch(destination.read_text()), encoding="utf-8")
     shutil.copytree(root / "Sources/TetherlessCore", output / "SideStore/TetherlessCore")

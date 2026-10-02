@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import Foundation
+import SideSign
 @preconcurrency import UIKit
 import Minimuxer
 
@@ -59,15 +60,13 @@ actor NativeRenewalRuntime {
             let summary = NativeRenewalSummary(startedAt: started, finishedAt: Date(), trigger: trigger,
                     managerWasForeground: foreground, attempted: 0, verified: 0, unverified: 0,
                     deferred: 0, failures: [failure.rawValue])
-            // Reporting failure must not erase the core journal or its pending batch.
             try? NativeRenewalStorage.write(summary, to: NativeRenewalStorage.root().appendingPathComponent("last-run.json"))
             throw failure
         }
     }
 
-    /// Explicit recovery action AFTER the user repaired login/pairing. Performs a
-    /// real preflight before clearing interaction flags, preserving pending work.
-    /// Identity changes remain blocked; they require the separate full-install flow.
+    /// Explicit preflight AFTER login/pairing repair. Pending work is preserved;
+    /// signing identity changes still require the separate full-install workflow.
     func confirmRepair() async throws {
         guard !running else { throw RenewalFailure.busy }
         running = true
@@ -96,6 +95,20 @@ actor NativeRenewalRuntime {
             case .identityChanged: return .identityChanged
             case .expiredPlan: return .needsForeground
             case .invalidPlan, .readbackMismatch: return .invalidEvidence
+            }
+        }
+        if let error = error as? DeveloperPortalError {
+            switch error {
+            case .incorrectCredentials, .appSpecificPasswordRequired, .noTeams,
+                 .requiresTwoFactorAuthentication, .incorrectVerificationCode,
+                 .authenticationHandshakeFailed, .accountRepairRequired, .invalid2FAResponse:
+                return .needsAuthentication
+            case .certificateDoesNotExist: return .identityChanged
+            case .invalidDeviceID, .appIDDoesNotExist, .maximumAppIDLimitReached,
+                 .tooManyCertificates, .invalidProvisioningProfileIdentifier,
+                 .provisioningProfileDoesNotExist: return .needsForeground
+            case .userCancelled: return .cancelled
+            default: return .unavailable
             }
         }
         if let error = error as? MinimuxerError {

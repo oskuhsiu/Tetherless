@@ -75,23 +75,14 @@ enum NativeRenewalStorage {
     }
 }
 
-/// Task-local reentrancy is only for nested INHERITED operations. A completed
-/// scope is invalidated so a surviving child cannot bypass a later lock holder.
-/// The new RenewalEngine obtains the very same file lock independently.
+/// All inherited mutating call chains use the same OS lease as RenewalEngine.
+/// Admitted child operations retain the lease even if their parent returns early.
 enum NativeMutationGate {
-    private final class Token: @unchecked Sendable {
-        private let mutex = NSLock()
-        private var active = true
-        var isActive: Bool { mutex.lock(); defer { mutex.unlock() }; return active }
-        func end() { mutex.lock(); active = false; mutex.unlock() }
-    }
-    @TaskLocal private static var token: Token?
-
     static func withLease<T>(_ body: () async throws -> T) async throws -> T {
-        if token?.isActive == true { return try await body() }
-        let lease = try NativeRenewalStorage.acquire()
-        let scope = Token()
-        defer { scope.end(); lease.release() }
-        return try await $token.withValue(scope) { try await body() }
+        let path = try NativeRenewalStorage.root().appendingPathComponent("device-mutation.lock")
+        return try await MutationScope.withLease(identity: path.path, acquire: {
+            let lease = try ProcessLease.acquire(at: path)
+            return { lease.release() }
+        }, body: body)
     }
 }

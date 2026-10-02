@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import Foundation
 
+/// Validates identifiers before they are used as a relative file component.
+public enum ManagedBundleIdentifier {
+    public static func isSafe(_ value: String) -> Bool {
+        !value.isEmpty && value.utf8.count <= 255 &&
+        value.split(separator: ".", omittingEmptySubsequences: false).allSatisfy { !$0.isEmpty } &&
+        value.unicodeScalars.allSatisfy {
+            CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_").contains($0)
+        }
+    }
+}
+
 public enum ProfileBatchFailure: String, Error, Sendable {
     case invalidPlan, expiredPlan, identityChanged, readbackMismatch
 }
@@ -47,7 +58,9 @@ public struct ProfileBatch: Codable, Equatable, Sendable {
     /// equality are both checked; a different profile with a reused UUID is not proof.
     public func validate(requiredComponents: Set<String>, identityDigest expected: String,
                          now: Date) throws {
-        guard schema == 1, !bundleID.isEmpty, bundleID.utf8.count <= 255,
+        guard schema == 1, ManagedBundleIdentifier.isSafe(bundleID),
+              requiredComponents.contains(bundleID),
+              requiredComponents.allSatisfy(ManagedBundleIdentifier.isSafe),
               identityDigest.count == 64,
               identityDigest.allSatisfy({ "0123456789abcdef".contains($0) }),
               !parts.isEmpty, parts.count <= 32,
@@ -82,7 +95,6 @@ public enum ProfileBatchExecutor {
         try batch.validate(requiredComponents: requiredComponents, identityDigest: identityDigest, now: now())
         try Task.checkCancellation()
         let installed = Set(try await transport.readInstalledProfileBytes())
-        // Main component first, then a deterministic extension order.
         let ordered = batch.parts.sorted {
             if ($0.componentID == batch.bundleID) != ($1.componentID == batch.bundleID) {
                 return $0.componentID == batch.bundleID

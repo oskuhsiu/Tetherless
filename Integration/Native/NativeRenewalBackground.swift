@@ -5,8 +5,6 @@ import Foundation
 
 @available(iOS 17.0, *)
 enum NativeRenewalBackground {
-    // Stable across re-signing; the matching plist value must not depend on the
-    // user's Team suffix being rewritten by an external bootstrap signer.
     static let identifier = "org.tetherless.profile-renewal"
     private static let registration = NSLock()
     private nonisolated(unsafe) static var registered = false
@@ -37,7 +35,7 @@ enum NativeRenewalBackground {
         request.requiresNetworkConnectivity = true
         request.requiresExternalPower = false
         request.earliestBeginDate = Date().addingTimeInterval(21_600)
-        // Earliest eligibility only, NOT a six-hour timer. Shortcuts is the main trigger.
+        // Earliest eligibility, NOT a timer. Shortcuts remains the main trigger.
         do {
             try BGTaskScheduler.shared.submit(request)
             UserDefaults.standard.removeObject(forKey: "tetherless.background.scheduleFailed")
@@ -70,6 +68,7 @@ enum NativeRenewalBackground {
             task = nil
             mutex.unlock()
             if cancelWork { work?.cancel() }
+            bgTask.expirationHandler = nil
             bgTask.setTaskCompleted(success: success)
         }
     }

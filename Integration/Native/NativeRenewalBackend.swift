@@ -5,10 +5,9 @@ import SideSign
 import Minimuxer
 @preconcurrency import UIKit
 
-/// Profile-store evidence, NOT a claim of testing the iOS launch policy. The
-/// manager's leaf certificate comes from its running Mach-O. Other managed apps
-/// use the certificate and profile templates saved by the successful install
-/// pipeline; externally replaced apps must be re-enrolled before renewing them.
+/// The manager identity is read from its running Mach-O; other app identities
+/// come from successful-install metadata. External replacement requires
+/// reenrollment. Profile-store readback is not proof of kernel launch behavior.
 @available(iOS 17.0, tvOS 17.0, *)
 final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
     private struct Descriptor {
@@ -33,13 +32,24 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
     }
 
     func snapshot() async throws -> [AppLease] {
+        do { return try await snapshotImpl() }
+        catch { throw NativeRenewalRuntime.classify(error) }
+    }
+    func refresh(_ app: AppLease) async throws -> RenewalEvidence {
+        do { return try await refreshImpl(app) }
+        catch { throw NativeRenewalRuntime.classify(error) }
+    }
+    func reconcile(_ pending: PendingRenewal) async throws -> RenewalEvidence? {
+        do { return try await reconcileImpl(pending) }
+        catch { throw NativeRenewalRuntime.classify(error) }
+    }
+
+    private func snapshotImpl() async throws -> [AppLease] {
         try transport.checkBudget()
         #if targetEnvironment(simulator)
         throw RenewalFailure.unavailable
         #else
         try await DatabaseManager.shared.start()
-        // This path never launches authentication, pairing UI, cellular-data
-        // Shortcuts, certificate provisioning or a remote Anisette fallback.
         guard AuthManager.shared.isAuthenticated else { throw RenewalFailure.needsAuthentication }
         guard UserDefaults.standard.useOnDeviceAnisette,
               !CellularRefreshManager.shared.isEnabled else { throw RenewalFailure.needsForeground }
@@ -59,8 +69,6 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         try transport.checkBudget()
         let selectedTeam = try await AuthManager.shared.getAuthenticatedTeam()
         team = selectedTeam
-        // Presence in the portal's active certificate inventory is checked before
-        // extending anything. This is not an independent OCSP/revocation audit.
         let certificates = try await ALTAppleAPI.shared.fetchCertificates(for: selectedTeam, session: appleSession())
         appIDs = try await ALTAppleAPI.shared.fetchAppIDs(for: selectedTeam, session: appleSession())
         try transport.checkBudget()
@@ -71,6 +79,10 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
             return try apps.map { app in
                 let isManager = app.bundleIdentifier == StoreApp.altstoreAppID
                 let bundleID = app.resignedBundleIdentifier
+                guard ManagedBundleIdentifier.isSafe(bundleID),
+                      app.appExtensions.allSatisfy({ ManagedBundleIdentifier.isSafe($0.resignedBundleIdentifier) }) else {
+                    throw RenewalFailure.invalidEvidence
+                }
                 guard let certificate = CertificateManager.shared.getSigningCertificate(for: app),
                       let certificateDER = certificate.data,
                       certificates.contains(where: { $0.data == certificateDER }),
@@ -86,8 +98,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
                         templates[component.bundleIdentifier] = profile
                     }
                 } else {
-                    // A wildcard/shared profile requires a separate enrollment
-                    // model. Fail explicitly instead of ignoring extensions.
+                    // Shared/wildcard authorization needs its own enrollment model.
                     guard !app.useMainProfile else { throw RenewalFailure.needsForeground }
                     let required = [bundleID] + app.appExtensions.map(\.resignedBundleIdentifier)
                     for id in required {
@@ -137,13 +148,11 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         #endif
     }
 
-    func refresh(_ app: AppLease) async throws -> RenewalEvidence {
+    private func refreshImpl(_ app: AppLease) async throws -> RenewalEvidence {
         guard let descriptor = descriptors[app.bundleID], let team else { throw RenewalFailure.invalidEvidence }
         try transport.checkBudget()
         let current = try effectiveExpiry(of: descriptor, in: await transport.readInstalledProfileBytes())
         if current > app.effectiveExpiry {
-            // Another trusted tool may have renewed between snapshots. Readback
-            // is evidence of its state, not a claim that this run performed it.
             return try await commitReadback(app, descriptor: descriptor, expiry: current,
                                             installed: await transport.readInstalledProfileBytes())
         }
@@ -167,13 +176,12 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
                                  certificateExpiry: descriptor.certificateExpiry, parts: parts)
         do { try batch.validate(requiredComponents: descriptor.components, identityDigest: descriptor.identityDigest, now: Date()) }
         catch ProfileBatchFailure.expiredPlan { throw RenewalFailure.noExtension }
-        try NativeRenewalStorage.saveBatch(batch) // BEFORE any profile installation.
+        try NativeRenewalStorage.saveBatch(batch)
         return try await complete(batch, app: app, descriptor: descriptor)
     }
 
-    func reconcile(_ pending: PendingRenewal) async throws -> RenewalEvidence? {
+    private func reconcileImpl(_ pending: PendingRenewal) async throws -> RenewalEvidence? {
         guard let descriptor = descriptors[pending.app.bundleID] else { throw RenewalFailure.identityChanged }
-        // Always read the device first, including when the prepared file is absent.
         let installed = try await transport.readInstalledProfileBytes()
         let current = try effectiveExpiry(of: descriptor, in: installed)
         if let batch = try NativeRenewalStorage.loadBatch(for: pending.app.bundleID),
@@ -181,8 +189,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
             guard batch.bundleID == descriptor.bundleID, batch.identityDigest == descriptor.identityDigest else {
                 throw RenewalFailure.identityChanged
             }
-            // Re-parse every persisted payload. JSON metadata is not trusted to
-            // describe the CMS bytes, even in our protected application storage.
+            // Re-parse persisted payloads; JSON metadata alone is not evidence.
             for part in batch.parts {
                 let profile = try ALTProvisioningProfile(data: part.bytes)
                 guard part.profileID == profile.uuid.uuidString, part.expiry == profile.expirationDate else {
@@ -195,8 +202,6 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         if current > pending.app.effectiveExpiry {
             return try await commitReadback(pending.app, descriptor: descriptor, expiry: current, installed: installed)
         }
-        // No matching prepared batch means this backend could not have started
-        // its write phase. The real readback must still match the original lease.
         guard current == pending.app.effectiveExpiry else { throw RenewalFailure.invalidEvidence }
         return nil
     }
@@ -209,7 +214,6 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
           catch ProfileBatchFailure.expiredPlan { throw RenewalFailure.needsForeground }
           catch let error as ProfileBatchFailure { throw error }
         let installed = try await transport.readInstalledProfileBytes()
-        // Independent re-parse and expiry computation, not a return of the input date.
         let expiry = try effectiveExpiry(of: descriptor, in: installed)
         guard expiry >= batch.newExpiry else { throw RenewalFailure.invalidEvidence }
         return try await commitReadback(app, descriptor: descriptor, expiry: expiry, installed: installed)
@@ -227,8 +231,6 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
               profile.creationDate <= Date(), profile.expirationDate > profile.creationDate else {
             throw RenewalFailure.invalidEvidence
         }
-        // Conservative exact entitlement authorization comparison. No wildcard
-        // expansion, capability removal, group migration or signing-identity rotation.
         guard try Self.entitlementBytes(profile) == Self.entitlementBytes(template) else {
             throw RenewalFailure.needsForeground
         }
@@ -241,8 +243,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
               let token = Keychain.shared.appleIDXcodeToken, !token.isEmpty else {
             throw RenewalFailure.needsAuthentication
         }
-        // Explicit local provider, not the preference-driven shared/coalesced
-        // provider: a concurrent Settings change cannot switch this run remotely.
+        // Explicit local provider; a settings change cannot select remote fallback.
         let anisette = try await OnDeviceAnisetteManager.shared.fetchAnisetteData()
         let version = await AnisetteConfigManager.shared.resolvedXcodeVersion()
         try transport.checkBudget()
@@ -265,8 +266,6 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
                   descriptor.components.contains(profile.bundleIdentifier) else { continue }
             if let previous = uuidBytes[profile.uuid], previous != data { throw RenewalFailure.invalidEvidence }
             uuidBytes[profile.uuid] = data
-            // Unrelated teams, stale signing identities and capability variants
-            // in the system profile store are not authorization for this binary.
             guard (try? validate(profile, componentID: profile.bundleIdentifier,
                                  descriptor: descriptor, requireFuture: false)) != nil else { continue }
             if profiles[profile.bundleIdentifier].map({ $0.expirationDate >= profile.expirationDate }) != true {
@@ -308,8 +307,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
             }
         } catch let error as RenewalFailure { throw error }
           catch { throw RenewalFailure.storageUnavailable }
-        // Keep the prepared batch until a later attempt replaces it. A crash
-        // before the core journal commits can therefore still reconcile exactly.
+        // Retain the batch for crash reconciliation until a later attempt replaces it.
         return evidence
     }
 }
