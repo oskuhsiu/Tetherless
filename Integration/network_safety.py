@@ -56,5 +56,6 @@ def apply(root: Path):
         file.write_text(patch_download(raw.decode()))
     subprocess.run([sys.executable, str(Path(__file__).with_name("auth_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("manager_update.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("certificate_safety.py")), str(root)], check=True)
 
 if __name__ == '__main__': apply(Path(sys.argv[1]))
