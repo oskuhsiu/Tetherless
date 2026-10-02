@@ -1,6 +1,6 @@
 # Pairing records and untrusted IPA inputs
 
-Implementation checkpoint: `76f88f5cf6eb6a506b01a4499cc46e28ca2a7c14` (2026-10-02).
+Implementation checkpoint: `318faaefb116a60dee86c5cddccfd9df4c865719` (2026-10-02). Pairing/archive implementation is carried forward; HTTP boundaries were added in `4c24758`.
 This describes implemented boundaries, not an independent audit or proof of device acceptance.
 
 ## Pairing storage and migration
@@ -39,7 +39,19 @@ Main and nested app/extension/framework metadata have bounded Info.plist parsing
 | Unsupported archive features | ZIP64, multidisk, encryption, symlinks/special files |
 | Unsupported input path | Unpacked .app directory import |
 
-These restrictions may reject a legitimate large or unusual IPA. There is no automatic unsafe fallback. Compatibility expansion requires explicit code and adversarial tests, not disabling the checks. These limits apply when the archive reaches extraction; a separate streaming HTTP-download quota is still required.
+These restrictions may reject a legitimate large or unusual IPA. There is no automatic unsafe fallback. Compatibility expansion requires explicit code and adversarial tests, not disabling the checks. These extraction limits are separate from the implemented streaming HTTP transfer limit below.
+
+## Remote IPA downloads
+
+The native download operation now uses the shared `BoundedHTTPDownload`. It accepts HTTPS GET URLs without embedded credentials and checks every redirect, reconstructing requests rather than carrying authorization or cookies to another origin. At most five redirects are followed. Responses must be full HTTP 200 bodies, not partial/multipart or transport-compressed responses. Declared Content-Length and actual streamed bytes are independently bounded to 1 GiB, and a declared length must match the final body. An absent length is allowed only within the streamed budget.
+
+An ephemeral URLSession has no shared credential, cookie or cache store. Public IPA downloads cannot prompt for account credentials or client keys. Failed/cancelled transfers remove their own temporary file, never unrelated caller data; incomplete files are never returned as complete input. The caller owns the private directory and successful file lifecycle. Request/resource timeouts are bounded, but this is not a complete global memory/disk reservation system.
+
+A supported-version fallback uses the selected app version's URL, not the original incompatible version's URL. URLProtocol tests exercise actual URLSession callbacks and file IO with scripted responses; they are not live TLS/CDN integration tests.
+
+## No post-extraction dependency injection
+
+`AltStore.plist` may describe remote `ALTDependencies`. The inherited downloader could write those resources after archive validation. V1 now accepts only an absent or empty dependency list; malformed, oversized or nonempty manifests fail with a self-contained-IPA requirement. No additional resource is downloaded, and no legacy unsafe fallback runs. This intentionally rejects legitimate IPA packages requiring this feature.
 
 ## Verification and remaining work
 
@@ -47,4 +59,4 @@ The core tests use real temporary files for replacement failure, migration confl
 
 The archive tests build real ZIP files independently of the preflight parser, plus actual deflated content. They cover successful extraction, path collisions, CRC corruption, local/central mismatch, encrypted trailing entries, forged expanded sizes, cancelled work, destination preservation, malformed metadata and nested executable escapes. A compressed expansion test forges the declared size and confirms that the streaming consumer stops before publishing output.
 
-Still required before the complete product is a candidate: global/download resource budgeting, abandoned staging cleanup after process termination, native wireless callback/bootstrap lifecycle tests, remaining authentication/maintenance mutation and log auditing, and unsupported-entitlement/Mach-O/signature parser review. Safe extraction does not certify the IPA's behavior or independently attest CMS signatures or iOS launch authorization. See STATUS.md for exact executed checks, skips and revisions.
+Still required before the complete product is a candidate: aggregate disk/memory reservation and cross-operation resource budgeting, abandoned staging cleanup after process termination, native wireless callback/bootstrap lifecycle tests, remaining authentication/maintenance mutation and log auditing, and unsupported-entitlement/Mach-O/signature parser review. Safe extraction does not certify the IPA's behavior or independently attest CMS signatures or iOS launch authorization. See STATUS.md for exact executed checks, skips and revisions.

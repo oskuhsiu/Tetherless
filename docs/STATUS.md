@@ -4,93 +4,92 @@ Updated 2026-10-02. **Integrated development build; not a release candidate or a
 
 ## Repository state
 
-PR #1 was merged into `develop` as `7a7c9e0b986a54e6824216e15060494e542fa883`. Subsequent development is committed directly to `develop` under the owner's authorization. `main` has not been promoted. The latest implementation covered by this checkpoint is **`76f88f5cf6eb6a506b01a4499cc46e28ca2a7c14`**. A later documentation-only commit does not change the tested implementation.
+Development continues directly on `develop` with the owner's authorization. PR #1 was already merged as `7a7c9e0b986a54e6824216e15060494e542fa883`; `main` remains unpromoted. Latest implementation for this checkpoint: **`318faaefb116a60dee86c5cddccfd9df4c865719`**. Later documentation-only commits do not change that implementation.
 
-This increment:
+This increment adds:
 
-- `1eea8fc95dd8d960635675812a63259591fdf6f5`: protected pairing storage, bounded import, migration and wireless-session ownership.
-- `0258030071d772736d5d44188ea765cee6c337a5`: shared streaming archive extractor, actual ZIP integration tests and separated simulator/hardware protection checks.
-- `ca9663b4f428dab3445671dd2686fffc42a93c73`: durable pairing reset, nested bundle metadata validation and forged-size deflate regression tests.
-- `779932be04ce8dfa924b11cf6c3955da6396ae9b`: execute the production archive package on iOS Simulator.
-- `8b8d468ad8589dcb60588bbcf835fa4a2d4c9e0f`: retain the reset marker until leftover pairing cleanup finishes.
-- `76f88f5cf6eb6a506b01a4499cc46e28ca2a7c14`: migrate bootstrap pairing before the cold-boot missing-record decision.
+- `4c2475885c42b8f5a2a33f895f83c9fb88227724`: bounded ephemeral HTTPS IPA downloads; no post-extraction remote dependency injection; compatible-version download uses the selected app URL.
+- `71bfb18ba2f0b27c62ac5af7c9815283791d9abd`: coherent system Keychain envelope, staged/ready/signed-out account phases, checked sign-out, native login/renewal integration and disabled legacy account archives.
+- `43006f73d8758c868804a67525e96916da0ec0fb`: whole-app simulator build/install/launch/screenshot workflow, separate from core package tests.
+- `38177ef64ad7b1915bfc606942734abb33489008`: portal mutation ownership before session/team reads, generation/team checks, noninteractive LAContext Keychain queries and retained smoke diagnostics.
+- `4b48e47de26ebe5a687f39172637e2930a3c16bf`: new sessions retain token but not Apple password; earlier coherent records can remove a retained password without losing token/team; simulator GUI readiness checked separately.
+- `318faaefb116a60dee86c5cddccfd9df4c865719`: generation-bound failed-login cleanup and password cleanup attempted on every native launch, independent of old maintenance counters.
 
 ## Implemented and wired
 
-The existing native adapter creates local-anisette Apple sessions, discovers app/certificate/profile state, obtains compatible profiles, applies only missing batch components and reads back profile-store bytes. The journal and Core Data commits distinguish verified metadata from ambiguous/failed updates. Daily renewal is proactive, manager-first and has no foreground fallback. Per-app faults do not block unrelated apps; shared account/pairing failures persist a retry/interaction gate. App Intent, supplementary background work and manual checks use the same runtime. These are implemented call paths, not proof of live Apple/device success.
+Daily proactive manager-first profile renewal, required-component/identity checks, readback, write-ahead recovery, per-app isolation, shared authentication/backoff gates, no-foreground App Intent and supplementary background entry points remain connected to the native app. Auto Renewal shows consent, setup/repair navigation, observed expiry/history, warnings and whitelist-only diagnostics. These are implemented code paths, not evidence of a live Apple login or unattended device launch.
 
-The Auto Renewal UI provides consent, setup/repair navigation, observed expiries, recent runs, notifications and whitelist-only diagnostics. Manual/foreground results cannot earn non-foreground renewal evidence. A non-foreground invocation alone still cannot prove lock state or scheduled triggering. Fake audio/location keepalive and automatic full-console capture are disabled.
+Protected pairing storage/migration/reset markers and the production streaming archive extractor remain integrated. Prior pairing/archive evidence is retained in Git history and linked below. The product base identity is `org.tetherless.Tetherless`; reviewed signing paths embed public DER rather than the manager's signing P12. URL-triggered secret export and fake audio/location keepalive are disabled.
 
-Product identity is `org.tetherless.Tetherless`. Both reviewed signing paths use public certificate DER instead of embedding the manager's private P12. Embedded-key recovery and URL-triggered certificate/pairing exports are disabled. Credentials use an independent, non-synchronizing Keychain namespace.
+### Account lifecycle
 
-### Pairing protection
+The native path reads one device-local, non-synchronizing Keychain record, not four independent credential fields. Login stages a coherent generation, saves the selected team, then activates it. Session use checks that same team/generation; portal mutations obtain the shared OS mutation lease before reading them. An incomplete stage cannot enable renewal. Storage/readback errors are not converted into successful login or a generic expired-session condition.
 
-The native manager now uses bounded protected Application Support storage rather than Documents. File replacement preserves the old record until the new file has been prepared; migration preserves conflicting legacy data and removes it only after verified destination readback. Imports reject invalid plist types, oversized/deep data, links and special files. Syntactic validation is not cryptographic pairing validation.
+New stages discard the entered Apple password and retain email/DSID/token only. A checked migration removes any password retained by an earlier development envelope while preserving its generation/team/token. It is attempted on every startup, not only first launch. This does not guarantee that Apple will never expire the token or require another 2FA challenge.
 
-Full reset writes and flushes a persistent marker before deletion. Read/migration paths honor the marker after restart. A new verified import must clean reset leftovers before it can unblock pairing; cleanup failure preserves the marker. Ordinary replacements do not delete another protocol. Cold boot handles the migration/maintenance ordering race without requesting a duplicate import.
+Sign-out commits a secret-free tombstone before legacy cleanup. Failure to write the tombstone is reported; later cleanup failure cannot resurrect the account. Failed-login cleanup may discard only its own staged generation and cannot sign out a newer or ready account, nor remove certificates. Legacy account archive/JSON imports and exports are disabled rather than left as a bypass. Existing application-data backup code is a separate boundary. See AUTHENTICATION.md.
 
-Reviewed import/reset/maintenance/protocol-switch paths share the renewal lease. Wireless pairing uses a protected random staging directory, fixed filename and callback-owned lease; it does not automatically export the resulting secret file or substitute a fake PIN. Callback cancellation and abandoned staging cleanup remain lifecycle-verification work.
+### Download lifecycle
 
-### Runtime IPA boundary
+HTTPS-only GET and every redirect are checked; redirects rebuild the request without inherited credentials/cookies. A full 200 response is required. Declared length and actual bytes are independently bounded to 1 GiB, and truncation, partial bodies and transport compression are rejected. The ephemeral session has no shared cookie, credential or cache store. Cancellation/error removes only the transfer's partial file, never unrelated caller data. The returned file must be complete.
 
-The production `TetherlessArchive` sources are compiled both in the standalone integration tests and into the shared SideSign extractor. ZIPFoundation is fixed at `22787ffb59de99e5dc1fbfe80b19c97a904ad48d` (0.9.20). Full ZIP32 preflight precedes extraction; a partial iterator cannot become accepted success. Paths, collisions, file types, streamed byte counts and CRC are checked. Output is staged and existing destination data is not overwritten. Main and nested bundle metadata are validated before IPA publication.
-
-V1 deliberately rejects ZIP64, encrypted/multidisk archives, links/special files and unpacked .app directory imports. Current extraction caps are 1 GiB archive, 4 GiB expanded, 512 MiB per file and 30,000 entries. Legitimate inputs outside those limits are unsupported, not silently sent to an unsafe fallback. HTTP download quotas and signature/entitlement approval are separate unfinished boundaries. See INPUT_SAFETY.md.
+Nonempty `ALTDependencies` in an IPA are rejected: no resource can be fetched and injected after archive validation. This intentionally requires a self-contained IPA. The native operation now uses the selected compatible app version's URL. Tests use URLProtocol-scripted responses with actual URLSession callbacks and file IO; they are not internet/TLS/CDN tests. Aggregate disk/memory and abandoned staging cleanup remain separate gates. See INPUT_SAFETY.md.
 
 ## Executed verification
 
-No personal Apple Account, live signing key or real pairing record was used. Protocol outcomes in core tests are scripted. File/lock/reset tests use real files and archive integration tests use real ZIP bytes plus the actual decompressor.
-
-| Verification | Observed result | Revision / evidence |
+| Check | Observed result | Scope / revision |
 | --- | --- | --- |
-| Local Linux Swift core Debug / Release | 104 passed in each configuration | Current core, Swift 6.2.1 |
-| macOS CI Swift core Debug / Release | 105 passed in each configuration | `76f88f5`, run 36989824003 |
-| iOS Simulator core execution | 104 actual passing test records; 1 explicitly skipped hardware-protection test | Same core at `8b8d468`, run 36989184036 |
-| Local Linux production archive package Debug / Release | 17 passed in each configuration | Current production sources; disposable local manifest used the verified dependency source snapshot |
-| macOS production archive package Debug / Release | 17 passed in each configuration | Same archive sources at `779932b`, run 36988598288 |
-| iOS Simulator production archive package | 17 passed; `TEST SUCCEEDED` | Same run's separate archive-ios-tests job |
-| Python transformation / packaging checks | 41 passed locally | `76f88f5` |
-| Actual hash-pinned native source preparation | Passed | `76f88f5`, native run 36989824052 |
-| Native iOS Debug compilation and packaging | Passed; actual artifact inspected | `76f88f5`, native run 36989824052 |
-| Native iOS Release compilation and packaging | Passed; final job and artifact-upload steps succeeded | `76f88f5`, same native run |
+| Local Linux core Debug / Release | 131 passed each | Current implementation, Swift 6.2.1 |
+| Python preparation/packaging/evidence tests | 56 passed locally | Current implementation |
+| Actual native auth transformations | 11 reviewed input hashes matched and transformations passed | Current implementation; not only synthetic anchors |
+| macOS core Debug / Release | 133 passed each, including the actual synthetic system Keychain test | `318faae`, run 36998496062 |
+| Core iOS Simulator | 131 actual passing test records; 1 explicitly skipped hardware-protection test | `318faae`, run 36998496073 |
+| Native iOS Debug / Release | Both compiled, linked, packaged and uploaded successfully | `318faae`, run 36998496012; final Release artifact inspected |
+| Production archive package | 17 Debug / 17 Release and 17 iOS Simulator passed | Unchanged archive sources, prior run 36988598288 |
+| Whole native App simulator | No complete passing smoke yet at this checkpoint | Latest run 36998496066 is still in progress; not a full UI test suite |
 
-The macOS count includes a Darwin backup-exclusion test absent on Linux. Simulator does not compile the host process-spawn test, but does record the separate disabled hardware-protection test. Swift Testing's summary says 105 in the simulator log; inspection found 104 actual pass records and one skip. We do not count the skipped test as successful verification.
+The macOS count includes Darwin backup-exclusion and a real synthetic system Keychain test absent on Linux. The Simulator excludes the host process-spawn and macOS Keychain tests, includes Darwin backup exclusion and records one explicitly disabled Data Protection test. Its summary reports 132; inspection of actual records found 131 passes and one skip. The skip is not successful hardware verification.
 
-The first pairing simulator run failed because reading `.protectionKey` returned nil. The hardware-specific assertion remains enabled for physical iOS and is explicitly disabled with a reason on Simulator. Backup exclusion, file permissions and IO are independently tested there. Setting a Data Protection attribute is not a claim that hardware encryption or locked-device access has been verified.
+Observed macOS core toolchain: macOS 15.7.9 arm64, Xcode 16.4 / Swift 6.1.2. These are CI observations, not a guaranteed supported-device matrix. A test-only unused-result warning and inherited upstream warnings remain. Live TLS/CDN behavior, Apple login and physical Data Protection have not been tested.
 
-Observed CI toolchain: macOS 15.7.9 arm64, Xcode 16.4, Swift 6.1.2. The core simulator recorded iPhone SE (3rd generation), iOS 26.2. These are runner observations, not a guaranteed supported-device matrix. Upstream warnings and a test-only unused-result warning remain; no warning-free whole-app claim is made.
+Latest evidence:
 
-Evidence:
+- Core and real synthetic Keychain: https://github.com/oskuhsiu/Tetherless/actions/runs/36998496062
+- Core iOS Simulator: https://github.com/oskuhsiu/Tetherless/actions/runs/36998496073
+- Native Debug/Release: https://github.com/oskuhsiu/Tetherless/actions/runs/36998496012
+- Whole-app Simulator: https://github.com/oskuhsiu/Tetherless/actions/runs/36998496066
+- Unchanged production archive package: https://github.com/oskuhsiu/Tetherless/actions/runs/36988598288
 
-- Core: https://github.com/oskuhsiu/Tetherless/actions/runs/36989824003
-- Core simulator: https://github.com/oskuhsiu/Tetherless/actions/runs/36989184036
-- Archive host and iOS Simulator: https://github.com/oskuhsiu/Tetherless/actions/runs/36988598288
-- Native integration: https://github.com/oskuhsiu/Tetherless/actions/runs/36989824052
+### Whole-app evidence and failures
 
-### Artifact verification
+Run `36995550010` (`43006f7`) compiled and installed the entire native app, obtained a process ID, and verified it remained alive after five seconds. Its screenshot command timed out after 30 seconds and produced a zero-byte PNG. The workflow failed; it is not a complete smoke pass.
 
-Both final native jobs completed successfully for `76f88f5`. The earlier in-progress Release status is superseded by the completed job, including compilation, packaging and artifact upload. The detailed local archive inspection below was performed on Debug, not inferred for Release.
+Run `36996650009` (`38177ef`) compiled and installed, but the launch command timed out after 60 seconds before returning a process ID. It also failed. The second failure must not be misreported as another screenshot failure. No root cause is declared solely from these timeouts.
 
-The latest `76f88f5` Debug artifact was downloaded, not merely inferred from job status. Its IPA SHA-256 matches the manifest:
+The updated smoke workflow explicitly initializes Simulator.app and validates a Home-screen capture before the product build/install. It persists phase-specific command logs and false-by-default launch/screenshot evidence. It never uses `continue-on-error` to turn launch failure into acceptance and does not inject successful login/device fixtures. Latest run `36998496066` has passed simulator screen readiness and native source preparation and is still compiling the full app at this checkpoint. A complete launch/screenshot pass has not yet been observed.
 
-`234c6d916a18ca828f591c5049752ff31e4827c122c8f1a94b290653f4059cf2`
+### Inspected artifacts and exact-source verification
 
-Actual Info.plist: `org.tetherless.Tetherless.XYZ0123456`, display name Tetherless, version 0.1.0/build 0100. The unsigned archive contains no `.p12`, `.p8`, `.key` or `.mobileprovision` resources. The log contains `BUILD SUCCEEDED`. No warning from TetherlessCore/TetherlessNative was found in this inspected Debug build; inherited warnings remain.
+The latest `318faae` Release artifact was downloaded and checked, not inferred from a green job. Its outer ZIP SHA-256 matched the Actions digest. The actual IPA SHA-256 matches its manifest:
 
-The prepared-source artifact byte-matches the checked production pairing-store override, reset marker and all three archive source files. It also contains the cold-boot migration before the missing-pairing guard. This verifies integration content, not execution against a real device.
+`06916a664a859461e6748adade7794b395e78f3c8e2344b67516bb0747f9b4c8`
 
-Unsigned archives require the user's authorized signing/bootstrap process. Their provenance flags do not claim `deviceValidated` or `unattendedRenewalValidated`. Core/archive package tests and unsigned app builds are not whole-app UI or physical sideloading tests.
+Actual bundle ID `org.tetherless.Tetherless`, display name Tetherless, version 0.1.0/build 0100. The unsigned IPA contained no `.p12`, `.p8`, `.key` or `.mobileprovision` resources. The Release log contains `BUILD SUCCEEDED` and no compiler warnings attributed to TetherlessCore/TetherlessNative; inherited upstream warnings remain. Transport configuration permits local networking without a blanket arbitrary-load exception.
 
-## Remaining gates before one consolidated device handoff
+All 25 current core/native Swift files in the retained prepared source byte-match the checked local implementation. All 11 auth-transformed native files and the bounded native download route also byte-match, including token-only records, generation-bound failed-login cleanup, and startup migration. This proves source integration, not a live Apple login.
+
+The exact tested `318faae` source artifact was independently downloaded and its commit, outer ZIP digest and inner tar digest checked. Comparing 80 files against the evolving local tree found only the intended uncommitted documentation differences; code, tests and workflows matched. No live credentials, signing key or pairing record were used in these tests or placed in CI artifacts. Unsigned manifests state `requiresUserSigning: true`, `deviceValidated: false` and `unattendedRenewalValidated: false`.
+
+Earlier `71bfb18` Release inspection is retained in history; it is not substituted for these latest results.
+
+## Remaining gates before a consolidated device handoff
 
 | Gate | Remaining implementation / verification |
 | --- | --- |
-| Authentication and mutation audit | Remaining advanced settings/authentication/sign-out ownership; silent Keychain write failures; all relevant log destinations and callback cancellation/lifetime behavior |
-| Bootstrap and manager updates | First-login initialization without embedded keys, explicit certificate-capacity decisions, manager identity rotation/update and data recovery; native wireless success/cancel/retry integration |
-| Remaining untrusted-input budgets | Streaming HTTP quotas, aggregate disk/memory budget, crash-abandoned staging cleanup, unsupported-entitlement and Mach-O/signature parser review |
-| Whole-app UI and support matrix | Actual onboarding/repair/import screens, accessibility and layout tests across supported simulator configurations; package tests are not full UI coverage |
-| Supply chain and distribution | Binary/dependency inventory, provenance/rights review, original branding assets and release notices |
+| Remaining secret and mutation audit | Certificate and Anisette storage errors/advanced actions; all log destinations; pairing callback cancellation and retained lease lifetime; not just account-envelope tests |
+| Bootstrap and manager updates | First-login certificate initialization without embedded keys, explicit certificate-capacity handling, identity rotation/self-update and interrupted data recovery |
+| Untrusted-input resources | Aggregate disk/memory reservation, crash-abandoned staging cleanup, live download/redirect integration and unsupported entitlement/Mach-O/signature parser review |
+| Whole-app UI / supported configurations | Reliable full native launch evidence; actual setup, login, repair and import navigation/accessibility/layout tests; package tests are not UI flows |
+| Supply chain / distribution | Dependency and binary inventory, provenance/rights review, original branding and notices |
 
-The protected-store and runtime extractor implementations are no longer placeholders. Their unresolved lifetime/resource checks remain visible rather than being declared complete because unit tests pass. Data Protection, live Apple authentication/profile installation and next-day locked-screen renewal belong to the final consolidated physical acceptance after the implementation gates, not recurring requests for the owner's phone.
-
-No real-time expiry crossing or locked-screen unattended renewal was performed. Profile parsing/readback is not independent CMS trust or kernel launch attestation. The complete product has not passed release acceptance.
+No live Apple login, real signing/profile installation, physical pairing, locked-screen unattended run or expiry crossing was performed. Profile parsing/readback is not independent CMS trust or kernel launch attestation. These limitations are not a reason to request the owner's phone while implementation work remains.

@@ -18,6 +18,8 @@ Finish implementation, integration and feasible non-device verification before r
 - A replacement `Renew Managed Apps` App Intent without foreground continuation; supplementary iOS background processing/fetch.
 - An Auto Renewal screen with setup instructions, consent, explicit repair, observed expiry/history, advance warnings and privacy-whitelisted diagnostics.
 - Protected, bounded pairing storage with atomic replacement, conflict-safe legacy migration, durable full-reset markers and serialized wireless import.
+- Bounded ephemeral HTTPS IPA downloads, independent declared/streamed byte limits, cancellation cleanup and no post-extraction remote dependency injection.
+- Token-only coherent Keychain account records with staged/ready/signed-out phases, checked writes and sign-out, generation-bound failed-login cleanup and shared portal mutation ownership. The entered Apple password is not retained in new records.
 - Shared streaming IPA extraction with ZIP structure/CRC/path/expansion limits and nested bundle metadata checks; real adversarial archive tests use the production extractor.
 - Distinct `org.tetherless.Tetherless` product identity. Private signing keys are no longer embedded by the target-app or manager signing paths; only public certificate material crosses that boundary.
 
@@ -40,7 +42,7 @@ python3 Integration/prepare.py
 
 Do not use `git submodule update --remote`. Preparation rejects changed source hashes, dirty dependencies and an existing generated output; inspect that directory before removing it for a fresh preparation. Do not edit `Vendor/SideStore` or `.generated` as the authoritative source of Tetherless changes.
 
-The native CI builds the generated `AltStore.xcodeproj` / `SideStore` scheme in both configurations. Internal target names are retained to keep the derivative patch small; the product's bundle identity is separate. The simulator workflow executes the Swift core tests on an installed iOS Simulator runtime, not on a macOS host masquerading as iOS.
+The native CI builds the generated `AltStore.xcodeproj` / `SideStore` scheme in both configurations. Internal target names are retained to keep the derivative patch small; the product's bundle identity is separate. The package simulator workflows execute core and production-archive tests on iOS Simulator. A separate whole-app workflow builds, installs, launches and captures the unmodified production first-run UI; its result is recorded separately and is not a full onboarding/repair test.
 
 CI retains source revisions, build logs, prepared review sources and unsigned IPA manifests. **An unsigned IPA is input to an authorized signing/bootstrap process, not directly installable and not a stable release.** See [build and bootstrap notes](docs/BUILD_AND_BOOTSTRAP.md).
 
@@ -52,13 +54,13 @@ CI retains source revisions, build logs, prepared review sources and unsigned IP
 | `Tests/TetherlessCoreTests` | Fault injection, real filesystem/process tests and output-boundary tests |
 | `Integration/Native` | Actual SideSign/minimuxer adapter, runtime, intents, scheduling and UI |
 | `Integration/Overrides` | Reviewed native replacements, including the protected pairing manager |
-| `Integration/prepare.py`, `harden.py`, `input_safety.py`, `archive_safety.py` | Hash-locked transformations of the pinned native app |
+| `Integration/prepare.py` and its hash-locked hardening stages | Hash-locked transformations of the pinned native app |
 | `Packages/TetherlessArchive` | Production streaming extractor and real ZIP adversarial tests |
 | `Vendor/SideStore` | Native upstream gitlink; dependencies retain their licenses |
 | `docs/STATUS.md` | Verified evidence and remaining implementation gates |
 
 ## Security and licensing
 
-Tetherless uses its own non-synchronizing Keychain namespace. Renewal never silently falls back to remote anisette, revokes a certificate, reinstalls the manager, enables fake audio/location keepalive or turns off another VPN. Diagnostic export excludes credentials and identifiers. These safeguards are not a completed independent security audit: remaining authentication, maintenance, bootstrap, download-resource and lifecycle paths still have release gates in the status document. [Input-safety notes](docs/INPUT_SAFETY.md) distinguish implemented protections from unverified platform behavior. ZIP64/encrypted/link-bearing archives and unpacked .app imports are explicitly unsupported in v1; there is no unsafe fallback.
+Tetherless uses its own non-synchronizing Keychain namespace. Renewal never silently falls back to remote anisette, revokes a certificate, reinstalls the manager, enables fake audio/location keepalive or turns off another VPN. Diagnostic export excludes credentials and identifiers. [Account-state notes](docs/AUTHENTICATION.md) describe credential retention and failure semantics. These safeguards are not a completed independent security audit: remaining authentication, maintenance, bootstrap, download-resource and lifecycle paths still have release gates in the status document. [Input-safety notes](docs/INPUT_SAFETY.md) distinguish implemented protections from unverified platform behavior. ZIP64/encrypted/link-bearing archives and unpacked .app imports are explicitly unsupported in v1; there is no unsafe fallback.
 
 Original Tetherless code is AGPL-3.0-only. Preserve upstream copyrights and licenses; the full upstream license is retained in `Vendor/SideStore/LICENSE` after initialization. See [pinned source audit](docs/UPSTREAM_AUDIT.md) before distributing a product. Do not submit automated contributions/issues to upstream maintainers.
