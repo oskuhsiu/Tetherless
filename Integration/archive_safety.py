@@ -4,6 +4,7 @@ from pathlib import Path
 import hashlib
 import sys
 import shutil
+import subprocess
 
 ZIP = 'Dependencies/SideSign/Sources/Archiver/FileManagerZip.swift'
 PACKAGE = 'Dependencies/SideSign/Package.swift'
@@ -78,5 +79,6 @@ def apply(root: Path):
     sources = Path(__file__).parents[1] / 'Packages/TetherlessArchive/Sources/TetherlessArchive'
     for path in sources.glob('*.swift'):
         shutil.copyfile(path, root / 'Dependencies/SideSign/Sources/Archiver' / path.name)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("network_safety.py")), str(root)], check=True)
 
 if __name__ == '__main__': apply(Path(sys.argv[1]))
