@@ -12,9 +12,13 @@ struct CertificateIssuanceTests {
         init(root: URL) throws { files = try PrivateFileStore(root: root, maximumBytes: 65_536); try files.prepare() }
         func read() throws -> Data? { try files.read("request") }
         func write(_ data: Data) throws {
-            let text = String(decoding: data, as: UTF8.self)
-            if let failPhase, text.contains(failPhase) { throw AuthenticationStorageFailure.unavailable }
-            if let dropPhase, text.contains(dropPhase) { return }
+            // Select a semantic phase, never a substring sensitive to JSON key
+            // ordering. Malformed bytes remain writable for corruption tests.
+            let envelope = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let pending = envelope?["pending"] as? [String: Any]
+            let phase = pending?["phase"] as? String ?? (envelope != nil ? "empty" : "malformed")
+            if failPhase == phase { throw AuthenticationStorageFailure.unavailable }
+            if dropPhase == phase { return }
             try files.write(data, named: "request")
         }
     }
@@ -75,13 +79,29 @@ struct CertificateIssuanceTests {
         let storage = try Storage(root: root)
         try await body(CertificateIssuanceStore(storage: storage), Backend(storage), storage)
     }
+    @Test func faultInjectionUsesSemanticPhaseRegardlessOfJSONKeyOrder() async throws {
+        try await fixture { (_, _, storage) async throws in
+            storage.failPhase = "empty"
+            // These are testing the fault injector, not a valid production record.
+            let first = Data(#"{"schemaVersion":1,"pending":{"phase":"issued"}}"#.utf8)
+            let reordered = Data(#"{"pending":{"phase":"issued"},"schemaVersion":1}"#.utf8)
+            try storage.write(first)
+            try storage.write(reordered)
+            #expect(throws: AuthenticationStorageFailure.unavailable) {
+                try storage.write(Data(#"{"schemaVersion":1}"#.utf8))
+            }
+            #expect(try storage.read() == reordered)
+        }
+    }
     @Test func keyAndRequestAreDurableBeforeRemoteMutationAndClearedOnlyAfterSave() async throws {
         try await fixture { (store, backend, storage) async throws in
             let result = try await CertificateIssuanceCoordinator(store: store).issue(owner: owner(), backend: backend)
             #expect(result == backend.persisted)
             #expect(backend.submitCount == 1 && backend.persistCount == 1)
             #expect(try store.read() == nil)
-            #expect(!String(decoding: try #require(storage.read()), as: UTF8.self).contains("privateKeyPEM"))
+            let saved = try storage.read()
+            let bytes = try #require(saved)
+            #expect(!String(decoding: bytes, as: UTF8.self).contains("privateKeyPEM"))
         }
     }
     @Test func lostAcceptedResponseIsRecoveredWithoutAnotherCreateOrKey() async throws {
@@ -188,7 +208,7 @@ struct CertificateIssuanceTests {
     }
     @Test func completionWriteFailureRetainsIssuedRequest() async throws {
         try await fixture { (store, backend, storage) async throws in
-            storage.failPhase = "\"schemaVersion\":1}" // JSON omits nil optional, exact empty envelope.
+            storage.failPhase = "empty"
             await #expect(throws: AuthenticationStorageFailure.unavailable) {
                 try await CertificateIssuanceCoordinator(store: store).issue(owner: owner(), backend: backend)
             }
