@@ -9,6 +9,12 @@ struct NativeProfileTransport: ProfileBatchTransport {
     func checkBudget() throws {
         try Task.checkCancellation()
         guard ContinuousClock.now < deadline else { throw RenewalFailure.budgetExhausted }
+        // A self-update receipt owns recovery until startup/explicit reconciliation.
+        // Temporary failure (not a permanent interaction gate) lets later renewal
+        // resume after successful recovery without needing another user action.
+        if let update = try NativeManagerUpdate.journal().read(), update.phase.isPending {
+            throw RenewalFailure.unavailable
+        }
     }
 
     func readInstalledProfileBytes() async throws -> [Data] {

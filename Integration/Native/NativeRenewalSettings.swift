@@ -20,6 +20,7 @@ struct NativeRenewalSettings: View {
                 introduction
                 setup
                 verification
+                NativeManagerUpdateControls()
                 currentApps
                 recentRuns
                 #if DEBUG

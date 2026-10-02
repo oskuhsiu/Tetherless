@@ -1,5 +1,6 @@
 """Small transformation fixtures; native CI separately checks real source hashes."""
 import importlib.util
+import re
 from pathlib import Path
 import unittest
 
@@ -60,8 +61,11 @@ class PatchTests(unittest.TestCase):
         self.assertNotIn("requestToContinueInForeground", source)
     def test_simulator_transport_fails_instead_of_claiming_readback(self):
         source = (Path(__file__).parents[1] / "Native/NativeProfileTransport.swift").read_text()
-        self.assertEqual(source.count("#if targetEnvironment(simulator)"), 2)
-        self.assertEqual(source.count("throw RenewalFailure.unavailable"), 4)
+        branches = re.findall(r"#if targetEnvironment\(simulator\)(.*?)#else", source, re.S)
+        self.assertEqual(len(branches), 2)
+        for branch in branches:
+            self.assertIn("throw RenewalFailure.unavailable", branch)
+            self.assertNotIn("minimuxer.core", branch)
 
 class KeepaliveTests(unittest.TestCase):
     def test_central_manager_disables_all_entry_points(self):
