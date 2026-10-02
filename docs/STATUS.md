@@ -39,7 +39,7 @@ The test suite uses scripted backend/transport outcomes for Apple/device protoco
 | Python transformation/packaging tests | 29 tests passed locally | Security increment |
 | Actual pinned-source transformation | Passed, including all hardening hashes | Native preparation, not just small synthetic fixtures |
 | Native iOS Debug compilation/link | Passed | `3919a4`, native run 36979130985 |
-| Native iOS Release compilation/link and packaging | In progress at this checkpoint; not claimed passed | Native run 36979130985 |
+| Native iOS Release compilation/link and packaging | Passed; artifact uploaded and inspected | Native run 36979130985 |
 
 The simulator excludes the host-only process-spawning test, explaining 81 rather than 82. Its recorded destination was iPhone SE (3rd generation), iOS 26.2; the CI reported Xcode 16.4/Swift 6.1.2. These are observations from the runner, not a blanket supported-device matrix. The native target retains inherited warnings; no warning-free or strict-Swift-6 certification is claimed for the entire upstream app.
 
@@ -50,7 +50,7 @@ Evidence links:
 - Native security build: https://github.com/oskuhsiu/Tetherless/actions/runs/36978518949
 - Native concurrency fix: https://github.com/oskuhsiu/Tetherless/actions/runs/36979130985
 
-### Artifact inspected
+### Artifacts inspected
 
 The `3919a4` Debug artifact was downloaded and inspected, not merely inferred from a green job. The archive hash matched its manifest:
 
@@ -59,6 +59,8 @@ The `3919a4` Debug artifact was downloaded and inspected, not merely inferred fr
 Its actual Info.plist identifies `org.tetherless.Tetherless.XYZ0123456`, display name Tetherless, version 0.1.0, build 0100 and general URL scheme `tetherless`. Its transport configuration allows local networking without a blanket arbitrary-load exception. No `.p12`, `.p8`, `.key` or `.mobileprovision` resources were present in that unsigned app archive. The prepared source artifact confirmed both public-only signing paths and removal of embedded-key fallback.
 
 The inspected latest Debug log contains `BUILD SUCCEEDED` and no compiler warnings originating in `TetherlessCore` or `TetherlessNative`. Inherited upstream warnings remain; this is not a warning-free app claim.
+
+The same implementation's Release artifact was also downloaded: its manifest hash is `e6c3c2ec0fbde833ec4d84449bbd558097dcf193af58a7644e6309b33ea2326e`, actual Bundle ID is `org.tetherless.Tetherless`, and version/build are 0.1.0/0100. The hash matched, the Release log contains `BUILD SUCCEEDED`, and the unsigned archive contained no `.p12`, `.p8`, `.key` or `.mobileprovision` resources.
 
 The manifest explicitly states `requiresUserSigning: true`, `deviceValidated: false` and `unattendedRenewalValidated: false`. An unsigned package is not directly installable or approved for general use. It remains a development artifact, not a request to test on an iPhone.
 
