@@ -71,22 +71,47 @@ jobs:
         run: |
           python3 Integration/simulator_smoke.py launch --simulator "$SIMULATOR_ID" \
             --app .generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app
+      - name: Add UI-only test target without changing production sources
+        run: python3 Integration/prepare_ui_tests.py .generated/SideStore
+      - name: Exercise first setup and local navigation in the real app
+        run: |
+          xcodebuild test \
+            -project .generated/SideStore/AltStore.xcodeproj \
+            -scheme TetherlessUITests -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath .generated/SimulatorDerived \
+            -resultBundlePath native-ui.xcresult \
+            -parallel-testing-enabled NO \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            ORG_IDENTIFIER=com.SideStore > native-ui.log 2>&1
+      - name: Export actual UI screenshots
+        if: always()
+        run: |
+          if [ -d native-ui.xcresult ]; then
+            xcrun xcresulttool export attachments --path native-ui.xcresult --output-path native-ui-attachments
+          fi
       - name: Summarize actual compiler diagnostics
         if: always()
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          path=Path('native-simulator-build.log')
-          if path.exists():
-              lines=path.read_text(errors='replace').splitlines()
-              selected=[line for line in lines if 'error:' in line or 'BUILD SUCCEEDED' in line or 'BUILD FAILED' in line]
-              print('\n'.join(selected[-80:] if selected else lines[-40:]))
+          for name in ['native-simulator-build.log', 'native-ui.log']:
+              path=Path(name)
+              if path.exists():
+                  lines=path.read_text(errors='replace').splitlines()
+                  selected=[line for line in lines if any(key in line for key in ['error:', 'BUILD SUCCEEDED', 'BUILD FAILED', 'TEST SUCCEEDED', 'TEST FAILED', 'Executed ', ' failed '])]
+                  print(name, '\n'.join(selected[-80:] if selected else lines[-40:]))
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: native-launch-${{ github.sha }}
           path: |
+            native-ui.log
+            native-ui.xcresult
+            native-ui-attachments
             native-simulator-build.log
             native-simulator-launch.log
             native-simulator-devices.json
