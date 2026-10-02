@@ -115,6 +115,15 @@ public struct VerifiedAuthenticationStore: Sendable {
         try commit(AuthenticationRecord(generation: record.generation, phase: record.phase,
             credentials: session, teamID: record.teamID))
     }
+    /// Cleanup may run after the login lease ended. Only that exact unfinished
+    /// attempt may be discarded; a newer account or a ready session survives.
+    @discardableResult
+    public func discardStaged(generation: UUID) throws -> Bool {
+        guard let current = try read(), current.phase == .staged,
+              current.generation == generation else { return false }
+        try signOut()
+        return true
+    }
     public func signOut() throws {
         // A tombstone is authoritative: leftover legacy fields cannot resurrect
         // a session if later cleanup fails. A write failure is not sign-out success.

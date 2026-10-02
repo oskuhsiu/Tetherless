@@ -112,6 +112,27 @@ struct AuthenticationStoreTests {
         try store.discardRetainedPassword()
         #expect(storage.data == bytes)
     }
+    @Test func abortedLoginCannotSignOutANewerAttemptOrReadyAccount() throws {
+        let storage = AuthFixtureStore(); let store = VerifiedAuthenticationStore(storage: storage)
+        let first = try store.stage(credentials("first"))
+        let second = try store.stage(credentials("second"))
+        #expect(try !store.discardStaged(generation: first))
+        #expect(try store.read()?.generation == second)
+        try store.activate(generation: second, teamID: "TEAM")
+        #expect(try !store.discardStaged(generation: second))
+        #expect(try store.requireReady().generation == second)
+    }
+    @Test func abandonedStageIsRemovedWithReadbackAndWithoutCertificateDeletion() throws {
+        let storage = AuthFixtureStore(); let store = VerifiedAuthenticationStore(storage: storage)
+        let generation = try store.stage(credentials())
+        storage.ignoreWrite = true
+        #expect(throws: AuthenticationStorageFailure.readbackMismatch) { try store.discardStaged(generation: generation) }
+        #expect(try store.read()?.phase == .staged)
+        storage.ignoreWrite = false
+        #expect(try store.discardStaged(generation: generation))
+        #expect(try store.read()?.phase == .signedOut)
+        #expect(try !store.discardStaged(generation: generation))
+    }
     @Test func invalidInputCannotReplaceAValidSession() throws {
         let storage = AuthFixtureStore(); let store = VerifiedAuthenticationStore(storage: storage)
         try store.activate(generation: store.stage(credentials()), teamID: "TEAM")

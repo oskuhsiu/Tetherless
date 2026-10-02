@@ -90,6 +90,16 @@ private struct AssociatedKeys {
         self.assertIn('NativeAuthenticationStore.ready().teamID == team.identifier',result)
         self.assertNotIn('return try await NativeMutationGate.withLease { try await ALTAppleAPI', result)
 
+    def test_credential_migration_is_not_limited_to_first_launch(self):
+        source = """                if isFirstLaunch
+                {
+                    await AuthManager.shared.signOut()
+                }"""
+        result = m.patch_app(source)
+        self.assertNotIn('if isFirstLaunch', result)
+        self.assertNotIn('shared.signOut()', result)
+        self.assertIn('try await AuthManager.shared.initializeAccountStorageIfNeeded()', result)
+
     def test_preparation_invokes_auth_after_other_hash_locked_boundaries(self):
         source=(ROOT/'network_safety.py').read_text()
         self.assertLess(source.index('file.write_text('),source.index('with_name("auth_safety.py")'))

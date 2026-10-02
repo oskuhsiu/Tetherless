@@ -125,8 +125,16 @@ def patch_login(source):
                     self?.setProgress(progress)
                 }
             }''')
-    source = once(source, '                await AuthManager.shared.signOut()',
-                  '                try? await AuthManager.shared.signOut() // Original failure is still thrown.')
+    source = once(source, """            if !AuthManager.shared.hasStoredPassword &&
+               !AuthManager.shared.hasStoredXcodeToken
+            {
+                await AuthManager.shared.signOut()
+            }""", """            if let generation = self.authenticationGeneration {
+                try? await NativeMutationGate.withLease {
+                    // Do not discard a session established after this attempt.
+                    _ = try NativeAuthenticationStore.make().discardStaged(generation: generation)
+                }
+            }""")
     source = once(source, '''        AuthManager.shared.adsid = session.dsid
         AuthManager.shared.xcodeToken = session.authToken
         AuthManager.shared.currentAppleID = appleID
@@ -303,8 +311,16 @@ def patch_portal(source):
         raise ValueError(f'Expected 20 portal mutations, found {count}')
     return result
 
+def patch_app(source):
+    return once(source, """                if isFirstLaunch
+                {
+                    await AuthManager.shared.signOut()
+                }""", """                // Retry checked credential-format cleanup on every launch,
+                // independent of old first-launch/maintenance counters.
+                try await AuthManager.shared.initializeAccountStorageIfNeeded()""")
+
 PATCHES = {PORTAL: patch_portal, AUTH: patch_auth, LOGIN: patch_login, KEYCHAIN: patch_keychain,
-           APP: lambda s: once(s, '                    await AuthManager.shared.signOut()', '                    try await AuthManager.shared.initializeAccountStorageIfNeeded()'),
+           APP: patch_app,
            MAINT: patch_maintenance, SETTINGS: patch_settings, CUSTOM: patch_custom,
            DEV: patch_developer, ARCHIVE: patch_archive, BACKUP: patch_backup}
 BLOBS = {PORTAL: '702759f52dae5dfc7e3a88f57668d7a83e30f354', 'SideStore/Core/Auth/AuthManager.swift': 'c426783db44eda9a183562cddbd446f57cecc93a', 'SideStore/Core/Operations/StandaloneOperations/SignInOperation.swift': '1ff9135ea725cc45481d82a96af1de8418726ef8', 'AltStore/Core/Components/Keychain.swift': '440f4a763cc3a95b10c696f432129f8570b4116a', 'AltStore/AppDelegate.swift': '466ba57a35e67b1a93961b5d4553d24d7c5e73ff', 'SideStore/MaintenanceManager.swift': '55dbd051aeff41e6f2859ca1ebe357c76f378bf5', 'AltStore/Settings/SettingsViewController.swift': '6b7a4c28ed942089a38c8f1a870345b57e47bad6', 'SideStore/Views/Settings/Advanced/UserCustomizations/UserCustomizationsView.swift': '6d6a72327aa0d19dab23e63576abadccc6909c61', 'SideStore/Views/Settings/Diagnostics/DeveloperOptionsView.swift': '5826d7d2ecca2776ac823ae516322016ba8eb944', 'SideStore/Utils/importexport/ImportExport.swift': '509c0ef993239e0ef61eff19fc8cc1f86d854b92', 'SideStore/Views/Settings/Advanced/BackupRestore/BackupAndRestoreView.swift': '861f17b0fa0abb4ead5f679b021747c985bd9598'}  # Filled from the reviewed prepared baseline, not the evolving remote branch.
