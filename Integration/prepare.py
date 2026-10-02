@@ -8,6 +8,7 @@ import plistlib
 import re
 import shutil
 import subprocess
+import sys
 
 BASELINE = "0dd743f75afc358b0ba4a002feb5f19474492371"
 PROFILE_PATH = "SideStore/Core/Operations/PipelineOperations/RefreshAppOperation.swift"
@@ -268,12 +269,14 @@ def prepare(root: Path) -> Path:
     info["BGTaskSchedulerPermittedIdentifiers"] = ["org.tetherless.profile-renewal"]
     info["UIBackgroundModes"] = ["fetch", "processing"]
     info_path.write_bytes(plistlib.dumps(info, sort_keys=False))
+    subprocess.run([sys.executable, str(Path(__file__).with_name("harden.py")), str(output)], check=True)
     sample = output / "CodeSigning.xcconfig.sample"
     if sample.exists():
         shutil.copyfile(sample, output / "CodeSigning.xcconfig")
     (output / "TETHERLESS_PREPARATION.json").write_text(json.dumps({
         "upstream": BASELINE, "reviewed_blobs": BLOBS,
         "runtime_adapter_integrated": True, "device_validated": False,
+        "private_key_embedding_disabled": True, "product_identity": "org.tetherless.Tetherless",
     }, indent=2) + "\n")
     return output
 
