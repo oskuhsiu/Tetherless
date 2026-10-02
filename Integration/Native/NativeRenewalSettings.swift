@@ -8,6 +8,7 @@ struct NativeRenewalSettings: View {
     var openAppLibrary: () -> Void = {}
     @AppStorage("tetherless.autorenew.enabled") private var enabled = false
     @State private var working = false
+    @State private var showSetupWizard = false
     @State private var message = "Automatic renewal has not been observed on this device."
     @State private var timeline = RenewalTimeline()
     @State private var diagnosticText: String?
@@ -30,6 +31,12 @@ struct NativeRenewalSettings: View {
             }
             .navigationTitle("Auto Renewal")
             .task { reload() }
+            .sheet(isPresented: $showSetupWizard) {
+                OnboardingView {
+                    showSetupWizard = false
+                    reload()
+                }
+            }
             .confirmationDialog("Acknowledge a completed reinstall?", isPresented: $confirmReenrollment) {
                 SwiftUI.Button("Re-enroll repaired signing identities") {
                     perform(successMessage: "Repaired identities re-enrolled. Automatic renewal may resume.") {
@@ -60,6 +67,8 @@ struct NativeRenewalSettings: View {
     private var setup: some View {
         SwiftUI.Section {
             Text("1. Sign in and finish pairing. Enable your local VPN helper and On-Device Anisette. Background renewal never uses a remote fallback or toggles cellular data.")
+            SwiftUI.Button("Continue setup") { showSetupWizard = true }
+                .disabled(working).accessibilityIdentifier("renewal.resumeSetup")
             SwiftUI.Button("Account and pairing settings", action: openAccountAndPairing)
                 .accessibilityIdentifier("renewal.openSetup")
             SwiftUI.Button("Install or manage an IPA", action: openAppLibrary)

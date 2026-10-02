@@ -27,3 +27,31 @@ public struct SetupReadiness: Equatable, Sendable {
         return "You can explore Tetherless now and return to the missing steps. Automatic renewal is not ready."
     }
 }
+
+/// A navigation checkpoint only. Restoring it never restores credentials,
+/// grants renewal consent or changes the separately observed prerequisites.
+/// Stable string keys tolerate future reordering of the visible steps.
+public enum SetupStep: String, CaseIterable, Sendable {
+    case welcome, pairing, connection, account, automation, review
+
+    public static let storageKey = "tetherless.setup.currentStep"
+    public static func resuming(_ savedValue: String) -> Self {
+        Self(rawValue: savedValue) ?? .welcome
+    }
+    public var ordinal: Int { Self.allCases.firstIndex(of: self)! + 1 }
+    public var title: String {
+        switch self {
+        case .welcome: return "Welcome to Tetherless"
+        case .pairing: return "Device pairing"
+        case .connection: return "Local connection"
+        case .account: return "Your Apple Account"
+        case .automation: return "Automatic renewal"
+        case .review: return "Review setup"
+        }
+    }
+    public func moved(by delta: Int) -> Self? {
+        guard delta == -1 || delta == 1 else { return nil }
+        let index = ordinal - 1 + delta
+        return Self.allCases.indices.contains(index) ? Self.allCases[index] : nil
+    }
+}

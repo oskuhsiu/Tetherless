@@ -32,3 +32,33 @@ struct SetupReadinessTests {
         #expect(state.title == "Setup status could not be read")
     }
 }
+
+@Suite("Resumable navigation grants no setup authority")
+struct SetupStepTests {
+    @Test func stableStepNamesRoundTrip() {
+        #expect(SetupStep.allCases.map(\.rawValue) ==
+                ["welcome", "pairing", "connection", "account", "automation", "review"])
+        for step in SetupStep.allCases { #expect(SetupStep.resuming(step.rawValue) == step) }
+    }
+    @Test func unknownCheckpointsStartAtWelcome() {
+        for value in ["", "2", "finished", "futureStep", "PAIRING"] {
+            #expect(SetupStep.resuming(value) == .welcome)
+        }
+    }
+    @Test func navigationIsAdjacentAndBounded() {
+        let steps = SetupStep.allCases
+        for (index, step) in steps.enumerated() {
+            #expect(step.ordinal == index + 1)
+            #expect(step.moved(by: 1) == (index + 1 < steps.count ? steps[index + 1] : nil))
+            #expect(step.moved(by: -1) == (index > 0 ? steps[index - 1] : nil))
+            for invalid in [0, -2, 2, Int.min, Int.max] { #expect(step.moved(by: invalid) == nil) }
+        }
+    }
+    @Test func restoringReviewDoesNotMakePrerequisitesReady() {
+        #expect(SetupStep.resuming("review") == .review)
+        let state = SetupReadiness()
+        #expect(!state.canAttemptVerification)
+        #expect(!state.renewalPermitted)
+        #expect(state.title == "Setup is not finished")
+    }
+}

@@ -9,20 +9,8 @@ import UniformTypeIdentifiers
 @available(iOS 17.0, *)
 struct OnboardingView: View {
     var onFinish: (() -> Void)? = nil
-    private enum Step: Int, CaseIterable {
-        case welcome, pairing, connection, account, automation, review
-        var title: String {
-            switch self {
-            case .welcome: return "Welcome to Tetherless"
-            case .pairing: return "Device pairing"
-            case .connection: return "Local connection"
-            case .account: return "Your Apple Account"
-            case .automation: return "Automatic renewal"
-            case .review: return "Review setup"
-            }
-        }
-    }
-    @State private var step: Step = .welcome
+    @AppStorage(SetupStep.storageKey) private var savedStep = SetupStep.welcome.rawValue
+    private var step: SetupStep { .resuming(savedStep) }
     @State private var working = false
     @State private var showImporter = false
     @State private var status: String?
@@ -35,7 +23,7 @@ struct OnboardingView: View {
                 SwiftUI.Section {
                     Text(step.title).font(.title2.bold())
                         .accessibilityIdentifier("onboarding.title")
-                    Text("Step \(step.rawValue + 1) of \(Step.allCases.count)")
+                    Text("Step \(step.ordinal) of \(SetupStep.allCases.count)")
                         .foregroundStyle(.secondary)
                 }
                 content
@@ -73,6 +61,7 @@ struct OnboardingView: View {
                 }
                 .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
+            .interactiveDismissDisabled(working)
             .task(id: step) { await reload() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 Task { @MainActor in await reload() }
@@ -224,8 +213,8 @@ struct OnboardingView: View {
         }
     }
     private func move(_ delta: Int) {
-        guard !working, let next = Step(rawValue: step.rawValue + delta) else { return }
-        status = nil; step = next
+        guard !working, let next = step.moved(by: delta) else { return }
+        status = nil; savedStep = next.rawValue
     }
     private func finish() {
         // This flag only dismisses onboarding; it grants no permission and is

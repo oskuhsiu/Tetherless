@@ -29,6 +29,12 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(cancelImport.waitForExistence(timeout: 10)); cancelImport.tap()
         XCTAssertTrue(app.buttons["onboarding.importPairing"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+        // Kill/relaunch mid-wizard: persist navigation, not fake prerequisites.
+        app.terminate(); app.launch()
+        XCTAssertTrue(title.waitForExistence(timeout: 15))
+        XCTAssertEqual(title.label, "Device pairing")
+        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+        capture(app, "01b-resumed-pairing")
         app.buttons["onboarding.later"].tap()
         XCTAssertTrue(app.buttons["onboarding.openVPN"].waitForExistence(timeout: 5))
         app.buttons["onboarding.next"].tap()
@@ -65,6 +71,19 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(install.waitForExistence(timeout: 5)); install.tap()
         XCTAssertTrue(app.tabBars.buttons["My Apps"].isSelected)
         renewal.tap()
+        let resume = app.buttons["renewal.resumeSetup"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        if !resume.isHittable { app.swipeUp() }
+        resume.tap()
+        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertEqual(title.label, "Review setup")
+        XCTAssertEqual(app.staticTexts["onboarding.readiness"].label, "Setup is not finished")
+        app.buttons["onboarding.back"].tap()
+        XCTAssertTrue(consent.waitForExistence(timeout: 5))
+        XCTAssertEqual(consent.value as? String, "0")
+        app.buttons["onboarding.next"].tap()
+        app.buttons["onboarding.finish"].tap()
+        XCTAssertTrue(renewal.waitForExistence(timeout: 10))
         capture(app, "05-auto-renewal")
         // A real relaunch must retain wizard dismissal without silently granting
         // consent or fabricating an observed successful background renewal.
