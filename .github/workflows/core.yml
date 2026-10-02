@@ -24,3 +24,17 @@ jobs:
         run: swift test
       - name: Release tests
         run: swift test -c release
+      - name: Retain exact tested source (no Git credentials or build caches)
+        run: |
+          git archive --format=tar.gz --output=verified-source.tar.gz HEAD
+          git rev-parse HEAD > verified-source-commit.txt
+          shasum -a 256 verified-source.tar.gz > verified-source.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verified-source-${{ github.sha }}
+          path: |
+            verified-source.tar.gz
+            verified-source-commit.txt
+            verified-source.sha256
+          retention-days: 14
+          if-no-files-found: error
