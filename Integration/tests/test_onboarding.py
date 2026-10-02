@@ -39,3 +39,13 @@ class OnboardingIntegrationTests(unittest.TestCase):
         self.assertNotIn('method_exchangeImplementations',text)
         self.assertNotIn('launchEnvironment',text)
         self.assertIn('XCTAttachment(screenshot: app.screenshot())',text)
+    def test_replay_entry_is_guarded_without_raising_entire_deployment_target(self):
+        spec=importlib.util.spec_from_file_location('onboarding',ROOT/'onboarding.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        original='''                            OnboardingView(onFinish: {
+                                showOnboardingSheet = false
+                            })'''
+        result=module.patch_replay(original)
+        self.assertLess(result.index('if #available(iOS 17.0, *)'),result.index('OnboardingView('))
+        self.assertIn('requires iOS 17 or later',result)
+        with self.assertRaises(ValueError): module.patch_replay('drift')
