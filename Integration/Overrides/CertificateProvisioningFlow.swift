@@ -62,6 +62,9 @@ final class CertificateProvisioningFlow: @unchecked Sendable {
     private func fetchCertificate(for team: ALTTeam) async throws -> ALTCertificate {
         // Check storage BEFORE a remote create decision. Missing is different
         // from inaccessible/corrupt Keychain. Only current-Team portal matches count.
+        // Reconcile an outstanding request even when a key was already cached
+        // immediately before a crash. A zero-match result does not create again.
+        if let recovered = try await DeveloperPortalProxy.shared.recoverPendingCertificate(team: team) { return recovered }
         let active = try CertificateManager.shared.loadActiveCertificate()
         let fetched = try await DeveloperPortalProxy.shared.fetchCertificates(team: team)
         portalCertificates = fetched
