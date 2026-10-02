@@ -53,3 +53,75 @@ jobs:
             Packages/TetherlessArchive/Package.resolved
           retention-days: 14
           if-no-files-found: error
+  archive-ios-tests:
+    runs-on: macos-15
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Packages/TetherlessArchive
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Select an available iOS Simulator and record toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available --json > archive-simulator-devices.json
+          python3 - <<'PY'
+          import json, os, re
+          choices = []
+          for runtime, devices in json.load(open('archive-simulator-devices.json'))['devices'].items():
+              match = re.search(r'iOS-(\d+(?:-\d+)*)$', runtime)
+              if not match:
+                  continue
+              version = tuple(map(int, match[1].split('-')))
+              if version[0] < 17:
+                  continue
+              for device in devices:
+                  if device.get('isAvailable') and device['name'].startswith('iPhone'):
+                      choices.append((version, device['name'], device['udid']))
+          if not choices:
+              raise SystemExit('No installed compatible simulator; tests have not executed')
+          version, name, identifier = max(choices)
+          print('Selected:', name, version, identifier)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('ARCHIVE_SIMULATOR_ID=' + identifier + '\n')
+          PY
+      - name: Resolve only recorded package versions
+        run: |
+          swift package --force-resolved-versions resolve
+          xcodebuild -resolvePackageDependencies -scheme TetherlessArchive \
+            -clonedSourcePackagesDirPath .xcode-packages \
+            -onlyUsePackageVersionsFromResolvedFile > archive-ios-resolve.log 2>&1
+          test "$(git -C .xcode-packages/checkouts/ZIPFoundation rev-parse HEAD)" = 22787ffb59de99e5dc1fbfe80b19c97a904ad48d
+      - name: Execute production archive tests on iOS Simulator
+        run: |
+          xcodebuild test -scheme TetherlessArchive \
+            -destination "platform=iOS Simulator,id=$ARCHIVE_SIMULATOR_ID" \
+            -clonedSourcePackagesDirPath .xcode-packages \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -derivedDataPath .archive-simulator-derived \
+            -resultBundlePath archive-ios.xcresult \
+            CODE_SIGNING_ALLOWED=NO > archive-ios-tests.log 2>&1
+      - name: Summarize archive simulator evidence
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in Path('.').glob('archive-ios-*.log'):
+              lines = path.read_text(errors='replace').splitlines()
+              selected = [s for s in lines if any(t in s for t in ('error:', 'recorded an issue', 'Expectation failed', 'Test run with', 'TEST SUCCEEDED', 'TEST FAILED'))]
+              print(path.name)
+              print('\n'.join(selected[-100:] or lines[-50:]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: archive-ios-${{ github.sha }}
+          path: |
+            Packages/TetherlessArchive/archive-ios-*.log
+            Packages/TetherlessArchive/archive-ios.xcresult
+            Packages/TetherlessArchive/archive-simulator-devices.json
+            Packages/TetherlessArchive/Package.resolved
+          retention-days: 14
+          if-no-files-found: error
