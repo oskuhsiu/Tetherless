@@ -4,6 +4,15 @@
 
 Complete implementation, native integration, build verification and all feasible non-device tests BEFORE requesting the owner's iPhone. Device checks are a consolidated acceptance pass, not recurring development blockers. A missing device does not justify stopping unrelated implementation. Do not request passwords, 2FA codes, UDIDs, pairing files or private keys in chat, commits or issues.
 
+## Branch and pull-request workflow
+
+- `develop` is the integration branch for ongoing development. Create new feature/fix branches from `develop` and target all development-stage PRs at `develop`, never `main`.
+- Continue existing feature work on its current branch and retarget its PR to `develop`; do not reset branches or discard existing commits to adopt this workflow.
+- `main` is reserved for release/stable integration. Promote `develop` to `main` only through a separate, explicitly approved release PR after the agreed acceptance gates.
+- A request to create or retarget a PR does not authorize merging it. Keep unfinished work in draft PRs; no automatic merge or force push.
+- Before creating or updating a PR, verify its actual base branch. CI results must correspond to the relevant implementation commit and integration target; green checks are not physical-device acceptance.
+- The repository default branch and branch-protection settings are separate from PR targeting. Do not change them without an explicit request.
+
 ## Product invariant
 
 A personal/free Apple Account is primary. After first-time authorized setup, normal renewal is mobile-only, proactive and unattended: no desktop, opening the manager or pressing refresh. Daily is the default policy; a two-hour test policy is available through injected settings. Never change a device clock to simulate Apple authorization. Long real-time soak testing is separate, not the development iteration cycle.
