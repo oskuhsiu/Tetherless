@@ -22,6 +22,16 @@ class PairingIntegrationTests(unittest.TestCase):
         self.assertNotIn('Data(contentsOf:', s)
     def test_preparation_invokes_pairing_hardening(self):
         self.assertIn('input_safety.py', (ROOT / 'prepare.py').read_text())
+    def test_cold_boot_migrates_before_missing_pairing_prompt(self):
+        prepare_spec = importlib.util.spec_from_file_location('boot_prepare', ROOT / 'prepare.py')
+        prepare = importlib.util.module_from_spec(prepare_spec)
+        prepare_spec.loader.exec_module(prepare)
+        fixture = "PREFIX\n    public nonisolated func performBootSequence() async {\nOLD\n}\n}"
+        result = prepare.patch_boot(fixture)
+        self.assertLess(result.index('migrateLegacyFiles()'), result.index('guard let pairing ='))
+        self.assertLess(result.index('NativeMutationGate.withLease'), result.index('migrateLegacyFiles()'))
+        self.assertIn('if !PairingFileManager.shared.hasPairingFile()', result)
+
     def test_every_transformation_input_is_hash_pinned(self):
         self.assertEqual(set(m.BLOBS), {m.PAIR, *m.PATCHES})
         self.assertTrue(all(len(value) == 40 for value in m.BLOBS.values()))

@@ -143,6 +143,11 @@ def patch_boot(source: str) -> str:
         // Ordinary UI boot must not race headless work or probe JIT servers.
         do {
             try await NativeMutationGate.withLease {
+                // Boot can race the detached database-maintenance task. Migrate
+                // a bootstrap record before deciding that pairing is missing.
+                if !PairingFileManager.shared.hasPairingFile() {
+                    try PairingFileManager.shared.migrateLegacyFiles()
+                }
                 guard let pairing = PairingFileManager.shared.fetchPairingFile() else {
                     self.needsPairingPrompt = true
                     return
