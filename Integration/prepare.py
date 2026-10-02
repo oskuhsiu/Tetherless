@@ -73,7 +73,6 @@ def patch_runner(source: str) -> str:
         "            try await self.performWithNativeLease(operations, handler: handler, group: group)\n" \
         "        }\n    }\n\n" + signature.replace("func perform(", "private func performWithNativeLease(")
     source = replace_once(source, signature, replacement)
-    # Serial device operations also avoid same-group parallel profile writes.
     parallel = """        try await withThrowingTaskGroup(of: Void.self) { taskGroup in
             for operation in operations {
                 taskGroup.addTask {
@@ -114,9 +113,9 @@ def patch_app(source: str) -> str:
         #if os(iOS)
         if #available(iOS 17.0, *) { NativeRenewalBackground.register() }
         #endif""")
-    # Remove lifecycle calls as well as disabling the shared service implementation.
+    # Includes the legacy background fetch callback, not just UI lifecycle calls.
     call = "        BackgroundServiceManager.ensureBackgroundServicesStarted()"
-    if source.count(call) != 3:
+    if source.count(call) != 4:
         raise ValueError("Background service lifecycle call count changed")
     source = source.replace(call, "        // Tetherless does not use audio/location keepalive.")
     source = replace_once(source, "        consoleLog.startCapturing()", "        // Persistent full-console capture disabled in Tetherless.")
@@ -157,6 +156,35 @@ def patch_boot(source: str) -> str:
     }
 }
 """
+
+
+def patch_legacy_fetch(source: str) -> str:
+    start = "    func application(_ application: UIApplication, performFetchWithCompletionHandler backgroundFetchCompletionHandler: @escaping (UIBackgroundFetchResult) -> Void)"
+    end = "    func performBackgroundFetch(backgroundFetchCompletionHandler:"
+    if source.count(start) != 1 or source.count(end) != 1:
+        raise ValueError("Legacy background fetch boundary changed")
+    prefix, tail = source.split(start)
+    discarded, suffix = tail.split(end)
+    if "BackgroundTaskManager.shared.performExtendedBackgroundTask" not in discarded:
+        raise ValueError("Unexpected legacy background implementation")
+    return prefix + start + """
+    {
+        #if os(iOS)
+        if #available(iOS 17.0, *) {
+            Task {
+                do {
+                    let report = try await NativeRenewalRuntime.shared.run(trigger: .background)
+                    backgroundFetchCompletionHandler(report.failures.isEmpty && report.unverified == 0
+                        ? (report.verified > 0 ? .newData : .noData) : .failed)
+                } catch { backgroundFetchCompletionHandler(.failed) }
+            }
+            return
+        }
+        #endif
+        backgroundFetchCompletionHandler(.noData)
+    }
+
+""" + end + suffix
 
 
 def patch_services(source: str) -> str:
@@ -220,7 +248,7 @@ def prepare(root: Path) -> Path:
                     ignore=shutil.ignore_patterns(".git", ".build", "DerivedData", "xcuserdata"))
     for path, patch in ((PROFILE_PATH, patch_profile), (INTENT_PATH, patch_intent),
                         (RUNNER_PATH, patch_runner), (PORTAL_PATH, patch_portal),
-                        (APP_PATH, patch_app), (TAB_PATH, patch_tabs), (BOOT_PATH, patch_boot),
+                        (APP_PATH, lambda text: patch_legacy_fetch(patch_app(text))), (TAB_PATH, patch_tabs), (BOOT_PATH, patch_boot),
                         (SERVICE_PATH, patch_services)):
         destination = output / path
         destination.write_text(patch(destination.read_text()), encoding="utf-8")

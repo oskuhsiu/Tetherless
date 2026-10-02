@@ -40,11 +40,19 @@ class PatchTests(unittest.TestCase):
         self.assertIn("NativeMutationGate.withLease", result)
         self.assertNotIn("startJIT()", result)
     def test_lifecycle_keeps_registration_before_finish(self):
-        fixture = "        UserDefaults.registerDefaults()\n" + "        BackgroundServiceManager.ensureBackgroundServicesStarted()\n" * 3 + "        consoleLog.startCapturing()\n        UserDefaults.enableGlobalLogging()\nreturn true"
+        fixture = "        UserDefaults.registerDefaults()\n" + "        BackgroundServiceManager.ensureBackgroundServicesStarted()\n" * 4 + "        consoleLog.startCapturing()\n        UserDefaults.enableGlobalLogging()\nreturn true"
         result = prepare.patch_app(fixture)
         self.assertIn("NativeRenewalBackground.register()", result)
         self.assertNotIn("ensureBackgroundServicesStarted()", result)
         self.assertNotIn("consoleLog.startCapturing()", result)
+    def test_legacy_fetch_routes_to_same_runtime(self):
+        fixture = ("prefix\n    func application(_ application: UIApplication, performFetchWithCompletionHandler backgroundFetchCompletionHandler: @escaping (UIBackgroundFetchResult) -> Void)\n"
+                   "    { BackgroundTaskManager.shared.performExtendedBackgroundTask {} }\n"
+                   "    func performBackgroundFetch(backgroundFetchCompletionHandler: callback) {}")
+        result = prepare.patch_legacy_fetch(fixture)
+        self.assertIn("NativeRenewalRuntime.shared.run(trigger: .background)", result)
+        self.assertNotIn("BackgroundTaskManager.shared.performExtendedBackgroundTask", result)
+        self.assertIn("func performBackgroundFetch", result)
     def test_native_overlay_has_no_foreground_escalation(self):
         source = (Path(__file__).parents[1] / "Native/TetherlessRefreshIntent.swift").read_text()
         self.assertIn("openAppWhenRun = false", source)
@@ -64,10 +72,7 @@ class KeepaliveTests(unittest.TestCase):
         self.assertIn("func prepare() async -> Bool { false }", result)
         self.assertIn("static func ensureBackgroundServicesStarted() -> Bool", result)
         self.assertIn("isBackgroundServiceEnabled = false", result)
-
     def test_service_boundary_drift_fails_closed(self):
-        with self.assertRaises(ValueError):
-            prepare.patch_services("unexpected upstream")
-
+        with self.assertRaises(ValueError): prepare.patch_services("unexpected upstream")
 
 if __name__ == "__main__": unittest.main()
