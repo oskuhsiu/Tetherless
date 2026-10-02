@@ -3,6 +3,7 @@
 from pathlib import Path
 import hashlib
 import sys
+import subprocess
 
 DOWNLOAD = 'SideStore/Core/Operations/StandaloneOperations/DownloadAppOperation.swift'
 
@@ -53,5 +54,6 @@ def apply(root: Path):
         if actual != expected:
             raise ValueError('Unreviewed prepared network source: ' + path)
         file.write_text(patch_download(raw.decode()))
+    subprocess.run([sys.executable, str(Path(__file__).with_name("auth_safety.py")), str(root)], check=True)
 
 if __name__ == '__main__': apply(Path(sys.argv[1]))

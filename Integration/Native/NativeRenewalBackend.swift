@@ -54,7 +54,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         throw RenewalFailure.unavailable
         #else
         try await DatabaseManager.shared.start()
-        guard AuthManager.shared.isAuthenticated else { throw RenewalFailure.needsAuthentication }
+        _ = try NativeAuthenticationStore.ready() // Preserve storage failures; do not mislabel them as login expiry.
         guard UserDefaults.standard.useOnDeviceAnisette,
               !CellularRefreshManager.shared.isEnabled else { throw RenewalFailure.needsForeground }
         guard await MainActor.run(body: { ConnectionConfig.shared.useLocalVPN }) else {
@@ -270,15 +270,14 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
 
     private func appleSession() async throws -> ALTAppleAPISession {
         try transport.checkBudget()
-        guard let dsid = Keychain.shared.appleIDAdsid, !dsid.isEmpty,
-              let token = Keychain.shared.appleIDXcodeToken, !token.isEmpty else {
-            throw RenewalFailure.needsAuthentication
-        }
+        let account = try NativeAuthenticationStore.ready()
+        guard let credentials = account.credentials else { throw RenewalFailure.needsAuthentication }
         // Explicit local provider; a settings change cannot select remote fallback.
         let anisette = try await OnDeviceAnisetteManager.shared.fetchAnisetteData()
         let version = await AnisetteConfigManager.shared.resolvedXcodeVersion()
         try transport.checkBudget()
-        return ALTAppleAPISession(dsid: dsid, authToken: token, anisetteData: anisette, xcodeVersion: version)
+        try NativeAuthenticationStore.assertCurrent(account)
+        return ALTAppleAPISession(dsid: credentials.dsid, authToken: credentials.token, anisetteData: anisette, xcodeVersion: version)
     }
 
     private static func entitlementBytes(_ profile: ALTProvisioningProfile) throws -> Data {

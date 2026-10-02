@@ -117,6 +117,9 @@ actor NativeRenewalRuntime {
     nonisolated static func classify(_ error: Error) -> RenewalFailure {
         if let error = error as? RenewalFailure { return error }
         if error is CancellationError { return .cancelled }
+        if let failure = error as? AuthenticationStorageFailure {
+            return [.notReady, .staleAttempt].contains(failure) ? .needsAuthentication : .storageUnavailable
+        }
         if let error = error as? ProfileBatchFailure {
             switch error {
             case .identityChanged: return .identityChanged
