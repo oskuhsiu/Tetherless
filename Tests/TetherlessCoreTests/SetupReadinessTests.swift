@@ -62,3 +62,68 @@ struct SetupStepTests {
         #expect(state.title == "Setup is not finished")
     }
 }
+
+@Suite("Stage-specific setup observations do not turn unreadable items into missing items")
+struct SetupObservationTests {
+    @Test func emptyReadableInstallationIsIncompleteNotFailed() {
+        let value = SetupReadiness.observing(renewalPermitted: false, localAnisetteSelected: true,
+            account: { false }, signer: { false }, pairing: { false })
+        #expect(!value.localObservationFailed)
+        #expect(value.title == "Setup is not finished")
+        for stage in [SetupObservationIssue.Stage.account, .signingKey, .pairing] {
+            #expect(value.observationLabel(for: stage) == "missing")
+        }
+    }
+    @Test func failedAccountStopsLaterReadsAndNeverBecomesMissing() {
+        var reads = 0
+        let value = SetupReadiness.observing(renewalPermitted: false, localAnisetteSelected: true,
+            account: { throw AuthenticationStorageFailure.unavailable },
+            signer: { reads += 1; return true }, pairing: { reads += 1; return true })
+        #expect(reads == 0)
+        #expect(value.observationIssue?.diagnosticCode == "setup/account/storage")
+        #expect(value.observationLabel(for: .account) == "unavailable")
+        #expect(value.observationLabel(for: .signingKey) == "not checked")
+        #expect(!value.canAttemptVerification)
+    }
+    @Test func failedSignerRetainsOnlyAlreadyObservedAccount() {
+        let value = SetupReadiness.observing(renewalPermitted: true, localAnisetteSelected: true,
+            account: { true }, signer: { throw AuthenticationStorageFailure.invalidRecord }, pairing: { true })
+        #expect(value.observationIssue?.diagnosticCode == "setup/signingKey/invalidRecord")
+        #expect(value.observationLabel(for: .account) == "present")
+        #expect(value.observationLabel(for: .signingKey) == "unavailable")
+        #expect(value.observationLabel(for: .pairing) == "not checked")
+        #expect(!value.canAttemptVerification)
+    }
+    @Test func malformedPairingIsNotAbsentOrReset() {
+        let value = SetupReadiness.observing(renewalPermitted: true, localAnisetteSelected: true,
+            account: { true }, signer: { true }, pairing: { throw PrivateFileError.invalidContent })
+        #expect(value.observationIssue?.diagnosticCode == "setup/pairing/invalidRecord")
+        #expect(!value.canAttemptVerification)
+        #expect(value.observationLabel(for: .pairing) == "unavailable")
+    }
+    @Test func lockContentionHasSpecificRetryAdvice() {
+        var value = SetupReadiness()
+        value.recordFailure(RenewalFailure.busy, at: .access)
+        #expect(value.observationIssue?.diagnosticCode == "setup/access/busy")
+        #expect(value.detail.contains("Another operation"))
+        #expect(value.observationLabel(for: .account) == "not checked")
+    }
+    @Test func arbitraryErrorsCannotLeakToDiagnosticText() {
+        struct SecretError: Error, CustomStringConvertible {
+            var description: String { "token SECRET /private/path account@example.com" }
+        }
+        let issue = SetupObservationIssue(stage: .signingKey, error: SecretError())
+        #expect(issue.diagnosticCode == "setup/signingKey/storage")
+        for forbidden in ["SECRET", "/private/path", "account@example.com"] {
+            #expect(!issue.detail.contains(forbidden))
+        }
+    }
+    @Test func completeObservationStillNeedsLiveVerification() {
+        let value = SetupReadiness.observing(renewalPermitted: true, localAnisetteSelected: true,
+            account: { true }, signer: { true }, pairing: { true })
+        #expect(value.canAttemptVerification)
+        #expect(value.title == "Ready for a renewal check")
+        #expect(value.observationIssue == nil)
+        #expect(value.detail.contains("still need verification"))
+    }
+}

@@ -52,11 +52,21 @@ def prepare(identifier: str):
     record(simulatorID=identifier)
     developer = subprocess.check_output(['xcode-select', '-p'], text=True, timeout=15).strip()
     gui = str(Path(developer) / 'Applications/Simulator.app')
-    # simctl boot alone does not establish the GUI's screen surface.
+    # Start the device through one owner. Starting Simulator.app concurrently
+    # with bootstatus -b can race and fail with SimError 405 (already Booted).
+    listing = subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', '--json'],
+                                      text=True, timeout=30)
+    devices = [item for group in json.loads(listing)['devices'].values() for item in group
+               if item['udid'] == identifier]
+    if len(devices) != 1 or devices[0]['state'] not in ('Shutdown', 'Booting', 'Booted'):
+        raise RuntimeError('Selected Simulator has an unsupported boot state')
+    if devices[0]['state'] == 'Shutdown':
+        command(['xcrun', 'simctl', 'boot', identifier], 'native-simulator-prepare.log', 120)
+    command(['xcrun', 'simctl', 'bootstatus', identifier],
+            'native-simulator-prepare.log', 300)
+    # The GUI must supply a screen surface, but only after CLI boot has finished.
     command(['open', '-a', gui, '--args', '-CurrentDeviceUDID', identifier],
             'native-simulator-prepare.log', 30)
-    command(['xcrun', 'simctl', 'bootstatus', identifier, '-b'],
-            'native-simulator-prepare.log', 300)
     # Distinguish an unavailable renderer from a failure in the product UI.
     command(['xcrun', 'simctl', 'io', identifier, 'screenshot', 'native-simulator-home.png'],
             'native-simulator-prepare.log', 120)

@@ -15,6 +15,7 @@ struct OnboardingView: View {
     @State private var showImporter = false
     @State private var status: String?
     @State private var readiness = SetupReadiness()
+    @State private var observationGeneration = UUID()
     @AppStorage("tetherless.autorenew.enabled") private var renewalPermitted = false
 
     var body: some View {
@@ -96,7 +97,7 @@ struct OnboardingView: View {
         case .pairing:
             SwiftUI.Section {
                 Text("Import the device's pairing record from your authorized first-install process. A saved record is not proof of a live connection.")
-                observedRow("Protected pairing record", present: readiness.pairingStored)
+                observedRow("Protected pairing record", present: readiness.pairingStored, component: .pairing)
                 SwiftUI.Button("Choose pairing file") { showImporter = true }
                     .disabled(working).accessibilityIdentifier("onboarding.importPairing")
                 Text("Keep pairing files private. Tetherless stores its copy locally and does not upload it. A computer may be needed once for bootstrap on your supported setup.")
@@ -121,8 +122,8 @@ struct OnboardingView: View {
         case .account:
             SwiftUI.Section {
                 Text("Sign in with a dedicated Apple Account and complete Apple's verification. No password or verification code belongs in GitHub issues, chat, or diagnostics.")
-                observedRow("Locally saved account", present: readiness.accountStored)
-                observedRow("Local signing key", present: readiness.signingKeyStored)
+                observedRow("Locally saved account", present: readiness.accountStored, component: .account)
+                observedRow("Local signing key", present: readiness.signingKeyStored, component: .signingKey)
                 SwiftUI.Button(readiness.accountStored ? "Check or repair sign-in" : "Sign in") {
                     perform {
                         try await DatabaseManager.shared.start()
@@ -160,10 +161,10 @@ struct OnboardingView: View {
         case .review:
             SwiftUI.Section {
                 Text(readiness.title).font(.headline).accessibilityIdentifier("onboarding.readiness")
-                Text(readiness.detail)
-                observedRow("Protected pairing record", present: readiness.pairingStored)
-                observedRow("Locally saved account", present: readiness.accountStored)
-                observedRow("Local signing key", present: readiness.signingKeyStored)
+                Text(readiness.detail).accessibilityIdentifier("onboarding.readinessDetail")
+                observedRow("Protected pairing record", present: readiness.pairingStored, component: .pairing)
+                observedRow("Locally saved account", present: readiness.accountStored, component: .account)
+                observedRow("Local signing key", present: readiness.signingKeyStored, component: .signingKey)
                 observedRow("On-device Anisette selected", present: readiness.localAnisetteSelected)
                 observedRow("Unattended renewal permitted", present: renewalPermitted)
                 Text("Next: use Auto Renewal to run an explicit check, then verify your authorized Shortcut while the screen is locked. A manual check does not count as an unattended run.")
@@ -172,23 +173,34 @@ struct OnboardingView: View {
             }
         }
     }
-    private func observedRow(_ title: String, present: Bool) -> some View {
-        SwiftUI.Label(present ? "\(title): present" : "\(title): missing",
-                      systemImage: present ? "checkmark.circle" : "exclamationmark.circle")
+    private func observedRow(_ title: String, present: Bool,
+                             component: SetupObservationIssue.Stage? = nil) -> some View {
+        let label = component.map { readiness.observationLabel(for: $0) } ?? (present ? "present" : "missing")
+        return SwiftUI.Label("\(title): \(label)",
+                             systemImage: label == "present" ? "checkmark.circle" : "exclamationmark.circle")
     }
     @MainActor private func reload() async {
+        let generation = UUID()
+        observationGeneration = generation
         var facts = SetupReadiness()
+        let allowed = renewalPermitted
+        let localAnisette = UserDefaults.standard.useOnDeviceAnisette
+        do {
+            facts = try await NativeMutationGate.withLease {
+                SetupReadiness.observing(renewalPermitted: allowed, localAnisetteSelected: localAnisette,
+                    account: { try NativeAuthenticationStore.make().read()?.phase == .ready },
+                    signer: {
+                        let signer = try CertificateManager.shared.loadActiveCertificate()
+                        return signer.map { !$0.certificate.privateKey.isEmpty && $0.certificate.expiryDate > Date() } ?? false
+                    },
+                    pairing: { try PairingFileManager.shared.fetchPairingFileVerified() != nil })
+            }
+        } catch { facts.recordFailure(error, at: .access) }
+        // SwiftUI cancels prior step tasks; a stale result must not replace the
+        // current observation or an explicitly changed consent value.
+        guard !Task.isCancelled, observationGeneration == generation else { return }
         facts.renewalPermitted = renewalPermitted
         facts.localAnisetteSelected = UserDefaults.standard.useOnDeviceAnisette
-        do {
-            let stored = try await NativeMutationGate.withLease { () -> (Bool, Bool, Bool) in
-                let account = try NativeAuthenticationStore.make().read()
-                let signer = try CertificateManager.shared.loadActiveCertificate()
-                return (PairingFileManager.shared.hasPairingFile(), account?.phase == .ready,
-                        signer.map { !$0.certificate.privateKey.isEmpty && $0.certificate.expiryDate > Date() } ?? false)
-            }
-            facts.pairingStored = stored.0; facts.accountStored = stored.1; facts.signingKeyStored = stored.2
-        } catch { facts.localObservationFailed = true }
         readiness = facts
     }
     @MainActor private func perform(_ operation: @escaping @MainActor () async throws -> Void) {

@@ -36,4 +36,27 @@ class SmokeEvidenceTests(unittest.TestCase):
         self.assertIn('native-simulator-prepare.log',source)
         self.assertIn('native-simulator-install.log',source)
 
+class SimulatorBootOrderingTests(unittest.TestCase):
+    def prepare_commands(self, state):
+        listing=json.dumps({'devices': {'iOS': [{'udid': 'selected', 'state': state}]}})
+        with patch.object(m.subprocess, 'check_output', side_effect=['/Developer', listing]), \
+             patch.object(m, 'command') as command, patch.object(m, 'record'), patch.object(m, 'ensure_png'):
+            m.prepare('selected')
+            return [call.args[0] for call in command.call_args_list]
+    def test_cli_boot_completes_before_gui_without_second_boot_request(self):
+        commands=self.prepare_commands('Shutdown')
+        self.assertEqual(commands[0], ['xcrun', 'simctl', 'boot', 'selected'])
+        self.assertEqual(commands[1], ['xcrun', 'simctl', 'bootstatus', 'selected'])
+        self.assertEqual(commands[2][0], 'open')
+        self.assertEqual(commands[3][2], 'io')
+    def test_running_or_booting_device_is_only_monitored(self):
+        for state in ['Booted', 'Booting']:
+            with self.subTest(state=state):
+                commands=self.prepare_commands(state)
+                self.assertEqual(commands[0], ['xcrun', 'simctl', 'bootstatus', 'selected'])
+                self.assertEqual(commands[1][0], 'open')
+                self.assertFalse(any('-b' in command for command in commands))
+    def test_unavailable_state_does_not_launch_or_claim_ready(self):
+        with self.assertRaises(RuntimeError): self.prepare_commands('Unavailable')
+
 if __name__ == '__main__': unittest.main()

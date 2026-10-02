@@ -10,6 +10,8 @@ public struct SetupReadiness: Equatable, Sendable {
     public var localAnisetteSelected = false
     public var renewalPermitted = false
     public var localObservationFailed = false
+    public private(set) var observationIssue: SetupObservationIssue?
+    public private(set) var observedComponents: Set<SetupObservationIssue.Stage> = []
     public init() {}
     public var canAttemptVerification: Bool {
         !localObservationFailed && pairingStored && accountStored && signingKeyStored &&
@@ -20,11 +22,74 @@ public struct SetupReadiness: Equatable, Sendable {
         return canAttemptVerification ? "Ready for a renewal check" : "Setup is not finished"
     }
     public var detail: String {
+        if let issue = observationIssue { return issue.detail }
         if localObservationFailed { return "Existing records were not reset. Retry after the current operation finishes." }
         if canAttemptVerification {
             return "Local prerequisites are present. A live renewal check and your Shortcuts automation still need verification."
         }
         return "You can explore Tetherless now and return to the missing steps. Automatic renewal is not ready."
+    }
+    /// Runs under the caller's mutation lease. An unreadable item is not missing,
+    /// and later reads do not run after a failure. No credential data is retained.
+    public static func observing(renewalPermitted: Bool, localAnisetteSelected: Bool,
+                                 account: () throws -> Bool, signer: () throws -> Bool,
+                                 pairing: () throws -> Bool) -> Self {
+        var result = Self()
+        result.renewalPermitted = renewalPermitted
+        result.localAnisetteSelected = localAnisetteSelected
+        let stages: [SetupObservationIssue.Stage] = [.account, .signingKey, .pairing]
+        for stage in stages {
+            do {
+                switch stage {
+                case .account: result.accountStored = try account()
+                case .signingKey: result.signingKeyStored = try signer()
+                case .pairing: result.pairingStored = try pairing()
+                case .access: break
+                }
+                result.observedComponents.insert(stage)
+            } catch { result.recordFailure(error, at: stage); break }
+        }
+        return result
+    }
+    public mutating func recordFailure(_ error: Error, at stage: SetupObservationIssue.Stage) {
+        localObservationFailed = true
+        observationIssue = SetupObservationIssue(stage: stage, error: error)
+    }
+    public func observationLabel(for stage: SetupObservationIssue.Stage) -> String {
+        if observationIssue?.stage == stage { return "unavailable" }
+        guard observedComponents.contains(stage) else { return "not checked" }
+        switch stage {
+        case .account: return accountStored ? "present" : "missing"
+        case .signingKey: return signingKeyStored ? "present" : "missing"
+        case .pairing: return pairingStored ? "present" : "missing"
+        case .access: return "not checked"
+        }
+    }
+
+}
+
+/// Allowlisted stage/category only. Never stores localized errors, paths, keys,
+/// account identifiers, server responses or other arbitrary diagnostic strings.
+public struct SetupObservationIssue: Equatable, Sendable {
+    public enum Stage: String, Sendable { case access, account, signingKey, pairing }
+    public enum Category: String, Sendable { case busy, invalidRecord, storage, cancelled }
+    public let stage: Stage
+    public let category: Category
+    public init(stage: Stage, error: Error) {
+        self.stage = stage
+        if error is CancellationError { category = .cancelled }
+        else if (error as? RenewalFailure) == .busy { category = .busy }
+        else if let value = error as? AuthenticationStorageFailure,
+                [.invalidRecord, .unsupportedVersion, .readbackMismatch].contains(value) { category = .invalidRecord }
+        else if let value = error as? PrivateFileError,
+                [.invalidContent, .unsafeFile, .conflict, .changedDuringRead].contains(value) { category = .invalidRecord }
+        else { category = .storage }
+    }
+    public var diagnosticCode: String { "setup/" + stage.rawValue + "/" + category.rawValue }
+    public var detail: String {
+        let advice = category == .busy ? "Another operation is using the local records. Retry after it finishes." :
+            "The local check did not complete. Existing records were not reset; unlock the device and retry."
+        return advice + " Diagnostic: " + diagnosticCode
     }
 }
 

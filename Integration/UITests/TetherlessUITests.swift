@@ -50,7 +50,7 @@ final class TetherlessUITests: XCTestCase {
         app.buttons["onboarding.next"].tap()
         let readiness = app.staticTexts["onboarding.readiness"]
         XCTAssertTrue(readiness.waitForExistence(timeout: 5))
-        XCTAssertEqual(readiness.label, "Setup is not finished")
+        XCTAssertEqual(readiness.label, "Setup is not finished", app.staticTexts["onboarding.readinessDetail"].label)
         XCTAssertFalse(app.staticTexts["You're All Set!"].exists)
         capture(app, "04-review-incomplete")
         app.buttons["onboarding.back"].tap()
@@ -77,7 +77,7 @@ final class TetherlessUITests: XCTestCase {
         resume.tap()
         XCTAssertTrue(title.waitForExistence(timeout: 10))
         XCTAssertEqual(title.label, "Review setup")
-        XCTAssertEqual(app.staticTexts["onboarding.readiness"].label, "Setup is not finished")
+        XCTAssertEqual(app.staticTexts["onboarding.readiness"].label, "Setup is not finished", app.staticTexts["onboarding.readinessDetail"].label)
         app.buttons["onboarding.back"].tap()
         XCTAssertTrue(consent.waitForExistence(timeout: 5))
         XCTAssertEqual(consent.value as? String, "0")

@@ -19,7 +19,7 @@ class OnboardingIntegrationTests(unittest.TestCase):
         self.assertNotIn('ProcessInfo.processInfo.arguments',text)
         self.assertNotIn("You're All Set",text)
         self.assertIn('skipResign: false',text)
-        self.assertIn('account?.phase == .ready',text)
+        self.assertIn('read()?.phase == .ready',text)
         self.assertIn('A manual check does not count as an unattended run.',text)
     def test_wizard_completion_does_not_grant_permission(self):
         text=(ROOT/'Overrides/OnboardingView.swift').read_text().split('private func finish()')[1]
@@ -96,3 +96,13 @@ func finishLaunching() {
                     module.apply(root)
             for path,data in before.items():
                 self.assertEqual((root/path).read_bytes(),data)
+
+    def test_readiness_reports_stages_without_swallowing_pairing_errors(self):
+        text=(ROOT/'Overrides/OnboardingView.swift').read_text()
+        self.assertIn('SetupReadiness.observing(',text)
+        self.assertIn('fetchPairingFileVerified()',text)
+        self.assertNotIn('hasPairingFile()',text)
+        self.assertIn('facts.recordFailure(error, at: .access)',text)
+        self.assertIn('observationGeneration == generation',text)
+        self.assertIn('!Task.isCancelled',text)
+        self.assertIn('onboarding.readinessDetail',text)

@@ -64,21 +64,27 @@ final class PairingFileManager: NSObject {
                                   creationDate: attrs[.creationDate] as? Date, modificationDate: attrs[.modificationDate] as? Date)
     }
     nonisolated func fetchPairingFile(for mode: PairingProtocol) -> String? {
-        guard !UserDefaults.standard.isPairingReset else { return nil }
-        do {
-            let value = try store()
-            guard try !PairingReset.isMarked(in: value),
-                  let bytes = try value.read(name(mode)) else { return nil }
-            return try PairingRecord(data: bytes, expected: expected(mode)).content
-        } catch { return nil } // Fail closed; never fall back to Documents or logs.
+        try? fetchPairingFileVerified(preferred: mode)
     }
     nonisolated func fetchPairingFile(preferred: PairingProtocol? = nil) -> String? {
+        try? fetchPairingFileVerified(preferred: preferred)
+    }
+    /// Checked callers must distinguish absent/reset data from unreadable or
+    /// conflicting records. Compatibility callers above still fail closed.
+    nonisolated func fetchPairingFileVerified(preferred: PairingProtocol? = nil) throws -> String? {
         guard !UserDefaults.standard.isPairingReset else { return nil }
-        if let selected = preferred ?? preferredProtocol { return fetchPairingFile(for: selected) }
-        if let selected = persistedActiveProtocol { return fetchPairingFile(for: selected) }
-        // Bootstrap can provide exactly one file before a protocol is chosen.
-        let values = [PairingProtocol.lockdown, .rppairing].compactMap { fetchPairingFile(for: $0) }
-        return values.count == 1 ? values[0] : nil
+        let value = try store()
+        guard try !PairingReset.isMarked(in: value) else { return nil }
+        func read(_ mode: PairingProtocol) throws -> String? {
+            guard let bytes = try value.read(name(mode)) else { return nil }
+            return try PairingRecord(data: bytes, expected: expected(mode)).content
+        }
+        if let selected = preferred ?? preferredProtocol ?? persistedActiveProtocol {
+            return try read(selected)
+        }
+        let values = try [PairingProtocol.lockdown, .rppairing].compactMap { try read($0) }
+        guard values.count <= 1 else { throw PrivateFileError.conflict }
+        return values.first
     }
     @discardableResult
     nonisolated func parse(content: String, preferred: PairingProtocol? = nil) throws -> any PairingFile {
