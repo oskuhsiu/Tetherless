@@ -4,6 +4,7 @@ on:
     paths:
       - 'Sources/**'
       - 'Integration/**'
+      - 'Packages/**'
       - 'Vendor/**'
       - '.gitmodules'
       - '.github/workflows/native.yml'

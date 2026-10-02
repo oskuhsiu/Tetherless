@@ -63,7 +63,7 @@ jobs:
           p = Path('simulator-tests.log')
           if p.exists():
               lines = p.read_text(errors='replace').splitlines()
-              selected = [line for line in lines if 'error:' in line or 'Test run with' in line or 'TEST SUCCEEDED' in line or 'TEST FAILED' in line]
+              selected = [line for line in lines if 'error:' in line or 'recorded an issue' in line or 'Expectation failed' in line or 'Test run with' in line or 'TEST SUCCEEDED' in line or 'TEST FAILED' in line]
               print('\n'.join(selected[-100:] if selected else lines[-50:]))
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

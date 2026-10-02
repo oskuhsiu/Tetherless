@@ -1,0 +1,55 @@
+name: Adversarial archive integration
+on:
+  push:
+    paths: ['Packages/**', 'Integration/archive_safety.py', '.github/workflows/archive.yml']
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: archive-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  archive-tests:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Resolve only pinned archive dependency
+        working-directory: Packages/TetherlessArchive
+        run: |
+          swift --version
+          swift package --force-resolved-versions resolve
+          test "$(git -C .build/checkouts/ZIPFoundation rev-parse HEAD)" = 22787ffb59de99e5dc1fbfe80b19c97a904ad48d
+      - name: Debug real archive tests
+        working-directory: Packages/TetherlessArchive
+        run: swift test --force-resolved-versions > archive-debug.log 2>&1
+      - name: Release real archive tests
+        working-directory: Packages/TetherlessArchive
+        run: swift test --force-resolved-versions -c release > archive-release.log 2>&1
+      - name: Retain reviewed dependency sources and diagnostics
+        if: always()
+        working-directory: Packages/TetherlessArchive
+        run: |
+          if [ -d .build/checkouts/ZIPFoundation ]; then
+            git -C .build/checkouts/ZIPFoundation archive --format=tar.gz --output="$PWD/zipfoundation-source.tar.gz" HEAD
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in Path('.').glob('archive-*.log'):
+              print(path.name)
+              print('\n'.join(path.read_text(errors='replace').splitlines()[-80:]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: archive-integration-${{ github.sha }}
+          path: |
+            Packages/TetherlessArchive/archive-*.log
+            Packages/TetherlessArchive/zipfoundation-source.tar.gz
+            Packages/TetherlessArchive/Package.resolved
+          retention-days: 14
+          if-no-files-found: error

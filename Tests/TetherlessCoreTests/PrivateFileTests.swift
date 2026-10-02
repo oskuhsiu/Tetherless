@@ -105,7 +105,12 @@ struct PrivateFileTests {
         }
     }
     #if os(iOS) || os(tvOS)
-    @Test func actualIOSProtectionAndBackupExclusion() throws {
+    #if targetEnvironment(simulator)
+    @Test(.disabled("Simulator returned no Data Protection class; real-device readback is a separate acceptance test."))
+    #else
+    @Test
+    #endif
+    func actualIOSProtectionAndBackupExclusion() throws {
         try fixture { _, store in
             try store.write(Data([1]), named: "pair.plist")
             let attrs = try FileManager.default.attributesOfItem(atPath: store.root.appendingPathComponent("pair.plist").path)
