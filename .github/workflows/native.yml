@@ -1,0 +1,78 @@
+name: Native integration build
+on:
+  push:
+    paths:
+      - 'Sources/**'
+      - 'Integration/**'
+      - 'Vendor/**'
+      - '.gitmodules'
+      - '.github/workflows/native.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unsigned-build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Select newest installed stable Xcode
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          choices = []
+          for p in Path('/Applications').glob('Xcode*.app'):
+              m = re.fullmatch(r'Xcode_(\d+(?:\.\d+)*)\.app', p.name)
+              if m:
+                  choices.append((tuple(map(int, m[1].split('.'))), p))
+          if choices:
+              subprocess.run(['sudo', 'xcode-select', '-s', str(max(choices)[1] / 'Contents/Developer')], check=True)
+          PY
+          xcodebuild -version
+          swift --version
+      - name: Patch transformation tests
+        run: python3 -m unittest discover -s Integration/tests -v
+      - name: Verify pins and prepare native sources
+        run: python3 Integration/prepare.py
+      - name: Compile unsigned iOS app (not device validation)
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          xcodebuild build \
+            -project .generated/SideStore/AltStore.xcodeproj \
+            -scheme SideStore \
+            -configuration "$CONFIGURATION" \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath .generated/DerivedData \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            ORG_IDENTIFIER=com.SideStore > native-build.log 2>&1
+      - name: Summarize native compiler diagnostics
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('native-build.log')
+          if p.exists():
+              lines = p.read_text(errors='replace').splitlines()
+              indices = set()
+              for i, line in enumerate(lines):
+                  if 'error:' in line or 'BUILD SUCCEEDED' in line or 'BUILD FAILED' in line:
+                      indices.update(range(max(0, i-1), min(len(lines), i+5)))
+              for i in sorted(indices)[:300]:
+                  print(lines[i])
+              if not indices:
+                  print('\n'.join(lines[-50:]))
+          PY
