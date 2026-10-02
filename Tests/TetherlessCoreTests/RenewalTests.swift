@@ -171,7 +171,7 @@ private actor ScriptedBackend: RenewalBackend {
                    advance: TimeInterval = 86_400, blocked: Bool = false) {
         self.failure = failure; evidenceLevel = level; self.advance = advance; self.blocked = blocked
     }
-    func snapshot() -> [AppLease] { apps }
+    func snapshot() -> RenewalSnapshot { RenewalSnapshot(apps: apps) }
     func refresh(_ app: AppLease) async throws -> RenewalEvidence {
         calls.append(app.bundleID)
         if blocked { await withCheckedContinuation { continuation = $0 } }

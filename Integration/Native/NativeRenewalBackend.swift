@@ -21,6 +21,10 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         let identityDigest: String
         var components: Set<String> { Set(templates.keys) }
     }
+    private struct Discovery {
+        let descriptors: [Descriptor]
+        let failures: [String: RenewalFailure]
+    }
     private let transport: NativeProfileTransport
     private var descriptors: [String: Descriptor] = [:]
     private var deviceID = ""
@@ -31,7 +35,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         transport = NativeProfileTransport(deadline: deadline)
     }
 
-    func snapshot() async throws -> [AppLease] {
+    func snapshot() async throws -> RenewalSnapshot {
         do { return try await snapshotImpl() }
         catch { throw NativeRenewalRuntime.classify(error) }
     }
@@ -44,7 +48,7 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         catch { throw NativeRenewalRuntime.classify(error) }
     }
 
-    private func snapshotImpl() async throws -> [AppLease] {
+    private func snapshotImpl() async throws -> RenewalSnapshot {
         try transport.checkBudget()
         #if targetEnvironment(simulator)
         throw RenewalFailure.unavailable
@@ -74,9 +78,15 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         try transport.checkBudget()
         let context = DatabaseManager.shared.persistentContainer.newBackgroundContext()
         let localDeviceID = deviceID
-        let values: [Descriptor] = try await context.perform {
+        let discovery: Discovery = try await context.perform {
             let apps = InstalledApp.fetchAppsForRefreshingAll(in: context)
-            return try apps.map { app in
+            guard apps.count <= 256,
+                  apps.filter({ $0.bundleIdentifier == StoreApp.altstoreAppID }).count == 1,
+                  Set(apps.map(\.resignedBundleIdentifier)).count == apps.count,
+                  apps.allSatisfy({ ManagedBundleIdentifier.isSafe($0.resignedBundleIdentifier) }) else {
+                throw RenewalFailure.invalidEvidence
+            }
+            func describe(_ app: InstalledApp) throws -> Descriptor {
                 let isManager = app.bundleIdentifier == StoreApp.altstoreAppID
                 let bundleID = app.resignedBundleIdentifier
                 guard ManagedBundleIdentifier.isSafe(bundleID),
@@ -136,20 +146,40 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
                                   teamID: selectedTeam.identifier, certificateDER: certificateDER,
                                   certificateExpiry: certificate.expiryDate, templates: templates, identityDigest: digest)
             }
+            var values: [Descriptor] = []
+            var failures: [String: RenewalFailure] = [:]
+            for app in apps {
+                do { values.append(try describe(app)) }
+                catch {
+                    let failure = NativeRenewalRuntime.classify(error)
+                    if failure.isRunWide || failure.isStorageFailure || failure == .cancelled { throw failure }
+                    failures[app.resignedBundleIdentifier] = failure
+                }
+            }
+            return Discovery(descriptors: values, failures: failures)
         }
-        guard values.filter(\.isManager).count == 1,
-              Set(values.map(\.bundleID)).count == values.count else { throw RenewalFailure.invalidEvidence }
-        descriptors = Dictionary(uniqueKeysWithValues: values.map { ($0.bundleID, $0) })
+        descriptors = Dictionary(uniqueKeysWithValues: discovery.descriptors.map { ($0.bundleID, $0) })
         let installed = try await transport.readInstalledProfileBytes()
-        return try values.map {
-            try AppLease(bundleID: $0.bundleID, isManager: $0.isManager,
-                         effectiveExpiry: effectiveExpiry(of: $0, in: installed))
+        var leases: [AppLease] = []
+        var failures = discovery.failures
+        for descriptor in discovery.descriptors {
+            do {
+                leases.append(try AppLease(bundleID: descriptor.bundleID, isManager: descriptor.isManager,
+                    effectiveExpiry: effectiveExpiry(of: descriptor, in: installed),
+                    identityDigest: descriptor.identityDigest))
+            } catch {
+                let failure = NativeRenewalRuntime.classify(error)
+                if failure.isRunWide || failure.isStorageFailure || failure == .cancelled { throw failure }
+                failures[descriptor.bundleID] = failure
+            }
         }
+        return RenewalSnapshot(apps: leases, failures: failures)
         #endif
     }
 
     private func refreshImpl(_ app: AppLease) async throws -> RenewalEvidence {
         guard let descriptor = descriptors[app.bundleID], let team else { throw RenewalFailure.invalidEvidence }
+        guard app.identityDigest == descriptor.identityDigest else { throw RenewalFailure.identityChanged }
         try transport.checkBudget()
         let current = try effectiveExpiry(of: descriptor, in: await transport.readInstalledProfileBytes())
         if current > app.effectiveExpiry {
@@ -181,7 +211,8 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
     }
 
     private func reconcileImpl(_ pending: PendingRenewal) async throws -> RenewalEvidence? {
-        guard let descriptor = descriptors[pending.app.bundleID] else { throw RenewalFailure.identityChanged }
+        guard let descriptor = descriptors[pending.app.bundleID],
+              pending.app.identityDigest == descriptor.identityDigest else { throw RenewalFailure.identityChanged }
         let installed = try await transport.readInstalledProfileBytes()
         let current = try effectiveExpiry(of: descriptor, in: installed)
         if let batch = try NativeRenewalStorage.loadBatch(for: pending.app.bundleID),

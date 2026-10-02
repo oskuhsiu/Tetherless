@@ -8,7 +8,7 @@ struct NativeProfileTransport: ProfileBatchTransport {
 
     func checkBudget() throws {
         try Task.checkCancellation()
-        guard ContinuousClock.now < deadline else { throw RenewalFailure.cancelled }
+        guard ContinuousClock.now < deadline else { throw RenewalFailure.budgetExhausted }
     }
 
     func readInstalledProfileBytes() async throws -> [Data] {

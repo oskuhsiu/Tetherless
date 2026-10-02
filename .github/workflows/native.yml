@@ -7,6 +7,8 @@ on:
       - 'Vendor/**'
       - '.gitmodules'
       - '.github/workflows/native.yml'
+  pull_request:
+    branches: [develop]
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +47,20 @@ jobs:
         run: python3 -m unittest discover -s Integration/tests -v
       - name: Verify pins and prepare native sources
         run: python3 Integration/prepare.py
+      - name: Preserve prepared review sources (no binaries or Git credentials)
+        run: |
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          import tarfile
+          root = Path('.generated/SideStore')
+          suffixes = {'.swift', '.h', '.m', '.c', '.cpp', '.rs', '.json', '.resolved', '.plist', '.pbxproj', '.xcconfig', '.entitlements', '.xcscheme', '.md'}
+          with tarfile.open('native-review-source.tar.gz', 'w:gz') as archive:
+              for path in sorted(root.rglob('*')):
+                  if any(p in {'.git', '.swiftpm', 'xcuserdata'} or p.endswith('.xcframework') for p in path.parts):
+                      continue
+                  if path.is_file() and not path.is_symlink() and (path.suffix in suffixes or path.name == 'LICENSE'):
+                      archive.add(path, arcname=str(path.relative_to(root)), recursive=False)
+          PYCODE
       - name: Compile unsigned iOS app (not device validation)
         env:
           CONFIGURATION: ${{ matrix.configuration }}
@@ -76,3 +92,24 @@ jobs:
               if not indices:
                   print('\n'.join(lines[-50:]))
           PY
+      - name: Package unsigned build with provenance
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          python3 Integration/package_unsigned.py \
+            --app ".generated/DerivedData/Build/Products/$CONFIGURATION-iphoneos/SideStore.app" \
+            --output "artifacts/$CONFIGURATION" \
+            --commit "$SOURCE_COMMIT" --configuration "$CONFIGURATION"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-${{ matrix.configuration }}-${{ github.sha }}
+          path: |
+            artifacts/
+            native-build.log
+            native-review-source.tar.gz
+            .generated/SideStore/TETHERLESS_PREPARATION.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

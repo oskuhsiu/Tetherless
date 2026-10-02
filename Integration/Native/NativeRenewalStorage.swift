@@ -64,6 +64,33 @@ enum NativeRenewalStorage {
         #endif
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
     }
+    static func record(_ summary: RenewalSummary) throws -> RenewalTimeline {
+        let directory = try root()
+        let lease = try ProcessLease.acquire(at: directory.appendingPathComponent("evidence.lock"))
+        defer { lease.release() }
+        var value = try timeline()
+        try value.record(summary)
+        try write(value, to: directory.appendingPathComponent("timeline.json"))
+        return value
+    }
+    static func timeline() throws -> RenewalTimeline {
+        if let bytes = try read(root().appendingPathComponent("timeline.json")) {
+            let timeline: RenewalTimeline
+            do { timeline = try JSONDecoder().decode(RenewalTimeline.self, from: bytes) }
+            catch { throw RenewalFailure.corruptJournal }
+            try timeline.validate()
+            return timeline
+        }
+        // Non-destructive migration of the earlier single-run evidence format.
+        var timeline = RenewalTimeline()
+        if let bytes = try read(root().appendingPathComponent("last-run.json")) {
+            let summary: RenewalSummary
+            do { summary = try JSONDecoder().decode(RenewalSummary.self, from: bytes) }
+            catch { throw RenewalFailure.corruptJournal }
+            try timeline.record(summary)
+        }
+        return timeline
+    }
     static func loadBatch(for bundleID: String) throws -> ProfileBatch? {
         guard let bytes = try read(batchURL(bundleID)) else { return nil }
         do { return try JSONDecoder().decode(ProfileBatch.self, from: bytes) }

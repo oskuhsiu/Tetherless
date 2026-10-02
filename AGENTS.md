@@ -9,7 +9,7 @@ Complete implementation, native integration, build verification and all feasible
 - `develop` is the integration branch for ongoing development. Create new feature/fix branches from `develop` and target all development-stage PRs at `develop`, never `main`.
 - Continue existing feature work on its current branch and retarget its PR to `develop`; do not reset branches or discard existing commits to adopt this workflow.
 - `main` is reserved for release/stable integration. Promote `develop` to `main` only through a separate, explicitly approved release PR after the agreed acceptance gates.
-- A request to create or retarget a PR does not authorize merging it. Keep unfinished work in draft PRs; no automatic merge or force push.
+- The owner explicitly authorized merging existing and subsequent development PRs into `develop`, or committing directly to `develop` (2026-10-02). Prefer direct, tested commits for small coherent increments. Never force push. This authorization does not cover promotion to `main` or a stable release.
 - Before creating or updating a PR, verify its actual base branch. CI results must correspond to the relevant implementation commit and integration target; green checks are not physical-device acceptance.
 - The repository default branch and branch-protection settings are separate from PR targeting. Do not change them without an explicit request.
 
@@ -30,6 +30,6 @@ A personal/free Apple Account is primary. After first-time authorized setup, nor
 
 ## Repository and verification
 
-Work on feature branches and draft PRs until native integration gates pass. Preserve upstream licenses, copyrights and branding attribution; this is an independent derivative, not an official SideStore release. Do not submit automated contributions/issues to upstream maintainers. Never run upstream `make update` (`--remote`) or curl-to-shell recipes. Pin and review all dependency updates.
+Work directly on `develop` or use short-lived development PRs that are merged into `develop` after checks. In-progress integration is allowed; stable-release and device-acceptance claims still require their evidence. Preserve upstream licenses, copyrights and branding attribution; this is an independent derivative, not an official SideStore release. Do not submit automated contributions/issues to upstream maintainers. Never run upstream `make update` (`--remote`) or curl-to-shell recipes. Pin and review all dependency updates.
 
 Run `swift test`, `swift test -c release`, and `python3 -m unittest discover -s Integration/tests -v`. Run the unsigned native CI separately. Inspect actual logs and report failures precisely; do not call queued workflows successful. Keep `docs/STATUS.md` accurate and include a single consolidated acceptance procedure before device handoff.

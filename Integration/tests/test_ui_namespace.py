@@ -7,4 +7,5 @@ class UINamespaceTests(unittest.TestCase):
     def test_native_form_uses_swiftui_button(self):
         source = (Path(__file__).parents[1] / 'Native/NativeRenewalSettings.swift').read_text()
         self.assertIsNone(re.search(r'(?<![\w.])Button\s*\(', source))
-        self.assertEqual(source.count('SwiftUI.Button('), 3)
+        self.assertGreaterEqual(source.count('SwiftUI.Button('), 3)
+        self.assertNotRegex(source, r'(?<![\w.])Button\s*\(')

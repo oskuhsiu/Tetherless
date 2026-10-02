@@ -4,7 +4,7 @@ import Foundation
 public enum RenewalFailure: String, Error, Codable, Sendable {
     case busy, invalidInput, invalidEvidence, corruptJournal, unsupportedJournal
     case storageUnavailable, lockUnavailable, needsAuthentication, needsPairing
-    case needsForeground, unavailable, cancelled, noExtension, identityChanged
+    case needsForeground, unavailable, cancelled, noExtension, identityChanged, budgetExhausted
 }
 
 /// Public metadata only. Never put account names, UDIDs, passwords, tokens, keys,
@@ -13,14 +13,22 @@ public struct AppLease: Codable, Equatable, Sendable {
     public let bundleID: String
     public let isManager: Bool
     public let effectiveExpiry: Date
+    public let identityDigest: String?
 
-    public init(bundleID: String, isManager: Bool, effectiveExpiry: Date) throws {
+    public init(bundleID: String, isManager: Bool, effectiveExpiry: Date, identityDigest: String? = nil) throws {
         guard !bundleID.isEmpty, bundleID.utf8.count <= 255,
               bundleID.unicodeScalars.allSatisfy({
                   CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_").contains($0)
               }), effectiveExpiry.timeIntervalSince1970.isFinite else {
             throw RenewalFailure.invalidInput
         }
+        if let identityDigest {
+            guard identityDigest.count == 64,
+                  identityDigest.allSatisfy({ "0123456789abcdef".contains($0) }) else {
+                throw RenewalFailure.invalidInput
+            }
+        }
+        self.identityDigest = identityDigest
         self.bundleID = bundleID
         self.isManager = isManager
         self.effectiveExpiry = effectiveExpiry
@@ -90,10 +98,12 @@ public struct RenewalRecord: Codable, Equatable, Sendable {
 public struct RenewalState: Codable, Equatable, Sendable {
     public var schemaVersion: Int = 1
     public var records: [String: RenewalRecord] = [:]
+    public var gate: RenewalGate?
     public init() {}
 
     public func validate() throws {
         guard schemaVersion == 1 else { throw RenewalFailure.unsupportedJournal }
+        try gate?.validate()
         guard records.count <= 256 else { throw RenewalFailure.corruptJournal }
         for (id, record) in records {
             guard (0...1000).contains(record.consecutiveFailures) else { throw RenewalFailure.corruptJournal }
@@ -108,7 +118,7 @@ public struct RenewalState: Codable, Equatable, Sendable {
                 if let pending = record.pending {
                     guard pending.app.bundleID == id else { throw RenewalFailure.corruptJournal }
                     _ = try AppLease(bundleID: pending.app.bundleID, isManager: pending.app.isManager,
-                                     effectiveExpiry: pending.app.effectiveExpiry)
+                                     effectiveExpiry: pending.app.effectiveExpiry, identityDigest: pending.app.identityDigest)
                 }
             } catch { throw RenewalFailure.corruptJournal }
         }
@@ -120,10 +130,71 @@ public enum RenewalTrigger: String, Codable, Sendable {
 }
 
 public struct RenewalRunResult: Sendable {
+    public var observed: [AppLease] = []
+    /// nil means discovery never completed; do not interpret it as no apps.
+    public var managedIDs: [String]?
+    public var globalFailure: RenewalFailure?
     public var attempted: [String] = []
     public var verified: [String] = []
     public var appliedUnverified: [String] = []
     public var deferred: [String] = []
     public var failures: [String: RenewalFailure] = [:]
     public init() {}
+}
+
+/// A live snapshot can report an invalid target without inventing an expiry for
+/// it or preventing unrelated targets (especially the manager) from renewing.
+public struct RenewalSnapshot: Sendable {
+    public let apps: [AppLease]
+    public let failures: [String: RenewalFailure]
+    public init(apps: [AppLease], failures: [String: RenewalFailure] = [:]) {
+        self.apps = apps
+        self.failures = failures
+    }
+    public func validate() throws {
+        guard apps.count + failures.count <= 256,
+              Set(apps.map(\.bundleID)).count == apps.count,
+              Set(apps.map(\.bundleID)).isDisjoint(with: failures.keys),
+              failures.keys.allSatisfy(ManagedBundleIdentifier.isSafe),
+              failures.values.allSatisfy({ !$0.isRunWide && !$0.isStorageFailure && $0 != .cancelled }) else {
+            throw RenewalFailure.invalidEvidence
+        }
+        for app in apps {
+            _ = try AppLease(bundleID: app.bundleID, isManager: app.isManager,
+                             effectiveExpiry: app.effectiveExpiry, identityDigest: app.identityDigest)
+        }
+    }
+}
+
+/// Preflight failure has no app to attach to. Retain a separate run-wide gate
+/// so an expired session cannot cause another login attempt on every trigger.
+/// Optional in schema 1 for backwards-compatible decoding of existing journals.
+public struct RenewalGate: Codable, Equatable, Sendable {
+    public let failure: RenewalFailure
+    public let retryAfter: Date?
+    public let consecutiveFailures: Int
+    public init(failure: RenewalFailure, retryAfter: Date?, consecutiveFailures: Int) {
+        self.failure = failure
+        self.retryAfter = retryAfter
+        self.consecutiveFailures = consecutiveFailures
+    }
+    public var requiresInteraction: Bool { failure.requiresInteraction }
+    public func validate() throws {
+        guard (1...1000).contains(consecutiveFailures),
+              retryAfter.map({ $0.timeIntervalSince1970.isFinite }) ?? true else {
+            throw RenewalFailure.corruptJournal
+        }
+    }
+}
+
+public extension RenewalFailure {
+    var isStorageFailure: Bool {
+        [.storageUnavailable, .corruptJournal, .unsupportedJournal, .lockUnavailable].contains(self)
+    }
+    var requiresInteraction: Bool {
+        [.needsAuthentication, .needsPairing, .needsForeground, .identityChanged].contains(self)
+    }
+    /// An app's signing identity can differ from the manager's. A change in one
+    /// app must not block every other app; authentication/pairing really is shared.
+    var isRunWide: Bool { [.needsAuthentication, .needsPairing, .budgetExhausted].contains(self) }
 }

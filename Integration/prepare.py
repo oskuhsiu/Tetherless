@@ -125,7 +125,9 @@ def patch_tabs(source: str) -> str:
     return replace_once(source, marker, marker + """
         #if os(iOS)
         if #available(iOS 17.0, *) {
-            let renewal = UIHostingController(rootView: NativeRenewalSettings())
+            let renewal = UIHostingController(rootView: NativeRenewalSettings(
+                openAccountAndPairing: { [weak self] in self?.selectedIndex = Tab.settings.rawValue },
+                openAppLibrary: { [weak self] in self?.selectedIndex = Tab.myApps.rawValue }))
             renewal.tabBarItem = UITabBarItem(title: "Auto Renewal", image: UIImage(systemName: "arrow.triangle.2.circlepath"), tag: 0)
             self.viewControllers?[Tab.news.rawValue] = renewal
         }

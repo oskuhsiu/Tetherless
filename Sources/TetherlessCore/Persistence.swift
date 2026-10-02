@@ -15,8 +15,13 @@ public final class ProcessLease: @unchecked Sendable {
 
     public static func acquire(at url: URL) throws -> ProcessLease {
         guard url.isFileURL else { throw RenewalFailure.lockUnavailable }
-        let fd = open(url.path, O_CREAT | O_RDWR | O_CLOEXEC | O_NOFOLLOW, mode_t(0o600))
+        let fd = open(url.path, O_CREAT | O_RDWR | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, mode_t(0o600))
         guard fd >= 0 else { throw RenewalFailure.lockUnavailable }
+        var info = stat()
+        guard fstat(fd, &info) == 0, (info.st_mode & S_IFMT) == S_IFREG else {
+            _ = close(fd)
+            throw RenewalFailure.lockUnavailable
+        }
         guard flock(fd, LOCK_EX | LOCK_NB) == 0 else {
             let savedErrno = errno
             _ = close(fd)
@@ -57,7 +62,7 @@ public struct FileRenewalJournal: RenewalJournal {
               info.st_size >= 0, info.st_size <= 2_097_152 else { throw RenewalFailure.corruptJournal }
         let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: false)
         let data: Data
-        do { data = try handle.readToEnd() ?? Data() }
+        do { data = try handle.read(upToCount: 2_097_153) ?? Data() }
         catch { throw RenewalFailure.storageUnavailable }
         guard data.count <= 2_097_152 else { throw RenewalFailure.corruptJournal }
         let state: RenewalState

@@ -2,7 +2,7 @@
 import Foundation
 
 public protocol RenewalBackend: Sendable {
-    func snapshot() async throws -> [AppLease]
+    func snapshot() async throws -> RenewalSnapshot
     /// Must not silently revoke certificates, reinstall the manager or show UI.
     func refresh(_ app: AppLease) async throws -> RenewalEvidence
     /// Read back the device before retrying an interrupted transaction. Return nil
@@ -46,13 +46,60 @@ public actor RenewalEngine {
         defer { lease.release() }
         var state = try loadState() // Always read AFTER acquiring the process lock.
         guard state.schemaVersion == 1 else { throw RenewalFailure.unsupportedJournal }
-        let apps = try policy.ordered(try await backend.snapshot())
         var report = RenewalRunResult()
-        // Authentication/pairing repair is account/device-wide, not app-local.
-        if state.records.values.contains(where: {
-            $0.requiresInteraction && [.needsAuthentication, .needsPairing, .identityChanged].contains($0.failure)
-        }) {
+        // Do not contact Apple again until an explicit repair or retry window.
+        if let gate = state.gate,
+           gate.requiresInteraction || (gate.retryAfter.map { $0 > now() } ?? false) {
+            report.globalFailure = gate.failure
+            report.deferred = state.records.keys.sorted()
+            return report
+        }
+        let snapshot: RenewalSnapshot
+        do {
+            snapshot = try await backend.snapshot()
+            try snapshot.validate()
+        } catch {
+            if let failure = error as? RenewalFailure, failure.isStorageFailure { throw failure }
+            if error is CancellationError { throw CancellationError() }
+            let failure = error as? RenewalFailure ?? .unavailable
+            let count = min(state.gate?.consecutiveFailures ?? 0, 999) + 1
+            state.gate = RenewalGate(failure: failure,
+                retryAfter: policy.retryDate(failures: count, now: now()), consecutiveFailures: count)
+            try saveState(state)
+            throw failure
+        }
+        state.gate = nil
+        let apps = try policy.ordered(snapshot.apps)
+        report.observed = apps
+        report.managedIDs = (apps.map(\.bundleID) + snapshot.failures.keys).sorted()
+        let activeIDs = Set(report.managedIDs ?? [])
+        // Seed known state in memory; the first write-ahead save commits it. This
+        // is observed expiry, not a fabricated renewal or lastVerifiedAt value.
+        for app in apps {
+            var record = state.records[app.bundleID] ?? RenewalRecord()
+            record.lastKnownExpiry = app.effectiveExpiry
+            state.records[app.bundleID] = record
+        }
+        for (id, failure) in snapshot.failures {
+            var record = state.records[id] ?? RenewalRecord()
+            record.failure = failure
+            record.outcome = .failed
+            record.requiresInteraction = failure.requiresInteraction
+            record.consecutiveFailures = min(record.consecutiveFailures, 999) + 1
+            record.retryAfter = policy.retryDate(failures: record.consecutiveFailures, now: now())
+            state.records[id] = record // Keep any interrupted transaction intact.
+            report.failures[id] = failure
+        }
+        if !snapshot.failures.isEmpty { try saveState(state) }
+        // Only active account/device blockers are shared. Retain inactive records
+        // for recovery/history, but do not let an uninstalled app poison this run.
+        let blockers = state.records.filter {
+            activeIDs.contains($0.key) && $0.value.requiresInteraction &&
+            [.needsAuthentication, .needsPairing].contains($0.value.failure)
+        }
+        if !blockers.isEmpty {
             report.deferred = apps.map(\.bundleID)
+            for (id, record) in blockers { report.failures[id] = record.failure }
             return report
         }
 
@@ -61,17 +108,22 @@ public actor RenewalEngine {
             var record = state.records[app.bundleID] ?? RenewalRecord()
             if record.requiresInteraction || (record.retryAfter.map { $0 > now() } ?? false) {
                 report.deferred.append(app.bundleID)
+                if let failure = record.failure { report.failures[app.bundleID] = failure }
                 continue
             }
             do {
                 if let pending = record.pending {
+                    guard pending.app.isManager == app.isManager,
+                          pending.app.identityDigest == app.identityDigest else {
+                        throw RenewalFailure.identityChanged
+                    }
                     // Reconciliation remains mandatory even for a manual/force run.
                     if let evidence = try await backend.reconcile(pending) {
                         try evidence.validate(for: pending.app, now: now())
                         commit(evidence, record: &record)
                         state.records[app.bundleID] = record
                         try saveState(state)
-                        append(evidence, to: &report)
+                        append(evidence, app: app, to: &report)
                         continue
                     }
                     record.pending = nil
@@ -96,12 +148,12 @@ public actor RenewalEngine {
                 commit(evidence, record: &record)
                 state.records[app.bundleID] = record
                 try saveState(state)
-                append(evidence, to: &report)
+                append(evidence, app: app, to: &report)
             } catch {
                 // A storage failure must not be converted into a successful run.
                 // Keep the on-disk write-ahead record for next-run reconciliation.
                 if let failure = error as? RenewalFailure,
-                   [.storageUnavailable, .corruptJournal, .unsupportedJournal].contains(failure) {
+                   failure.isStorageFailure {
                     throw failure
                 }
                 let failure = error is CancellationError ? RenewalFailure.cancelled :
@@ -110,19 +162,28 @@ public actor RenewalEngine {
                 record.failure = failure
                 record.consecutiveFailures = min(max(record.consecutiveFailures, 0), 999) + 1
                 record.retryAfter = policy.retryDate(failures: record.consecutiveFailures, now: now())
-                record.requiresInteraction = [.needsAuthentication, .needsPairing, .needsForeground,
-                                              .identityChanged].contains(failure)
+                record.requiresInteraction = failure.requiresInteraction
                 // Failure after applying may be ambiguous. Do NOT discard pending:
                 // the backend must read back or explicitly request interaction.
                 if failure == .noExtension { record.pending = nil }
                 state.records[app.bundleID] = record
+                if [.needsAuthentication, .needsPairing].contains(failure) {
+                    state.gate = RenewalGate(failure: failure, retryAfter: record.retryAfter,
+                                            consecutiveFailures: record.consecutiveFailures)
+                }
                 try saveState(state)
                 report.failures[app.bundleID] = failure
                 if failure == .cancelled { throw CancellationError() }
                 // Account/pairing faults affect the whole run. Do not amplify them.
-                if [.needsAuthentication, .needsPairing, .identityChanged].contains(failure) { break }
+                if failure.isRunWide {
+                    report.globalFailure = failure
+                    let visited = Set(report.attempted + report.verified + report.appliedUnverified + report.deferred + Array(report.failures.keys))
+                    report.deferred += apps.filter { !visited.contains($0.bundleID) }.map(\.bundleID)
+                    break
+                }
             }
         }
+        try saveState(state)
         return report
     }
 
@@ -156,7 +217,13 @@ public actor RenewalEngine {
         try saveState(state)
     }
 
-    private func append(_ evidence: RenewalEvidence, to report: inout RenewalRunResult) {
+    private func append(_ evidence: RenewalEvidence, app: AppLease, to report: inout RenewalRunResult) {
+        if evidence.level == .deviceReadback,
+           let index = report.observed.firstIndex(where: { $0.bundleID == app.bundleID }),
+           let updated = try? AppLease(bundleID: app.bundleID, isManager: app.isManager,
+                                      effectiveExpiry: evidence.newExpiry, identityDigest: app.identityDigest) {
+            report.observed[index] = updated
+        }
         if evidence.level == .deviceReadback { report.verified.append(evidence.bundleID) }
         else { report.appliedUnverified.append(evidence.bundleID) }
     }
