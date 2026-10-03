@@ -45,7 +45,11 @@ The full standalone maintenance/settings/pairing/authentication mutation invento
 
 The streaming IPA validation/extraction boundary, path/link checks and per-transfer HTTP limits are implemented and tested. Aggregate disk/memory reservations, crash-abandoned staging cleanup, complete update-path coverage, binary supply-chain and redistribution inventory remain open. Runtime input checks, packaging checks and physical acceptance remain separate evidence levels.
 
-## Confirmed outstanding source findings — 2026-10-03
+## Original source findings and current follow-up — 2026-10-03
+
+Current follow-up: `3fbed9f` removes the identified SideSign authentication logs/raw-error paths and has passed native Debug/Release plus the complete signed-out setup/recovery UI. `b7b597f` adds mandatory package checksums, bounded ODA metadata/archive downloads and synchronized admission; its current verification is recorded in STATUS.md. Existing-cache trust/promotion, independent executable provenance and coherent Anisette identity persistence remain open. These fixes do not amount to an exhaustive native logging or binary supply-chain audit. See AUTHENTICATION_PRIVACY.md and ANISETTE_PACKAGE_INPUT.md.
+
+The observations below describe the pre-fix reviewed input, not a claim that all of those exact paths remain in the newer prepared output.
 
 These are code findings in the exact prepared `dd0b09c` Debug artifact (outer SHA-256 `dbcb612333e16d97dc016260f76918fd9ad53cf3ca635f3238e1890ef9c2e8d9`). They are **not fixed by certificate recovery**, not evidence of a compromise, and not exercised with live credentials. Keep them as pre-handoff blockers instead of treating an unsigned build or safe support export as a complete logging/supply-chain audit.
 

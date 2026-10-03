@@ -55,6 +55,14 @@ struct AnisettePackageInputTests {
         let third = try gate.acquire(); third.release()
     }
     @Test func errorsContainOnlyFixedCategories() {
-        #expect(!AnisettePackageFailure.invalidDigest.localizedDescription.contains("SYNTHETIC_TOKEN"))
+        let untrusted = "SYNTHETIC_TOKEN_SERVER_METADATA_18A7"
+        do {
+            _ = try AnisettePackageInput.digest(untrusted)
+            Issue.record("Malformed server digest was accepted")
+        } catch {
+            #expect(error as? AnisettePackageFailure == .invalidDigest)
+            #expect(!String(reflecting: error).contains(untrusted))
+            #expect(!error.localizedDescription.contains(untrusted))
+        }
     }
 }
