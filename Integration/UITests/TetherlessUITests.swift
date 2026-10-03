@@ -88,11 +88,15 @@ final class TetherlessUITests: XCTestCase {
         // consent or fabricating an observed successful background renewal.
         app.terminate(); app.launch()
         dismissPairingPrompt(app)
-        XCTAssertTrue(renewal.waitForExistence(timeout: 15)); renewal.tap()
+        XCTAssertTrue(renewal.waitForExistence(timeout: 15),
+                      "Relaunch must load the real shared database, not remain on Starting")
+        XCTAssertFalse(app.alerts["App Group Container Inaccessible"].exists)
+        renewal.tap()
         XCTAssertFalse(title.exists)
         let enabled = app.switches["renewal.allowUnattended"]
         XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
+        capture(app, "06-relaunch-database-ready")
     }
     /// SwiftUI Form virtualizes offscreen rows. Waiting for an absent row
     /// cannot reveal it on the SE-sized test device: scroll the actual Form,
