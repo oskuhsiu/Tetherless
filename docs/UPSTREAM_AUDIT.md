@@ -1,6 +1,6 @@
 # Pinned source and security audit
 
-Source review dated 2026-10-02. This is a targeted engineering review, not a full independent security certification. Findings refer to the fixed source below, not every version of the upstream product.
+Initial source review dated 2026-10-02; remaining-gate reconciliation updated 2026-10-03 against the prepared `dd0b09c` source. This is a targeted engineering review, not a full independent security certification. Findings refer to the fixed source below, not every version of the upstream product.
 
 ## Pinned sources
 
@@ -39,11 +39,31 @@ SideSign `ProvisioningProfile.swift` extracts XML from CMS bytes. Successful par
 
 The manager certificate comes from its running Mach-O. Other app identity uses successful-install metadata. External replacement requires enrollment. Dumped profile data and prepared batches are bounded, device-local, protected and excluded from support exports.
 
-The inherited `PairingFileManager` still uses Documents for pairing files and legacy import/migration behavior. A protected-storage migration and bounded import review remain required before handoff; the new profile-batch storage does not automatically secure this old path.
+The protected pairing-store replacement, bounded parser, verified migration and reset tombstone are implemented; the old Documents-first storage description is historical. Real hardware protection and remaining pairing-callback/maintenance lifetimes still need their separate acceptance. See INPUT_SAFETY.md and the current STATUS.md.
 
 The full standalone maintenance/settings/pairing/authentication mutation inventory is not yet complete. In particular, old maintenance may reset account state and must not race a headless renewal. Do not infer total mutual exclusion from the main pipeline's lock.
 
-The untrusted IPA extraction/import pipeline, archive expansion limits, symlink handling, all update paths, binary supply chain and legal redistribution inventory remain explicit release gates. Build packaging input checks are not a substitute for runtime IPA-import security.
+The streaming IPA validation/extraction boundary, path/link checks and per-transfer HTTP limits are implemented and tested. Aggregate disk/memory reservations, crash-abandoned staging cleanup, complete update-path coverage, binary supply-chain and redistribution inventory remain open. Runtime input checks, packaging checks and physical acceptance remain separate evidence levels.
+
+## Confirmed outstanding source findings — 2026-10-03
+
+These are code findings in the exact prepared `dd0b09c` Debug artifact (outer SHA-256 `dbcb612333e16d97dc016260f76918fd9ad53cf3ca635f3238e1890ef9c2e8d9`). They are **not fixed by certificate recovery**, not evidence of a compromise, and not exercised with live credentials. Keep them as pre-handoff blockers instead of treating an unsigned build or safe support export as a complete logging/supply-chain audit.
+
+1. **Authentication log/error payloads.** `Dependencies/SideSign/Sources/DeveloperPortal/Authentication.swift` still interpolates DSID and an authentication token into `verboseLog` after parsing, and constructs some errors from raw decrypted response dictionaries. `Sources/Logging.swift` emits every `debugLog` regardless of the verbose setting. Disabling automatic verbose activation and full-console capture reduces exposure but does not remove these source paths. Remove sensitive interpolation and raw authentication payload propagation, preserve only structured safe error categories, and verify both logging modes with synthetic secret-shaped fixtures.
+2. **Downloaded Anisette libraries.** `Dependencies/SideSign/Sources/Anisette/AnisetteDataManager.swift` currently logs a SHA-256 mismatch and proceeds with extraction. Its remote metadata/body paths use unbounded `URLSession.shared.data`, existing cache reuse checks file presence, and a concurrent caller waits for `isCaching` to clear without receiving the first caller's error. Require fail-closed integrity and reviewed provenance, bounded transfer/extraction, validation before cache promotion and explicit failure propagation. A digest supplied by the same mutable metadata is not independent provenance.
+3. **Anisette identity persistence.** `SideStore/Core/Anisette/AnisetteConfigManager.swift` exposes nonthrowing legacy Keychain setters for the identifier and `adi.pb`; `OnDeviceAnisetteManager.swift` reports a newly provisioned blob saved without checked readback. Make the identifier/blob coherent and error-reporting without deleting the last usable state. Account, pairing and signing journals do not automatically secure this separate state.
+
+Reviewed prepared-input Git blob identities for the next narrow transformations:
+
+| File | Blob SHA |
+| --- | --- |
+| `Dependencies/SideSign/Sources/DeveloperPortal/Authentication.swift` | `f60d4c67dcca0f093dc3ac949fdd0492ef7431a2` |
+| `Dependencies/SideSign/Sources/Logging.swift` | `5a90099f4c017db759c5446946d13f348cc90f2a` |
+| `Dependencies/SideSign/Sources/Anisette/AnisetteDataManager.swift` | `8c6448563e030dd991daefec52c42fcf3dbc3a0d` |
+| `SideStore/Core/Anisette/OnDeviceAnisetteManager.swift` | `03cc650766360eb6512f2a4543c2f288b2399d11` |
+| `SideStore/Core/Anisette/AnisetteConfigManager.swift` | `161f608c43ec40b30f390a7e245c143796e5e2a0` |
+
+No copying of actual passwords, tokens, private keys, pairing records or raw account traffic is required for these fixes or their non-device tests.
 
 ## References
 
