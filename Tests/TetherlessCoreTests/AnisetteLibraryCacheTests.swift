@@ -151,10 +151,64 @@ struct AnisetteLibraryCacheTests {
     }
     @Test func retentionBoundStopsUpdatesWithoutEvictingCurrentProvider() throws {
         try root { _, cache in
-            for index in 0..<4 { _ = try install(cache, value: "v\(index)") }
+            _ = try install(cache, value: "v0")
+            let pinned = try cache.pinCurrent()
+            #expect(pinned != nil)
+            defer { withExtendedLifetime(pinned) {} }
+            for index in 1..<4 { _ = try install(cache, value: "v\(index)") }
             let current = try cache.current()
             #expect(throws: AnisetteLibraryCacheFailure.capacity) { try install(cache, value: "overflow") }
             #expect(try cache.current() == current)
+        }
+    }
+    @Test func manyUnpinnedUpdatesReclaimObsoleteGenerations() throws {
+        try root { _, cache in
+            for index in 0..<8 { _ = try install(cache, value: "version-\(index)") }
+            let active = try cache.current()
+            #expect(try cache.pruneUnused())
+            #expect(try cache.current() == active)
+            let names = try fm.contentsOfDirectory(atPath: cache.directory.appendingPathComponent(".tetherless-cache-v1").path)
+            #expect(names.filter { $0.hasPrefix("version-") }.count == 1)
+        }
+    }
+    @Test func heldOldProviderDefersReclamationUntilFinalOwnerReleases() throws {
+        try root { _, cache in
+            let old = try install(cache)
+            var pin: AnisetteLibraryCache.PinnedGeneration? = try cache.pinCurrent()
+            #expect(pin?.directory == old)
+            let active = try install(cache, value: "new")
+            #expect(try !cache.pruneUnused())
+            #expect(try Data(contentsOf: old.appendingPathComponent("libadi.so")) == Data("first".utf8))
+            pin = nil
+            #expect(try cache.pruneUnused())
+            #expect(!fm.fileExists(atPath: old.path))
+            #expect(try cache.current() == active)
+        }
+    }
+    @Test func failedCurrentValidationPreventsCleanupAndReplacement() throws {
+        try root { _, cache in
+            let old = try install(cache)
+            let active = try install(cache, value: "new")
+            try Data("bad".utf8).write(to: active.appendingPathComponent("libadi.so"))
+            #expect(throws: AnisetteLibraryCacheFailure.changedContent) { try cache.pruneUnused() }
+            #expect(fm.fileExists(atPath: old.path))
+            #expect(throws: AnisetteLibraryCacheFailure.changedContent) { try install(cache, value: "another") }
+        }
+    }
+    @Test func cleanupDefersDuringActualExtractionAndRemovesAbandonedStagesLater() throws {
+        try root { _, cache in
+            let value = Data("libraries".utf8)
+            _ = try cache.install(archive: value, expectedSHA256: digest(value), extract: { _, output in
+                #expect(try !cache.pruneUnused())
+                try value.write(to: output.appendingPathComponent("libadi.so"))
+                try value.write(to: output.appendingPathComponent("libstore.so"))
+            })
+            let stage = cache.directory.appendingPathComponent(".tetherless-cache-v1/stage-" + UUID().uuidString)
+            try fm.createDirectory(at: stage, withIntermediateDirectories: false)
+            try value.write(to: stage.appendingPathComponent("package.zip"))
+            #expect(try cache.pruneUnused())
+            #expect(!fm.fileExists(atPath: stage.path))
+            #expect(try cache.current() != nil)
         }
     }
     @Test func slotSymlinkAndChangedLibraryContractAreRejected() throws {

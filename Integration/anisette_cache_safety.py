@@ -23,6 +23,8 @@ def method(text, start, end, body):
 
 def patch(text):
     text = once(text, '    private var localProvider: AnisetteClient?\n', '')
+    text = once(text, 'private func getClient(for mode: AnisetteMode, clientInfo: String) async throws -> AnisetteClient',
+                'private func getClient(for mode: AnisetteMode, clientInfo: String) async throws -> any AnisetteClientProtocol')
     text = once(text, '        AnisetteClient.validateLibrariesExist(at: directory)',
                 '        (try? AnisetteLibraryCache(directory: directory, requiredLibraries: Constants.Anisette.Libraries.requiredNames).current()) != nil')
     text = method(text, '    public var libsDir: URL {', '    public static func validateServer(', '''
@@ -39,17 +41,27 @@ def patch(text):
         return try libraryCache(at: remoteLibsDir).current()
     }
 
+    private func pinLibraries() throws -> AnisetteLibraryCache.PinnedGeneration? {
+        // Only manager-owned slots are eligible for automatic reclamation.
+        try libraryCache(at: localLibsDir).pruneUnused()
+        try libraryCache(at: remoteLibsDir).pruneUnused()
+        if let local = try libraryCache(at: localLibsDir).pinCurrent() { return local }
+        return try libraryCache(at: remoteLibsDir).pinCurrent()
+    }
+
     public func isReady() -> Bool { (try? verifiedLibraries()) != nil }
 
 ''')
     text = once(text, '        case .localODA(let libDir, let prov):\n', '''        case .localODA(let libDir, let prov):
-            guard let verified = try libraryCache(at: libDir).current() else {
+            guard let pinned = try libraryCache(at: libDir).pinCurrent() else {
                 throw AnisetteLibraryCacheFailure.missingLibraries
             }
 ''')
+    text = once(text, '            let targetProvDir = prov ?? provisioningDir\n            try FileManager.default.createDirectory(at: targetProvDir, withIntermediateDirectories: true)\n            return try AnisetteClient(',
+                '            let targetProvDir = prov ?? provisioningDir\n            try FileManager.default.createDirectory(at: targetProvDir, withIntermediateDirectories: true)\n            let client = try AnisetteClient(')
     # Only the pre-download local provider still has this exact resolver.
     text = once(text, '                libraryDirectoryResolver: { libDir }\n            )\n\n        case .remoteODA',
-                '                libraryDirectoryResolver: { verified }\n            )\n\n        case .remoteODA')
+                '                libraryDirectoryResolver: { pinned.directory }\n            )\n            return LibraryPinnedAnisetteClient(client: client, generation: pinned)\n\n        case .remoteODA')
     text = once(text, '''            try FileManager.default.createDirectory(at: libsDir, withIntermediateDirectories: true)
             try FileManager.default.createDirectory(at: provisioningDir, withIntermediateDirectories: true)
             if !AnisetteClient.validateLibrariesExist(at: libsDir, requiredLibraries: Constants.Anisette.Libraries.requiredNames) {''', '''            if try verifiedLibraries() == nil {''')
@@ -85,13 +97,14 @@ def patch(text):
         try await downloadAndCacheLibs(from: odaInfo, targetDirectory: remoteLibsDir, clientInfo: clientInfo)
     }
 
-    public func ensureProviderLoaded(clientInfo: String = Constants.Anisette.defaultClientInfo) async throws -> AnisetteClient {
+    public func ensureProviderLoaded(clientInfo: String = Constants.Anisette.defaultClientInfo) async throws -> any AnisetteClientProtocol {
         try Task.checkCancellation()
-        guard let verified = try verifiedLibraries() else { throw AnisetteLibraryCacheFailure.missingLibraries }
+        guard let pinned = try pinLibraries() else { throw AnisetteLibraryCacheFailure.missingLibraries }
         try FileManager.default.createDirectory(at: provisioningDir, withIntermediateDirectories: true)
-        return try AnisetteClient(provisioningDir: provisioningDir, clientInfo: clientInfo,
+        let client = try AnisetteClient(provisioningDir: provisioningDir, clientInfo: clientInfo,
             userAgent: Constants.Anisette.defaultUserAgent, lookupURL: Constants.Anisette.URLs.grandSlamLookup,
-            requiredLibraries: Constants.Anisette.Libraries.requiredNames, libraryDirectoryResolver: { verified })
+            requiredLibraries: Constants.Anisette.Libraries.requiredNames, libraryDirectoryResolver: { pinned.directory })
+        return LibraryPinnedAnisetteClient(client: client, generation: pinned)
     }
 
 ''')
@@ -104,10 +117,13 @@ def apply(root):
     if hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest() != EXPECTED:
         raise ValueError('Unreviewed ODA cache input')
     outputs = {path: patch(raw.decode())}
-    for name in ['AnisetteLibraryCache', 'PrivateFileStore']:
+    for name in ['AnisetteLibraryCache', 'PrivateFileStore', 'LibraryCacheMaintenance']:
         target = path.parent / ('Tetherless' + name + '.swift')
         if target.exists(): raise ValueError('Unexpected generated cache destination')
         outputs[target] = (ROOT/'Sources/TetherlessCore'/ (name + '.swift')).read_text()
+    wrapper = path.parent / 'LibraryPinnedAnisetteClient.swift'
+    if wrapper.exists(): raise ValueError('Unexpected generated client destination')
+    outputs[wrapper] = (ROOT/'Integration/Overrides/LibraryPinnedAnisetteClient.swift').read_text()
     for target, text in outputs.items(): target.write_text(text)
 
 if __name__ == '__main__': apply(Path(sys.argv[1]))

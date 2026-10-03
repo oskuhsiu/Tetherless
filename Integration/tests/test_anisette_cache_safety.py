@@ -37,16 +37,21 @@ class AnisetteCacheSafetyTests(unittest.TestCase):
             text = source.read_text()
             self.assertNotIn('AnisetteClient.validateLibrariesExist', text)
             self.assertNotIn('self.localProvider', text)
-            self.assertIn('try libraryCache(at: libDir).current()', text)
-            self.assertIn('guard let verified = try verifiedLibraries()', text)
-            self.assertIn('libraryDirectoryResolver: { verified }', text)
+            self.assertIn('try libraryCache(at: libDir).pinCurrent()', text)
+            self.assertIn('guard let pinned = try pinLibraries()', text)
+            self.assertIn('libraryDirectoryResolver: { pinned.directory }', text)
             self.assertIn('SafeArchive.extract(at: archive, toDirectory: staging', text)
             body = text.split('public func downloadAndCacheLibs(')[1].split('private func resolveZipData(')[0]
             self.assertLess(body.index('AnisettePackageInput.verify'), body.index('.install(archive:'))
             self.assertLess(body.index('AnisettePackageInput.verify'), body.index('fm.createDirectory'))
-            for name in ['AnisetteLibraryCache', 'PrivateFileStore']:
+            for name in ['AnisetteLibraryCache', 'PrivateFileStore', 'LibraryCacheMaintenance']:
                 self.assertEqual((source.parent/('Tetherless'+name+'.swift')).read_bytes(),
                                  (ROOT.parent/'Sources/TetherlessCore'/(name+'.swift')).read_bytes())
+            self.assertEqual(text.count('return LibraryPinnedAnisetteClient(client: client, generation: pinned)'), 2)
+            wrapper = (ROOT.parent/'Integration/Overrides/LibraryPinnedAnisetteClient.swift').read_bytes()
+            self.assertEqual((source.parent/'LibraryPinnedAnisetteClient.swift').read_bytes(), wrapper)
+            self.assertIn('defer { withExtendedLifetime(lifetime) {} }', wrapper.decode())
+            self.assertIn('try libraryCache(at: remoteLibsDir).pruneUnused()', text)
             before = {p.name:p.read_bytes() for p in source.parent.iterdir()}
             with self.assertRaises(ValueError): module.apply(root)
             self.assertEqual(before, {p.name:p.read_bytes() for p in source.parent.iterdir()})

@@ -47,6 +47,31 @@ public struct AnisetteLibraryCache: Sendable {
         records = try PrivateFileStore(root: directory.appendingPathComponent(".tetherless-cache-v1"))
     }
 
+    /// A provider owns this object, not merely its directory URL. The shared
+    /// descriptor prevents cleanup until all in-flight uses release ownership.
+    public final class PinnedGeneration: Sendable {
+        public let directory: URL
+        private let usage: LibraryCacheUsage
+        fileprivate init(directory: URL, usage: LibraryCacheUsage) {
+            self.directory = directory; self.usage = usage
+        }
+    }
+
+    public func pinCurrent() throws -> PinnedGeneration? {
+        guard try directoryExists(directory), try directoryExists(records.root) else { return nil }
+        let usage = try LibraryCacheUsage.acquire(in: records.root)
+        guard let url = try current() else { return nil }
+        return PinnedGeneration(directory: url, usage: usage)
+    }
+
+    /// Call only through a native mutation owner. All provider clients additionally
+    /// hold PinnedGeneration. Deferring while busy is safe; deleting is not.
+    @discardableResult
+    public func pruneUnused() throws -> Bool {
+        guard try directoryExists(directory), try directoryExists(records.root) else { return true }
+        return try LibraryCacheMaintenance.reclaim(in: records.root) { try current()?.lastPathComponent }
+    }
+
     /// No receipt means an old/untracked directory, never an implicitly trusted
     /// one. Malformed/unreadable/tampered receipts throw, not a cache miss.
     public func current() throws -> URL? {
@@ -79,6 +104,11 @@ public struct AnisetteLibraryCache: Sendable {
         // Verify before creating even a staging directory.
         try prepareDirectory(directory)
         try records.prepare()
+        // Reclaim before taking our shared in-flight install pin. A live provider
+        // defers reclamation; the capacity guard still bounds retained versions.
+        try pruneUnused()
+        let installUsage = try LibraryCacheUsage.acquire(in: records.root)
+        defer { withExtendedLifetime(installUsage) {} }
         let entries = try FileManager.default.contentsOfDirectory(atPath: records.root.path)
         // Bound abandoned versions as well. Never delete files held by a client.
         guard entries.filter({ $0.hasPrefix("version-") || $0.hasPrefix("stage-") }).count < 4 else {
