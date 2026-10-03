@@ -11,7 +11,26 @@ import Glibc
 public final class ProcessLease: @unchecked Sendable {
     private let mutex = NSLock()
     private var descriptor: Int32
-    private init(descriptor: Int32) { self.descriptor = descriptor }
+    private let identity: String
+    private init(descriptor: Int32, identity: String) { self.descriptor = descriptor; self.identity = identity }
+
+    private func takeDescriptor() throws -> Int32 {
+        mutex.lock(); defer { mutex.unlock() }
+        guard descriptor >= 0 else { throw RenewalFailure.lockUnavailable }
+        let value = descriptor; descriptor = -1
+        return value
+    }
+
+    /// Move descriptor ownership into a task-local mutation scope. Nested native
+    /// calls borrow this real lock; admitted children keep it after the body exits.
+    /// Releasing the old handle cannot prematurely unlock the transferred scope.
+    public func withMutationScope<T: Sendable>(_ body: @Sendable () async throws -> T) async throws -> T {
+        let fd = try takeDescriptor()
+        return try await MutationScope.withOwnedLease(identity: identity, release: {
+            _ = flock(fd, LOCK_UN)
+            _ = close(fd)
+        }, body: body)
+    }
 
     public static func acquire(at url: URL) throws -> ProcessLease {
         guard url.isFileURL else { throw RenewalFailure.lockUnavailable }
@@ -28,7 +47,7 @@ public final class ProcessLease: @unchecked Sendable {
             if savedErrno == EWOULDBLOCK || savedErrno == EAGAIN { throw RenewalFailure.busy }
             throw RenewalFailure.lockUnavailable
         }
-        return ProcessLease(descriptor: fd)
+        return ProcessLease(descriptor: fd, identity: url.resolvingSymlinksInPath().path)
     }
 
     public func release() {

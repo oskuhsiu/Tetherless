@@ -63,5 +63,6 @@ def apply(root: Path):
     subprocess.run([sys.executable, str(Path(__file__).with_name("catalog_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("authentication_privacy.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("anisette_package_safety.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("anisette_identity_safety.py")), str(root)], check=True)
 
 if __name__ == '__main__': apply(Path(sys.argv[1]))

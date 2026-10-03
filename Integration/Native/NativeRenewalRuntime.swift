@@ -61,8 +61,7 @@ actor NativeRenewalRuntime {
         guard !running else { throw RenewalFailure.busy }
         running = true
         defer { running = false }
-        let lease = try NativeRenewalStorage.acquire()
-        defer { lease.release() }
+        try await NativeMutationGate.withLease {
         let snapshot = try await NativeRenewalBackend(deadline: .now + .seconds(22)).snapshot()
         try snapshot.validate()
         let journal = try NativeRenewalStorage.journal()
@@ -80,6 +79,7 @@ actor NativeRenewalRuntime {
         }
         guard repaired > 0 else { throw RenewalFailure.needsForeground }
         try journal.save(state)
+        }
     }
 
     /// Explicit preflight AFTER login/pairing repair. Pending work is preserved;
@@ -88,8 +88,7 @@ actor NativeRenewalRuntime {
         guard !running else { throw RenewalFailure.busy }
         running = true
         defer { running = false }
-        let lease = try NativeRenewalStorage.acquire()
-        defer { lease.release() }
+        try await NativeMutationGate.withLease {
         let backend = NativeRenewalBackend(deadline: .now + .seconds(22))
         let snapshot = try await backend.snapshot()
         try snapshot.validate()
@@ -112,6 +111,7 @@ actor NativeRenewalRuntime {
             state.records[app.bundleID] = record
         }
         try journal.save(state)
+        }
     }
 
     nonisolated static func classify(_ error: Error) -> RenewalFailure {
@@ -120,6 +120,8 @@ actor NativeRenewalRuntime {
         if let failure = error as? AuthenticationStorageFailure {
             return [.notReady, .staleAttempt].contains(failure) ? .needsAuthentication : .storageUnavailable
         }
+        if error is AnisetteIdentityFailure { return .storageUnavailable }
+        if let failure = error as? AnisettePackageFailure, failure == .alreadyInProgress { return .busy }
         if let error = error as? ProfileBatchFailure {
             switch error {
             case .identityChanged: return .identityChanged

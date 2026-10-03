@@ -33,6 +33,15 @@ public enum MutationScope {
     }
     @TaskLocal private static var token: Token?
 
+    /// The ProcessLease transfers an already-acquired real descriptor here.
+    /// Unlike withLease, this must not borrow an existing token and leak ownership.
+    static func withOwnedLease<T: Sendable>(identity: String, release: @escaping @Sendable () -> Void,
+                                  body: @Sendable () async throws -> T) async throws -> T {
+        let scope = Token(identity: identity, release: release)
+        defer { scope.finish(owner: true) }
+        return try await $token.withValue(scope) { try await body() }
+    }
+
     public static func withSynchronousLease<T>(identity: String,
                  acquire: () throws -> (@Sendable () -> Void),
                  body: () throws -> T) throws -> T {

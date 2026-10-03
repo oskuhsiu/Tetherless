@@ -1,21 +1,37 @@
-# Current checkpoint — coherent Anisette identity foundation
+# Current checkpoint — native Anisette identity transaction and inherited process lease
 
-Updated 2026-10-03. Development remains on develop, no promotion to main and no device/credential request.
+Updated 2026-10-03. Development only on develop; main is not promoted. No phone or credentials requested. This checkpoint records implementation and local verification, not a release candidate or physical acceptance.
 
-## Confirmed previous results
+## Previous baseline confirmed
 
-The b7b597f full-app run 37120735783 is now completed successfully, including whole-app setup/recovery navigation and diagnostic retention. Its earlier pending state is historical. Existing native Debug/Release and core results are recorded in the previous 733c9e2 checkpoint. These are not live Apple authentication or physical renewal tests.
+The b7b597f full-App run 37120735783 completed successfully, including setup, signed-out certificate recovery, cold relaunch and diagnostic retention. Earlier pending status is historical. Its prior native/core evidence is in the 733c9e2 checkpoint. Do not re-diagnose historical App Group or catalog crashes without new evidence.
 
-## This saved increment
+9cba8dea4d60f693298e10fc43328420e26748af saved the identity core before native wiring. Its original local Debug/Release suites passed 231 tests. This following increment connects it to both native providers and explicit reset paths.
 
-AnisetteIdentityStore groups the identifier and provisioning blob in one versioned, generation-bound record. Invalid, incomplete or unavailable legacy records fail closed instead of generating a new identifier against an old blob. Canonical UUID and historical 16-byte Base64 UUID migration preserve identity. Fresh material must be saved and read back before headers are returned. Readback/write errors do not report success or delete the old pair. Cancellation after the provider returns preserves the returned material first; a changed generation cannot receive a stale response.
+## Current implementation
 
-Migration cleans split fields only after a verified coherent save, and retries cleanup through the authoritative new record without reading partially deleted legacy fields. Explicit resets produce a new generation or secret-free tombstone; late results and old split fields cannot resurrect erased material. Corrupt/future envelopes remain errors. Blob limit is 32 KiB, envelope limit 64 KiB; syntactic validation does not establish ADI/Apple validity.
+Identifier and adi.pb use a coherent versioned generation-bound record, checked Keychain replacement/readback and strict legacy migration. Invalid or inaccessible split data cannot cause automatic identity replacement. Fresh provider material must be saved before returning headers. Cancellation after a successful provider return preserves material first. Failed legacy cleanup retains the authoritative record; explicit reset writes a new generation or tombstone. Stale results cannot restore old state. All four native input hashes are validated before any transformed source is written.
 
-Completed local Linux Debug and Release suites: 231 tests each, including 17 new production-store tests against real private files and injected provider/storage failures. Initial test macro compilation errors were corrected before these results. Two initial Release commands timed out during compilation and are not counted as successful; the completed incremental run passed. A new macOS-only real Keychain test uses a unique temporary service and synthetic blob; its CI result is not yet known.
+A real integration conflict was found while wiring the new native guard: headless RenewalEngine owned a ProcessLease without conveying MutationScope ownership. Nested Anisette would have tried to relock it and failed busy. The engine now transfers the real descriptor to a task-local scope; there is no no-op acquire or lock bypass. Admitted children retain ownership and old handles cannot unlock transferred/reused descriptors. The two native repair preflights also use the shared scope. Existing policy, transaction, reconciliation and consent rules remain unchanged.
 
-## Exact next step
+## Executed local checks for this integration
 
-Connect this saved core to both on-device and remote providers under the common mutation lease plus process reentrancy guard; migrate checked Keychain legacy fields and update explicit sign-out/reset routes. The core is NOT yet the active native identity path in this checkpoint. Run integration contracts and fresh unsigned/native UI CI before claiming native wiring.
+| Check | Observed result |
+| --- | --- |
+| Linux Swift Debug | 235 tests passed |
+| Linux Swift Release | 235 tests passed on a completed invocation |
+| Python integration checks | 145 passed, no skips, with exact reviewed native inputs |
+| Exact four native transformations | Executed; every resulting Swift source parsed |
+| New native wrapper/runtime syntax | Parsed; not Xcode typechecking |
+| Fresh macOS/native/whole-App CI | Not yet accepted for this integration |
 
-Remaining independent blockers: Anisette library existing-cache validation/promotion/provenance, other native logging and pairing/maintenance lifetimes, aggregate resources/staging cleanup, first-sign/self-update and supported-configuration coverage, branding/distribution. No physical signing, pairing, locked-screen unattended renewal or expiry crossing has been verified.
+The new tests include 17 real-file identity tests and four real-descriptor/scope tests. The latter run the actual renewal coordinator with a scripted backend that enters the same nested lease pattern. A separate macOS real Keychain test uses synthetic bytes and awaits CI. Initial local test macro errors, a Sendable closure error and earlier Release command timeouts were corrected before the completed results; none is counted as success or hidden by disabling assertions/concurrency checking.
+
+## Resume next
+
+1. Inspect this integration's macOS core, native Debug/Release and real setup/recovery UI checks. Resolve actual compiler/transform failures narrowly; previous green builds do not validate new native code. Verify committed files against the tested local source/artifact.
+2. Complete Anisette executable cache validation, promotion recovery and independently reviewed provenance. The earlier download checksum is not trust in mutable metadata or existing cache contents.
+3. Finish native logging and pairing/maintenance callback lifetimes, aggregate metadata/RAM/disk limits and abandoned staging cleanup.
+4. Finish remaining first-sign/self-update, supported-configuration UI, branding and dependency/distribution checks before consolidated physical acceptance.
+
+See ANISETTE_IDENTITY.md for scope and limits. No live Apple provisioning, physical pairing, actual signing/profile installation, hardware protection, locked-screen unattended renewal or expiry crossing has been verified. Every coherent increment remains saved independently.

@@ -43,7 +43,10 @@ public actor RenewalEngine {
         running = true
         defer { running = false }
         let lease = try acquire()
-        defer { lease.release() }
+        return try await lease.withMutationScope { try await self.runAcquired(trigger: trigger, force: force) }
+    }
+
+    private func runAcquired(trigger: RenewalTrigger, force: Bool) async throws -> RenewalRunResult {
         var state = try loadState() // Always read AFTER acquiring the process lock.
         guard state.schemaVersion == 1 else { throw RenewalFailure.unsupportedJournal }
         var report = RenewalRunResult()
