@@ -16,7 +16,7 @@ Core tests execute the identical digest-format/comparison, Base64 and admission 
 
 ## Subsequent cache and identity work
 
-The inherited presence-only reuse and direct in-place update descriptions are now historical. Product `5a7b5ab` resolves managed receipts, revalidates the complete file inventory before client construction and publishes immutable generations without overwriting the active version. Untracked loose local libraries are refused. See ANISETTE_LIBRARY_CACHE.md and STATUS.md for the actual Darwin/native verification and the temporary four-generation limit. Safe quiescent cleanup and independent publisher provenance are still unfinished.
+The inherited presence-only reuse and direct in-place update descriptions are now historical. Product `5a7b5ab` resolves managed receipts, revalidates the complete file inventory before client construction and publishes immutable generations without overwriting the active version. Untracked loose local libraries are refused. See ANISETTE_LIBRARY_CACHE.md and STATUS.md for the actual Darwin/native verification and the temporary four-generation limit. Product `97903f0` adds provider-owned usage pins and exclusive automatic reclamation of obsolete managed generations/stages; see CACHE_RECLAMATION.md. The four-generation bound still protects active clients but no longer permanently exhausts under unpinned updates. Independent publisher provenance and the separate HTTP-transfer staging cleanup remain unfinished.
 
 Coherent checked identifier/adi.pb storage is separately connected at `ae9fd0a`; see ANISETTE_IDENTITY.md. Passing download/cache tests do not validate physical Keychain protection or a real Apple provisioning transaction.
 
