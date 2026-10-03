@@ -53,6 +53,28 @@ def patch_portal(source):
         }
     }
 
+    func checkCertificateRequest(type: CertificateType, expectedID: UUID) async throws -> CertificateRecoveryObservation {
+        try await NativeMutationGate.withLease {
+            guard try NativeCertificateRecovery.local(type: type).requestID == expectedID else {
+                throw CertificateIssuanceFailure.staleAttempt
+            }
+            let session = try await self.getSession()
+            let team = try await self.getTeam()
+            return try await NativeCertificateRecovery.check(type: type, expectedID: expectedID, team: team, session: session)
+        }
+    }
+
+    func resolveCertificateRequest(type: CertificateType, expectedID: UUID, action: CertificateRecoveryAction) async throws {
+        try await NativeMutationGate.withLease {
+            guard try NativeCertificateRecovery.local(type: type).requestID == expectedID else {
+                throw CertificateIssuanceFailure.staleAttempt
+            }
+            let session = try await self.getSession()
+            let team = try await self.getTeam()
+            try await NativeCertificateRecovery.resolve(type: type, expectedID: expectedID, action: action, team: team, session: session)
+        }
+    }
+
     @discardableResult
     public func revokeCertificate(''')
 

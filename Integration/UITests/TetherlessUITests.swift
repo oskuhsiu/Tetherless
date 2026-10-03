@@ -100,6 +100,21 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
         capture(app, "06-relaunch-database-ready")
+        let recovery = app.buttons["recovery.open"]
+        XCTAssertTrue(revealRenewalControl(recovery, in: app)); recovery.tap()
+        XCTAssertTrue(app.navigationBars["Certificate recovery"].waitForExistence(timeout: 5))
+        let recoveryStatus = app.staticTexts["recovery.status"]
+        XCTAssertTrue(recoveryStatus.waitForExistence(timeout: 5))
+        XCTAssertEqual(recoveryStatus.label, "Sign in to inspect requests for this account.")
+        for identifier in ["recovery.check", "recovery.save", "recovery.submit", "recovery.discard"] {
+            let control = app.buttons[identifier]
+            XCTAssertTrue(revealRecoveryControl(control, in: app), identifier)
+            XCTAssertFalse(control.isEnabled, "No account or pending request may be fabricated")
+        }
+        capture(app, "07-certificate-recovery-signed-out")
+        app.navigationBars["Certificate recovery"].buttons.firstMatch.tap()
+        XCTAssertTrue(revealRenewalControl(enabled, in: app))
+        XCTAssertEqual(enabled.value as? String, "0")
     }
     /// SwiftUI Form virtualizes offscreen rows. Waiting for an absent row
     /// cannot reveal it on the SE-sized test device: scroll the actual Form,
@@ -128,6 +143,24 @@ final class TetherlessUITests: XCTestCase {
         capture(app, "failure-unreachable-renewal-control")
         return false
     }
+    @MainActor private func revealRecoveryControl(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        guard app.navigationBars["Certificate recovery"].exists else { return false }
+        let form = app.collectionViews.firstMatch
+        guard form.waitForExistence(timeout: 5) else { return false }
+        // These controls must be disabled. Visibility, not tappability, is what
+        // the test needs to inspect; no coordinate action is used.
+        func visible() -> Bool { element.exists && !element.frame.isEmpty && element.frame.intersects(form.frame) }
+        if visible() { return true }
+        for down in [false, true] {
+            for _ in 0..<6 {
+                if down { form.swipeDown() } else { form.swipeUp() }
+                if visible() { return true }
+            }
+        }
+        capture(app, "failure-missing-recovery-control")
+        return false
+    }
+
     @MainActor private func assertStartupHasNoFailure(_ app: XCUIApplication) {
         // XCTest's default interruption handler can press Retry on an unknown
         // alert. Assert first so a fatal database error is never hidden by that.

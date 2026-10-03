@@ -5,6 +5,17 @@ import SideSign
 /// Called while the complete portal operation owns NativeMutationGate. Tokens
 /// stay in the in-memory backend; only request-specific key/CSR live in the vault.
 enum NativeCertificateIssuance {
+    /// One namespace for normal issuance and explicit recovery. Caller holds
+    /// NativeMutationGate; constructing the adapter does not write to Keychain.
+    static func store(owner: CertificateIssuanceOwner) throws -> CertificateIssuanceStore {
+        try owner.validate()
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let scope = NativeRenewalStorage.digest(try encoder.encode(owner))
+        return CertificateIssuanceStore(storage: try KeychainAuthenticationStorage(
+            service: "org.tetherless.requests." + Bundle.Info.appbundleIdentifier,
+            account: "certificate-v1." + scope))
+    }
+
     static func perform(machineName: String, type: CertificateType, team: ALTTeam,
                         session: ALTAppleAPISession, allowNew: Bool) async throws -> ALTCertificate? {
         let account = try NativeAuthenticationStore.ready()
@@ -15,15 +26,12 @@ enum NativeCertificateIssuance {
             throw DeveloperPortalError.invalidParameters(cause: "This certificate type is not available for the selected account.")
         }
         let owner = try CertificateIssuanceOwner(accountID: session.dsid, teamID: team.identifier, certificateType: type.rawValue)
-        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
-        let scope = NativeRenewalStorage.digest(try encoder.encode(owner))
-        let storage = try KeychainAuthenticationStorage(service: "org.tetherless.requests." + Bundle.Info.appbundleIdentifier,
-                                                       account: "certificate-v1." + scope)
+        let requestStore = try store(owner: owner)
         let backend = NativeCertificateIssuanceBackend(account: account, team: team, session: session,
                                                        type: type, machineName: machineName)
         let result: IssuedCertificate?
         do {
-            result = try await CertificateIssuanceCoordinator(store: CertificateIssuanceStore(storage: storage))
+            result = try await CertificateIssuanceCoordinator(store: requestStore)
                 .issue(owner: owner, backend: backend, allowNew: allowNew)
         } catch CertificateIssuanceFailure.capacityReached {
             throw DeveloperPortalError.tooManyCertificates(cause: "Apple reported the certificate limit. No existing certificate was revoked.")
@@ -36,7 +44,7 @@ enum NativeCertificateIssuance {
     }
 }
 
-private struct NativeCertificateIssuanceBackend: CertificateIssuanceBackend {
+struct NativeCertificateIssuanceBackend: CertificateIssuanceBackend, CertificateIssuanceLookup {
     let account: AuthenticationRecord
     let team: ALTTeam
     let session: ALTAppleAPISession
