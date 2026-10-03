@@ -20,6 +20,7 @@ final class TetherlessUITests: XCTestCase {
         let title = app.staticTexts["onboarding.title"]
         XCTAssertTrue(title.waitForExistence(timeout: 20), "Expected the actual first-launch onboarding")
         XCTAssertEqual(title.label, "Welcome to Tetherless")
+        assertStartupHasNoFailure(app)
         capture(app, "01-welcome")
         app.buttons["onboarding.next"].tap()
         XCTAssertTrue(app.buttons["onboarding.importPairing"].waitForExistence(timeout: 5))
@@ -32,6 +33,7 @@ final class TetherlessUITests: XCTestCase {
         // Kill/relaunch mid-wizard: persist navigation, not fake prerequisites.
         app.terminate(); app.launch()
         XCTAssertTrue(title.waitForExistence(timeout: 15))
+        assertStartupHasNoFailure(app)
         XCTAssertEqual(title.label, "Device pairing")
         XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
         capture(app, "01b-resumed-pairing")
@@ -57,6 +59,7 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(consent.waitForExistence(timeout: 5))
         XCTAssertEqual(consent.value as? String, "0")
         app.buttons["onboarding.next"].tap()
+        assertStartupHasNoFailure(app)
         app.buttons["onboarding.finish"].tap()
         dismissPairingPrompt(app)
         let renewal = app.tabBars.buttons["Auto Renewal"]
@@ -124,6 +127,12 @@ final class TetherlessUITests: XCTestCase {
         }
         capture(app, "failure-unreachable-renewal-control")
         return false
+    }
+    @MainActor private func assertStartupHasNoFailure(_ app: XCUIApplication) {
+        // XCTest's default interruption handler can press Retry on an unknown
+        // alert. Assert first so a fatal database error is never hidden by that.
+        let startup = app.alerts["App Group Container Inaccessible"]
+        XCTAssertFalse(startup.exists, startup.debugDescription)
     }
     @MainActor private func dismissPairingPrompt(_ app: XCUIApplication) {
         let prompt = app.alerts["Pairing File"]
