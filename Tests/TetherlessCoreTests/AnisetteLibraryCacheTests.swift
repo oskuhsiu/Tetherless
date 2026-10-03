@@ -102,7 +102,8 @@ struct AnisetteLibraryCacheTests {
             #expect(try cache.current() == first)
             #expect(throws: Injected.crash) { try install(cache, value: "next", after: { throw Injected.crash }) }
             let reopened = try AnisetteLibraryCache(directory: cache.directory, requiredLibraries: cache.requiredLibraries)
-            let second = try #require(reopened.current())
+            let restored = try reopened.current()
+            let second = try #require(restored)
             #expect(second != first)
             #expect(try Data(contentsOf: second.appendingPathComponent("libadi.so")) == Data("next".utf8))
         }
@@ -123,7 +124,8 @@ struct AnisetteLibraryCacheTests {
             _ = try install(cache)
             let pointer = cache.directory.appendingPathComponent(".tetherless-cache-v1/current.json")
             let valid = try Data(contentsOf: pointer)
-            var json = try #require(JSONSerialization.jsonObject(with: valid) as? [String: Any])
+            let decoded = try JSONSerialization.jsonObject(with: valid)
+            var json = try #require(decoded as? [String: Any])
             json["version"] = 999
             try JSONSerialization.data(withJSONObject: json).write(to: pointer)
             #expect(throws: AnisetteLibraryCacheFailure.invalidReceipt) { try cache.current() }
