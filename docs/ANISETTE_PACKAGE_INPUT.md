@@ -14,8 +14,12 @@ Current limits: archive 64 MiB, Base64 transport `((64 MiB + 2) / 3) * 4` bytes,
 
 Core tests execute the identical digest-format/comparison, Base64 and admission code. Existing downloader tests exercise actual URLSession callbacks/files with scripted HTTP responses. Integration tests compile the actual namespaced downloader and wrapper, reject an unsafe URL without a workspace leak, enforce copied-source equality, and run the complete transformation on hash-checked input. The transformation contracts verify checksum comparison precedes destination writes/extraction. These are not live CDN/TLS, Apple authentication, native library loading or independent digest-provenance tests.
 
+## Subsequent cache and identity work
+
+The inherited presence-only reuse and direct in-place update descriptions are now historical. Product `5a7b5ab` resolves managed receipts, revalidates the complete file inventory before client construction and publishes immutable generations without overwriting the active version. Untracked loose local libraries are refused. See ANISETTE_LIBRARY_CACHE.md and STATUS.md for the actual Darwin/native verification and the temporary four-generation limit. Safe quiescent cleanup and independent publisher provenance are still unfinished.
+
+Coherent checked identifier/adi.pb storage is separately connected at `ae9fd0a`; see ANISETTE_IDENTITY.md. Passing download/cache tests do not validate physical Keychain protection or a real Apple provisioning transaction.
+
 ## Still open
 
-Existing cache reuse and manually supplied local library directories still use inherited presence checks. They need validated cache receipts, revalidation before provider loading, interrupted-promotion recovery and a reviewed update strategy. The current extractor intentionally refuses to overwrite existing children; that is not a complete cache-update implementation. Other manager mutable state has not become synchronized merely because download admission is now locked.
-
-The SHA supplied by mutable remote metadata is not an independent trust root. Pinning/reviewing actual library distribution identity, binary rights and release inventory remains required. The metadata parser's depth/structure budget, all remote Anisette-server validation paths, aggregate RAM/disk reservation, complete staging cleanup and coherent `identifier`/`adi.pb` Keychain persistence also remain separate work. Do not treat a passed unsigned build as acceptance of these boundaries.
+The SHA supplied by mutable remote metadata is not an independent trust root. Reviewing/pinning actual library distribution identity, binary rights and release inventory remains required. The metadata parser's depth/structure budget, all remote Anisette-server validation paths, aggregate RAM/disk reservation and complete crash-abandoned staging cleanup remain separate work. Do not treat an unsigned build as acceptance of these boundaries.
