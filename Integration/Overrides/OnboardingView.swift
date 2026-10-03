@@ -12,14 +12,16 @@ struct OnboardingView: View {
     @AppStorage(SetupStep.storageKey) private var savedStep = SetupStep.welcome.rawValue
     private var step: SetupStep { .resuming(savedStep) }
     @State private var working = false
-    @State private var showImporter = false
+    @State private var pairingRequest: PairingImportRequest?
+    @State private var pairingImport = PairingImportFlow()
     @State private var status: String?
     @State private var readiness = SetupReadiness()
     @State private var observationGeneration = UUID()
     @AppStorage("tetherless.autorenew.enabled") private var renewalPermitted = false
 
     var body: some View {
-        SwiftUI.NavigationStack {
+        let dismissalRequest = pairingImport.request
+        return SwiftUI.NavigationStack {
             SwiftUI.Form {
                 SwiftUI.Section {
                     Text(step.title).font(.title2.bold())
@@ -38,7 +40,7 @@ struct OnboardingView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     if step != .welcome {
                         SwiftUI.Button("Back") { move(-1) }
-                            .disabled(working).accessibilityIdentifier("onboarding.back")
+                            .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.back")
                     }
                 }
             }
@@ -46,39 +48,58 @@ struct OnboardingView: View {
                 VStack(spacing: 10) {
                     if step == .review {
                         SwiftUI.Button("Open Tetherless") { finish() }
-                            .buttonStyle(.borderedProminent).disabled(working)
+                            .buttonStyle(.borderedProminent).disabled(working || pairingImport.isBusy)
                             .accessibilityIdentifier("onboarding.finish")
                     } else {
                         SwiftUI.Button(step == .welcome ? "Get started" : "Continue") { move(1) }
                             .buttonStyle(.borderedProminent)
-                            .disabled(working || (step == .pairing && !readiness.pairingStored) ||
+                            .disabled(working || pairingImport.isBusy || (step == .pairing && !readiness.pairingStored) ||
                                       (step == .account && !readiness.accountStored))
                             .accessibilityIdentifier("onboarding.next")
                         if step == .pairing || step == .connection || step == .account {
                             SwiftUI.Button("Set up later") { move(1) }
-                                .disabled(working).accessibilityIdentifier("onboarding.later")
+                                .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.later")
                         }
                     }
                 }
                 .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
-            .interactiveDismissDisabled(working)
+            .interactiveDismissDisabled(working || pairingImport.isBusy)
             .task(id: step) { await reload() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 Task { @MainActor in await reload() }
             }
-            .fileImporter(isPresented: $showImporter,
-                          allowedContentTypes: PairingFileManager.supportedContentTypes,
-                          allowsMultipleSelection: false) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    perform {
-                        try PairingFileManager.shared.importPairingFile(from: url)
-                        status = "Pairing record saved. A live device connection still needs checking."
-                    }
-                case .failure: status = "The pairing file was not imported. Existing pairing was retained."
-                }
+        }
+        .fullScreenCover(item: $pairingRequest, onDismiss: {
+            if let dismissalRequest { finishPairingSelection(dismissalRequest) }
+        }) { request in
+            PairingDocumentPicker(request: request, contentTypes: PairingFileManager.supportedContentTypes) { resolved, outcome in
+                guard pairingImport.resolve(outcome, request: resolved) else { return }
+                pairingRequest = nil
+            }
+        }
+    }
+
+    @MainActor private func choosePairingFile() {
+        guard !working, let request = pairingImport.begin() else { return }
+        status = nil
+        pairingRequest = request
+    }
+
+    @MainActor private func finishPairingSelection(_ request: PairingImportRequest) {
+        guard let outcome = pairingImport.dismissed(request) else { return }
+        switch outcome {
+        case .cancelled:
+            status = "Import cancelled. Existing pairing was retained."
+        case .invalidSelection:
+            status = "Select one local pairing file. Existing pairing was retained."
+        case .selected(let url):
+            // The picker has closed before coordinated, bounded reading and protected
+            // mutation begin. No mutation lease is held while browsing.
+            perform {
+                defer { pairingImport.finished(request) }
+                try PairingFileManager.shared.importPairingFile(from: url)
+                status = "Pairing record saved. A live device connection still needs checking."
             }
         }
     }
@@ -98,8 +119,8 @@ struct OnboardingView: View {
             SwiftUI.Section {
                 Text("Import the device's pairing record from your authorized first-install process. A saved record is not proof of a live connection.")
                 observedRow("Protected pairing record", present: readiness.pairingStored, component: .pairing)
-                SwiftUI.Button("Choose pairing file") { showImporter = true }
-                    .disabled(working).accessibilityIdentifier("onboarding.importPairing")
+                SwiftUI.Button("Choose pairing file") { choosePairingFile() }
+                    .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.importPairing")
                 Text("Keep pairing files private. Tetherless stores its copy locally and does not upload it. A computer may be needed once for bootstrap on your supported setup.")
             }
         case .connection:
@@ -117,7 +138,7 @@ struct OnboardingView: View {
                     perform {
                         try await NativeMutationGate.withLease { UserDefaults.standard.useOnDeviceAnisette = true }
                     }
-                }.disabled(working).accessibilityIdentifier("onboarding.localAnisette")
+                }.disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.localAnisette")
             }
         case .account:
             SwiftUI.Section {
@@ -132,13 +153,13 @@ struct OnboardingView: View {
                             skipResign: false, skipHowTos: true)
                         status = "Sign-in flow finished. Review the actual local prerequisites below."
                     }
-                }.disabled(working).accessibilityIdentifier("onboarding.signIn")
+                }.disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.signIn")
                 Text("The first setup may ask to replace the bootstrap-signed manager once. Daily profile renewal does not reinstall Tetherless. New logins retain the session token, not your Apple password.")
             }
         case .automation:
             SwiftUI.Section {
                 SwiftUI.Toggle("Allow unattended profile renewal", isOn: $renewalPermitted)
-                    .disabled(working).accessibilityIdentifier("onboarding.allowUnattended")
+                    .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.allowUnattended")
                     .onChange(of: renewalPermitted) { _, active in
                         if active { NativeRenewalBackground.schedule() }
                         else {
@@ -169,7 +190,7 @@ struct OnboardingView: View {
                 observedRow("Unattended renewal permitted", present: renewalPermitted)
                 Text("Next: use Auto Renewal to run an explicit check, then verify your authorized Shortcut while the screen is locked. A manual check does not count as an unattended run.")
                 SwiftUI.Button("Recheck local setup") { Task { @MainActor in await reload() } }
-                    .disabled(working).accessibilityIdentifier("onboarding.recheck")
+                    .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.recheck")
             }
         }
     }
@@ -225,7 +246,7 @@ struct OnboardingView: View {
         }
     }
     private func move(_ delta: Int) {
-        guard !working, let next = step.moved(by: delta) else { return }
+        guard !working, !pairingImport.isBusy, let next = step.moved(by: delta) else { return }
         status = nil; savedStep = next.rawValue
     }
     private func finish() {

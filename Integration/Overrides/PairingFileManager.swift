@@ -105,7 +105,7 @@ final class PairingFileManager: NSObject {
         try value.write(record.xml, named: name(mode))
         guard try value.read(name(mode)) == record.xml else { throw PrivateFileError.changedDuringRead }
         try PairingReset.finishImport(in: value, name: name(mode), expected: record.xml) {
-            let other: PairingProtocol = mode == .lockdown ? .rppairing : .lockdown
+            let other: PairingProtocol = mode == .remote ? .lockdown : .rppairing
             try value.remove(name(other))
             for url in legacyURLs {
                 if try PrivateFileStore.readExternal(url) != nil { try FileManager.default.removeItem(at: url) }
@@ -118,8 +118,22 @@ final class PairingFileManager: NSObject {
     func inspectPairingFile(from url: URL) throws -> (content: String, file: any PairingFile) {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-        guard let bytes = try PrivateFileStore.readExternal(url) else { throw PrivateFileError.unavailable }
-        let record = try PairingRecord(data: bytes)
+        // The open-mode document picker grants a security-scoped URL. Coordinate
+        // access while that grant is held, then bound and validate the snapshot.
+        // Do not create an unprotected imported copy in Documents/Inbox.
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinationError: NSError?
+        var captured: Result<Data, Error>?
+        coordinator.coordinate(readingItemAt: url, options: .withoutChanges, error: &coordinationError) { coordinatedURL in
+            captured = Result {
+                guard let bytes = try PrivateFileStore.readExternal(coordinatedURL) else {
+                    throw PrivateFileError.unavailable
+                }
+                return bytes
+            }
+        }
+        guard coordinationError == nil, let captured else { throw PrivateFileError.unavailable }
+        let record = try PairingRecord(data: captured.get())
         return (record.content, try parse(content: record.content))
     }
     func importPairingFile(from url: URL, preferred: PairingProtocol? = nil) throws {

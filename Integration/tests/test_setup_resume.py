@@ -9,7 +9,7 @@ class ResumeSetupIntegrationTests(unittest.TestCase):
         self.assertIn('@AppStorage(SetupStep.storageKey)',text)
         self.assertIn('savedStep = next.rawValue',text)
         self.assertIn('.task(id: step) { await reload() }',text)
-        self.assertIn('.interactiveDismissDisabled(working)',text)
+        self.assertIn('.interactiveDismissDisabled(working || pairingImport.isBusy)',text)
         body=text.split('private func move(')[1].split('private func finish()')[0]
         for forbidden in ['renewalPermitted =', 'hasCompletedOnboarding =', 'activate(']:
             self.assertNotIn(forbidden,body)

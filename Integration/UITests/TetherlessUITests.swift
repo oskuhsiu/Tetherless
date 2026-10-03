@@ -25,11 +25,22 @@ final class TetherlessUITests: XCTestCase {
         app.buttons["onboarding.next"].tap()
         XCTAssertTrue(app.buttons["onboarding.importPairing"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["onboarding.next"].isEnabled, "A fresh simulator has no pairing")
-        app.buttons["onboarding.importPairing"].tap()
-        let cancelImport = app.buttons["Cancel"].firstMatch
-        XCTAssertTrue(cancelImport.waitForExistence(timeout: 10)); cancelImport.tap()
-        XCTAssertTrue(app.buttons["onboarding.importPairing"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+        // Two separate real picker presentations. A blank picker is still a
+        // test failure; do not replace its system Cancel with an app-owned button.
+        for attempt in 1...2 {
+            app.buttons["onboarding.importPairing"].tap()
+            let cancelImport = app.buttons["Cancel"].firstMatch
+            XCTAssertTrue(cancelImport.waitForExistence(timeout: 10), "System picker did not load on presentation \(attempt)")
+            XCTAssertTrue(cancelImport.isHittable)
+            capture(app, "01-picker-\(attempt)")
+            cancelImport.tap()
+            let choose = app.buttons["onboarding.importPairing"]
+            XCTAssertTrue(choose.waitForExistence(timeout: 5))
+            XCTAssertTrue(choose.isEnabled, "Dismissed picker must release its request")
+            XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+            XCTAssertEqual(app.staticTexts["onboarding.status"].label,
+                           "Import cancelled. Existing pairing was retained.")
+        }
         // Kill/relaunch mid-wizard: persist navigation, not fake prerequisites.
         app.terminate(); app.launch()
         XCTAssertTrue(title.waitForExistence(timeout: 15))
