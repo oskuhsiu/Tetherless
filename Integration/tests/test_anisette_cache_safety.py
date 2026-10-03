@@ -44,7 +44,7 @@ class AnisetteCacheSafetyTests(unittest.TestCase):
             body = text.split('public func downloadAndCacheLibs(')[1].split('private func resolveZipData(')[0]
             self.assertLess(body.index('AnisettePackageInput.verify'), body.index('.install(archive:'))
             self.assertLess(body.index('AnisettePackageInput.verify'), body.index('fm.createDirectory'))
-            for name in ['AnisetteLibraryCache', 'PrivateFileStore', 'LibraryCacheMaintenance']:
+            for name in ['AnisetteLibraryCache', 'PrivateFileStore', 'LibraryCacheMaintenance', 'TransferWorkspace']:
                 self.assertEqual((source.parent/('Tetherless'+name+'.swift')).read_bytes(),
                                  (ROOT.parent/'Sources/TetherlessCore'/(name+'.swift')).read_bytes())
             self.assertEqual(text.count('return LibraryPinnedAnisetteClient(client: client, generation: pinned)'), 2)

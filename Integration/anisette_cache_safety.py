@@ -117,7 +117,7 @@ def apply(root):
     if hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest() != EXPECTED:
         raise ValueError('Unreviewed ODA cache input')
     outputs = {path: patch(raw.decode())}
-    for name in ['AnisetteLibraryCache', 'PrivateFileStore', 'LibraryCacheMaintenance']:
+    for name in ['AnisetteLibraryCache', 'PrivateFileStore', 'LibraryCacheMaintenance', 'TransferWorkspace']:
         target = path.parent / ('Tetherless' + name + '.swift')
         if target.exists(): raise ValueError('Unexpected generated cache destination')
         outputs[target] = (ROOT/'Sources/TetherlessCore'/ (name + '.swift')).read_text()

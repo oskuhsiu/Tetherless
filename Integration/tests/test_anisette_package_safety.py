@@ -82,6 +82,10 @@ import Foundation
             _ = try await boundedODAPackageData(from:URL(string:"http://example.invalid/library.zip")!,maximumBytes:4096)
             fatalError("Insecure transport was accepted")
         } catch ODAHTTPDownloadFailure.invalidURL {}
+        do {
+            _ = try await boundedODAPackageData(from:URL(string:"https://example.invalid/library.zip")!,maximumBytes:TransferWorkspace.maximumTransferBytes + 1)
+            fatalError("Unbounded workspace was accepted")
+        } catch TransferWorkspaceFailure.invalidLimit {}
         let after=Set(try fm.contentsOfDirectory(atPath:fm.temporaryDirectory.path).filter{$0.hasPrefix("tetherless-oda-")})
         precondition(before == after)
         print("PASS")
@@ -89,7 +93,18 @@ import Foundation
 }
 ''')
             p=subprocess.run([compiler,'-swift-version','6',str(root/'HTTP.swift'),str(ROOT.parent/'Sources/TetherlessCore/AnisettePackageInput.swift'),
-                              str(ROOT/'Overrides/AnisettePackageTransfer.swift'),str(root/'Main.swift'),'-o',str(root/'test')],capture_output=True,text=True,timeout=45)
+                              str(ROOT/'Overrides/AnisettePackageTransfer.swift'),
+                              *[str(ROOT.parent/'Sources/TetherlessCore'/f'{name}.swift') for name in ['TransferWorkspace', 'PrivateFileStore', 'LibraryCacheMaintenance']],
+                              str(root/'Main.swift'),'-o',str(root/'test')],capture_output=True,text=True,timeout=45)
             self.assertEqual(p.returncode,0,p.stderr)
             p=subprocess.run([str(root/'test')],capture_output=True,text=True,timeout=15)
             self.assertEqual(p.returncode,0,p.stderr); self.assertEqual(p.stdout,'PASS\n')
+
+    def test_oda_consumer_holds_workspace_until_read_and_verified_cleanup(self):
+        code = (ROOT/'Overrides/AnisettePackageTransfer.swift').read_text()
+        self.assertLess(code.index('.request(for: url)'), code.index('TransferWorkspace(pool:'))
+        self.assertLess(code.index('workspace.readOutput(file)'), code.index('try workspace.finish()'))
+        self.assertLess(code.index('try workspace.finish()'), code.index('return data'))
+        self.assertNotIn('removeItem', code)
+        self.assertNotIn('FileHandle(forReadingFrom:', code)
+        self.assertIn('defer { try? workspace.finish() }', code)

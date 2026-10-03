@@ -165,4 +165,46 @@ struct HTTPTransferTests {
         }
         #expect(try FileManager.default.contentsOfDirectory(atPath: target.path).isEmpty)
     }
+    @Test(arguments: ["ok", "largeBody", "disconnected"])
+    func workspaceOutlivesDownloadAndCleansSuccessOrError(_ scenario: String) async throws {
+        let parent = try directory()
+        defer { try? FileManager.default.removeItem(at: parent) }
+        let pool = parent.appendingPathComponent("pool")
+        let workspace = try TransferWorkspace(pool: pool, maximumBytes: 100)
+        do {
+            let url = try await transfer().download(from: source(scenario), into: workspace.directory, maximumBytes: 100)
+            #expect(scenario == "ok")
+            #expect(try workspace.readOutput(url) == Data("abcdef".utf8))
+            // Completed bytes remain owned until the consumer explicitly finishes.
+            #expect(throws: LibraryCacheMaintenanceFailure.busy) { try TransferWorkspace(pool: pool, maximumBytes: 100) }
+        } catch {
+            #expect(scenario != "ok")
+            #expect(error is HTTPDownloadFailure)
+        }
+        try workspace.finish()
+        #expect(!FileManager.default.fileExists(atPath: workspace.directory.path))
+        let next = try TransferWorkspace(pool: pool, maximumBytes: 100)
+        try next.finish()
+    }
+
+    @Test func cancelledTransferKeepsOwnershipUntilCallbacksFinishAndConsumerCleans() async throws {
+        let parent = try directory()
+        defer { try? FileManager.default.removeItem(at: parent) }
+        let pool = parent.appendingPathComponent("pool")
+        let workspace = try TransferWorkspace(pool: pool, maximumBytes: 100)
+        let downloader = transfer()
+        let task = Task { try await downloader.download(from: source("stall"), into: workspace.directory, maximumBytes: 100) }
+        var started = false
+        for _ in 0..<500 {
+            if !(try FileManager.default.contentsOfDirectory(atPath: workspace.directory.path)).isEmpty { started = true; break }
+            try await Task.sleep(for: .milliseconds(2))
+        }
+        task.cancel()
+        await #expect(throws: CancellationError.self) { try await task.value }
+        #expect(started)
+        #expect(throws: LibraryCacheMaintenanceFailure.busy) { try TransferWorkspace(pool: pool, maximumBytes: 100) }
+        try workspace.finish()
+        #expect(!FileManager.default.fileExists(atPath: workspace.directory.path))
+    }
+
 }
