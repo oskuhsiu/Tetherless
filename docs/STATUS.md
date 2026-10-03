@@ -1,32 +1,30 @@
-# Current checkpoint — authentication diagnostic privacy
+# Current checkpoint — authentication privacy and bounded ODA package input
 
-Updated 2026-10-03. Work remains on develop; main is not promoted. No physical-device handoff or live credentials requested. Previous verified recovery implementation is dd0b09c; this checkpoint adds authentication privacy hardening and a narrow test traversal correction.
+Updated 2026-10-03. Development only on `develop`; `main` stays unpromoted. No phone or live credentials requested. This remains an integration build, not a release candidate. The previous rough 80% estimate concerns implementation plus feasible non-device verification, not reliability.
 
-## Implemented in this checkpoint
+## Saved authentication change: 3fbed9f
 
-SideSign Authentication.swift's 72 free-form logging sites are removed. Raw/decrypted response copies no longer enter its errors or retry messages. The public authenticate boundary rebuilds propagated errors without server payloads, token-bearing URLs or arbitrary NSError userInfo, while retaining cancellation, authentication decision types and numeric server codes. Only typed fixed authentication events can log. Legacy SideSign debug/verbose autoclosures are not evaluated in either logging mode; enabling our events does not enable AnisetteKit verbose logging. The actual request fields, token processing and server-proof verification remain in place. See AUTHENTICATION_PRIVACY.md for tradeoffs and scope.
+`3fbed9f8d6d1cb2c463052abda9ea6a21ae711cb` removes 72 free-form SideSign authentication logging sites and raw/decrypted response copies in error/retry messages. The public authenticate boundary recreates errors without arbitrary response text/userInfo or token-bearing repair URLs; cancellation, typed decisions and numeric codes survive. Legacy SideSign log autoclosures never evaluate, including when diagnostics are enabled; only typed fixed events can print, without enabling AnisetteKit verbose logs. The real wire fields, SRP/server-proof and verification operations remain. See AUTHENTICATION_PRIVACY.md. Other native/dependency logging still requires review.
 
-Both prepared inputs are hash-checked before any write. The transformation was applied to the exact retained dd0b09c native sources and syntax parsed. The test compiles the identical logging replacement and error policy with real upstream error enums; secret-shaped data is synthetic. This is not real Apple login/2FA validation or an exhaustive native/dependency logging audit.
+Local Linux core Debug/Release each passed 207 tests on completed runs; an initial Release command timeout is not counted. Python passed 134 checks with exact pinned inputs and no skips, including compiled real logging/error policies and upstream error enums using synthetic secrets. Native Debug/Release both compiled, linked, packaged and uploaded successfully in run **37119710500**. macOS core run **37119710497** passed. Full UI run **37119710499** is not yet accepted at this checkpoint.
 
-## Previous UI result is now known
+The downloaded source artifact 11272806994 matched outer SHA-256 `05f4dcd38bccec6fb631007e43a00376b5928390f2c90f85b7f8a3d4916d1dbc`, recorded 3fbed9f commit and inner TAR SHA-256 `ebd6624330fa6568f24b5243b0519b8127403ee5af7683e201e87be51e46c82b`. All nine first-batch changed files were compared byte-for-byte with the local tested checkpoint. It contains 139 files. Native prepared output still needs its independent inspection; this archive is not an IPA.
 
-Run 37106719330 at dd0b09c failed at TetherlessUITests.swift:78 in the existing resume-setup traversal, BEFORE the new certificate recovery screen was reached. It is not a passed recovery UI test. Its downloaded artifact matched SHA-256 5671f1f7f18f62a3c7882634757e74d612486c368e891b9ffa978bfda10cb5f6. The actual log and failure-unreachable-renewal-control screenshot were inspected: on the SE-sized display, Continue setup was below the usable content area behind the tab bar. The fixed alternating full-speed swipes could overshoot it in both directions.
+## Current ODA increment
 
-The bounded helper now follows the observed target row's geometry relative to navigation/tab bars and uses slow semantic Form swipes. The original attempt bound, exact target, hittability requirement, all navigation/consent/relaunch assertions and signed-out recovery checks remain. No coordinate taps or simulated account state. Fresh actual UI execution is required.
+Hash-lock AnisetteDataManager input; require a valid SHA-256 and stop on mismatch **before library destination mutation or extraction**. Keep the existing Crypto digest computation. Reject overlapping download calls explicitly with a synchronized generation-bound lease instead of treating a previous caller's failure as success. Metadata and payload transfer use the existing bounded downloader with only its type namespace changed, private temporary files, ordinary TLS/HTTPS redirect policy, no shared cookies/credentials and cancellation cleanup. Base64 is bounded/strict, and the existing safe extractor gets explicit smaller ODA budgets. See ANISETTE_PACKAGE_INPUT.md for limits and still-open cache/provenance work.
 
-## Executed local checks
+Checks for this increment: Linux core Debug/Release each **214 passed**; Python **139 passed** with pinned inputs and no skips. Exact transformed source parses; the namespaced downloader and actual wrapper compile/run in a no-network invalid-URL test. Digest/Base64/admission tests execute real production code, while HTTP responses in the preexisting downloader suite are scripted. Native/UI for this newer increment require their own fresh run; the 3fbed9f native result does not validate it.
 
-- Linux Swift core Debug: 207 passed (core unchanged).
-- Linux Swift core Release: 207 passed on a completed rerun. The initial compilation hit the local command timeout and is not counted.
-- Python integration checks: 134 passed with exact pinned SideSign sources supplied; no skips. Includes actual compiled diagnostic/error policy, URL validation, no-argument-evaluation tests and hash/reapplication contracts.
-- Full transformed Authentication.swift and the changed UI test passed Swift frontend syntax parsing. This is not native typecheck or UI execution.
-- Fresh native Debug/Release and full actual-app UI for this checkpoint are pending, not covered by old green runs.
+## Prior recovery UI failure, not a new startup diagnosis
+
+Run **37106719330** at dd0b09c failed `TetherlessUITests.swift:78` in resume-setup traversal **before reaching the recovery screen**. Its artifact matched SHA-256 `5671f1f7f18f62a3c7882634757e74d612486c368e891b9ffa978bfda10cb5f6`. The actual failure screenshot showed Continue setup below the usable content behind the SE tab bar; fixed alternating swipes could overshoot. The first saved batch now guides slow semantic Form swipes by observed row geometry, preserving the original attempt bound, all hittability/navigation/consent/relaunch assertions, and signed-out recovery checks. No coordinate taps, fake account or disabled assertions. The last accepted full navigation baseline is 00e5e10; recovery-screen acceptance is still outstanding until the new run proves it.
 
 ## Resume next
 
-1. Inspect fresh native and whole-app jobs for this commit. The last accepted navigation baseline is 00e5e10; dd0b09c's added recovery-screen acceptance remains outstanding.
-2. Finish the two Anisette source findings in UPSTREAM_AUDIT.md: library digest mismatch/cache/transfer/extraction and coherent checked identifier/adi.pb persistence. Authentication changes here do not fix those boundaries.
-3. Complete other native logging and pairing/maintenance callback lifetimes, aggregate resource reservations and abandoned staging cleanup.
-4. Finish remaining first-signing/self-update, supported-configuration UI, branding and dependency/distribution checks before consolidated physical acceptance.
+1. Read current native and actual UI results, retaining exact implementation SHAs and failures. Confirm recovery-screen signed-out controls and retained consent. Do not re-diagnose resolved App Group/catalog traps absent new evidence.
+2. Complete ODA existing-cache validation/promotion recovery and independently reviewed binary provenance. The new mandatory checksum only protects the download path and does not authenticate mutable metadata. Existing cache/local-library presence-only reads remain open. Finish coherent checked identifier/adi.pb persistence.
+3. Finish remaining native logging, pairing/maintenance callback lifetimes, metadata structural and aggregate RAM/disk budgets, and crash-abandoned staging cleanup.
+4. Complete remaining first-sign/self-update, supported-configuration UI, branding and dependency/distribution checks before consolidated physical acceptance.
 
-No real signing/profile install, physical pairing, locked-screen unattended renewal or expiry crossing was tested. Prior evidence remains in Git history and STATUS-00e5e10.md.
+No real Apple login/2FA, profile installation, physical pairing, locked-screen unattended renewal or expiry crossing has been tested. Earlier failed checks remain historical failures, not silently relabelled successes. Every coherent change is saved before moving to another boundary.
