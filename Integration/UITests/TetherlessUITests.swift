@@ -136,7 +136,17 @@ final class TetherlessUITests: XCTestCase {
         if element.exists && element.isHittable { return true }
         for scrollDown in [false, true] {
             for _ in 0..<6 {
-                if scrollDown { form.swipeDown() } else { form.swipeUp() }
+                // On a compact screen, a known row can be behind the tab bar.
+                // Follow its actual geometry instead of swiping past it and
+                // continuing all the way to the opposite end of the Form.
+                let top = app.navigationBars["Auto Renewal"].frame.maxY
+                let bottom = app.tabBars.firstMatch.frame.minY
+                if element.exists && element.frame.maxY > bottom {
+                    form.swipeUp(velocity: .slow)
+                } else if element.exists && element.frame.minY < top {
+                    form.swipeDown(velocity: .slow)
+                } else if scrollDown { form.swipeDown(velocity: .slow) }
+                else { form.swipeUp(velocity: .slow) }
                 if element.exists && element.isHittable { return true }
             }
         }

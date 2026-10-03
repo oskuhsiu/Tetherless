@@ -1,0 +1,13 @@
+# Authentication diagnostic privacy
+
+This is a targeted correction to the pinned SideSign integration, not a complete security certification or live Apple authentication result.
+
+`authentication_privacy.py` checks both reviewed input hashes before writing either file. It removes all 72 free-form log call sites in Authentication.swift, eliminates diagnostic copies of raw/decrypted payloads and preserves the actual SRP, request, token and verification code operations. Error/retry messages use fixed descriptions. A public-authenticate catch boundary reconstructs errors without raw NSError userInfo, arbitrary server descriptions, repair-URL query strings or underlying response dictionaries. Existing authentication decision categories, cancellation and numeric server codes are retained.
+
+The SideSign logging boundary no longer evaluates inherited debugLog/verboseLog autoclosures, even when verbose mode is requested. Only typed AuthenticationDiagnosticEvent values can print. Payload/header formatting helpers discard all contents, including unknown keys and token suffixes. Enabling typed events never enables AnisetteKit verbose output. This intentionally reduces upstream diagnostics; migrate additional useful logs to typed events rather than restore raw interpolation. Native app logging and other libraries still require their separate review.
+
+The interactive account-repair handler may receive a bounded HTTPS URL on the exact supported Apple hosts, with no embedded user credentials or unexpected port. Unsupported URLs use the existing official account fallback. A thrown repair error always contains the fixed account URL, not the server's query. No browser or external account is opened by the tests.
+
+Tests compile and run the identical replacement logging code and authentication-error policy. The error test uses the actual upstream enum definitions with synthetic secret-bearing errors and checks reflected values, localized descriptions and bridged NSError userInfo. Logger tests exercise disabled/enabled modes and prove free-form autoclosures are not evaluated. Source-contract tests also require the original wire fields and server-proof check to remain. These tests do not execute the full SRP handshake, real 2FA or a live account. The native pipeline separately compiles the full patched SideSign and app.
+
+Reference: https://developer.apple.com/documentation/os/generating-log-messages-from-your-code (prefer fixed, developer-defined diagnostic values).
