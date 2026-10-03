@@ -91,6 +91,29 @@ jobs:
             CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
             CODE_SIGN_STYLE=Manual AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
             ORG_IDENTIFIER=com.SideStore > native-ui.log 2>&1
+      - name: Retain app stdout and crash reports from the actual test result
+        if: always()
+        run: |
+          if [ -d native-ui.xcresult ]; then
+            xcrun xcresulttool export diagnostics --path native-ui.xcresult --output-path .generated/ui-diagnostics
+            python3 - <<'PYCODE'
+          from pathlib import Path
+          import shutil
+          root = Path('.generated/ui-diagnostics')
+          output = Path('native-ui-diagnostics')
+          output.mkdir(exist_ok=True)
+          selected = [p for p in root.rglob('*') if p.is_file() and not p.is_symlink() and (
+              p.name.startswith('StandardOutputAndStandardError-org.tetherless.Tetherless') or
+              (p.name.startswith('SideStore-') and p.suffix in {'.ips', '.crash'}))]
+          if len(selected) > 20:
+              raise SystemExit('Unexpected diagnostic count')
+          for index, path in enumerate(sorted(selected)):
+              if path.stat().st_size > 2_097_152:
+                  raise SystemExit('Unexpected diagnostic size')
+              shutil.copyfile(path, output / (str(index) + '-' + path.name))
+          print('Retained', len(selected), 'app-only diagnostics; no live account supplied by UI tests')
+          PYCODE
+          fi
       - name: Export actual UI screenshots
         if: always()
         run: |
@@ -116,6 +139,7 @@ jobs:
           path: |
             native-simulator-signing.json
             native-ui.log
+            native-ui-diagnostics
             native-ui.xcresult
             native-ui-attachments
             native-simulator-build.log

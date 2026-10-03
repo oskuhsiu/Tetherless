@@ -1,58 +1,43 @@
-# Current checkpoint — database readiness and explicit App Group diagnostics
+# Current checkpoint — reject ambiguous catalog imports without crashing
 
-Updated 2026-10-03. Development integration, approximately 80% toward feature-complete implementation plus feasible non-device verification. Not a release candidate or a request for a phone. Work stays on `develop`; `main` remains unpromoted.
+Updated 2026-10-03. Development on `develop` only, approximately 80% toward feature-complete implementation and feasible non-device verification. No phone requested and no release promotion.
 
-## Implemented startup boundary
+## Diagnosed actual failure at 2eea8d1
 
-`6ed95b0` introduced LaunchReadiness. Every transition to the main interface requires both a successful database startup and wizard dismissal, in either completion order, and happens only once. Completing the wizard no longer bypasses a failed database start. No account or renewal permission is inferred from navigation. It also introduced reading the main Simulator executable's linked iOS entitlements rather than its distinct macOS host signature. Device and other-bundle parsing remain unchanged.
+Run 37082841722 failed its first UI assertion because the **app terminated**, not because the App Group remained inaccessible. The downloaded result ZIP matches Actions SHA-256 `57fdd5a805f69209d42941a8de655969627869366f410061370a7bac7ebc12dc`. The result's actual app stdout and crash report were inspected, not just the final XCTest assertion:
 
-`6dac8e7` is documentation-only: CERTIFICATE_STORAGE now describes the previously implemented durable CSR/key transaction. It explicitly warns that `allowNew: false` can still submit an existing prepared request; it is not a check-only API. Dedicated recovery controls and persistently uncertain-request decisions remain unfinished.
+- App stdout records the shared App Group payload cache being used and `Started DatabaseManager`.
+- It then fetches the remote default source and hits `MergePolicy.swift:221` with three `AppVersion` records sharing `(sourceID, appBundleID, version, buildVersion)` and no database object.
+- The `assertionFailure` becomes a SIGTRAP. Its stack goes through `MergePolicy.resolveWhenDatabaseObjectUnavailable`, Core Data save and `AppManager.fetchSources`.
+- The screen recording shows SpringBoard after termination. The earlier launch smoke did pass but did not cover this subsequent catalog fetch.
 
-## Actual complete-app result at 6ed95b0
+Thus the new reader achieved container/database startup in this run, exposing another defect. Previous failed runs remain failures. This evidence is neither device App Group acceptance nor real Apple login.
 
-Run **37080604148** passed boot/screen readiness, whole-app compilation, actual signature/linked-identity inspection, installation and initial launch. Its real UI test **failed** at `TetherlessUITests.swift:63`, when the wizard could not enter the main interface. It did not complete final cold-relaunch acceptance.
+## Current coherent repair
 
-Inspection of the full log, not only its last assertion, shows **App Group Container Inaccessible** during both initial and resumed setup. XCTest's default interruption handler pressed Retry three times and hid that alert before the final hierarchy was captured. The new startup gate then correctly refused to enter the main interface. This is not a scrolling failure, not a passing UI flow and not proof that group access was repaired.
+- Validate the **entire inserted AppVersion graph** before saving a decoded source to its parent. All release channels are included. Composite keys are typed tuples; nil and empty builds are the same stored key, while the literal `nil` string is distinct.
+- Reject duplicate apps and ambiguous versions instead of silently selecting a payload or deleting an arbitrary duplicate. This intentionally rejects snapshots with cross-channel versions the current database schema cannot represent distinctly.
+- Roll back a rejected child import. Keep the previously saved catalog and installed-app records.
+- Unknown context-level merge conflicts now throw a fixed, serializable error instead of trapping in Debug or silently falling through in Release.
+- A failed parent save rolls back and reports failure; it no longer returns an unsaved context as a success for callers to save again.
+- Export the actual app-only stdout/crash diagnostics from xcresult in CI, in addition to screenshots and the untouched full result. Do not infer a missing control means the app is still running.
 
-Downloaded UI artifact SHA-256 matched `9800dd68b140ffb3a396c79b41919e892f785182122ec7f6f2575d3cf288a92a`. Its log, signing evidence and failure hierarchy `8B7DF74D-7CC8-46EC-99F0-9C99FCF183D7.txt` were read. The build log contains the expected group in the simulated entitlement payload, but that is not proof that the running app resolved it or obtained its container. The exact runtime failure stage was not exposed by this revision.
+All three native input hashes are checked before writing any patched file. The transformation was applied to the actual retained prepared sources. No production UI assertions, App Group gate, native authentication or renewal behavior were bypassed.
 
-## Narrow follow-up in this checkpoint
+## Checks before commit
 
-The Simulator reader no longer assumes loaded-image index zero is the app. It matches the actual canonical main executable URL in a bounded image table, checks its executable header and reads that image's linked entitlement section. The immutable result includes only a predefined stage. It does not scan untrusted IPA files, invent a group, repair a signature or select a private database directory.
+- Python integration checks: 117 passed after the complete change, including diagnostic-export workflow syntax checks.
+- Linux core Debug: 194 tests passed.
+- Linux core Release: 194 tests passed on a completed rerun. The first build/test invocation hit the local command timeout and is not counted as passing.
+- Added a Darwin-only real SQLite/child-context test using the production preflight: three conflicting records reject, rollback leaves the saved catalog intact, and a following valid import can save and be independently read back. It requires macOS/iOS CI, not Linux.
+- Current native and real UI results require fresh CI for this implementation. Earlier green builds do not validate this repair.
 
-The existing missing-App-Group error now adds an allowlisted category: executable not found, invalid/missing linked payload, absent groups, no matching group, or matching group with unavailable container. No path, group identifier, account, key or token is added. This separates the next diagnosis rather than claiming the previous cause is proven.
-
-The actual UI test explicitly rejects the startup error before the first action, after resuming setup and before finishing the wizard. XCTest may not silently turn a fatal startup error into Retry interactions and later apparent navigation progress. Existing navigation, consent and final relaunch assertions remain intact.
-
-All three native transformation inputs are hash-locked and validated before any write. The current transforms were executed on exact retained source, and Swift frontend syntax checks passed. Runtime entitlement reading still requires the new native/UI run.
-
-## Verification scope
-
-| Check | Observed result |
-| --- | --- |
-| Current local Linux core Debug / Release | 186 tests passed each; no core code changed after 6ed95b0 |
-| Current Python integration contracts | 112 passed, including image selection, safe stage reporting and early UI alert assertions |
-| 6ed95b0 macOS core | Passed, run 37080604108; exact test count not inferred |
-| 6ed95b0 Simulator core | 195 individual passes and one explicit hardware Data Protection skip, run 37080604233 |
-| 6ed95b0 native Debug / Release | Both compiled, linked, packaged and uploaded, run 37080604217 |
-| 6ed95b0 full UI | Failed as detailed above; not accepted |
-| Follow-up native and real UI | Requires fresh CI for this checkpoint; prior builds do not validate the new reader or alert diagnostics |
-
-Four LaunchReadiness tests exercise both completion orders, failure/retry, prior dismissal and duplicate callbacks. Local syntax/contract tests are not Xcode typechecking or iOS execution. A first local test macro failure was corrected before the recorded final Debug/Release results; no assertions were removed.
-
-## Artifact identity already verified at 6ed95b0
-
-The CI source archive's recorded commit, outer digest `2bf120bbe76fa60cb9af005ebae6723da065d59fa9a7ea34af73c48437d0daec` and inner TAR digest `66a57b1b6e68952c9312766f7fd73f7d6dcba8aacb6354145232e1f925d6f6ca` matched. All 120 files matched the implementation before the later follow-up edits.
-
-Simulator core artifact digest: `9860971360d7fffb68b753e6cadcf017ef4bc16cfb9c468bde4da77824330acd`. Its 195 passing records were inspected separately from the one skipped test.
-
-Release outer digest: `8e0a0150e4d333889213a47f0fa7119793ef6728e63cef15b4dbe3aca7a40969`. Actual IPA digest `18f2c690e1d568c4c0a3a3ea638ebbc784a730d60f10c14e432d9484997ba237` matched the manifest. Bundle ID org.tetherless.Tetherless, version 0.1.0/build 0100. No .p12/.p8/.key/.mobileprovision filenames were present. Prepared launch, Bundle extension and LaunchReadiness bytes matched. An existing unnecessary-await warning remains in NativeManagerUpdateControls; no warning-free claim.
+The verified source archive for 2eea8d1 matched outer SHA-256 `ed82b7386b6a76caf22eec1db4461ea090cc1d400b66c6936ac10567a0561529` and inner TAR SHA-256 `438f1054cccef94b1d3bda3bc2bbd6938ac671bdbc0ce05fda2a3130f59ea02e`; it is the local code baseline. There were no previous uncommitted edits in this working copy.
 
 ## Next actions
 
-1. Read the new native and full UI result for this follow-up commit. On failure, inspect the early startup alert's `[group/<category>]` and actual artifact, not just the last tab assertion. Do not weaken the shared-database gate or allow a sandbox fallback.
-2. Complete the full setup/resume/reopen/consent/cold-relaunch flow. A launch smoke, missing-account check or successful compilation alone is insufficient.
-3. Finish certificate uncertain-state recovery controls, Anisette/pairing/log lifecycle, aggregate resource reservation and abandoned staging cleanup, then remaining first-sign/self-update and supported-configuration coverage.
-4. Finish branding and dependency/distribution review before one consolidated physical acceptance.
+1. Inspect this repair's native builds, real SQLite test, and complete UI flow through final cold relaunch. Check app stdout if a screen disappears. Preserve real failures; do not merely rerun until green.
+2. Finish certificate uncertain-state recovery controls, Anisette/pairing/log lifecycle, resource reservation and abandoned staging cleanup.
+3. Finish first-signing/self-update integration, supported-configuration coverage and distribution/branding before consolidated physical acceptance.
 
-No live Apple authentication, real profile installation, physical pairing, locked-screen unattended renewal or expiry crossing was tested. Earlier failures remain failures in Git history. No uncommitted feature batch is needed to resume.
+No physical pairing, real signing/profile install, locked-screen unattended renewal or original-expiry crossing has been verified. Historical architecture/evidence remain in Git history.
