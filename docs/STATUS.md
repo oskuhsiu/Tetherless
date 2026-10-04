@@ -1,32 +1,36 @@
-# Single-item checkpoint — document activation verification
+# Single-item checkpoint — instrument actual pairing selection and dismissal
 
-Updated 2026-10-04. UI change: **c4b3f90fec2aefe8999a141472d434783e8e7498**. Product Swift remains **b67a36264dd0baddf69fe65cd156b6f3ced42e58**. This final update is documentation only. All work is on develop; main remains unpromoted. No device or credentials requested.
+2026-10-04. Starting develop: **b08eaca6cb8224e114afd5093d92666e581367dc**. This increment removes the disproven preview-image test target and adds fixed lifecycle diagnostics to the real picker/wizard. Renewal, parsing, storage and authorization behavior remain unchanged. Work stays on develop; main is unpromoted. AUTO-02 / PAIR-01 invalid-document acceptance is still OPEN.
 
-## Standalone next item: AUTO-02 / PAIR-01
+## Result inspected this turn
 
-Read full-App run **37191398887**, job **111404163196**, for c4b3f90. It was **in_progress**, conclusion null, at the last check and started 2026-10-04T09:12:29Z. Do not infer success, rerun it automatically, or mix waiting on it with another large feature/audit. The one-long-running-item-per-turn rule is saved in AGENTS.md.
+Full-App run **37191398887**, job **111404163196**, at c4b3f90 is FAILED. Installation, launch, fixture seed and both real system cancellations succeeded. The test reached the correct document cell, then failed at **TetherlessUITests.swift:171** because its Image child was **not hittable**. The preview tap was never executed. This is a disproven test-target hypothesis, not an observed parser rejection or dismissal failure. Original-file verification was skipped and is not accepted.
 
-Required result: the actual invalid public plist is activated through the system picker, the picker dismisses, the app explicitly rejects it, the original file remains byte-identical, pairing stays incomplete, consent stays off, and the existing setup/recovery/cold-relaunch assertions pass. Original-file verification is a required separate workflow step. A seeded file or a successful tap alone is not acceptance.
+Downloaded artifact **11299044027** matched SHA-256 `62a665282418c864c5e9d66f642543c40ec9babe0f74016ec6336fdcdac22f39`. The actual native-ui.log, issue description D4FFA467-296D-4BBB-84E6-88C691AAB52C.txt, system-service logs and a late screen-recording frame were inspected. The frame shows the Files picker with the fixture visible. File-provider service logs include container lookup/preparation errors, but these do not establish a causal explanation for this test failure. Do not claim the new invalid-document route is accepted.
 
-## Observed current failure that motivated this change
+## Narrow change
 
-At starting head 81554d8, run **37189390107** / job **111398218234** FAILED in the XCTest, not installation. Compile/signature/install/launch and fixture seeding passed. Both real Cancel operations passed. The correct folder cell and then the correct `Tetherless-Invalid-Pairing.plist, plist` cell were tapped (file at t=64.27s), but onboarding.status did not appear within the original ten-second wait. The final hierarchy and a late screen-recording frame still show the Files picker with its file; the wizard's Choose button remains disabled. Original-file verification was skipped, not passed.
+Use the existing exact document Cell again, retaining enabled/hittable checks and one tap. Do not target decorative descendants, double-tap, increase deadlines, change content types or add a fallback. Both cancellations, the original ten-second outcome deadline, actual picker dismissal, explicit error, unchanged incomplete pairing/consent, recovery and cold-relaunch assertions remain.
 
-UI artifact **11298695803** matched SHA-256 `69aba8546bf51e9b7ea4bb4cd346a92a1ceecea3c7bea8fea40bf2d81c0e526e`. Actual native-ui.log, final hierarchy `5E394C88-5E0D-4E4D-A4D2-2F8554C98934.txt` and the video frame were inspected. The hierarchy contains one real Image in the matched document cell. This establishes no visible completion after the aggregate cell tap; it does not prove an activation, delegate or dismissal root cause.
+The real native picker/wizard now emit only a fixed enum marker at request start, creation, plist-type policy classification, selection/cancellation callbacks, result delivery, invalidation, accepted/ignored resolution, cover dismissal, request-bound dismissal, and import start/success/failure. No event API accepts a filename, URL, raw error, request/account/device identifier or arbitrary string. Logging observes the same control flow; the original error is rethrown and state guards are unchanged.
 
-## Narrow change, not a proven product fix
+The diagnostic manifest retains these exact whole-line markers from the ORIGINAL exported stdout, even if the existing head/tail excerpts omit the middle. Its scan is bounded to 32 MiB per selected stdout and at most 256 retained events, with scanned bytes/completeness and event truncation recorded. Unknown names, trailing payloads, partial lines and suffixes of oversized lines are ignored; no UI result is inferred. Existing full xcresult and raw excerpt bounds are unchanged. An empty/incomplete trace is not proof that a callback never ran.
 
-For that observed icon-mode fixture, the test now taps its unique hittable preview Image inside the matched document Cell rather than the center of the cell's filename/metadata area. The cell must be enabled and the preview unique. It taps once, without coordinates, double-taps, retries or fallback. Folder/location navigation is unchanged. Screenshots before activation and after the original ten-second outcome wait distinguish the missing stage. Both explicit rejection and actual picker dismissal are mandatory; all earlier cancellation, pairing/consent, recovery and cold-launch checks remain.
+## Local verification
 
-No production UIKit/file-type/parser/storage/signing/renewal code was changed to manufacture success. This is a targeted test-input hypothesis awaiting actual UI execution. If the fresh run still leaves the picker visible, inspect the selection/delegate lifecycle instead of rotating tap methods or increasing waits. The full inspected evidence and initial checkpoint are retained in STATUS.md at c4b3f90.
+**22 focused tests passed:** six lifecycle/export tests, five existing native-picker contracts, six fixture/activation contracts and five diagnostic-retention regressions. The real fixed-message Swift logger was compiled and executed in both -Onone and -O with Swift 6; output exactly matched the permitted enum events. Export tests used real temporary files, including events in the omitted middle, synthetic secret-bearing lines, oversized lines and explicit scan/event caps. Source contracts preserve delegate clearing, dismissal-before-import and the original throw. Native picker/onboarding and changed XCTest sources also passed frontend syntax parsing.
 
-## Local verification this turn
+One initial new source-contract regex wrongly consumed a later line; it was replaced with explicit extraction of record-call arguments and the full focused set reran successfully. No claim of UIKit typechecking or XCUITest execution follows from these local tests. Unchanged core and the full integration suite were not rerun in this single-item turn. The next native/full-App run is required.
 
-- Six document-fixture/activation tests passed: real fixture file IO plus two new source-contract checks.
-- Five existing pairing-picker contracts passed, including syntax parsing of native picker/onboarding sources.
-- Changed XCTest source parsed separately with swiftc -frontend -parse.
-- These **eleven focused checks** are not executed XCUITest or native typechecking. Unchanged core Debug/Release and the full integration suite were not rerun; previous counts are not new results.
-- Saved XCTest blob `28a2d1b72ae6c08bcce397959673ebc48d613635` was read back from c4b3f90 and matches the tested local file.
-- Starting source artifact **11298254179** matched ZIP SHA-256 `d95a65e506bdc61b30490e3f444613269d71a5166ca50c1e6b23d84eef6656ea`, TAR `165cc9c8eaf0b37f9d4a425a8ad80fceb5f4354f228e7dc6a13edbfb50a3361d` and recorded 81554d8 before editing.
+The source baseline artifact **11299321500** matched outer SHA-256 `4339049ee69a96387520f9eb2cde474441a8ada49b270d7e724e0b9639091b5f`, inner TAR `e052419eb76dbc1a92a43a10446fe850243ca29e2f4c80e508d5c94644c538b4` and recorded c4b3f90. Its parent-to-current b08eaca follow-up is documentation-only.
 
-No other plan item is completed here. Valid pairing, preserving an already-installed real pairing record, third-party file providers, real Apple login/profile install, locked-screen scheduling and expiry crossing remain separate unverified conditions. The broader original inventory is docs/PLAN_PROGRESS.md. Stop at this saved checkpoint; no after-turn background work is promised.
+## Standalone next verification
+
+Read the new complete-App run once it has finished; do not wait repeatedly or mix it with another large feature. Require the unchanged invalid-file rejection and original-file-preservation checks. Inspect `native-ui-diagnostics/manifest.json` / `pairingLifecycle` alongside the actual XCTest log:
+
+- No selection marker after a confirmed single cell tap: inspect native picker activation/type/provider behavior; do not rotate tap guesses.
+- Selection/result delivery but no accepted resolution: inspect coordinator/request lifetime.
+- Accepted resolution without bound dismissal: inspect the real presentation completion/request capture.
+- Import start without completion: inspect coordinated file access; importFailed with a dismissed picker must still satisfy the UI error and original-file checks.
+
+Markers alone cannot pass acceptance. The original sixteen-task inventory remains PLAN_PROGRESS.md; no other task is claimed complete. No live Apple account, valid pairing record, physical profile install, locked-screen scheduling or expiry crossing was exercised.

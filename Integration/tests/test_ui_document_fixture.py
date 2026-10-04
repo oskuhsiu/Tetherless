@@ -43,7 +43,7 @@ class UIDocumentFixtureTests(unittest.TestCase):
         text=(ROOT/'UITests/TetherlessUITests.swift').read_text()
         self.assertIn('for attempt in 1...2',text)
         self.assertIn('tapDocumentItem("Tetherless", in: app, documentCell: true)',text)
-        self.assertIn('tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true, thumbnail: true)',text)
+        self.assertIn('tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)',text)
         self.assertIn('documentCell ? app.cells : app.descendants(matching: .any)',text)
         self.assertIn('01-invalid-pairing-rejected',text)
         self.assertIn('XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)',text)
@@ -60,18 +60,19 @@ class UIDocumentFixtureTests(unittest.TestCase):
 
 
 class DocumentActivationContractTests(unittest.TestCase):
-    def test_file_targets_unique_preview_without_retry_or_coordinate_taps(self):
+    def test_document_cell_is_the_only_activation_target(self):
         text = (ROOT/'UITests/TetherlessUITests.swift').read_text()
         helper = text.split('private func tapDocumentItem(')[1].split('/// SwiftUI Form')[0]
         self.assertIn('XCTAssertTrue(item.isEnabled', helper)
-        self.assertIn('let preview = item.images.firstMatch', helper)
-        self.assertIn('XCTAssertEqual(item.images.count, 1', helper)
-        self.assertIn('XCTAssertTrue(preview.isHittable', helper)
-        self.assertEqual(helper.count('preview.tap()'), 1)
+        self.assertIn('XCTAssertTrue(item.isHittable', helper)
+        self.assertEqual(helper.count('item.tap()'), 1)
+        self.assertNotIn('item.images', helper)
+        self.assertNotIn('preview.tap()', helper)
         self.assertNotIn('coordinate(', helper)
         self.assertNotIn('doubleTap(', helper)
         self.assertNotIn('for ', helper)
         self.assertNotIn('while ', helper)
+        self.assertIn('document-before-activation', helper)
 
     def test_outcome_and_real_dismissal_remain_mandatory(self):
         text = (ROOT/'UITests/TetherlessUITests.swift').read_text()

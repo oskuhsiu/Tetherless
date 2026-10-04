@@ -11,6 +11,48 @@ from pathlib import Path
 import stat
 
 
+# Match only an entire line emitted by the zero-payload native event API. No
+# copied path, arbitrary log suffix or raw provider response enters this record.
+PAIRING_EVENTS = frozenset("""requestBegan pickerCreated plistTypeAllowed plistTypeNotAllowed
+selectionReceived invalidSelection cancellationReceived resultDelivered lateCallbackIgnored
+coordinatorInvalidated resolutionAccepted resolutionIgnored coverDismissed dismissalUnbound
+dismissalObserved dismissalIgnored
+cancelFinished importStarted importSucceeded importFailed""".split())
+PAIRING_PREFIX = b'[Tetherless.PairingImport] '
+
+
+def pairing_lifecycle(stream, size, scan_limit=33_554_432, event_limit=256):
+    if scan_limit < 1 or event_limit < 1:
+        raise ValueError('Invalid lifecycle evidence limits')
+    stream.seek(0)
+    consumed = 0
+    total = 0
+    events = []
+    discard_line = False
+    budget = min(size, scan_limit)
+    while consumed < budget:
+        part = stream.readline(min(4096, budget - consumed))
+        if not part:
+            raise ValueError('Diagnostic changed during lifecycle scan')
+        consumed += len(part)
+        complete_line = part.endswith(b'\n')
+        if not discard_line and complete_line and part.startswith(PAIRING_PREFIX):
+            event = part[len(PAIRING_PREFIX):].removesuffix(b'\n').removesuffix(b'\r')
+            try:
+                value = event.decode('ascii')
+            except UnicodeDecodeError:
+                value = None
+            if value in PAIRING_EVENTS:
+                total += 1
+                if len(events) < event_limit:
+                    events.append(value)
+        # A suffix of an oversized line must not be mistaken for a fresh event.
+        discard_line = not complete_line
+    return {'events': events, 'observedEventCount': total,
+            'eventsTruncated': total > event_limit, 'scannedBytes': consumed,
+            'scanComplete': consumed == size, 'uiResultInferred': False}
+
+
 def kind(path):
     if path.name.startswith('StandardOutputAndStandardError-org.tetherless.Tetherless'):
         return 'stdout'
@@ -46,6 +88,8 @@ def retain(root: Path, destination: Path, limit=2_097_152):
                 name = f'{index:02d}-{kind(path)}-{part}.txt'
                 (destination / name).write_bytes(data)
                 entry['parts'].append({'file': name, 'offset': offset, 'bytes': length})
+            if kind(path) == 'stdout':
+                entry['pairingLifecycle'] = pairing_lifecycle(stream, size)
             after = os.fstat(stream.fileno())
             if (after.st_size, after.st_mtime_ns) != (before.st_size, before.st_mtime_ns):
                 raise ValueError('Diagnostic changed during selection')

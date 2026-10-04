@@ -49,7 +49,7 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(browse.waitForExistence(timeout: 10)); browse.tap()
         tapDocumentItem("On My iPhone", in: app)
         tapDocumentItem("Tetherless", in: app, documentCell: true)
-        tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true, thumbnail: true)
+        tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)
         let rejected = app.staticTexts["onboarding.status"]
         // Keep the original outcome deadline. A visible file or a tap is not
         // proof that UIKit delivered a selection to the app.
@@ -149,7 +149,7 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertEqual(enabled.value as? String, "0")
     }
     @MainActor private func tapDocumentItem(_ name: String, in app: XCUIApplication,
-                                            documentCell: Bool = false, thumbnail: Bool = false) {
+                                            documentCell: Bool = false) {
         let stem = (name as NSString).deletingPathExtension
         let match = NSPredicate(format: "label == %@ OR label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
                                 name, stem, name + ",", stem + ",")
@@ -160,20 +160,12 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(item.waitForExistence(timeout: 10), "Missing system document item: \(name)")
         XCTAssertTrue(item.isHittable, item.debugDescription)
         XCTAssertTrue(item.isEnabled, "System document item is disabled: \(name)")
-        if thumbnail {
-            // The observed Files icon-mode cell includes a large filename and
-            // metadata area. Target its unique real preview image, not the
-            // center of that aggregate cell. No guessed coordinates or retaps.
-            XCTAssertTrue(documentCell)
-            let preview = item.images.firstMatch
-            XCTAssertTrue(preview.waitForExistence(timeout: 5), item.debugDescription)
-            XCTAssertEqual(item.images.count, 1, "Ambiguous file preview target")
-            XCTAssertTrue(preview.isHittable, preview.debugDescription)
-            capture(app, "01-before-file-activation")
-            preview.tap()
-        } else {
-            item.tap()
-        }
+        // Activate the actual document cell. Its preview Image is a decorative
+        // descendant that the observed system picker does not expose as hittable.
+        // Lifecycle markers identify delivery/dismissal; do not guess another
+        // child target, retap, or infer selection just because the cell exists.
+        if documentCell { capture(app, "document-before-activation") }
+        item.tap()
     }
 
     /// SwiftUI Form virtualizes offscreen rows. Waiting for an absent row

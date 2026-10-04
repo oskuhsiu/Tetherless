@@ -71,10 +71,15 @@ struct OnboardingView: View {
             }
         }
         .fullScreenCover(item: $pairingRequest, onDismiss: {
+            PairingImportDiagnostic.coverDismissed.record()
             if let dismissalRequest { finishPairingSelection(dismissalRequest) }
+            else { PairingImportDiagnostic.dismissalUnbound.record() }
         }) { request in
             PairingDocumentPicker(request: request, contentTypes: PairingFileManager.supportedContentTypes) { resolved, outcome in
-                guard pairingImport.resolve(outcome, request: resolved) else { return }
+                guard pairingImport.resolve(outcome, request: resolved) else {
+                    PairingImportDiagnostic.resolutionIgnored.record(); return
+                }
+                PairingImportDiagnostic.resolutionAccepted.record()
                 pairingRequest = nil
             }
         }
@@ -82,14 +87,19 @@ struct OnboardingView: View {
 
     @MainActor private func choosePairingFile() {
         guard !working, let request = pairingImport.begin() else { return }
+        PairingImportDiagnostic.requestBegan.record()
         status = nil
         pairingRequest = request
     }
 
     @MainActor private func finishPairingSelection(_ request: PairingImportRequest) {
-        guard let outcome = pairingImport.dismissed(request) else { return }
+        PairingImportDiagnostic.dismissalObserved.record()
+        guard let outcome = pairingImport.dismissed(request) else {
+            PairingImportDiagnostic.dismissalIgnored.record(); return
+        }
         switch outcome {
         case .cancelled:
+            PairingImportDiagnostic.cancelFinished.record()
             status = "Import cancelled. Existing pairing was retained."
         case .invalidSelection:
             status = "Select one local pairing file. Existing pairing was retained."
@@ -98,7 +108,14 @@ struct OnboardingView: View {
             // mutation begin. No mutation lease is held while browsing.
             perform {
                 defer { pairingImport.finished(request) }
-                try PairingFileManager.shared.importPairingFile(from: url)
+                PairingImportDiagnostic.importStarted.record()
+                do {
+                    try PairingFileManager.shared.importPairingFile(from: url)
+                    PairingImportDiagnostic.importSucceeded.record()
+                } catch {
+                    PairingImportDiagnostic.importFailed.record()
+                    throw error
+                }
                 status = "Pairing record saved. A live device connection still needs checking."
             }
         }

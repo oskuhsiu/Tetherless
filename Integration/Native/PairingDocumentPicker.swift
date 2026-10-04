@@ -15,6 +15,11 @@ struct PairingDocumentPicker: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(request: request, onResolve: onResolve) }
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        PairingImportDiagnostic.pickerCreated.record()
+        let plistAllowed = UTType(filenameExtension: "plist").map { type in
+            contentTypes.contains { type.conforms(to: $0) }
+        } ?? false
+        (plistAllowed ? PairingImportDiagnostic.plistTypeAllowed : .plistTypeNotAllowed).record()
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: contentTypes, asCopy: false)
         picker.allowsMultipleSelection = false
         picker.shouldShowFileExtensions = true
@@ -37,18 +42,27 @@ struct PairingDocumentPicker: UIViewControllerRepresentable {
             self.request = request; self.onResolve = onResolve
         }
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            PairingImportDiagnostic.selectionReceived.record()
             guard urls.count == 1, let url = urls.first, url.isFileURL else {
+                PairingImportDiagnostic.invalidSelection.record()
                 finish(.invalidSelection); return
             }
             finish(.selected(url))
         }
-        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) { finish(.cancelled) }
-        func invalidate() { onResolve = nil }
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            PairingImportDiagnostic.cancellationReceived.record()
+            finish(.cancelled)
+        }
+        func invalidate() {
+            PairingImportDiagnostic.coordinatorInvalidated.record()
+            onResolve = nil
+        }
         private func finish(_ outcome: PairingImportFlow.Outcome) {
             // Clear BEFORE calling into SwiftUI. A reentrant/late delegate event
             // cannot dispatch a second import or cancel a newer request.
             let callback = onResolve
             onResolve = nil
+            (callback == nil ? PairingImportDiagnostic.lateCallbackIgnored : .resultDelivered).record()
             callback?(request, outcome)
         }
     }
