@@ -54,6 +54,10 @@ def pairing_lifecycle(stream, size, scan_limit=33_554_432, event_limit=256):
 
 
 def kind(path):
+    if path.name.startswith('StandardOutputAndStandardError-org.tetherless.testdocuments'):
+        return 'fixture-stdout'
+    if path.name.startswith('DocumentFixture-') and path.suffix in {'.ips', '.crash'}:
+        return 'fixture-crash'
     if path.name.startswith('StandardOutputAndStandardError-org.tetherless.Tetherless'):
         return 'stdout'
     if path.name.startswith('SideStore-') and path.suffix in {'.ips', '.crash'}:

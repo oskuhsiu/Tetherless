@@ -1,40 +1,33 @@
-# One-run decision: isolate the real file-provider source
+# One-run decision — separate host and simulated entitlements for the producer
 
-- Plan item: AUTO-02 / PAIR-01 invalid-document import. No other long item this turn.
-- Starting branch/SHA: develop, `8b7b02bf8011bc3854c49cb1b9072e3ddab78fe2`.
-- Observed run: `37195486462`, attempt 1, job `111416356929`, product instrumentation `20faee940c802acb1cd2efc18e921ea3c4598636`.
-- Read-only classifier executed locally with the checked run/job projection and downloaded smoke artifact: firstFailureStage=ui, failureFingerprint=`78ee90c7035f5d63724529ad2afee4152e02db2a06122986b2dc2bf2829306f3`, reportSHA256=`7b0a0b244549650fa2dc5f1dbc986c2dad3845de7ec9d2a32279e8985cb23992`. No boot, install or launch failure; no automatic retry permission.
+- Scope: AUTO-02 / PAIR-01, repair the test-document source startup prerequisite only.
+- Current source: develop `2ec72137dd76d8d63b44961d561be39fff61fb83`.
+- Observed run/attempt/job: `37207927236` / 1 / `111452931419`.
+- Actual read-only report: docs/simulator-ci/latest-report.json; SHA-256 `428cf183950960d63d22e9127b2c4e57abfe02e21b59375f1e97d8a8adfe0d2b`.
+- Earliest failed workflow step: UI, step 11. Concrete failure: producer launch before any product UI. Step 12's missing fixture is consequent evidence, not proof of product deletion.
 
-## Newly inspected evidence, not another tap hypothesis
+## Evidence
 
-UI artifact 11300687557 matches SHA-256 `24d2445d0453ea7876d931098a47437deefa0b8dd6f08af697180e082c3baecd`. At 10:40:36, immediately after the recorded single document-cell tap, `native-ui-diagnostics/00-stdout-1.txt` contains DocumentManager's bookmark resolution failure: NSFileProviderErrorDomain -1005, underlying NSFileProviderResolverErrorDomain -1012. It then reports an empty document-URL array because the selected item could not be prepared/materialized. No selectionReceived/importStarted event appears in the complete trace. The actual screenshot shows a loaded picker and the 241-byte fixture, not a blank Simulator.
+The current artifact SHA-256 is `1af4797c77483280058ad1e47112111100cf0f05b93c429a139565507725babd`. Its XCTest log fails documents.launch() at line 13. The original xcresult contains a DocumentFixture crash with CODESIGNING / 1 / Taskgated Invalid Signature and SIGKILL (Code Signature Invalid); decoded crash SHA-256 `fe150437df1f48436fd15ad32fc7cac9c0610ffe0b69e67690b703bc1f1ef9f8`. The original diagnostic selection omitted that process. The helper did not create its document, so no selection/materialization result is available.
 
-The workflow currently writes the fixture from host Python into the target app's container before `xcodebuild test`. In the same artifact, installd subsequently patches/re-registers that target, and the test launches it again. The earlier fixture manifest has no post-install materialization evidence; its postcheck was skipped after UI failure. Seeing the cell/thumbnail did not prove a usable provider bookmark.
+Compare the commands from the same actual run, not a remembered generic fix: the helper embeds its iOS entitlements in __TEXT and ALSO passes that file to codesign. The working Xcode product signs with an empty host entitlement dictionary and embeds simulated entitlements separately. Static codesign --verify had passed for the old helper; it did not prove launch authorization.
 
-**Confirmed observation:** document-provider URL materialization failed before delivery to our delegate. **Unconfirmed hypothesis:** using a host-seeded file inside the target being reinstalled/re-registered is an invalid or unstable fixture source. It is not proved that app reinstall is the sole cause, or that every user document has this problem.
+Confirmed observation: taskgated signature rejection at producer startup. Evidence-backed correction: remove iOS privilege claims from the helper's host signature, retaining them only in the simulated section. Actual successful runtime after that correction remains unverified.
 
 ## One discriminating change
 
-Use a tiny independent Simulator-only app as an ordinary external document source. It publishes the exact same invalid public plist from inside its own container with NSFileCoordinator, after the test runner is active; XCTest first requires its real ready UI and then terminates that source app. It owns no account/Keychain/App Group and is not bundled into Tetherless. The target app is no longer seeded. This is a minimal producer/consumer isolation, not a custom file provider extension, fake import/delegate result or additional user-facing requirement.
+Generate separate empty host and unchanged simulated entitlement files. Use the host file for ad-hoc signing, preserve the simulated linker section, and inspect BOTH actual representations before installation. Keep strict signature verification and expected identity/platform checks. Record static evidence with runtimeLaunchObserved=false. Retain helper crash/stdout separately within the existing bounded diagnostic exporter.
 
-The product, content types, asCopy=false, picker presentation/delegate, parser/storage, one semantic file-cell tap, ten-second outcome deadline, both cancellations, explicit rejection, consent-off and cold-launch assertions stay unchanged. Only the source folder is the distinct fixture app. The unchanged 241-byte payload digest remains `8adc01ad4d6304deb1daf74335f9acc7891ed5ed442dd85c5a50a7e30b58b96b`. Post-run source verification now runs even after an unsuccessful UI test when the fixture app installed, and does not infer UI success.
+No production Swift, producer Swift, payload, content type, picker delegate, Files source, single semantic tap, timeout, cancellation, rejection, original-byte or consent/relaunch assertions changes. No entitlements are added to the product and no security check is disabled. This corrects a test-build misconfiguration, not a product permission workaround.
 
-## Expected evidence and stop condition
+## Expected observation / refutation
 
-Require actual helper compile/sign/install, source-app ready UI, selectionReceived -> accepted resolution -> bound dismissal -> importStarted -> importFailed, the original UI refusal and complete existing assertions, and independent original-byte verification. The helper manifest's creationObserved=false is not rewritten to true by installation; creation evidence is the actual XCTest ready assertion. A successful postcheck alone cannot pass a failed UI run.
+Require helper signature inspection -> XCTest launch -> actual documentReady -> the unchanged full product path and independent source preservation. If the helper still has a codesigning failure, preserve the new signed-bundle evidence and crash; do not reset the simulator or keep rerunning. If it starts but provider resolution still fails, that refutes the earlier source-isolation hypothesis rather than this launch prerequisite. A later callback/dismissal failure belongs to its observed boundary. No intermediate stage alone closes invalid-file acceptance.
 
-If the same resolver error remains with the independent coordinated source, this fixture hypothesis is not accepted. Inspect the specific provider/runtime failure or a minimal UIKit consumer; do not change tap targets, add retries, enlarge waits or weaken parser expectations. If selection now arrives but dismissal loses it, the trace separates that product bug. Do not relabel the original own-container fixture path as passed.
+## Environment and checks
 
-## Environment and fast checks
+Same declared macos-15 job, concrete owned device destination and installed-toolchain selection; no SDK/runtime upgrade or reset. Inspected failed run used macos-15-arm64 image 20260907.0337.1, macOS 15.7.9, Xcode 26.3 build 17C529, iOS 26.2 SDK/runtime and iPhone SE (3rd generation). Report any actual next-run drift rather than assuming the label is immutable.
 
-Existing Xcode/runtime selection, owned SE/iOS26.2 policy, concrete destination, product entitlements and dependency pins are unchanged. The tiny producer is compiled with the selected Simulator SDK and current runner architecture, with its own identity and no shared secret groups. Native compilation/execution of this new producer has NOT been observed locally.
+42 focused local tests and 16 skill tests passed. These use actual files/Mach-O parsing and scripted codesign responses, not native execution. Product core and full integration suites were not rerun for this test-build-only correction. The unchanged original UI remains required. Read STATUS.md for exact evidence and limits. Before pushing, verify there is no current related active run; dispatch at most one full validation via the code commit and checkpoint its ID without polling.
 
-Local checks: 8 new producer contracts/real bundle-file tests, 6 existing document activation/fixture tests and 6 lifecycle/export tests passed; 16 skill classifier tests passed. Actual helper and XCTest frontend syntax parsed, and workflow YAML parsed. Mocked command planning/host temporary-file checks are not UIKit or file-provider validation. Unchanged core and complete native integration suite were not rerun for this test-only increment.
-
-A single new full-App workflow will follow the commit. Record its ID once and leave its completion as the next standalone item. No existing run is being reset or replayed. Read the exact new SHA's result; there is no after-turn work promise.
-
-## Primary API basis
-
-Apple documents coordinated access and security-scoped URLs for document-picker open operations, and local sharing via UIFileSharingEnabled plus LSSupportsOpeningDocumentsInPlace. These support the ordinary external-source test design, not a proven explanation of the observed -1012 error:
-- https://developer.apple.com/documentation/uikit/uidocumentpickerviewcontroller
-- https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html
+Primary implementation reference for the platform distinction: https://github.com/madsmtm/embed_entitlements . The decisive project evidence is the actual Xcode build and crash above, not an assumption that every taskgated failure has this cause.

@@ -118,6 +118,7 @@ jobs:
             native-simulator-owner.json
             native-ui-document-fixture.json
             native-document-fixture-build.log
+            native-document-fixture-signing.json
             native-simulator-health
             native-simulator-signing.json
             native-ui.log

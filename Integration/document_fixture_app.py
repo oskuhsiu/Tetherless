@@ -8,6 +8,7 @@ account, pairing or backend-success fixture. This is not a product component.
 from __future__ import annotations
 import hashlib
 import json
+import mmap
 import os
 from pathlib import Path
 import platform
@@ -17,6 +18,7 @@ import subprocess
 
 import simulator_environment as environment
 from ui_document_fixture import PAYLOAD, NAME
+from simulator_signing import simulator_entitlements, MAX_ENTITLEMENTS
 
 BUNDLE = 'org.tetherless.testdocuments'
 DISPLAY_NAME = 'Tetherless Test Documents'
@@ -24,6 +26,7 @@ ROOT = Path(__file__).parent
 OUTPUT = Path('.generated/DocumentFixture.app')
 MANIFEST = Path('native-ui-document-fixture.json')
 LOG = Path('native-document-fixture-build.log')
+SIGNING = Path('native-document-fixture-signing.json')
 
 
 def target(architecture: str) -> str:
@@ -51,7 +54,60 @@ def build_inputs(output: Path, application_identifier: str) -> Path:
     with entitlement.open('xb') as f:
         f.write(plistlib.dumps({'application-identifier': team + '.' + BUNDLE,
                                'get-task-allow': True}))
+    # Simulator iOS entitlements belong only in the linked __TEXT section.
+    # Match this runner's working Xcode product: no host privileges in its
+    # ad-hoc signature. Applying iOS application-identifier/get-task-allow to
+    # the host signature accompanied the observed taskgated startup rejection.
+    with host_entitlements(output).open('xb') as f:
+        f.write(plistlib.dumps({}))
     return entitlement
+
+
+def host_entitlements(output: Path) -> Path:
+    return output.parent/'DocumentFixture.host.entitlements'
+
+
+def signing_command(output: Path) -> list[str]:
+    return ['codesign', '--force', '--sign', '-', '--entitlements',
+            str(host_entitlements(output)), '--timestamp=none',
+            '--generate-entitlement-der', str(output)]
+
+
+def inspect_signature(output: Path, application_identifier: str) -> dict:
+    """Inspect the actual signed bundle, not the source entitlement files.
+
+    Code-sign verification is necessary but does not prove taskgated accepted
+    process launch. The unchanged XCTest must still launch the producer and
+    observe its documentReady label.
+    """
+    info = plistlib.loads((output/'Info.plist').read_bytes())
+    if (info.get('CFBundleIdentifier') != BUNDLE or
+            info.get('CFBundleExecutable') != 'DocumentFixture'):
+        raise ValueError('Unexpected document-source executable identity')
+    command(['codesign', '--verify', '--strict', str(output)], 30)
+    result = subprocess.check_output(['codesign', '--display', '--entitlements', '-',
+                                      '--xml', str(output)], timeout=30)
+    if len(result) > MAX_ENTITLEMENTS:
+        raise ValueError('Oversized document-source host entitlements')
+    host = plistlib.loads(result) if result.strip() else {}
+    if host != {}:
+        raise ValueError('Document source must not carry host privilege entitlements')
+    binary = output/'DocumentFixture'
+    if binary.is_symlink() or not binary.is_file():
+        raise ValueError('Expected regular document-source executable')
+    with binary.open('rb') as f:
+        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as data:
+            simulated, digest = simulator_entitlements(data)
+            executable_digest = hashlib.sha256(data).hexdigest()
+    expected = {'application-identifier': application_identifier.split('.')[0] + '.' + BUNDLE,
+                'get-task-allow': True}
+    if simulated != expected:
+        raise ValueError('Document-source simulated entitlement mismatch')
+    return {'schema': 1, 'bundleID': BUNDLE, 'signatureVerified': True,
+            'hostEntitlementCount': 0, 'simulatedIdentityVerified': True,
+            'simulatedEntitlementsSHA256': digest,
+            'executableSHA256': executable_digest, 'runtimeLaunchObserved': False,
+            'scope': 'document-source bundle signature inspection, not runtime acceptance'}
 
 
 def command(args: list[str], timeout: int) -> None:
@@ -70,7 +126,7 @@ def command(args: list[str], timeout: int) -> None:
 def install() -> None:
     if platform.system() != 'Darwin':
         raise RuntimeError('Actual Simulator fixture requires a macOS runner')
-    if MANIFEST.exists():
+    if MANIFEST.exists() or SIGNING.exists():
         raise FileExistsError('Fixture manifest already exists; refusing another install')
     device = environment.owned_device(environment.listing())
     smoke = json.loads(Path('native-launch-evidence.json').read_text())
@@ -88,8 +144,11 @@ def install() -> None:
              '-framework', 'UIKit', '-module-name', 'DocumentFixture',
              '-Xlinker', '-sectcreate', '-Xlinker', '__TEXT', '-Xlinker', '__entitlements',
              '-Xlinker', str(entitlement), '-Xlinker', '-rpath', '-Xlinker', '/usr/lib/swift', str(source), '-o', str(OUTPUT/'DocumentFixture')], 120)
-    command(['codesign', '--force', '--sign', '-', '--entitlements', str(entitlement), str(OUTPUT)], 30)
-    command(['codesign', '--verify', '--strict', str(OUTPUT)], 30)
+    command(signing_command(OUTPUT), 30)
+    signature = inspect_signature(OUTPUT, signing['applicationIdentifier'])
+    signature['sourceCommit'] = smoke['sourceCommit']
+    with SIGNING.open('x') as f:
+        json.dump(signature, f, indent=2); f.write('\n')
     command(['xcrun', 'simctl', 'install', device['udid'], str(OUTPUT)], 120)
     # Do not launch or warm the picker. XCTest launches the source app exactly
     # once, observes documentReady, then tests the unchanged product picker.
