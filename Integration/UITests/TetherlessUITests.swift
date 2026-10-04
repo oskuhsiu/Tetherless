@@ -6,6 +6,16 @@ import XCTest
 final class TetherlessUITests: XCTestCase {
     @MainActor func testFirstSetupAndLocalNavigation() throws {
         continueAfterFailure = false
+        // A distinct, ordinary document source: the product is never seeded.
+        // Create inside the Simulator after Xcode has finished installing apps,
+        // using NSFileCoordinator rather than host-side container writes.
+        let documents = XCUIApplication(bundleIdentifier: "org.tetherless.testdocuments")
+        documents.launch()
+        XCTAssertTrue(documents.staticTexts["fixture.documentReady"].waitForExistence(timeout: 10),
+                      "The actual external document source did not create its invalid plist")
+        XCTAssertFalse(documents.staticTexts["fixture.documentFailed"].exists)
+        capture(documents, "00-external-document-created")
+        documents.terminate()
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
@@ -42,13 +52,13 @@ final class TetherlessUITests: XCTestCase {
                            "Import cancelled. Existing pairing was retained.")
         }
         // Select a real, deliberately invalid plist through the system picker.
-        // CI creates only this public document, never a fake pairing/account or
+        // The isolated fixture creates only this public document, never a fake pairing/account or
         // a backend result. Production coordination/parser/storage handles it.
         app.buttons["onboarding.importPairing"].tap()
         let browse = app.buttons["Browse"].firstMatch
         XCTAssertTrue(browse.waitForExistence(timeout: 10)); browse.tap()
         tapDocumentItem("On My iPhone", in: app)
-        tapDocumentItem("Tetherless", in: app, documentCell: true)
+        tapDocumentItem("Tetherless Test Documents", in: app, documentCell: true)
         tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)
         let rejected = app.staticTexts["onboarding.status"]
         // Keep the original outcome deadline. A visible file or a tap is not

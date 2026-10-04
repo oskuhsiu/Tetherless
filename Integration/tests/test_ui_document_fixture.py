@@ -42,7 +42,7 @@ class UIDocumentFixtureTests(unittest.TestCase):
     def test_actual_ui_path_requires_rejection_and_preserves_existing_checks(self):
         text=(ROOT/'UITests/TetherlessUITests.swift').read_text()
         self.assertIn('for attempt in 1...2',text)
-        self.assertIn('tapDocumentItem("Tetherless", in: app, documentCell: true)',text)
+        self.assertIn('tapDocumentItem("Tetherless Test Documents", in: app, documentCell: true)',text)
         self.assertIn('tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)',text)
         self.assertIn('documentCell ? app.cells : app.descendants(matching: .any)',text)
         self.assertIn('01-invalid-pairing-rejected',text)
@@ -50,7 +50,7 @@ class UIDocumentFixtureTests(unittest.TestCase):
         self.assertIn('The operation did not complete.',text)
         self.assertNotIn('launchEnvironment',text)
         workflow=(ROOT.parent/'.github/workflows/native-simulator.yml').read_text()
-        self.assertLess(workflow.index('simulator_smoke.py launch'),workflow.index('ui_document_fixture.py seed'))
+        self.assertLess(workflow.index('simulator_smoke.py launch'),workflow.index('document_fixture_app.py'))
         self.assertLess(workflow.index('xcodebuild test'),workflow.index('ui_document_fixture.py verify'))
         self.assertIn('native-ui-document-fixture.json',workflow)
         self.assertNotIn('continue-on-error',workflow)

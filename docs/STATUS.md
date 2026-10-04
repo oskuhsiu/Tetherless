@@ -1,27 +1,34 @@
-# Current checkpoint — reusable Simulator CI skill, no blind reruns
+# Current checkpoint — external document source isolates resolver failure
 
-2026-10-04. Starting develop: **9101523a11b915223561933e41dac9fccd9cacee**. Latest production instrumentation remains **20faee940c802acb1cd2efc18e921ea3c4598636**; renewal core remains b67a362. This increment adds a repository-discoverable skill, read-only classifier/tests, exact stage map and observed evidence. It changes no production Swift, UI assertions, existing simulator scripts or existing iOS workflow.
+2026-10-04. Starting develop: **8b7b02bf8011bc3854c49cb1b9072e3ddab78fe2**. This is one AUTO-02 / PAIR-01 test-integration increment, not a new production feature. Tetherless's Swift, picker delegate/content policy, pairing parser/storage and renewal core are unchanged. Main is unpromoted. No physical device or credentials requested.
 
-## Read first
+## Apply the Simulator skill
 
-`.agents/skills/ios-simulator-ci/SKILL.md` now governs Simulator/CI diagnosis. `docs/SIMULATOR_CI.md` contains the Tetherless adapters and current evidence. AGENTS.md requires reading them before editing/rerunning Simulator work. One long item per turn remains mandatory. Main is not promoted. No iPhone or secrets requested.
+Read `.agents/skills/ios-simulator-ci/SKILL.md`, `docs/SIMULATOR_CI.md`, and the current decision `docs/simulator-ci/next-run-decision.md`. This conversation's installed-resource listing did not yet expose the newly uploaded skill, so the identical supplied skill archive and repository copy were read and used. No claim of controlling the user's account installation state.
 
-## Latest result actually inspected
+The current source was recovered from artifact **11302891252**, ZIP SHA-256 `8d61664cc52b1e8a827570d045784d702907f4a03b8df6a221bfb7b85977b3d1`, inner TAR `936f577b7fc09cddf18f37743a7a173cd2b087507fe4af21ece044726b248008`, recorded 8b7b02b. Skill classifier executed against the live-checked failed job projection and verified smoke artifact: earliest failure remains UI, not boot/install. No active UI job was found or rerun.
 
-Run **37195486462**, attempt 1, job **111416356929**, at **20faee9** is FAILED, not pending. Build/signature/boot/install/launch passed. Step 11 failed in the actual XCTest: no import outcome, picker still visible. Original-file verification was skipped. All subsequent evidence and owned-device cleanup completed. This is a UI-path failure, not a Simulator boot failure.
+## New evidence, precise scope
 
-Downloaded artifact **11300687557** SHA-256: `24d2445d0453ea7876d931098a47437deefa0b8dd6f08af697180e082c3baecd`. The smoke JSON, XCTest failure log and complete fixed-event trace were inspected. Third picker request records creation/plist acceptance, but no selection callback or import-start event in a complete 4,423,416-byte scan. No root cause inferred; no valid/invalid-file import acceptance claimed. The two cancellation traces have dismissal-before-delegate ordering, which is an observation to inspect, not proof that it caused the third selection failure.
+In the previously retained but now specifically inspected app stdout, **DocumentManager fails bookmark resolution before delivering a selected URL**: NSFileProviderErrorDomain -1005, underlying NSFileProviderResolverErrorDomain -1012, then an empty array because the item could not be prepared/materialized. The line occurs at 10:40:36 immediately after the single file-cell tap. It explains why no app selection callback was observed, but does not establish why the provider's resolution failed.
 
-## Skill implementation and verification
+The fixture was created by host Python inside the target's Documents before Xcode patched/re-registered and relaunched that target. The new evidence-backed hypothesis is that this fixture's provider identity is unstable/invalid; neither tap selection nor the product's parser should be changed to conceal it. See next-run-decision.md for source hash, timeline, expected evidence and refutation conditions.
 
-- Reusable skill separates environment, preparation, build, signature, boot, install/launch, fixture, UI, data postcheck, evidence and cleanup failures.
-- Actual Python classifier consumes raw REST or connector-wrapped JSON, binds run/job/source identity, rejects mixed evidence, preserves first failure despite successful cleanup, distinguishes pending/cancelled, and flags repeated stage/symptom fingerprints across changed commits.
-- It is read-only, has no network/simctl/GitHub mutation, never authorizes automatic retries and never equates report generation with test/product acceptance. Repository step names/incidents are not hard-coded into the generic skill.
-- **16 helper tests passed locally**, including real CLI file output/no-overwrite checks. Current live job projection plus actual downloaded smoke JSON produces firstFailureStage=ui and automaticRetryAllowed=false. A lightweight Ubuntu skill-check workflow is added; its remote result is not inferred from local tests.
-- No new Xcode/Simulator run was requested for this skill-only work. The failing product UI remains open. This does not claim to make GitHub infrastructure failure-free or install a ChatGPT-wide plugin.
+## Narrow change
 
-## Exact next product item
+A **Simulator-test-only document-source app** now creates the same one invalid 241-byte public plist with NSFileCoordinator inside its own container. XCTest launches it once, requires its actual ready label and terminates it before testing Tetherless. The source is distinct from the app Xcode rebuilds/reinstalls. It holds no secret groups/credentials, invokes no Tetherless API, supplies no delegate/backend response and is not distributed or compiled into the product. The normal Files picker must select it from Tetherless Test Documents and exercise the real parser.
 
-Use the skill and its decision record to isolate actual document activation/delegate/provider behavior in the current version. Preserve two cancellations, single semantic cell tap, original outcome deadline, explicit refusal, original-file verification, pairing incomplete, consent off and cold-relaunch checks. Do not rotate tap targets, increase waits, reset simulators or change type restrictions without evidence. Save one change before one planned long verification; do not combine it with installer/supply-chain work.
+Two cancellations, exact single document-cell tap, original outcome deadline, actual dismissal, visible rejection, pairing incomplete, consent off, recovery/cold-launch and byte-preservation checks remain. Preservation runs after failed UI too when the fixture installation succeeded; successful preservation cannot override a failed test. The producer itself is an additional test prerequisite, not a success fixture. Its new native build/runtime is pending.
 
-Original remaining product scope stays in PLAN_PROGRESS.md. Prior checkpoint at 9101523 retains the previous test-target failure and detailed history; it is not the current run outcome. No whole-product, live Apple, physical installation, locked-screen renewal or expiry crossing acceptance is claimed here.
+## Local checks actually completed
+
+- **20 focused checks passed:** 8 new producer/bundle/command/ownership contracts and real-file tests; 6 retained document fixture/activation checks; 6 retained lifecycle/export checks.
+- **16 Simulator skill tests passed**, including real read-only CLI/report behavior. Current classification remains failed/ui and productAccepted=false.
+- Actual helper and XCTest source passed Swift frontend syntax parsing; workflow YAML parsed. These are not UIKit typechecking or native execution.
+- No new core Debug/Release or whole-integration-suite count is advertised; production core did not change. No original failed UI is relabelled successful.
+
+## Next standalone item
+
+Inspect the single full-App workflow triggered by this commit. Require helper compile/sign/install and ready UI, then the actual product selection/rejection/dismissal, all existing assertions and independent original-byte verification. Read fixed callback markers and exact FileProvider errors. If the source isolation does not resolve materialization, record that refutation rather than repeating full runs. If callbacks arrive but state/dismissal fails, fix that now-visible product boundary separately.
+
+The originally host-seeded own-container route remains failed historical evidence, not newly accepted. No real Apple login, valid pairing, physical installation, locked-screen scheduling or expiry crossing was tested. The broader scope remains PLAN_PROGRESS.md; no other task is claimed complete in this turn.
