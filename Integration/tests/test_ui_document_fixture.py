@@ -43,7 +43,7 @@ class UIDocumentFixtureTests(unittest.TestCase):
         text=(ROOT/'UITests/TetherlessUITests.swift').read_text()
         self.assertIn('for attempt in 1...2',text)
         self.assertIn('tapDocumentItem("Tetherless", in: app, documentCell: true)',text)
-        self.assertIn('tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)',text)
+        self.assertIn('tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true, thumbnail: true)',text)
         self.assertIn('documentCell ? app.cells : app.descendants(matching: .any)',text)
         self.assertIn('01-invalid-pairing-rejected',text)
         self.assertIn('XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)',text)
@@ -57,6 +57,33 @@ class UIDocumentFixtureTests(unittest.TestCase):
         environment=(ROOT/'simulator_environment.py').read_text()
         self.assertIn('payload = listing(timeout=90)',environment)
         self.assertIn('def listing(timeout: int = 30)',environment)
+
+
+class DocumentActivationContractTests(unittest.TestCase):
+    def test_file_targets_unique_preview_without_retry_or_coordinate_taps(self):
+        text = (ROOT/'UITests/TetherlessUITests.swift').read_text()
+        helper = text.split('private func tapDocumentItem(')[1].split('/// SwiftUI Form')[0]
+        self.assertIn('XCTAssertTrue(item.isEnabled', helper)
+        self.assertIn('let preview = item.images.firstMatch', helper)
+        self.assertIn('XCTAssertEqual(item.images.count, 1', helper)
+        self.assertIn('XCTAssertTrue(preview.isHittable', helper)
+        self.assertEqual(helper.count('preview.tap()'), 1)
+        self.assertNotIn('coordinate(', helper)
+        self.assertNotIn('doubleTap(', helper)
+        self.assertNotIn('for ', helper)
+        self.assertNotIn('while ', helper)
+
+    def test_outcome_and_real_dismissal_remain_mandatory(self):
+        text = (ROOT/'UITests/TetherlessUITests.swift').read_text()
+        part = text.split('let rejected =')[1].split('// Kill/relaunch')[0]
+        self.assertIn('rejected.waitForExistence(timeout: 10)', part)
+        self.assertIn('app.otherElements["Browse View (Picker)"].exists', part)
+        self.assertIn('XCTAssertTrue(outcomeAppeared', part)
+        self.assertIn('XCTAssertFalse(pickerStillVisible', part)
+        self.assertIn('The operation did not complete.', part)
+        self.assertIn('XCTAssertTrue(app.buttons["onboarding.importPairing"].isEnabled)', part)
+        self.assertIn('XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)', part)
+        self.assertIn('01-after-file-activation', part)
 
 
 if __name__ == '__main__': unittest.main()

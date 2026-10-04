@@ -40,3 +40,9 @@ Run `swift test`, `swift test -c release`, and `python3 -m unittest discover -s 
 - Save each coherent code change and a concrete next step before expanding to another feature or waiting on a long native/UI run. Do not accumulate an entire session in an uncommitted workspace.
 - If a session is interrupted, first inspect the actual `develop` head and CI, preserve source artifacts and failures, and checkpoint any narrow repair. Do not restart a large feature batch as part of recovery.
 - Tie every verification claim to its implementation SHA. Pending or failed native/UI work remains pending or failed; prior green commits do not validate new code.
+
+## One long-running item per turn
+
+- Owner instruction (2026-10-04): isolate each long-running item into its own work turn. Choose one current acceptance condition; do not combine a full UI/native wait with another large feature or audit.
+- Save the narrow code/test change and its exact next action before starting long CI. Record implementation SHA, run ID, passed stages and actual failure; use a separate verification turn for unfinished long runs rather than repeated polling to fill the session.
+- A missing result is pending, not success. End at a committed checkpoint without promising work after the turn. Preserve the same acceptance assertions and focus on the current version.

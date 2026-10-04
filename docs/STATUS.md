@@ -1,38 +1,33 @@
-# Current product verification — renewal recovery and real document selection
+# Single-item checkpoint — actual document activation
 
-2026-10-04. Product Swift: b67a36264dd0baddf69fe65cd156b6f3ced42e58. UI/environment extension: 1b14f75a349d04fdebbd17f42187a3a83b13be91. This follow-up fixes only the observed UI selector and records completed evidence; product Swift is unchanged. Develop only; main remains 4cfcc185cd529e07c212c3b310c0ee5162c19b2f. No physical device or credentials requested, and no complete-product or release-readiness claim.
+Updated 2026-10-04. Starting/current inspected head: 81554d87aa7f7b68c8247ef383e81a4b6771d11f. Product Swift remains b67a36264dd0baddf69fe65cd156b6f3ced42e58. This increment changes the UI test, its source contracts and documentation only. Develop only; main is not promoted. No physical device or credentials requested.
 
-## Product fixes actually tested
+## One item for this turn: AUTO-02 / PAIR-01 selected invalid document
 
-The engine/runtime retain earlier durable renewal results when later work is cancelled or persistence fails. Per-invocation capture preserves verified expiries for summaries/alarms without counting uncommitted work or suppressing errors. Pending mutations still reconcile before another write. The native backend consumes the exact final batch readback rather than repeating a full profile-store dump; final readback and cancellation checks remain mandatory.
+The owner requested that each long-running item be isolated into its own turn. The matching rule is saved in AGENTS.md. Do not bundle the next native/full-App wait with an unrelated implementation or audit. The acceptance condition remains: select the actual invalid public plist via the system picker, observe dismissal and explicit rejection, retain the original file, keep pairing incomplete and consent unchanged, and complete the existing setup/recovery/cold-relaunch path.
 
-Six scenario tests run the real coordinator with actual journal files and process locks and a scripted device: next-day manager/two-app renewal, no duplicate same-day renewal, cancellation after manager success, second-commit failure followed by reconciliation without duplicate writes, write-ahead failure and applied-but-unverified results. Three transport tests verify the exact returned post-apply snapshot, missing-extension refusal and cancellation during final readback. These are not real Apple/physical-device results.
+## What the current UI run actually did
 
-## Current verification
+Full-App run **37189390107**, job **111398218234**, at 81554d8 FAILED in the XCTest, not in installation. The owned simulator, compile, signature, install/launch and public-fixture seed steps passed. Both Cancel operations passed. The test reached On My iPhone, tapped the correct `Tetherless, Container` cell, then the correct `Tetherless-Invalid-Pairing.plist, plist` cell at t=64.27s. At line 54 it timed out waiting ten seconds for onboarding.status. Verification of original-file preservation was skipped; it is NOT accepted as passed.
 
-- Local current baseline Debug: 296 passes. Modified product Debug: 305 passes in 40 suites. Local Release invocations timed out; the remaining orphaned compiler from that command was stopped, not counted as a completed run.
-- macOS product core run 37187683409 completed successfully with both Debug and Release steps. The follow-up source archive from core run 37188333824 was also retained and checked.
-- iOS Simulator core run 37187683404: 329 unique individual passes counted in the downloaded log, plus one explicit hardware Data Protection skip. All nine added scenario/readback cases passed; TEST SUCCEEDED recorded.
-- Native current integration 1b14f75 run 37188333754: Debug and Release both compiled, linked, packaged and uploaded successfully.
-- Local integration after restoring exact reviewed source preimages: 178 tests passed, no skips. The initially recorded 13 missing-input skips were resolved by restoring and hash-checking the retained auth/cache/IPA inputs and reconstructing the metadata preimage with the current pinned cache transform. Final checks were rerun after the selector fix.
+Artifact **11298695803** was downloaded and verified against SHA-256 `69aba8546bf51e9b7ea4bb4cd346a92a1ceecea3c7bea8fea40bf2d81c0e526e`. The actual native-ui.log, final hierarchy `5E394C88-5E0D-4E4D-A4D2-2F8554C98934.txt` and a late frame of its screen recording were inspected. The system Files picker remained on screen with the fixture, and the background wizard's Choose button was disabled. The hierarchy contains one Image inside that exact document cell. These observations establish no visible completion after the cell tap. They do not establish whether UIKit failed to activate the file, delayed its callback, or encountered a production dismissal problem; do not claim an import-parser failure from this evidence.
 
-## Actual UI execution and narrow correction
+## Narrow test correction, pending actual execution
 
-Current full-App run 37188333737 successfully allocated/booted its owned Simulator, compiled and signature-checked the app, installed/launched it and seeded only one invalid public plist. The real test completed both system-picker cancellations and navigated to On My iPhone. It then FAILED at TetherlessUITests.swift:151: the broad Any/firstMatch selector selected the presenting wizard's hidden StaticText named Tetherless instead of the visible document Cell named `Tetherless, 1 item`. Actual hierarchy includes both elements and confirms the correct cell exists. This is a test-selection failure before the invalid file was selected, not evidence that its rejection succeeded or failed.
+For this observed icon-mode fixture only, activate the unique real preview Image inside the already matched document Cell instead of the aggregate cell's center/metadata area. Require the cell enabled and the preview unique and hittable; tap once, with no coordinates, double-tap, retry or fallback. Location/folder navigation stays unchanged. Capture before activation and after the original ten-second outcome wait. Require explicit rejection AND real picker dismissal. Preserve both cancellations, enabled Choose button, incomplete pairing, unchanged consent, recovery and cold-launch assertions. Original-file verification is still a separate required workflow step.
 
-The downloaded UI artifact 11298198553 matched SHA-256 aba8a046e2324be9657138b687d67939ee3a6a2cf1cf2b53df487263f77d280f. Actual log and full failure hierarchy were inspected. The original-file verification step was skipped after test failure; no preservation success is inferred from a seeded file.
+This is a targeted test-input hypothesis, not a proven product fix. No production file-type restrictions, UIKit coordinator, parser, storage, signing or renewal code was changed to manufacture success. If the next actual run still shows the picker, inspect selection/delegate lifecycle rather than cycling through different taps or increasing waits.
 
-The follow-up scopes only file/folder targets to document Cells, retaining the working location navigation and all hittability, rejection, consent, resume/recovery/cold-launch assertions. No coordinate taps, success fixtures or production hooks are added. Its complete UI execution still requires the next CI result; syntax/contract checks are not a passing UI claim.
+## This turn's local checks
 
-The first b67a362 UI attempt failed before compilation because initial simctl listing exceeded 30 seconds. Only fresh-service initialization was given 90 seconds in 1b14f75; ordinary diagnosis and UI/action bounds remain unchanged. No reset/retry loop was introduced. That earlier failed attempt remains a failure, not a product assertion.
+- Six document-fixture/activation contract tests passed (real temporary fixture IO; two added source-contract checks).
+- Five existing pairing-picker integration contracts passed, including Swift frontend parsing of native picker/onboarding sources.
+- Swift frontend parsing of the changed XCTest source passed separately.
+- These eleven focused checks are not executed XCUITest or native typechecking. Unchanged core Debug/Release suites and the full integration suite were not rerun this turn; no inherited test counts are advertised as new results.
+- Source artifact **11298254179** matched ZIP SHA-256 `d95a65e506bdc61b30490e3f444613269d71a5166ca50c1e6b23d84eef6656ea`, TAR `165cc9c8eaf0b37f9d4a425a8ad80fceb5f4354f228e7dc6a13edbfb50a3361d` and the recorded 81554d8 commit before editing. Current macOS core run 37189390115 is successful, but does not validate this later UI-only correction.
 
-## Inspected current artifacts
+## Standalone next verification
 
-- b67a362 source 11297776949: ZIP SHA-256 35e13ec3cac552a600d29dfa9348f7d65177c31b2730115ad472c0e7978acf0e, TAR 40de96ab6c18dbf95070377a514e78a119f6ee89d8b1963d7ee14ccf31635726; nine changed files match tested bytes.
-- b67a362 Simulator 11298246283: ZIP SHA-256 09a0662537b475dd3129df1bb3195431bd22862dd33fc54cdaed8b44536991dd; actual individual results counted separately from the protection skip.
-- 1b14f75 source 11297647354: ZIP a661d34240e188b8d57abadd16bf2ac820b3460a68915f9a449f5d865898b46c, TAR c829e282293ada3bc47a5bc0c7944212c69d2bcfa673cb2174457851e6af3f46; all six test/environment/checkpoint files match before this follow-up.
-- 1b14f75 native Debug 11297893333: ZIP e0603e7f4e2099518c85cae67e42015003339e16f6d553252b1020100c451f3a. IPA a4ada7b67a14261dc7121286635a661a959fef13172a889a0f6e561833890be8 matches manifest/sourceCommit. Prepared RenewalEngine, ProfileBatch, RenewalRunCapture, NativeRenewalRuntime and NativeRenewalBackend match the tested source. The unsigned product still requires user signing and reports physical/unattended acceptance false.
+Read the one fresh full-App run for this commit. Check the actual activation target, dismissal/rejection, final existing assertions and original-file verification, not merely the workflow's aggregate state. If it passes, close only this signed-out invalid-document route; valid pairing, preservation of an already-installed real pairing record, third-party providers and physical acceptance remain separate. If pending, record its run ID and stop rather than repeatedly waiting while adding more features. Keep the latest exact result and a concrete next action in this file.
 
-## Continue from current code
-
-Read the corrected document-cell UI run before declaring selected-file coverage complete. Continue remaining actual installer/first-sign/self-update and distribution requirements, not previous percentage estimates. All product changes and test corrections are saved independently. No real Apple login/provisioning, physical pairing/profile install, locked-screen scheduling or expiry crossing has been verified in this work.
+The broader task inventory remains docs/PLAN_PROGRESS.md, but no other task is claimed complete here. No real Apple login, physical pairing/profile install, locked-screen scheduling or expiry crossing was tested.
