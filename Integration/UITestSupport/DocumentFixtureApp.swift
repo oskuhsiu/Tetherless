@@ -2,6 +2,7 @@
 // Simulator-only test document source. Never linked into Tetherless.
 import Foundation
 import UIKit
+import UniformTypeIdentifiers
 
 @main
 @MainActor
@@ -13,7 +14,7 @@ final class DocumentFixtureApp: UIResponder, UIApplicationDelegate {
         let label = UILabel()
         label.numberOfLines = 0
         label.textAlignment = .center
-        let controller = UIViewController()
+        let controller = DocumentPickerControl()
         controller.view.backgroundColor = .systemBackground
         label.translatesAutoresizingMaskIntoConstraints = false
         controller.view.addSubview(label)
@@ -68,5 +69,81 @@ final class DocumentFixtureApp: UIResponder, UIApplicationDelegate {
         }
         guard coordinationError == nil, let result else { throw Failure.unavailable }
         try result.get()
+    }
+}
+
+/// Deliberately independent UIKit control. It has no SwiftUI, Tetherless import
+/// flow, success backend or test-triggered delegate invocation. The test only
+/// opens it AFTER the original product outcome has already failed and is frozen.
+@MainActor
+final class DocumentPickerControl: UIViewController, UIDocumentPickerDelegate {
+    private enum Outcome: String {
+        case idle, waiting, selectedFileURL, invalidSelection, cancelled
+    }
+    private let resultLabel = UILabel()
+    private let openButton = UIButton(type: .system)
+    private var activePicker: UIDocumentPickerViewController?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        openButton.setTitle("Open independent system picker", for: .normal)
+        openButton.accessibilityIdentifier = "fixture.openControl"
+        openButton.addTarget(self, action: #selector(openControl), for: .touchUpInside)
+        resultLabel.accessibilityIdentifier = "fixture.controlOutcome"
+        resultLabel.textAlignment = .center
+        let controls: [UIView] = [openButton, resultLabel]
+        for item in controls {
+            item.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(item)
+        }
+        NSLayoutConstraint.activate([
+            openButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            openButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -65),
+            resultLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            resultLabel.topAnchor.constraint(equalTo: openButton.bottomAnchor, constant: 12)
+        ])
+        observe(.idle)
+    }
+
+    @objc private func openControl() {
+        guard activePicker == nil, presentedViewController == nil else { return }
+        // The same open-in-place semantics; never switch to copying or invoke
+        // an app-owned fake picker to manufacture callback delivery.
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.propertyList, .xml], asCopy: false)
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        picker.delegate = self
+        picker.modalPresentationStyle = .fullScreen
+        activePicker = picker
+        openButton.isEnabled = false
+        observe(.waiting)
+        present(picker, animated: true)
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard controller === activePicker else { return }
+        let valid = urls.count == 1 && urls.first?.isFileURL == true
+        // No URL/path/content is logged. This reports callback delivery only,
+        // not byte access, pairing validity or product acceptance.
+        observe(valid ? .selectedFileURL : .invalidSelection)
+        finish(controller)
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        guard controller === activePicker else { return }
+        observe(.cancelled)
+        finish(controller)
+    }
+
+    private func finish(_ controller: UIDocumentPickerViewController) {
+        controller.delegate = nil
+        controller.dismiss(animated: true)
+        activePicker = nil
+        openButton.isEnabled = true
+    }
+
+    private func observe(_ outcome: Outcome) {
+        resultLabel.text = outcome.rawValue
+        print("[Tetherless.DocumentControl] \(outcome.rawValue)")
     }
 }

@@ -66,6 +66,13 @@ final class TetherlessUITests: XCTestCase {
         let outcomeAppeared = rejected.waitForExistence(timeout: 10)
         let pickerStillVisible = app.otherElements["Browse View (Picker)"].exists
         capture(app, "01-after-file-activation")
+        if !outcomeAppeared || pickerStillVisible {
+            // Freeze and retain the original failure BEFORE the independent
+            // control. Its result cannot extend the product deadline or retry
+            // the product, and the original assertions below still fail.
+            capture(app, "product-failure-before-control")
+            inspectIndependentPickerControl(after: app, documents: documents)
+        }
         XCTAssertTrue(outcomeAppeared, "No import outcome; system picker visible: \(pickerStillVisible)")
         XCTAssertFalse(pickerStillVisible, "The real system picker must dismiss before import")
         XCTAssertTrue(rejected.label.hasPrefix("The operation did not complete."), rejected.label)
@@ -158,6 +165,59 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
     }
+    /// Failure-only diagnostic, not an alternative way to pass this test. The
+    /// original outcome/visibility have already been captured and are immutable.
+    /// Never warm the provider before testing the product or retry its selection.
+    @MainActor private func inspectIndependentPickerControl(after product: XCUIApplication,
+                                                           documents: XCUIApplication) {
+        product.terminate()
+        defer { documents.terminate() }
+        documents.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        documents.launch()
+        guard documents.staticTexts["fixture.documentReady"].waitForExistence(timeout: 10),
+              !documents.staticTexts["fixture.documentFailed"].exists else {
+            capture(documents, "control-source-unavailable"); return
+        }
+        let open = documents.buttons["fixture.openControl"]
+        guard open.waitForExistence(timeout: 5), open.isEnabled, open.isHittable else {
+            capture(documents, "control-button-unavailable"); return
+        }
+        open.tap()
+        let browse = documents.buttons["Browse"].firstMatch
+        guard browse.waitForExistence(timeout: 10), browse.isHittable else {
+            capture(documents, "control-picker-unavailable"); return
+        }
+        browse.tap()
+        func tapOnce(_ name: String, cells: Bool) -> Bool {
+            let stem = (name as NSString).deletingPathExtension
+            let match = NSPredicate(format: "label == %@ OR label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+                                    name, stem, name + ",", stem + ",")
+            let items = cells ? documents.cells : documents.descendants(matching: .any)
+            let item = items.matching(match).firstMatch
+            guard item.waitForExistence(timeout: 10), item.isEnabled, item.isHittable else { return false }
+            item.tap()
+            return true
+        }
+        guard tapOnce("On My iPhone", cells: false),
+              tapOnce("Tetherless Test Documents", cells: true),
+              tapOnce("Tetherless-Invalid-Pairing.plist", cells: true) else {
+            capture(documents, "control-document-unreachable"); return
+        }
+        let status = documents.staticTexts["fixture.controlOutcome"]
+        let predicate = NSPredicate(format: "exists == true AND label IN %@", ["selectedFileURL", "invalidSelection", "cancelled"])
+        let observed = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: status)], timeout: 10)
+        let pickerVisible = documents.otherElements["Browse View (Picker)"].exists
+        let allowed = ["idle", "waiting", "selectedFileURL", "invalidSelection", "cancelled"]
+        let result = status.exists && allowed.contains(status.label) ? status.label : "not-visible"
+        let observation = XCTAttachment(string: "controlWaitCompleted=\(observed == .completed); controlOutcome=\(result); pickerVisible=\(pickerVisible); productAccepted=false")
+        observation.name = "independent-picker-control-result"
+        observation.lifetime = .keepAlways
+        add(observation)
+        capture(documents, "independent-picker-control-after-selection")
+        // Deferred source-app termination also runs on an incomplete probe.
+        // The already captured original product failure is never retried.
+    }
+
     @MainActor private func tapDocumentItem(_ name: String, in app: XCUIApplication,
                                             documentCell: Bool = false) {
         let stem = (name as NSString).deletingPathExtension
