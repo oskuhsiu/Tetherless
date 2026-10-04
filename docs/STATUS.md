@@ -1,6 +1,10 @@
 # Single-item checkpoint — instrument actual pairing selection and dismissal
 
-2026-10-04. Starting develop: **b08eaca6cb8224e114afd5093d92666e581367dc**. This increment removes the disproven preview-image test target and adds fixed lifecycle diagnostics to the real picker/wizard. Renewal, parsing, storage and authorization behavior remain unchanged. Work stays on develop; main is unpromoted. AUTO-02 / PAIR-01 invalid-document acceptance is still OPEN.
+2026-10-04. Implementation: **20faee940c802acb1cd2efc18e921ea3c4598636**. This last update changes documentation only. The implementation removes the disproven preview-image test target and adds fixed lifecycle diagnostics to the real picker/wizard. Renewal, parsing, storage and authorization behavior remain unchanged. Work stays on develop; main is unpromoted. AUTO-02 / PAIR-01 invalid-document acceptance is still OPEN.
+
+## Next standalone verification
+
+Full-App run **37195486462**, job **111416356929**, started 2026-10-04T10:28:47Z for 20faee9. At the single status check it was **in_progress**, conclusion null. No native/UI pass is claimed for this new instrumentation. Read its actual result in the next verification turn rather than repeatedly waiting or adding another large item. The entire uploaded Integration subtree `f6981086cb9b96f9f59ef1a5299ab3785e35195d` matched the locally tested tree exactly before publishing the implementation.
 
 ## Result inspected this turn
 
@@ -24,9 +28,9 @@ One initial new source-contract regex wrongly consumed a later line; it was repl
 
 The source baseline artifact **11299321500** matched outer SHA-256 `4339049ee69a96387520f9eb2cde474441a8ada49b270d7e724e0b9639091b5f`, inner TAR `e052419eb76dbc1a92a43a10446fe850243ca29e2f4c80e508d5c94644c538b4` and recorded c4b3f90. Its parent-to-current b08eaca follow-up is documentation-only.
 
-## Standalone next verification
+## Acceptance and diagnosis
 
-Read the new complete-App run once it has finished; do not wait repeatedly or mix it with another large feature. Require the unchanged invalid-file rejection and original-file-preservation checks. Inspect `native-ui-diagnostics/manifest.json` / `pairingLifecycle` alongside the actual XCTest log:
+Require the unchanged invalid-file rejection and original-file-preservation checks. Inspect `native-ui-diagnostics/manifest.json` / `pairingLifecycle` alongside the actual XCTest log:
 
 - No selection marker after a confirmed single cell tap: inspect native picker activation/type/provider behavior; do not rotate tap guesses.
 - Selection/result delivery but no accepted resolution: inspect coordinator/request lifetime.
