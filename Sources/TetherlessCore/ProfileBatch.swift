@@ -88,10 +88,24 @@ public protocol ProfileBatchTransport: Sendable {
 
 /// Caller holds the shared device mutation lease and has durably persisted the
 /// validated batch. Recovery uses the SAME batch: no new certificate/profile request.
+public struct ProfileBatchReadback: Sendable {
+    public let newExpiry: Date
+    /// Exactly the final transport snapshot used to verify all submitted parts.
+    /// Sensitive bytes: never put this object in public summaries or diagnostics.
+    public let installedProfiles: [Data]
+}
+
 public enum ProfileBatchExecutor {
     public static func applyMissing(_ batch: ProfileBatch, requiredComponents: Set<String>,
                                     identityDigest: String, transport: any ProfileBatchTransport,
                                     now: @Sendable () -> Date = { Date() }) async throws -> Date {
+        try await applyMissingAndReadback(batch, requiredComponents: requiredComponents,
+            identityDigest: identityDigest, transport: transport, now: now).newExpiry
+    }
+
+    public static func applyMissingAndReadback(_ batch: ProfileBatch, requiredComponents: Set<String>,
+                                    identityDigest: String, transport: any ProfileBatchTransport,
+                                    now: @Sendable () -> Date = { Date() }) async throws -> ProfileBatchReadback {
         try batch.validate(requiredComponents: requiredComponents, identityDigest: identityDigest, now: now())
         try Task.checkCancellation()
         let installed = Set(try await transport.readInstalledProfileBytes())
@@ -107,11 +121,13 @@ public enum ProfileBatchExecutor {
             try await transport.installProfileBytes(part.bytes)
         }
         try Task.checkCancellation()
-        let readback = Set(try await transport.readInstalledProfileBytes())
+        let finalProfiles = try await transport.readInstalledProfileBytes()
+        try Task.checkCancellation()
+        let readback = Set(finalProfiles)
         guard batch.parts.allSatisfy({ readback.contains($0.bytes) }) else {
             throw ProfileBatchFailure.readbackMismatch
         }
         try batch.validate(requiredComponents: requiredComponents, identityDigest: identityDigest, now: now())
-        return batch.newExpiry
+        return ProfileBatchReadback(newExpiry: batch.newExpiry, installedProfiles: finalProfiles)
     }
 }

@@ -25,16 +25,19 @@ public actor RenewalEngine {
     private let policy: RenewalPolicy
     private let now: @Sendable () -> Date
     private let acquire: @Sendable () throws -> ProcessLease
+    private let reportOnExit: @Sendable (RenewalRunResult) -> Void
     private var running = false
 
     public init(backend: any RenewalBackend, journal: any RenewalJournal,
                 policy: RenewalPolicy, now: @escaping @Sendable () -> Date = { Date() },
-                acquire: @escaping @Sendable () throws -> ProcessLease) {
+                acquire: @escaping @Sendable () throws -> ProcessLease,
+                reportOnExit: @escaping @Sendable (RenewalRunResult) -> Void = { _ in }) {
         self.backend = backend
         self.journal = journal
         self.policy = policy
         self.now = now
         self.acquire = acquire
+        self.reportOnExit = reportOnExit
     }
 
     public func run(trigger: RenewalTrigger, force: Bool = false) async throws -> RenewalRunResult {
@@ -47,9 +50,14 @@ public actor RenewalEngine {
     }
 
     private func runAcquired(trigger: RenewalTrigger, force: Bool) async throws -> RenewalRunResult {
+        var report = RenewalRunResult()
+        // Publish the actual in-memory outcome even when a later app is cancelled
+        // or persistence fails. Only append() after a durable commit adds verified
+        // work. The observer is synchronous/nonthrowing and cannot change control
+        // flow, suppress an error, or replace the write-ahead journal.
+        defer { reportOnExit(report) }
         var state = try loadState() // Always read AFTER acquiring the process lock.
         guard state.schemaVersion == 1 else { throw RenewalFailure.unsupportedJournal }
-        var report = RenewalRunResult()
         // Do not contact Apple again until an explicit repair or retry window.
         if let gate = state.gate,
            gate.requiresInteraction || (gate.retryAfter.map { $0 > now() } ?? false) {

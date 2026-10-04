@@ -181,10 +181,11 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
         guard let descriptor = descriptors[app.bundleID], let team else { throw RenewalFailure.invalidEvidence }
         guard app.identityDigest == descriptor.identityDigest else { throw RenewalFailure.identityChanged }
         try transport.checkBudget()
-        let current = try effectiveExpiry(of: descriptor, in: await transport.readInstalledProfileBytes())
+        let initialProfiles = try await transport.readInstalledProfileBytes()
+        let current = try effectiveExpiry(of: descriptor, in: initialProfiles)
         if current > app.effectiveExpiry {
             return try await commitReadback(app, descriptor: descriptor, expiry: current,
-                                            installed: await transport.readInstalledProfileBytes())
+                                            installed: initialProfiles)
         }
         guard current == app.effectiveExpiry else { throw RenewalFailure.invalidEvidence }
         var parts: [ProfileBatchPart] = []
@@ -238,13 +239,16 @@ final class NativeRenewalBackend: RenewalBackend, @unchecked Sendable {
     }
 
     private func complete(_ batch: ProfileBatch, app: AppLease, descriptor: Descriptor) async throws -> RenewalEvidence {
+        let readback: ProfileBatchReadback
         do {
-            _ = try await ProfileBatchExecutor.applyMissing(batch, requiredComponents: descriptor.components,
+            readback = try await ProfileBatchExecutor.applyMissingAndReadback(batch, requiredComponents: descriptor.components,
                     identityDigest: descriptor.identityDigest, transport: transport)
         } catch ProfileBatchFailure.identityChanged { throw RenewalFailure.identityChanged }
           catch ProfileBatchFailure.expiredPlan { throw RenewalFailure.needsForeground }
           catch let error as ProfileBatchFailure { throw error }
-        let installed = try await transport.readInstalledProfileBytes()
+        // Use the exact post-install snapshot that verified this batch. Another
+        // full dump adds latency but no stronger atomicity/OS-launch guarantee.
+        let installed = readback.installedProfiles
         let expiry = try effectiveExpiry(of: descriptor, in: installed)
         guard expiry >= batch.newExpiry else { throw RenewalFailure.invalidEvidence }
         return try await commitReadback(app, descriptor: descriptor, expiry: expiry, installed: installed)

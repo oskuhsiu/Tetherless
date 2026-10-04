@@ -26,8 +26,10 @@ actor NativeRenewalRuntime {
         #else
         let interval: TimeInterval = 86_400
         #endif
+        let capture = RenewalRunCapture()
         let engine = RenewalEngine(backend: backend, journal: journal,
-                        policy: try RenewalPolicy(interval: interval), acquire: { try NativeRenewalStorage.acquire() })
+                        policy: try RenewalPolicy(interval: interval), acquire: { try NativeRenewalStorage.acquire() },
+                        reportOnExit: { capture.record($0) })
         do {
             let result = try await engine.run(trigger: trigger, force: force)
             let summary = RenewalSummary(startedAt: started, finishedAt: Date(), trigger: trigger,
@@ -36,8 +38,7 @@ actor NativeRenewalRuntime {
             return summary
         } catch {
             let failure = Self.classify(error)
-            var result = RenewalRunResult()
-            result.globalFailure = failure
+            let result = capture.interrupted(by: failure)
             let summary = RenewalSummary(startedAt: started, finishedAt: Date(), trigger: trigger,
                 managerWasForeground: foreground, result: result)
             try? await saveEvidence(summary)
