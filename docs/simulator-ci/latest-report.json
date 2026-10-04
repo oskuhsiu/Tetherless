@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "runID": 37195486462,
+  "runAttempt": 1,
+  "jobID": 111416356929,
+  "sourceCommit": "20faee940c802acb1cd2efc18e921ea3c4598636",
+  "outcome": "failed",
+  "firstFailureStage": "ui",
+  "firstFailureStep": 11,
+  "observations": [
+    {
+      "number": 1,
+      "stage": "environment",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 2,
+      "stage": "unknown",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 3,
+      "stage": "environment",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 4,
+      "stage": "prepare",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 5,
+      "stage": "build",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 6,
+      "stage": "signature",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 7,
+      "stage": "boot",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 8,
+      "stage": "install_launch",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 9,
+      "stage": "fixture",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 10,
+      "stage": "prepare",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 11,
+      "stage": "ui",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "number": 12,
+      "stage": "postcheck",
+      "status": "completed",
+      "conclusion": "skipped"
+    },
+    {
+      "number": 13,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 14,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 15,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 16,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 17,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 18,
+      "stage": "cleanup",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 36,
+      "stage": "unknown",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 37,
+      "stage": "unknown",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "smoke": {
+    "simulatorReady": true,
+    "installed": true,
+    "launched": true,
+    "smokePassed": true
+  },
+  "symptomCode": "selection-not-observed",
+  "symptomSource": "agent-selected-after-reading-evidence-not-inferred",
+  "failureFingerprint": "78ee90c7035f5d63724529ad2afee4152e02db2a06122986b2dc2bf2829306f3",
+  "sameFailureAsPrevious": false,
+  "nextAction": "inspect-test-log-xcresult-and-app-lifecycle-not-boot",
+  "automaticRetryAllowed": false,
+  "rootCauseInferred": false,
+  "productAccepted": false,
+  "reportSHA256": "7b0a0b244549650fa2dc5f1dbc986c2dad3845de7ec9d2a32279e8985cb23992"
+}

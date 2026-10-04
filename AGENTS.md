@@ -46,3 +46,9 @@ Run `swift test`, `swift test -c release`, and `python3 -m unittest discover -s 
 - Owner instruction (2026-10-04): isolate each long-running item into its own work turn. Choose one current acceptance condition; do not combine a full UI/native wait with another large feature or audit.
 - Save the narrow code/test change and its exact next action before starting long CI. Record implementation SHA, run ID, passed stages and actual failure; use a separate verification turn for unfinished long runs rather than repeated polling to fill the session.
 - A missing result is pending, not success. End at a committed checkpoint without promising work after the turn. Preserve the same acceptance assertions and focus on the current version.
+
+## Mandatory Simulator CI skill
+
+Before diagnosing, changing, dispatching or rerunning an iOS Simulator/XCTest workflow, read `.agents/skills/ios-simulator-ci/SKILL.md` and `docs/SIMULATOR_CI.md`. Apply the read-only stage classifier to current run/job evidence using `docs/simulator-ci/stages.json`; missing or unknown evidence is not permission to guess a boot failure.
+
+Record one evidence-backed decision before the next expensive run. A repeated stage/symptom without new evidence or a discriminating change blocks another full run. Successful build/boot/install/launch followed by a UI failure must be investigated at the UI/lifecycle boundary, not by resetting the Simulator. Reuse the existing reviewed helpers. Keep project-specific incidents outside the reusable skill. The skill is an agent operating rule, not a GitHub server-side restriction or a claim that infrastructure cannot fail.
