@@ -23,7 +23,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - name: Select installed stable toolchain and simulator
+      - name: Select toolchain and allocate an isolated unbooted simulator
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -36,24 +36,7 @@ jobs:
               subprocess.run(['sudo','xcode-select','-s',str(max(choices)[1]/'Contents/Developer')],check=True)
           PY
           xcodebuild -version
-          xcrun simctl list devices available --json > native-simulator-devices.json
-          python3 - <<'PY'
-          import json, re, os
-          choices=[]
-          for runtime,devices in json.load(open('native-simulator-devices.json'))['devices'].items():
-              match=re.search(r'iOS-(\d+(?:-\d+)*)$',runtime)
-              if not match: continue
-              version=tuple(map(int,match[1].split('-')))
-              for device in devices:
-                  if version[0]>=17 and device.get('isAvailable') and device['name'].startswith('iPhone'):
-                      choices.append((version,device['name'],device['udid']))
-          if not choices: raise SystemExit('No simulator: whole-app launch has NOT run')
-          version,name,identifier=max(choices)
-          print('Selected native simulator:',name,version,identifier)
-          with open(os.environ['GITHUB_ENV'],'a') as file: file.write('SIMULATOR_ID='+identifier+'\n')
-          PY
-      - name: Initialize simulator and verify its screen surface
-        run: python3 Integration/simulator_smoke.py prepare --simulator "$SIMULATOR_ID"
+          python3 Integration/simulator_environment.py allocate
       - name: Prepare the same production integration
         run: python3 Integration/prepare.py
       - name: Build complete app for Simulator (no Apple account)
@@ -61,7 +44,7 @@ jobs:
           xcodebuild build \
             -project .generated/SideStore/AltStore.xcodeproj \
             -scheme SideStore -configuration Debug \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -destination "generic/platform=iOS Simulator" \
             -derivedDataPath .generated/SimulatorDerived \
             -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
@@ -72,6 +55,8 @@ jobs:
           python3 Integration/simulator_signing.py \
             .generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app \
             --team XYZ0123456 --output native-simulator-signing.json
+      - name: Boot the isolated simulator only after compilation
+        run: python3 Integration/simulator_smoke.py prepare --simulator "$SIMULATOR_ID"
       - name: Install and launch the complete app in a fresh simulator
         run: |
           python3 Integration/simulator_smoke.py launch --simulator "$SIMULATOR_ID" \
@@ -91,6 +76,9 @@ jobs:
             CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
             CODE_SIGN_STYLE=Manual AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
             ORG_IDENTIFIER=com.SideStore > native-ui.log 2>&1
+      - name: Record installation and file-provider services on failure
+        if: failure()
+        run: python3 Integration/simulator_environment.py diagnose
       - name: Retain app stdout and crash reports from the actual test result
         if: always()
         run: |
@@ -121,6 +109,8 @@ jobs:
         with:
           name: native-launch-${{ github.sha }}
           path: |
+            native-simulator-owner.json
+            native-simulator-health
             native-simulator-signing.json
             native-ui.log
             native-ui-diagnostics
@@ -137,3 +127,6 @@ jobs:
             native-simulator-home.png
           if-no-files-found: error
           retention-days: 14
+      - name: Shut down only the simulator created by this job
+        if: always()
+        run: python3 Integration/simulator_environment.py shutdown
