@@ -24,9 +24,9 @@ def identifier(value: str) -> str:
     return str(uuid.UUID(value)).upper()
 
 
-def listing() -> dict:
+def listing(timeout: int = 30) -> dict:
     return json.loads(subprocess.check_output(
-        ['xcrun', 'simctl', 'list', 'devices', 'available', '--json'], text=True, timeout=30))
+        ['xcrun', 'simctl', 'list', 'devices', 'available', '--json'], text=True, timeout=timeout))
 
 
 def select_template(payload: dict) -> tuple[str, str, str]:
@@ -53,7 +53,9 @@ def select_template(payload: dict) -> tuple[str, str, str]:
 def allocate() -> str:
     if OWNER.exists():
         raise RuntimeError('This job already owns a Simulator; refusing a replacement')
-    payload = listing()
+    # The first request also starts CoreSimulator on a fresh runner. Give that
+    # infrastructure initialization its own bound; UI/action limits stay intact.
+    payload = listing(timeout=90)
     Path('native-simulator-devices.json').write_text(json.dumps(payload, indent=2) + '\n')
     template, runtime, kind = select_template(payload)
     name = 'Tetherless-CI-' + str(uuid.uuid4()).upper()

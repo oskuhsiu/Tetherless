@@ -41,6 +41,21 @@ final class TetherlessUITests: XCTestCase {
             XCTAssertEqual(app.staticTexts["onboarding.status"].label,
                            "Import cancelled. Existing pairing was retained.")
         }
+        // Select a real, deliberately invalid plist through the system picker.
+        // CI creates only this public document, never a fake pairing/account or
+        // a backend result. Production coordination/parser/storage handles it.
+        app.buttons["onboarding.importPairing"].tap()
+        let browse = app.buttons["Browse"].firstMatch
+        XCTAssertTrue(browse.waitForExistence(timeout: 10)); browse.tap()
+        tapDocumentItem("On My iPhone", in: app)
+        tapDocumentItem("Tetherless", in: app)
+        tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app)
+        let rejected = app.staticTexts["onboarding.status"]
+        XCTAssertTrue(rejected.waitForExistence(timeout: 10))
+        XCTAssertTrue(rejected.label.hasPrefix("The operation did not complete."), rejected.label)
+        XCTAssertTrue(app.buttons["onboarding.importPairing"].isEnabled)
+        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+        capture(app, "01-invalid-pairing-rejected")
         // Kill/relaunch mid-wizard: persist navigation, not fake prerequisites.
         app.terminate(); app.launch()
         XCTAssertTrue(title.waitForExistence(timeout: 15))
@@ -127,6 +142,16 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
     }
+    @MainActor private func tapDocumentItem(_ name: String, in app: XCUIApplication) {
+        let stem = (name as NSString).deletingPathExtension
+        let match = NSPredicate(format: "label == %@ OR label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+                                name, stem, name + ",", stem + ",")
+        let item = app.descendants(matching: .any).matching(match).firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "Missing system document item: \(name)")
+        XCTAssertTrue(item.isHittable, item.debugDescription)
+        item.tap()
+    }
+
     /// SwiftUI Form virtualizes offscreen rows. Waiting for an absent row
     /// cannot reveal it on the SE-sized test device: scroll the actual Form,
     /// then require the exact control to exist and be hittable before tapping.
