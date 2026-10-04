@@ -48,8 +48,8 @@ final class TetherlessUITests: XCTestCase {
         let browse = app.buttons["Browse"].firstMatch
         XCTAssertTrue(browse.waitForExistence(timeout: 10)); browse.tap()
         tapDocumentItem("On My iPhone", in: app)
-        tapDocumentItem("Tetherless", in: app)
-        tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app)
+        tapDocumentItem("Tetherless", in: app, documentCell: true)
+        tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)
         let rejected = app.staticTexts["onboarding.status"]
         XCTAssertTrue(rejected.waitForExistence(timeout: 10))
         XCTAssertTrue(rejected.label.hasPrefix("The operation did not complete."), rejected.label)
@@ -142,11 +142,14 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
     }
-    @MainActor private func tapDocumentItem(_ name: String, in app: XCUIApplication) {
+    @MainActor private func tapDocumentItem(_ name: String, in app: XCUIApplication, documentCell: Bool = false) {
         let stem = (name as NSString).deletingPathExtension
         let match = NSPredicate(format: "label == %@ OR label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
                                 name, stem, name + ",", stem + ",")
-        let item = app.descendants(matching: .any).matching(match).firstMatch
+        // The presenting wizard also has a hidden "Tetherless" title. Files
+        // and folders must be document cells, not an arbitrary same-label text.
+        let items = documentCell ? app.cells : app.descendants(matching: .any)
+        let item = items.matching(match).firstMatch
         XCTAssertTrue(item.waitForExistence(timeout: 10), "Missing system document item: \(name)")
         XCTAssertTrue(item.isHittable, item.debugDescription)
         item.tap()

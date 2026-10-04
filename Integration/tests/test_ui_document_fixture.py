@@ -42,7 +42,9 @@ class UIDocumentFixtureTests(unittest.TestCase):
     def test_actual_ui_path_requires_rejection_and_preserves_existing_checks(self):
         text=(ROOT/'UITests/TetherlessUITests.swift').read_text()
         self.assertIn('for attempt in 1...2',text)
-        self.assertIn('Tetherless-Invalid-Pairing.plist',text)
+        self.assertIn('tapDocumentItem("Tetherless", in: app, documentCell: true)',text)
+        self.assertIn('tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)',text)
+        self.assertIn('documentCell ? app.cells : app.descendants(matching: .any)',text)
         self.assertIn('01-invalid-pairing-rejected',text)
         self.assertIn('XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)',text)
         self.assertIn('The operation did not complete.',text)

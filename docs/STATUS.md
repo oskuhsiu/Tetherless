@@ -1,23 +1,38 @@
-# Current code: interrupted-renewal fix and selected-file UI test
+# Current product verification — renewal recovery and real document selection
 
-2026-10-04. Product implementation b67a36264dd0baddf69fe65cd156b6f3ced42e58. This follow-up extends the actual UI test and its isolated test setup; product Swift stays unchanged. Develop only, main unchanged. No account, device or release handoff requested.
+2026-10-04. Product Swift: b67a36264dd0baddf69fe65cd156b6f3ced42e58. UI/environment extension: 1b14f75a349d04fdebbd17f42187a3a83b13be91. This follow-up fixes only the observed UI selector and records completed evidence; product Swift is unchanged. Develop only; main remains 4cfcc185cd529e07c212c3b310c0ee5162c19b2f. No physical device or credentials requested, and no complete-product or release-readiness claim.
 
-## Current tested behavior
+## Product fixes actually tested
 
-The engine/runtime now retain already committed renewal results when a later app is cancelled or journal persistence fails. A per-invocation report preserves verified expiries for summaries/alarms without promoting uncommitted work. Pending operations still reconcile on the next run. The native adapter consumes the exact final ProfileBatchExecutor readback instead of dumping the device profile store again. Cancellation during final readback cannot return success.
+The engine/runtime retain earlier durable renewal results when later work is cancelled or persistence fails. Per-invocation capture preserves verified expiries for summaries/alarms without counting uncommitted work or suppressing errors. Pending mutations still reconcile before another write. The native backend consumes the exact final batch readback rather than repeating a full profile-store dump; final readback and cancellation checks remain mandatory.
 
-Local baseline Debug passed 296 tests. Modified Debug passed 305 tests including six multi-app daily/interruption scenarios and three exact-readback cases, using real files/locks and scripted device responses. b67a362 macOS core run 37187683409 completed successfully with Debug and Release steps. Native Debug in 37187683426 passed; Release and Simulator details are checked separately, not inferred. Local Release commands timed out and are not claimed as completed passes.
+Six scenario tests run the real coordinator with actual journal files and process locks and a scripted device: next-day manager/two-app renewal, no duplicate same-day renewal, cancellation after manager success, second-commit failure followed by reconciliation without duplicate writes, write-ahead failure and applied-but-unverified results. Three transport tests verify the exact returned post-apply snapshot, missing-extension refusal and cancellation during final readback. These are not real Apple/physical-device results.
 
-## Actual current UI failure
+## Current verification
 
-Full-App run 37187683391 at b67a362 failed before product preparation: the first `simctl list devices available --json` timed out after 30 seconds. No app compilation, installation or UI assertion ran. The actual job log was inspected; this is not a failed picker or renewal assertion. The follow-up gives ONLY the initial CoreSimulator listing a 90-second bound; routine diagnosis retains 30 seconds and UI wait/action assertions are unchanged. There is no reset/retry loop and the previous failed run remains failed. A longer initialization window is not proof of the underlying service's root cause or a solved product defect.
+- Local current baseline Debug: 296 passes. Modified product Debug: 305 passes in 40 suites. Local Release invocations timed out; the remaining orphaned compiler from that command was stopped, not counted as a completed run.
+- macOS product core run 37187683409 completed successfully with both Debug and Release steps. The follow-up source archive from core run 37188333824 was also retained and checked.
+- iOS Simulator core run 37187683404: 329 unique individual passes counted in the downloaded log, plus one explicit hardware Data Protection skip. All nine added scenario/readback cases passed; TEST SUCCEEDED recorded.
+- Native current integration 1b14f75 run 37188333754: Debug and Release both compiled, linked, packaged and uploaded successfully.
+- Local integration after restoring exact reviewed source preimages: 178 tests passed, no skips. The initially recorded 13 missing-input skips were resolved by restoring and hash-checking the retained auth/cache/IPA inputs and reconstructing the metadata preimage with the current pinned cache transform. Final checks were rerun after the selector fix.
 
-## Real selected-file coverage added
+## Actual UI execution and narrow correction
 
-The isolated CI runner seeds one deliberately invalid public plist in the installed app's Documents folder. It does not supply any pairing keys, credentials, readiness flags or backend responses. The actual XCTest opens Browse -> On My iPhone -> Tetherless, selects that file with semantic controls, requires a visible rejection, verifies setup cannot continue, and then performs the existing resume/consent/recovery/cold-launch assertions. Both prior system-picker cancellations remain. A later file read checks the original fixture is unchanged. The fixture manifest never claims UI success.
+Current full-App run 37188333737 successfully allocated/booted its owned Simulator, compiled and signature-checked the app, installed/launched it and seeded only one invalid public plist. The real test completed both system-picker cancellations and navigated to On My iPhone. It then FAILED at TetherlessUITests.swift:151: the broad Any/firstMatch selector selected the presenting wizard's hidden StaticText named Tetherless instead of the visible document Cell named `Tetherless, 1 item`. Actual hierarchy includes both elements and confirms the correct cell exists. This is a test-selection failure before the invalid file was selected, not evidence that its rejection succeeded or failed.
 
-Four new local Python tests exercised actual fixture IO, existing-file refusal, bad readback, symlink rejection and workflow/UI contracts. Final Python suite: 178 discovered, 165 passed, 13 explicit prepared-native-preimage skips in this runtime. Native preparation separately runs the actual transform chain. Swift frontend parsed the expanded XCTest, but real XCTest compilation/execution remains pending for this follow-up; no selected-file pass is claimed.
+The downloaded UI artifact 11298198553 matched SHA-256 aba8a046e2324be9657138b687d67939ee3a6a2cf1cf2b53df487263f77d280f. Actual log and full failure hierarchy were inspected. The original-file verification step was skipped after test failure; no preservation success is inferred from a seeded file.
 
-The b67a362 source artifact 11297776949 matched outer SHA-256 35e13ec3cac552a600d29dfa9348f7d65177c31b2730115ad472c0e7978acf0e and inner TAR 40de96ab6c18dbf95070377a514e78a119f6ee89d8b1963d7ee14ccf31635726. All nine changed files matched the tested source before this follow-up. Source identity is not native/physical acceptance.
+The follow-up scopes only file/folder targets to document Cells, retaining the working location navigation and all hittability, rejection, consent, resume/recovery/cold-launch assertions. No coordinate taps, success fixtures or production hooks are added. Its complete UI execution still requires the next CI result; syntax/contract checks are not a passing UI claim.
 
-Next read the exact current native/UI results, fix actual failures rather than reciting old estimates, and continue the remaining full installer/first-sign/self-update and distribution requirements. Scripted daily renewal is not real Apple provisioning, profile installation or locked-screen scheduling. All changes are checkpointed before the longer CI run.
+The first b67a362 UI attempt failed before compilation because initial simctl listing exceeded 30 seconds. Only fresh-service initialization was given 90 seconds in 1b14f75; ordinary diagnosis and UI/action bounds remain unchanged. No reset/retry loop was introduced. That earlier failed attempt remains a failure, not a product assertion.
+
+## Inspected current artifacts
+
+- b67a362 source 11297776949: ZIP SHA-256 35e13ec3cac552a600d29dfa9348f7d65177c31b2730115ad472c0e7978acf0e, TAR 40de96ab6c18dbf95070377a514e78a119f6ee89d8b1963d7ee14ccf31635726; nine changed files match tested bytes.
+- b67a362 Simulator 11298246283: ZIP SHA-256 09a0662537b475dd3129df1bb3195431bd22862dd33fc54cdaed8b44536991dd; actual individual results counted separately from the protection skip.
+- 1b14f75 source 11297647354: ZIP a661d34240e188b8d57abadd16bf2ac820b3460a68915f9a449f5d865898b46c, TAR c829e282293ada3bc47a5bc0c7944212c69d2bcfa673cb2174457851e6af3f46; all six test/environment/checkpoint files match before this follow-up.
+- 1b14f75 native Debug 11297893333: ZIP e0603e7f4e2099518c85cae67e42015003339e16f6d553252b1020100c451f3a. IPA a4ada7b67a14261dc7121286635a661a959fef13172a889a0f6e561833890be8 matches manifest/sourceCommit. Prepared RenewalEngine, ProfileBatch, RenewalRunCapture, NativeRenewalRuntime and NativeRenewalBackend match the tested source. The unsigned product still requires user signing and reports physical/unattended acceptance false.
+
+## Continue from current code
+
+Read the corrected document-cell UI run before declaring selected-file coverage complete. Continue remaining actual installer/first-sign/self-update and distribution requirements, not previous percentage estimates. All product changes and test corrections are saved independently. No real Apple login/provisioning, physical pairing/profile install, locked-screen scheduling or expiry crossing has been verified in this work.
