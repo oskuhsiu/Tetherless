@@ -1,62 +1,37 @@
-# Tetherless：依原開發計劃的進度核對
+# Tetherless progress against the original 16 tasks
 
-核對日期：2026-10-04（Asia/Taipei）。產品程式版本：`6ca17af2956ff1b493600904fcfec734076bd60f`。本輪完成 INSTALL-01 的單一受保護 IPA 快照，並取得 AUTO-02／PAIR-01 完整設定流程的一輪通過證據。詳細 run、雜湊與限制見 STATUS.md。這不是正式發行。
+Updated 2026-10-05. The authoritative [original plan](ORIGINAL_PLAN.md) is preserved byte-for-byte (SHA-256 `49d049cea36c0872224e888e20074d08d313031a72d6ed9a128ef320370fe3a6`). The owner's later device-last order remains in force: finish feasible implementation and non-device checks before one consolidated iPhone acceptance pass. No percentage or test-count total is a completion claim.
 
-## 計劃基準與判定方式
+## This independent increment
 
-依據原《iOS 手機端側載與自動續期工具：開發計劃 v1.0》：`ios-mobile-sideload-autorenew-plan-v1.0.md`，2026-10-02，第 11 節 G0–G5 與第 11.1 節 16 項任務。恢復原文件 SHA-256：`49d049cea36c0872224e888e20074d08d313031a72d6ed9a128ef320370fe3a6`。
+- Cache reconciliation owns the existing mutation lease before its database snapshot through pruning. Clear-cache deletion happens within the file-coordinator accessor; cancellation cannot release the lease before that work returns. Pending manager recovery prevents pruning
+- Both app-local free-form logging sinks no longer evaluate diagnostic autoclosures. Operation summaries retain only fixed outcomes and bounded elapsed time; structured renewal evidence and fixed import events remain
+- Three lower-layer PIN log interpolations are removed. Wireless generation is explicitly unavailable before it can start a non-cancellable native worker. Existing-record import, stored pairing, consent and ordinary renewal are preserved. This is a safety gate, not completion of wireless pairing
+- Static independent review and focused portable checks passed. Native compilation and executable Swift checks for these changes remain pending until the exact implementation commit's CI is inspected
 
-使用者後續指示將順序改為「先完成實作、整合與可行非實機測試，再集中實機驗收」，見 AGENTS.md／IMPLEMENTATION_PLAN.md。這不取消免費帳號、真正無前景續期與有效期前移的要求。隔天即可測主動續期；七天不是開發迭代，30 日觀察另屬可靠性驗收。
+The original complete-product selected-file assertion is still open. The separately verified same-artifact diagnostic delivered the file on iOS 18.6 and failed bookmark resolution before the delegate on iOS 26.2; its overall result remains failed because UI and collector gaps are preserved. That observation does not substitute for product parsing/storage acceptance. See [STATUS.md](STATUS.md), [PAIRING_CAPABILITIES.md](PAIRING_CAPABILITIES.md) and [AUTHENTICATION_PRIVACY.md](AUTHENTICATION_PRIVACY.md).
 
-「完成（非實機範圍）」只代表指定程式／測試成果；「已接線、待驗」沒有端到端實機成功證據；「部分完成」仍有開發或非實機缺口；「研究／未執行」不算可用功能。先前約 80% 沒有逐項權重，不再用它或測試數推定計劃完成率。
+## Original task inventory
 
-## G0–G5 總覽
+| ID | Current evidence and remaining condition |
+|---|---|
+| BASE-01 | Pinned source/preparation/native build baseline exists. Reverify preparation, tests, build and artifact consistency for the final same candidate SHA |
+| BASE-02 | Dependency inventory and binary/license review identified concrete remaining provenance and distribution gates, especially essential ADI/Unicorn inputs. Matching publisher hashes do not close them |
+| AUTH-01 | Account/key/session persistence and authentication error boundaries exist; this increment closes the identified app-local and PIN log sinks. Other library/binary output, persisted error payloads and real login/2FA/expiry repair remain |
+| LEASE-01 | Ordinary profile-only renewal and necessary full signing/install are separated. Their real device effects remain unverified |
+| LEASE-02 | Bound profile readback, earliest expiry and journal/database reconciliation are wired. Real application, forward expiry and launch evidence remain device acceptance |
+| AUTO-01 | Headless intent and background entrypoints are wired. Actual locked-screen, no-manager/no-computer scheduled execution remains unverified |
+| AUTO-02 | Setup/resumption/cancellation baselines exist; selected-file delivery is unresolved. Genuine authorized non-foreground self-check and all permission/error paths remain |
+| AUTO-03 | Core serialization/cancellation/backoff exists; this increment fixes the identified cache-maintenance race and accessor lifetime. Broader startup/local mutators and complete resource budgets remain |
+| SAFE-01 | Manager profile gets renewal priority without ordinary reinstallation. Continued operation across original expiry remains physical evidence |
+| SAFE-02 | Durable write-ahead/partial-success/readback recovery exists. Remaining native interruption and persistence-failure integration must be closed without discarding pending evidence |
+| INSTALL-01 | Safe input snapshot/download/archive baseline exists. Complete executable/signing boundaries, owned aggregate install resources and provider/data-retention evidence remain; unpublished work is not counted as shipped |
+| INSTALL-02 | Certificate request recovery and manager replacement receipts exist. Effective signed data-access continuity, verified new cache publication and first-sign/replacement interruption matrix remain; unpublished changes are not completion |
+| PAIR-01 | Protected existing-record import/reset remains available. Unsafe wireless generation is temporarily gated and explicitly incomplete. A cancellable native host adapter, matching packaged API evidence, same-phone PIN UX and real peer validation are still required |
+| QA-01 | Device-last: first establish next-day proactive renewal, then original-expiry crossing and long real-time observation. Do not wait seven days to iterate or count manual refresh as unattended evidence |
+| QA-02 | Many scoped privacy/input/lease tests exist. Remaining lifecycle, resources, binary supply chain, actual traffic/performance/power and hardware protection are not globally closed |
+| BOOT-01 | Clean-phone, entirely computer-free first installation remains separate research. Pairing import or generated pairing does not establish a trusted initial delivery chain |
 
-| 階段 | 目前成果 | 未結案條件 |
-| --- | --- | --- |
-| G0 基線與權利盤點 | 固定來源／依賴、原生雙配置建置與產物紀錄 | 完整 SBOM、授權／二進位來源及分發決策 |
-| G1 profile-only 實證 | 兩類安裝路徑分離、管理器優先、元件綁定、裝置讀回與提交已接線 | 真實 profile 套用、有效期前移與跨原到期日啟動，留最後實機驗收 |
-| G2 無前景自動化 | Intent、背景入口、每日政策、互斥與退避；6ca17af 完整設定／兩次選檔取消／重啟通過 | 真實鎖屏排程、自檢與通道恢復；實際選檔匯入等剩餘路徑 |
-| G3 安裝與失敗恢復 | 安全快照／解壓、簽署安裝介接、憑證恢復、自身更新交易與秘密保存 | 完整生命週期、首次簽署／自身更新整合矩陣與第三方檔案提供者 |
-| G4 長期與安全驗收 | 故障、日誌、Anisette 保存／快取、下載工作區與 JSON 防護 | 整體資源預算、其餘安全邊界、流量／效能／耗電及長期實測 |
-| G5 純手機引導 | 既有無線配對介面、部分整合與首裝文件 | 手機內配對完整流程與乾淨手機首裝尚未證實 |
+## Acceptance rule
 
-## 原計劃 16 項任務 checklist
-
-| ID／原任務 | 實作與非實機進度 | 尚缺的條件 |
-| --- | --- | --- |
-| BASE-01 固定來源與可建置依賴 | 完成非實機範圍：固定來源、準備流程、雙配置建置與產物核對 | 持續維持同一候選版證據，不用舊綠燈代替新程式 |
-| BASE-02 核對授權與第三方二進位 | 部分完成：依賴版本與 UPSTREAM_AUDIT 已記錄 | 完整 SBOM／license matrix、ADI 等獨立來源驗證及分發結論 |
-| AUTH-01 登入與秘密儲存審查 | 部分完成：token-only 帳號、Keychain 整組保存、私鑰隔離、認證日誌防護與 Anisette 交易 | 其餘原生／依賴日誌和維護路徑盤點；最後驗真實 Apple 登入／2FA／過期修復 |
-| LEASE-01 分離 profile-only 與完整安裝 | 完成主要實作／條件測試；一般續期不重裝管理器 | 正常續期與需重簽兩路徑的實機效果 |
-| LEASE-02 系統 profile 對帳與有效期 | 已接線、待驗：讀回、元件／身分核對、最早有效期與持久化 | 真實裝置套用前後證據；讀回不等於 OS 啟動授權證明 |
-| AUTO-01 App Intent 無前景入口 | 已接線、待驗：Renew Managed Apps 直接呼叫 runtime，openAppWhenRun=false | 真實鎖屏排程、不開管理器／不接電腦的執行紀錄 |
-| AUTO-02 捷徑精靈與真實自檢 | 部分完成：六步設定／授權／指引；6ca17af 通過兩次系統選檔取消、設定接續、重啟與恢復頁 | 實際檔案匯入、設定後真實無前景自檢；捷徑仍需使用者一次授權建立，不把開關當成功證據 |
-| AUTO-03 冗餘排程、互斥、取消與退避 | 主要核心已測：每日／兩小時政策、背景入口、跨程序鎖、巢狀持有、取消／退避 | 其餘回呼／維護入口的完整互斥清單、整體預算與 OS 行為 |
-| SAFE-01 管理器自身 profile 續期 | 已接線、待驗：管理器優先，日常不重裝自身 | 跨原有效期後仍能執行並繼續自動續期的實機證據 |
-| SAFE-02 提交失敗對帳與重啟恢復 | 主要核心／故障測試完成：write-ahead journal、部分套用、失敗對帳與身分綁定 | 真實裝置操作中止及資料庫失敗的整合恢復 |
-| INSTALL-01 可信 IPA 的完整重簽安裝 | 部分完成：簽署安裝、安全下載／解壓、不嵌入私鑰；6ca17af 統一驗證與保存的受保護 IPA 快照，核心與原生建置通過 | 實際 iCloud／第三方提供者、完整安裝、Mach-O／entitlements／巢狀簽章邊界、整體資源與資料保留測試 |
-| INSTALL-02 憑證輪替與自身重裝 | 部分完成：CSR／私鑰提前保存、只讀查詢／明確恢復、自身更新交易與讀回 | 首次簽署至自身替換的完整矩陣，中止後資料／身分恢復 |
-| PAIR-01 iOS 27 手機端配對 | 部分完成：原生無線配對介面、保護儲存／匯入／重設；系統選檔取消路徑已通過 | 完整 PIN／重配對／取消及適用系統驗證；匯入檔案不能冒充手機自行產生配對 |
-| QA-01 無前景 30 日觀察 | 未執行，依 device-last 留最後 | 先隔天驗真正有效期前移，再跨原到期日與 30 日觀察；無例行手動刷新／電腦依賴 |
-| QA-02 安全與資源檢查 | 部分完成：真實檔案／鎖／Keychain、ZIP／下載限制、快取／工作區清理、JSON、快照取消／變動檢查 | 剩餘日誌／生命週期、安裝級 RAM／磁碟預算、供應鏈、實際流量／p50 p95／耗電／硬體保護 |
-| BOOT-01 乾淨手機首次安裝研究 | 研究／文件，尚未完成純手機首裝 | 完整可信分發／簽署／安裝／配對链；維持獨立次級目標，不變成日常免電腦的隱藏阻塞 |
-
-## 本輪已關閉的具體條件（6ca17af）
-
-- AUTO-02／PAIR-01：工作 37179423364 全部成功，完整 XCTest 1 項、0 失敗、164.832 秒；真正系統選檔兩次取消、設定接續／重啟、導覽、未登入恢復頁與授權保持關閉均通過。一輪 iOS26.2／iPhone SE 模擬器證據，不是所有 OS、手機配對或 Apple 登入。
-- INSTALL-01／QA-02：可變來源只先讀入一份快照，解壓與保存不再兩次讀原檔；十項新增真實檔案測試及原生 Debug／Release 通過。第三方檔案提供者與安裝级預算仍未結案。
-- 最新來源、原生產物、320 筆獨立 Simulator 通過紀錄與 UI 日誌／截圖已核對；另有一項硬體保護明確跳過。STATUS.md 保存各個 run、摘要與雜湊。
-
-## 保留的歷史失敗
-
-8f08455 恢復了已保存的選檔改動 6cee0e3、enum 修正 6397897 與 b393cac 檢查點；當時 37150571770 在 simctl install 逾時，UI 未執行。其來源／UI artifact 雜湊與完整記錄保存在該提交的 STATUS.md。本輪 decaef1 的 generic Simulator 又引入 x86_64 idevice 連結失敗，已在 6ca17af 恢復指定裝置目的地。新一輪成功不改寫這些舊失敗，也不代表每次舊逾時的根因都已被證實。
-
-## 收尾順序
-
-1. **AUTO-02／PAIR-01：在已通過的設定基線上補齊實際匯入。**不要把舊安裝逾時當成目前阻塞。補選取有效／無效檔案後資料保留與原生手機配對回呼，保留既有兩次取消和冷啟動斷言。
-2. **AUTH-01／AUTO-03／INSTALL-01/02／QA-02：集中關閉現有缺口。**完整回呼／維護／日誌清單、安裝級預算、首次簽署與自身更新的取消／失敗恢復。局部快取回收不代表所有安裝暫存已處理。
-3. **BASE-02／QA-02：供應鏈與分發決策。**各依賴／二進位的 pin、來源、授權、可分發狀態逐一結案，不以雜湊一致冒充來源可信。
-4. **候選版與集中實機驗收。**固定同一版本的建置／完整 UI／非實機證據，補齊品牌、支援矩陣、操作文件與可簽署產物；再測真實登入、profile 安裝、隔天鎖屏自動續期及長期觀察。
-
-後續回報以原任務 ID 與具體條件為單位，不只增加測試數。G5 首裝維持獨立研究，不無聲擴大核心範圍。關鍵實作／文件見 Sources/TetherlessCore、Integration/Native、Integration/Overrides、Packages/TetherlessArchive、NATIVE_INTEGRATION.md、CERTIFICATE_RECOVERY.md、MANAGER_UPDATES.md、IPA_INPUT.md、PAIRING_IMPORT.md、UPSTREAM_AUDIT.md 與 DEVICE_ACCEPTANCE.md。
+A green core job, native build, diagnostic callback and physical profile renewal are different evidence levels. Keep every result tied to its actual source SHA, run/attempt/job and artifact identity. A temporary capability gate is visible incomplete functionality. No main promotion, stable release, unattended-iOS guarantee or early request for the owner's phone is implied by this development increment.

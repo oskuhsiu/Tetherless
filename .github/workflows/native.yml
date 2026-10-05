@@ -93,6 +93,15 @@ jobs:
               if not indices:
                   print('\n'.join(lines[-50:]))
           PY
+      - name: Inspect packaged pairing APIs (read-only evidence)
+        id: pairing_api_surface
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          python3 Integration/inspect_pairing_api.py \
+            --artifacts-root .generated/DerivedData/SourcePackages/artifacts \
+            --output "artifacts/pairing-api-${{ matrix.configuration }}.json"
       - name: Package unsigned build with provenance
         env:
           CONFIGURATION: ${{ matrix.configuration }}

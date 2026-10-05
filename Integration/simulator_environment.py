@@ -19,6 +19,92 @@ OWNER = Path('native-simulator-owner.json')
 DIAGNOSTICS = Path('native-simulator-health')
 MAX_OUTPUT = 262_144
 SMOKE = Path('native-launch-evidence.json')
+PREFLIGHT = Path('native-simulator-environment')
+DEVELOPER = '/Applications/Xcode_26.3.app/Contents/Developer'
+DEVICE_TYPE = 'com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation'
+CONFIGURATIONS = {
+    'ios-26-2': ('com.apple.CoreSimulator.SimRuntime.iOS-26-2', '26.2', '23C54'),
+    'ios-18-6': ('com.apple.CoreSimulator.SimRuntime.iOS-18-6', '18.6', '22G86'),
+}
+
+
+def validate_configuration(values: dict, image: dict, configuration: str) -> dict:
+    """Verify the observed contract, without downloading or substituting anything."""
+    runtime, version, build = CONFIGURATIONS[configuration]
+    expected = {'architecture': 'arm64', 'developer': DEVELOPER,
+                'xcode': 'Xcode 26.3\nBuild version 17C529',
+                'sdkVersion': '26.2', 'sdkBuild': '23C57'}
+    if any(values.get(key) != value for key, value in expected.items()):
+        raise ValueError('Observed toolchain/SDK/architecture differs from the reviewed contract')
+    if (image.get('RUNNER_ARCH') != 'ARM64' or not image.get('ImageOS') or
+            not image.get('ImageVersion') or
+            not re.search(r'ProductVersion:\s+15\.', values.get('macOS', '')) or
+            not values.get('sdkPath', '').startswith(DEVELOPER + '/')):
+        raise ValueError('Runner image/macOS/SDK identity is missing or unexpected')
+    runtimes = json.loads(values['runtimeInventory'])
+    types = json.loads(values['deviceTypeInventory'])
+    if (not isinstance(runtimes, dict) or set(runtimes) != {'runtimes'} or
+            not isinstance(runtimes['runtimes'], list) or
+            not all(isinstance(item, dict) for item in runtimes['runtimes']) or
+            not isinstance(types, dict) or set(types) != {'devicetypes'} or
+            not isinstance(types['devicetypes'], list) or
+            not all(isinstance(item, dict) for item in types['devicetypes'])):
+        raise ValueError('Incomplete or unexpected Simulator inventories')
+    matches = [item for item in runtimes['runtimes'] if item.get('identifier') == runtime]
+    devices = [item for item in types['devicetypes'] if item.get('identifier') == DEVICE_TYPE]
+    if (len(matches) != 1 or matches[0].get('isAvailable') is not True or
+            matches[0].get('version') != version or matches[0].get('buildversion') != build):
+        raise ValueError('Required exact installed runtime is unavailable or mismatched: ' + runtime)
+    if len(devices) != 1 or not devices[0].get('name'):
+        raise ValueError('Required exact Simulator device type is unavailable or ambiguous')
+    return {'configuration': configuration, 'runtime': runtime, 'runtimeVersion': version,
+            'runtimeBuild': build, 'deviceType': DEVICE_TYPE, 'templateName': devices[0]['name'],
+            'architecture': 'arm64'}
+
+
+def preflight(configuration: str) -> dict:
+    # Retain incomplete/failed preflight separately from product acceptance.
+    # Focused inventories avoid truncating a broad devices/pairs listing.
+    PREFLIGHT.mkdir(exist_ok=False)
+    manifest = PREFLIGHT / 'manifest.json'
+    record = {'schema': 1, 'configuration': configuration, 'status': 'incomplete',
+              'sourceCommit': os.environ.get('GITHUB_SHA'), 'productAccepted': False,
+              'image': {key: os.environ.get(key) for key in ('ImageOS', 'ImageVersion', 'RUNNER_ARCH')},
+              'referenceImageVersion': '20260907.0337.1',
+              'imageMatchesReference': os.environ.get('ImageVersion') == '20260907.0337.1',
+              'commands': {}, 'values': {}}
+    def save() -> None:
+        manifest.write_text(json.dumps(record, indent=2) + '\n')
+    save()
+    try:
+        if os.environ.get('DEVELOPER_DIR') != DEVELOPER:
+            raise ValueError('DEVELOPER_DIR must name the reviewed installed Xcode')
+        probes = {'architecture': ['uname', '-m'], 'macOS': ['sw_vers'],
+                  'developer': ['xcode-select', '-p'], 'xcode': ['xcodebuild', '-version'],
+                  'sdkVersion': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'],
+                  'sdkBuild': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-build-version'],
+                  'sdkPath': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-path'],
+                  'runtimeInventory': ['xcrun', 'simctl', 'list', 'runtimes', '--json'],
+                  'deviceTypeInventory': ['xcrun', 'simctl', 'list', 'devicetypes', '--json']}
+        for name, args in probes.items():
+            path = PREFLIGHT / (name + '.log')
+            result = capture(args, path, timeout=90 if name == 'runtimeInventory' else 30)
+            record['commands'][name] = result
+            save()
+            if (result.get('exitCode') != 0 or result.get('timeout') or
+                    result.get('errorType') or result.get('truncated')):
+                raise RuntimeError('Environment probe incomplete or failed: ' + name)
+            record['values'][name] = path.read_text().strip()
+        selected = validate_configuration(record['values'], record['image'], configuration)
+        record.update(status='verified', selected=selected)
+        save()
+        print('Verified exact Simulator configuration:', configuration,
+              'runner image matches diagnostic:', record['imageMatchesReference'])
+        return selected
+    except Exception as error:
+        record.update(status='failed', failureType=type(error).__name__)
+        save()
+        raise
 
 
 def identifier(value: str) -> str:
@@ -51,21 +137,26 @@ def select_template(payload: dict) -> tuple[str, str, str]:
     return name, runtime, kind
 
 
-def allocate() -> str:
+def allocate(configuration: str | None = None) -> str:
     if OWNER.exists():
         raise RuntimeError('This job already owns a Simulator; refusing a replacement')
+    selected = preflight(configuration) if configuration is not None else None
     # The first request also starts CoreSimulator on a fresh runner. Give that
     # infrastructure initialization its own bound; UI/action limits stay intact.
     payload = listing(timeout=90)
     Path('native-simulator-devices.json').write_text(json.dumps(payload, indent=2) + '\n')
-    template, runtime, kind = select_template(payload)
+    if selected is None:
+        template, runtime, kind = select_template(payload)
+    else:
+        template, runtime, kind = (selected['templateName'], selected['runtime'], selected['deviceType'])
     name = 'Tetherless-CI-' + str(uuid.uuid4()).upper()
     raw = subprocess.check_output(['xcrun', 'simctl', 'create', name, kind, runtime],
                                   text=True, timeout=60).strip()
     value = identifier(raw)
     OWNER.write_text(json.dumps({'schema': 1, 'id': value, 'name': name,
                                 'runtime': runtime, 'deviceType': kind,
-                                'templateName': template, 'sourceCommit': os.environ.get('GITHUB_SHA')},
+                                'templateName': template, 'sourceCommit': os.environ.get('GITHUB_SHA'),
+                                'configuration': selected},
                                indent=2) + '\n')
     # Leave shutdown through compilation. Boot only when the built app is ready.
     with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as file:
@@ -214,8 +305,14 @@ def shutdown() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['allocate', 'diagnose', 'shutdown'])
+    parser.add_argument('--configuration', choices=CONFIGURATIONS)
     args = parser.parse_args()
-    {'allocate': allocate, 'diagnose': diagnose, 'shutdown': shutdown}[args.action]()
+    if args.configuration and args.action != 'allocate':
+        parser.error('--configuration applies only to allocation')
+    if args.action == 'allocate':
+        allocate(args.configuration)
+    else:
+        {'diagnose': diagnose, 'shutdown': shutdown}[args.action]()
 
 
 if __name__ == '__main__':

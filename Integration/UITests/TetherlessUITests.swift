@@ -35,6 +35,7 @@ final class TetherlessUITests: XCTestCase {
         app.buttons["onboarding.next"].tap()
         XCTAssertTrue(app.buttons["onboarding.importPairing"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["onboarding.next"].isEnabled, "A fresh simulator has no pairing")
+        assertPairingObservedMissing(app)
         // Two separate real picker presentations. A blank picker is still a
         // test failure; do not replace its system Cancel with an app-owned button.
         for attempt in 1...2 {
@@ -76,6 +77,11 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(outcomeAppeared, "No import outcome; system picker visible: \(pickerStillVisible)")
         XCTAssertFalse(pickerStillVisible, "The real system picker must dismiss before import")
         XCTAssertTrue(rejected.label.hasPrefix("The operation did not complete."), rejected.label)
+        // A generic IO/storage failure is not evidence of parser rejection.
+        // The actual selected-import catch exposes only this closed category.
+        XCTAssertEqual(rejected.value as? String, "pairing/invalidContent",
+                       "The real pairing parser must reject the selected public fixture")
+        assertPairingObservedMissing(app)
         XCTAssertTrue(app.buttons["onboarding.importPairing"].isEnabled)
         XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
         capture(app, "01-invalid-pairing-rejected")
@@ -84,6 +90,7 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 15))
         assertStartupHasNoFailure(app)
         XCTAssertEqual(title.label, "Device pairing")
+        assertPairingObservedMissing(app)
         XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
         capture(app, "01b-resumed-pairing")
         app.buttons["onboarding.later"].tap()
@@ -165,6 +172,16 @@ final class TetherlessUITests: XCTestCase {
         XCTAssertTrue(revealRenewalControl(enabled, in: app))
         XCTAssertEqual(enabled.value as? String, "0")
     }
+    /// On a fresh install, verify a completed protected-store observation.
+    /// A disabled Continue alone also covers unreadable/not-yet-checked state.
+    /// This is absence evidence, not retention of an existing valid pairing.
+    @MainActor private func assertPairingObservedMissing(_ app: XCUIApplication) {
+        XCTAssertTrue(app.staticTexts["Protected pairing record: missing"].waitForExistence(timeout: 5),
+                      "The protected pairing store must be observed missing, not unavailable or unchecked")
+        XCTAssertFalse(app.staticTexts["Protected pairing record: unavailable"].exists)
+        XCTAssertFalse(app.staticTexts["Protected pairing record: present"].exists)
+    }
+
     /// Failure-only diagnostic, not an alternative way to pass this test. The
     /// original outcome/visibility have already been captured and are immutable.
     /// Never warm the provider before testing the product or retry its selection.

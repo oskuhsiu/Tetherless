@@ -14,6 +14,16 @@ struct OnboardingView: View {
     @State private var working = false
     @State private var pairingRequest: PairingImportRequest?
     @State private var pairingImport = PairingImportFlow()
+    // A closed, value-free category from the actual import catch. It never
+    // contains an error description, document URL, pairing data or identifier.
+    private enum PairingImportFailure: String {
+        case invalidContent = "pairing/invalidContent"
+        case otherFailure = "pairing/otherFailure"
+        init(_ error: Error) {
+            self = (error as? PrivateFileError) == .invalidContent ? .invalidContent : .otherFailure
+        }
+    }
+    @State private var pairingImportFailure: PairingImportFailure?
     @State private var status: String?
     @State private var readiness = SetupReadiness()
     @State private var observationGeneration = UUID()
@@ -31,7 +41,10 @@ struct OnboardingView: View {
                 }
                 content
                 if let status {
-                    SwiftUI.Section { Text(status).accessibilityIdentifier("onboarding.status") }
+                    SwiftUI.Section {
+                        Text(status).accessibilityIdentifier("onboarding.status")
+                            .accessibilityValue(pairingImportFailure?.rawValue ?? "")
+                    }
                 }
             }
             .navigationTitle("Tetherless")
@@ -88,7 +101,7 @@ struct OnboardingView: View {
     @MainActor private func choosePairingFile() {
         guard !working, let request = pairingImport.begin() else { return }
         PairingImportDiagnostic.requestBegan.record()
-        status = nil
+        status = nil; pairingImportFailure = nil
         pairingRequest = request
     }
 
@@ -113,6 +126,7 @@ struct OnboardingView: View {
                     try PairingFileManager.shared.importPairingFile(from: url)
                     PairingImportDiagnostic.importSucceeded.record()
                 } catch {
+                    pairingImportFailure = PairingImportFailure(error)
                     PairingImportDiagnostic.importFailed.record()
                     throw error
                 }
@@ -243,7 +257,7 @@ struct OnboardingView: View {
     }
     @MainActor private func perform(_ operation: @escaping @MainActor () async throws -> Void) {
         guard !working else { return }
-        working = true; status = nil
+        working = true; status = nil; pairingImportFailure = nil
         Task { @MainActor in
             defer { working = false }
             do { try await operation() }
@@ -264,7 +278,7 @@ struct OnboardingView: View {
     }
     private func move(_ delta: Int) {
         guard !working, !pairingImport.isBusy, let next = step.moved(by: delta) else { return }
-        status = nil; savedStep = next.rawValue
+        status = nil; pairingImportFailure = nil; savedStep = next.rawValue
     }
     private func finish() {
         // This flag only dismisses onboarding; it grants no permission and is

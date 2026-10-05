@@ -1,6 +1,6 @@
 # Decision: isolate the shared document-provider boundary
 
-Status: one reviewed preflight correction is ready for the next controlled diagnostic. The first diagnostic did not allocate a device, build, or test either runtime. No product acceptance is claimed.
+Status: the controlled comparison completed at 9a49417. iOS 18.6 delivered one selected URL and dismissed; iOS 26.2 failed before the delegate. The overall diagnostic remains failed and no automatic retry is authorized. See [verified result](runtime-comparison-37273262340.md). The decision and first preflight failure below are retained as history. The next changed-source product run is governed by [product-import decision](product-import-decision.md), not an identical repeat of this standalone experiment. No product acceptance is claimed.
 
 ## Current evidence
 
