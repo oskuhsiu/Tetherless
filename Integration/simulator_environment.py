@@ -18,6 +18,7 @@ import uuid
 OWNER = Path('native-simulator-owner.json')
 DIAGNOSTICS = Path('native-simulator-health')
 MAX_OUTPUT = 262_144
+SMOKE = Path('native-launch-evidence.json')
 
 
 def identifier(value: str) -> str:
@@ -118,6 +119,51 @@ def capture(args: list[str], path: Path, timeout: int = 15) -> dict:
     return result
 
 
+
+def install_failure_commands(device: dict) -> list[tuple[list[str], str]]:
+    """Read back an uncertain install without retrying or accepting its result.
+
+    Called only after owned_device has checked the live device. Bind saved smoke
+    to that owner AND this job's SHA before constructing any device command.
+    A timeout does not establish whether the daemon finished installation.
+    """
+    if not SMOKE.exists():
+        return []
+    with SMOKE.open('rb') as file:
+        raw = file.read(65_537)
+    if len(raw) > 65_536:
+        raise ValueError('Oversized smoke identity')
+    evidence = json.loads(raw)
+    if not isinstance(evidence, dict):
+        raise ValueError('Invalid smoke identity')
+    if evidence.get('failedStage') != 'native-simulator-install.log':
+        return []
+    owner = json.loads(OWNER.read_text())
+    sha = os.environ.get('GITHUB_SHA', '')
+    value = identifier(device['udid'])
+    bundle = evidence.get('bundleID', '')
+    if (device.get('state') != 'Booted' or not re.fullmatch(r'[0-9a-f]{40}', sha) or
+            owner.get('sourceCommit') != sha or evidence.get('sourceCommit') != sha or
+            identifier(owner['id']) != value or evidence.get('simulatorID') != value or
+            evidence.get('lastCommand') != ['xcrun', 'simctl', 'install'] or
+            evidence.get('installed') is not False or evidence.get('launched') is not False or
+            not isinstance(bundle, str) or not re.fullmatch(r'org\.tetherless\.Tetherless(?:\.[A-Za-z0-9-]+)*', bundle)):
+        raise ValueError('Unbound failed-install evidence')
+    # The old combined log mixed thousands of container records with installer
+    # events and then lost its middle. Retain focused queries independently.
+    # Command exit/status is evidence only; never rewrite installed/smokePassed.
+    return [
+        (['xcrun', 'simctl', 'get_app_container', value, bundle, 'app'],
+         'install-container-readback.log'),
+        (['xcrun', 'simctl', 'spawn', value, 'log', 'show', '--last', '3m',
+          '--style', 'compact', '--predicate', 'process == "installd" OR process == "lsd"'],
+         'install-registration.log'),
+        (['xcrun', 'simctl', 'spawn', value, 'log', 'show', '--last', '3m',
+          '--style', 'compact', '--predicate', 'eventMessage CONTAINS "' + bundle + '"'],
+         'install-product-events.log'),
+    ]
+
+
 def diagnose() -> None:
     DIAGNOSTICS.mkdir(exist_ok=True)
     reports = []
@@ -132,6 +178,11 @@ def diagnose() -> None:
         device = owned_device(payload)
         value = identifier(device['udid'])
         if device.get('state') == 'Booted':
+            try:
+                # Query immediately, before generic logs consume the time window.
+                commands = install_failure_commands(device) + commands
+            except (ValueError, TypeError, KeyError, OSError):
+                reports.append({'installInspection': 'rejected-unbound-evidence'})
             predicate = ('process == "installd" OR process == "containermanagerd" OR '
                          'process == "fileproviderd" OR process == "filecoordinationd" OR '
                          'process == "DocumentManager"')

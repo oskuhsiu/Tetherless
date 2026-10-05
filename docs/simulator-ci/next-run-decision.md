@@ -1,29 +1,27 @@
-# One-run decision — failure-only independent UIKit recipient
+# One-run decision — distinguish uncertain install outcome from lost diagnostics
 
-- Scope: AUTO-02 / PAIR-01, discriminate provider resolution from product presentation/recipient behavior.
-- Inspected product/run/attempt/job: **2ae7ebdc9a143505f8664ef5b85a61fac9347f0d / 37220011794 / 1 / 111488264234**.
-- Develop parent for this change: **c6e2b27f7531622f91f78138870261ed0d73494d**.
-- Read-only report SHA-256: **8bd9c3a882c559c398886c913dc0c086704dc78be481c93d5091b58027b66753**.
-- First failed boundary: UI step 11. Successful original-file postcheck is not UI acceptance.
+- Current product/test baseline: 8c25ff3b984cd08401b4491aa0876ff0129161e6.
+- Observed run / attempt / job: 37242839315 / 1 / 111554802378.
+- First failure: install_launch, step 8, a 120-second simctl install timeout.
+- Report SHA-256: 4b10b0db99b2afbf39295b91bb2b5c13bd4fa65169f52dcf8d0b2062bb2fad0e.
+- Artifact: 11318286484, SHA-256 dc10213d482dbc643681f7c698bb2ef1ab03fafbe711bc9930a512411fb13048.
 
-## New observed evidence
+## Evidence and uncertainty
 
-The separate source now actually launches, presents documentReady and creates its verified 241-byte file. The product still gets FileProvider -1005 / resolver -1012 at 17:28:49 UTC, with no materialized URL/delegate delivery. The complete fixed-event scan and post-selection screenshot agree. Source isolation alone did not fix it. Artifact SHA-256: c9ef4da729c008f252d164e285e9b9b482c50d07ed06bf3a8c7650b57b44d039. Existing provider logs show container lookup/preparation errors, not a confirmed product parser failure.
+The actual job passed build/signature/boot/screenshot. It did not execute either recipient's document picker: those steps were skipped after the install timeout. The retained generic service log omitted 375,462 bytes of its middle and mostly mixed container initialization with installer work. Its absence of a product-specific completion is not conclusive. No supported root-cause finding justifies a product permission change, new tap target, global reset or longer timeout.
 
-## One hypothesis and comparison
+One question to discriminate: after the client command times out, is the product container registered, or is even a read-only product lookup unavailable? A returned container is only a partial-state observation, not complete-install or launch acceptance. Separately retain installer/LaunchServices events and product-specific events rather than obscuring them inside the generic container log.
 
-Hypothesis: the same system file-provider path can fail independently of Tetherless's SwiftUI/request state. Add a plain UIKit recipient in the already separate source app. Do not change Tetherless, its file types, entitlements, action or deadline. Run the control **only after** the original failure has been captured so it cannot pre-warm provider state and hide a defect. Product results remain immutable and failing even when the control succeeds.
+## Single change and preserved conditions
 
-Observe whether the independent recipient receives a file URL from one real system selection. This does not read selected contents or validate pairing. Differences remain: source-app identity and own-container access versus cross-container Tetherless access. Control failure supports a common provider/runtime boundary; control success points to remaining recipient/presentation/access differences, not automatically one confirmed cause.
+In the existing failure-diagnostic helper, add three bounded read-only queries after validating current SHA/owner/device/product. Run them before generic host queries so the three-minute log window is useful. Keep the existing 15-second/256-KiB capture limits and each query's exit/timeout/truncation metadata. Never rewrite smoke results. Invalid bindings record a gap and preserve generic diagnosis.
 
-## Unchanged acceptance and stop conditions
+The next code commit may trigger one full workflow with these observations. There is no automatic rerun. Existing runner/toolchain selection, concrete device, signing, boot ordering, 120-second installation bound and all product/control UI tests remain byte-identical. The comparison is still failure-only and cannot pass the original product assertion. No new permissions or successful backend fixture.
 
-Two product cancellations, single exact semantic document tap, ten-second original outcome deadline, actual dismissal, explicit rejection, original source bytes, incomplete pairing, consent off, recovery and cold relaunch stay required. No alternative success path, manual delegate callback, arbitrary sleep, double tap, global reset or runtime switch. The control has separate bounded waits and cannot retry the product. Its result is diagnostic only.
+## Fast verification and stopping rule
 
-Before publication, 33 focused tests and 16 skill tests passed; changed Swift parsed. These are not UIKit runtime evidence. Same macos-15 workflow, owned concrete destination, signing checks and toolchain-selection policy; report actual image drift rather than assume immutable labels. Existing builds still exercise the actual product. No new dependencies, privileges or workflow flags were added.
+8 new focused tests, 23 existing Simulator tests and 16 skill tests passed locally. The selector also consumed this actual failed artifact's identities without executing remote commands. simctl itself was not run in the Linux environment. Before publication, check current head and any related active run.
 
-One run is justified by the previously unavailable independent comparison, not by repeating the same hypothesis. After it is dispatched, record the run ID once and hand off. If pending, do not poll or mix in installer/supply-chain work. If both recipients fail, preserve that result and isolate/review the runtime/provider rather than modify product code just to make CI green. If the control is unavailable, do not infer either outcome.
+If another timeout occurs, inspect focused logs/readback before any further change; query failure or truncated logs are incomplete evidence, not root cause. If it reaches UI, inspect the original product result and independent control; success does not retroactively explain this timeout. Save the new run ID once, then use a separate verification turn rather than polling or adding another long feature.
 
-Apple API references (not claims that Apple documented this exact failure):
-- https://developer.apple.com/documentation/uikit/uidocumentpickerviewcontroller/init(foropeningcontenttypes:ascopy:)
-- https://developer.apple.com/documentation/uikit/uidocumentpickerdelegate/documentpicker(_:didpickdocumentsat:)
+Primary reference for separating simctl installation/launch and collecting failure diagnostics: https://developer.apple.com/videos/play/wwdc2019/418/ . The bounded diagnostic policy is project-specific; Apple does not identify this particular timeout's cause there.
