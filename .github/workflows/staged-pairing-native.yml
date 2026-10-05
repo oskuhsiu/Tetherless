@@ -176,6 +176,7 @@ jobs:
             .component/helper-work/completed/workspace-input-audit.json
             .component/helper-work/completed/source-manifest.json
             .component/helper-work/vendor-config-inventory.json
+            .component/helper-work/vendor-derivation-inventory.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14

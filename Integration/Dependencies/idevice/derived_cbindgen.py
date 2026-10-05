@@ -41,6 +41,38 @@ NEW_MANIFEST = '''            cmd.arg("--manifest-path");
             cmd.arg(&workspace_manifest);'''
 
 
+def inventory_difference(expected: dict, actual: dict) -> dict:
+    """Bounded metadata-only diagnostic; exact path/hash equality remains required."""
+    missing = sorted(expected.keys() - actual.keys())
+    extra = sorted(actual.keys() - expected.keys())
+    changed = sorted(name for name in expected.keys() & actual.keys() if expected[name] != actual[name])
+    def path_record(name: str) -> dict:
+        encoded = name.encode("utf-8", errors="surrogatepass")
+        return {"path": name if len(encoded) <= 512 else None,
+                "path_omitted": len(encoded) > 512,
+                "path_utf8_bytes": len(encoded), "path_sha256": sha256(encoded)}
+    details, omitted = {}, {}
+    for kind, names in (("missing", missing), ("extra", extra), ("changed", changed)):
+        rows = []
+        for name in names[:64]:
+            row = path_record(name)
+            if name in expected:
+                row["expected_sha256"] = expected[name]
+            if name in actual:
+                row["actual_sha256"] = actual[name]
+            rows.append(row)
+        details[kind] = rows
+        omitted[kind] = len(names) - len(rows)
+    return {"schema": 1, "exact_match": expected == actual,
+            "expected_files": len(expected), "observed_files": len(actual),
+            "counts": {"missing": len(missing), "extra": len(extra), "changed": len(changed)},
+            "details": details, "detail_limit_per_category": 64,
+            "omitted_counts": omitted, "details_truncated": any(omitted.values()),
+            "expected_inventory_sha256": sha256(canonical_json(expected)),
+            "observed_inventory_sha256": sha256(canonical_json(actual)),
+            "file_contents_retained": False}
+
+
 def patch_metadata_source(data: bytes) -> bytes:
     if sha256(data) != SOURCE_SHA256:
         raise VerificationError("cbindgen metadata source preimage mismatch")
@@ -74,8 +106,22 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
             raise VerificationError("unexpected pristine vendor symlink")
         if path.is_file():
             actual[str(path.relative_to(vendor))] = file_hash(path)
-    if actual != originals:
-        raise VerificationError("pristine vendor inventory changed before derivation")
+    difference = inventory_difference(originals, actual)
+    diagnostic = destination.parent / "vendor-derivation-inventory.json"
+    encoded = canonical_json(difference)
+    if len(encoded) > 1024 * 1024:
+        difference["details"] = {"missing": [], "extra": [], "changed": []}
+        difference["details_truncated"] = True
+        difference["omitted_counts"] = dict(difference["counts"])
+        difference["diagnostic_output_limit_exceeded"] = True
+        encoded = canonical_json(difference)
+    with diagnostic.open("xb") as stream:
+        stream.write(encoded)
+    if not difference["exact_match"]:
+        counts = difference["counts"]
+        raise VerificationError("pristine vendor inventory changed before derivation; "
+                                f"missing={counts['missing']} extra={counts['extra']} changed={counts['changed']}; "
+                                "see vendor-derivation-inventory.json")
     original_source = safe_path(vendor, source_name).read_bytes()
     patched_source = patch_metadata_source(original_source)
     original_checksum = safe_path(vendor, checksum_name).read_bytes()
@@ -102,6 +148,7 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
             "metadata_context": {"environment_key": CONTEXT_VARIABLE, "manifest_path": str(manifest),
                 "cwd": str(source), "workspace_lock_sha256": file_hash(lock),
                 "frozen": True, "scope": "patched cbindgen metadata commands only"},
+            "inventory_diagnostic": str(diagnostic), "inventory_diagnostic_sha256": file_hash(diagnostic),
             "pristine_registry_files_modified": False}
 
 
