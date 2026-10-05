@@ -137,7 +137,95 @@ class PairingSafetyTests(unittest.TestCase):
                 m.apply(root)
             self.assertEqual(before, {name: (root / name).read_bytes() for name in inputs})
 
-    def compile_run(self, sources, main):
+    @staticmethod
+    def native_logger_method(source):
+        start = '    public override func setLogging(_ enabled: Bool) {'
+        end = '    private func syncStart('
+        if source.count(start) != 1 or source.count(end) != 1:
+            raise ValueError('Native logger method boundary drift')
+        return start + source.split(start, 1)[1].split(end, 1)[0]
+
+    @unittest.skipUnless(AVAILABLE, 'Pinned pairing source not mounted; native preimage checks not executed')
+    def test_native_off_is_the_only_new_gateway_change(self):
+        raw = prepared_inputs()[m.GATEWAY].decode()
+        transformed = m.patch_gateway(raw)
+        original_method = self.native_logger_method(raw)
+        method = self.native_logger_method(transformed)
+        self.assertEqual(m.BLOBS[m.GATEWAY], 'e9310d0236e244813ce945236bdb99af2582f649')
+        # Restore only the new method. Every other byte must equal the actual
+        # previously shipped PIN-only prepared gateway observed at cb8e4dd.
+        restored = transformed.replace(method, original_method, 1).encode()
+        self.assertEqual(blob(restored), '1b0874f599b0f5ed4453476d2ddb46f71e58070c')
+        self.assertEqual(transformed.count('idevice_init_logger('), 1)
+        self.assertIn('let disabled = IdeviceLogLevel(rawValue: 0)', method)
+        self.assertIn('_ = idevice_init_logger(disabled, disabled, nil)', method)
+        self.assertIn('super.setLogging(enabled)', method)
+        self.assertNotIn('#if DEBUG', method)
+        self.assertNotIn('rawValue: 5', method)
+        self.assertNotIn('enabled ?', method)
+        self.assertIn('setLogging(true)', transformed)  # Original DEBUG caller is unchanged.
+
+    @unittest.skipUnless(AVAILABLE, 'Pinned pairing source not mounted; native preimage checks not executed')
+    def test_native_logger_method_drift_and_duplication_fail_closed(self):
+        raw = prepared_inputs()[m.GATEWAY].decode()
+        method = self.native_logger_method(raw)
+        for changed in [raw.replace(method, '', 1), raw + method,
+                        raw.replace('let upperBoundLevel = IdeviceLogLevel(rawValue: 5)',
+                                    'let upperBoundLevel = IdeviceLogLevel(rawValue: 4)', 1)]:
+            with self.assertRaisesRegex(ValueError, 'Unreviewed'):
+                m.patch_gateway(changed)
+
+    @unittest.skipUnless(AVAILABLE, 'Pinned pairing source not mounted; native preimage checks not executed')
+    def test_exact_native_logger_method_always_requests_off_in_debug_and_release(self):
+        method = self.native_logger_method(m.patch_gateway(prepared_inputs()[m.GATEWAY].decode()))
+        source = '''import Foundation
+// This records FFI arguments only. No binary logger or device is invoked.
+struct IdeviceLogLevel { let rawValue: UInt32 }
+struct NativeLoggerCall: Equatable {
+    let console: UInt32
+    let file: UInt32
+    let pathWasNil: Bool
+}
+final class NativeLoggerSpy: @unchecked Sendable {
+    static let shared = NativeLoggerSpy()
+    private let lock = NSLock()
+    private var calls: [NativeLoggerCall] = []
+    func record(_ call: NativeLoggerCall) { lock.withLock { calls.append(call) } }
+    func snapshot() -> [NativeLoggerCall] { lock.withLock { calls } }
+}
+func idevice_init_logger(_ console: IdeviceLogLevel, _ file: IdeviceLogLevel,
+                         _ path: UnsafeMutablePointer<CChar>?) -> Int32 {
+    NativeLoggerSpy.shared.record(NativeLoggerCall(console: console.rawValue,
+                                                   file: file.rawValue, pathWasNil: path == nil))
+    return 0
+}
+public class BaseDeviceGateway {
+    var requests: [Bool] = []
+    public func setLogging(_ enabled: Bool) { requests.append(enabled) }
+}
+public final class Gateway: BaseDeviceGateway {
+''' + method + '\n}\n'
+        main = '''import Foundation
+let sequences = [[false, true, true, false, false, true],
+                 [true, false, true, false, true, true]]
+for requests in sequences {
+    let gateway = Gateway()
+    let before = NativeLoggerSpy.shared.snapshot().count
+    for enabled in requests { gateway.setLogging(enabled) }
+    precondition(gateway.requests == requests, "Swift logging preference changed")
+    let received = Array(NativeLoggerSpy.shared.snapshot().dropFirst(before))
+    let off = NativeLoggerCall(console: 0, file: 0, pathWasNil: true)
+    precondition(received == Array(repeating: off, count: requests.count),
+                 "Native logging was enabled or a file path was supplied")
+}
+print("NATIVE_LOGGER_OFF_ARGUMENTS_PASSED")
+'''
+        for flags in [('-D', 'DEBUG', '-Onone'), ('-O',)]:
+            with self.subTest(flags=flags):
+                self.assertEqual(self.compile_run({'NativeLogger.swift': source}, main, flags),
+                                 'NATIVE_LOGGER_OFF_ARGUMENTS_PASSED\n')
+
+    def compile_run(self, sources, main, flags=()):
         compiler = shutil.which('swiftc')
         if not compiler:
             self.skipTest('Swift compiler unavailable; compiled safety boundary not executed')
@@ -149,7 +237,7 @@ class PairingSafetyTests(unittest.TestCase):
                 path.write_text(source)
                 files.append(str(path))
             (root / 'main.swift').write_text(main)
-            result = subprocess.run([compiler, '-swift-version', '6', *files, str(root / 'main.swift'),
+            result = subprocess.run([compiler, '-swift-version', '6', *flags, *files, str(root / 'main.swift'),
                                      '-o', str(root / 'test')], capture_output=True, text=True, timeout=45)
             self.assertEqual(result.returncode, 0, result.stderr)
             result = subprocess.run([str(root / 'test')], capture_output=True, text=True, timeout=15)

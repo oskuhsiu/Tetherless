@@ -352,7 +352,7 @@ def discover_picker_services(text: str, bundle: str) -> list[dict]:
     pattern = re.compile(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+\s+Df fileproviderd\[\d+:[0-9a-f]+\] '
         r'\[com\.apple\.runningboard:monitor\] Received state update for (\d+) '
         r'\(xpcservice<' + re.escape(service) + r'\(\[app<' + re.escape(bundle) +
-        r'\(\(null\)\)>:(\d+)\]\)>[^\r\n]{0,512}, (?:running-active-Visible|running-active-NotVisible|none-NotVisible)$')
+        r'\(\(null\)\)>:(\d+)\]\)>[^\r\n]{0,512}, (?:running-active-Visible|running-active-NotVisible|running-suspended-NotVisible|none-NotVisible)$')
     identities = {}
     for line in text.splitlines():
         if 'Received state update for ' not in line or service not in line or bundle not in line: continue
@@ -455,14 +455,24 @@ def collect_picker_timing() -> None:
             result = capture_draining(args, PICKER_TIMING/name, limit=65_536)
             record['commands'].append(result)
             if not capture_complete(result): record['gaps'].append('hostSnapshotIncomplete')
-        record['clocks'].append(paired_clock('hostAfterCollection'))
         record['status'] = 'complete' if not record['gaps'] else 'gaps'
         save()
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         record['status'] = 'gaps'
         record['gaps'].append(type(error).__name__)
-        if PICKER_TIMING.is_dir(): save()
         raise
+    finally:
+        # This local clock marks the end of the collection ATTEMPT, even when
+        # identity validation or a query failed. It does not claim that later
+        # stages ran: retain the actual last stage and all failure/gap evidence.
+        record['finalClockScope'] = 'afterCollectionAttempt'
+        record['finalClockStage'] = record['stage']
+        try:
+            record['clocks'].append(paired_clock('hostAfterCollection'))
+        except (OSError, ValueError, OverflowError):
+            record['status'] = 'gaps'
+            record['gaps'].append('finalClockUnavailable')
+        if PICKER_TIMING.is_dir(): save()
     if record['gaps']: raise RuntimeError('Picker timing collection has explicit gaps')
 
 

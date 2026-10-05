@@ -30,6 +30,48 @@ SERVICE = ('2026-10-05 09:03:03.325 Df fileproviderd[123:11e47] [com.apple.runni
            'Received state update for 456 (xpcservice<com.apple.DocumentManagerUICore.Service('
            '[app<org.tetherless.Tetherless.XYZ0123456((null))>:789])>{vt hash: 0}'
            '{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible\n')
+# Exact 32 app-bound monitor rows from run 37298228388, attempt 1,
+# job 111724485744, source 3d97ef75a224a76f84ba6741da8d9a6b89f99217.
+# Artifact 11341735733 ZIP SHA256:
+# ac79e699970ebf98f07277855ffd824529fb826b6aba01583da4538433b742e2
+# Member: native-picker-timing/service-discovery.log. Only monitor rows are
+# included; source document paths, contents and credentials are absent.
+# https://github.com/oskuhsiu/Tetherless/actions/runs/37298228388/artifacts/11341735733
+OBSERVED_SERVICE_ROWS = '''2026-10-05 10:55:28.018 Df fileproviderd[12472:e802] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:28.019 Df fileproviderd[12472:9c9e] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:28.038 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:28.040 Df fileproviderd[12472:e802] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:28.050 Df fileproviderd[12472:e802] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:30.139 Df fileproviderd[12472:10224] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:30.833 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:31.412 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:33.782 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:33.846 Df fileproviderd[12472:9496] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:33.987 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:34.314 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:34.803 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-suspended-NotVisible
+2026-10-05 10:55:35.292 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:35.351 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:35.510 Df fileproviderd[12472:f3f5] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:35.512 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:35.831 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:38.896 Df fileproviderd[12472:f3f5] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:38.927 Df fileproviderd[12472:9496] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:39.069 Df fileproviderd[12472:f3f5] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:39.417 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:39.509 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-suspended-NotVisible
+2026-10-05 10:55:40.471 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:40.486 Df fileproviderd[12472:f3f4] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:40.550 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:40.552 Df fileproviderd[12472:f3f5] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:40.802 Df fileproviderd[12472:f3f5] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:55:40.881 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:55:43.298 Df fileproviderd[12472:8ef6] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-Visible
+2026-10-05 10:56:18.937 Df fileproviderd[12472:9496] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, running-active-NotVisible
+2026-10-05 10:56:18.987 Df fileproviderd[12472:9bca] [com.apple.runningboard:monitor] Received state update for 22858 (xpcservice<com.apple.DocumentManagerUICore.Service([app<org.tetherless.Tetherless.XYZ0123456((null))>:21855])>{vt hash: 0}{definition:com.apple.DocumentManagerUICore.Service[extension][client]}, none-NotVisible
+'''
+OBSERVED_SERVICE_ROWS_SHA256 = '5b9fcc880ca96963e64126987ad1cfeefa11375f8975adc1547f2a28dd0770be'
+
 HELP = '''usage: log show [options]
 --process <pid> | <process>   Filter events using the specified process
 --start <date> Display events from the given start date
@@ -130,6 +172,18 @@ class TimingSchemaTests(unittest.TestCase):
             self.assertEqual(result['originalCancelWait']['durationLowerUS'],99_990)
             self.assertFalse(result['uiResultInferred'])
             with self.assertRaises(FileExistsError):DIAG.correlate_picker_timing(*paths,root/'result.json')
+
+    def test_final_clock_on_failed_collection_does_not_make_correlation_complete(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);paths=self.make_correlation_inputs(root)
+            path=paths[0]/'collection.json';value=json.loads(path.read_text())
+            value.update(status='gaps',gaps=['ValueError'],stage='serviceIdentity',
+                         finalClockStage='serviceIdentity',finalClockScope='afterCollectionAttempt')
+            path.write_text(json.dumps(value))
+            result=DIAG.correlate_picker_timing(*paths,root/'result.json')
+            self.assertTrue(result['temporalEnclosure']['valid'])
+            self.assertEqual(result['status'],'gaps');self.assertIn('collectorIncomplete',result['gaps'])
+            self.assertFalse(result['uiResultInferred']);self.assertFalse(result['videoPTSMappingPerformed'])
 
     def test_samples_outside_ui_window_never_report_complete_even_with_matching_offsets(self):
         for source,shift in [('uiTest',10_000_000),('uiTest',-10_000_000),('app',10_000_000),('app',-10_000_000)]:
@@ -235,6 +289,26 @@ class BoundedCollectorTests(unittest.TestCase):
         too_many=''.join(SERVICE.replace('for 456 ',f'for {456+i} ') for i in range(5))
         with self.assertRaises(ValueError):ENV.discover_picker_services(too_many,BUNDLE)
 
+    def test_exact_retained_32_monitor_rows_accept_only_observed_app_bound_identity(self):
+        self.assertEqual(hashlib.sha256(OBSERVED_SERVICE_ROWS.encode()).hexdigest(),
+                         OBSERVED_SERVICE_ROWS_SHA256)
+        self.assertEqual(len(OBSERVED_SERVICE_ROWS.splitlines()), 32)
+        self.assertEqual(OBSERVED_SERVICE_ROWS.count('running-suspended-NotVisible'), 2)
+        expected = [{'servicePID':22858, 'appPID':21855,
+                     'serviceIdentifier':'com.apple.DocumentManagerUICore.Service'}]
+        self.assertEqual(ENV.discover_picker_services(OBSERVED_SERVICE_ROWS, BUNDLE), expected)
+        for bad in (OBSERVED_SERVICE_ROWS.replace('running-suspended-NotVisible', 'unknown-state'),
+                    OBSERVED_SERVICE_ROWS.replace('((null))', 'unverified-format'),
+                    OBSERVED_SERVICE_ROWS.replace('for 22858 ', 'for 0 '),
+                    OBSERVED_SERVICE_ROWS.replace(BUNDLE, 'org.foreign.application'),
+                    OBSERVED_SERVICE_ROWS.replace('DocumentManagerUICore.Service', 'Other.Service'),
+                    OBSERVED_SERVICE_ROWS + OBSERVED_SERVICE_ROWS.replace('>:21855]', '>:999]')):
+            with self.subTest(bad=bad[-80:]), self.assertRaises(ValueError):
+                ENV.discover_picker_services(bad, BUNDLE)
+        # Foreign rows never authorize querying their PID, even beside a valid row.
+        foreign = OBSERVED_SERVICE_ROWS.replace(BUNDLE, 'org.foreign.application').replace('for 22858 ', 'for 999 ')
+        self.assertEqual(ENV.discover_picker_services(OBSERVED_SERVICE_ROWS + foreign, BUNDLE), expected)
+
     def make_collection(self, directory):
         path=Path(directory)/'timing';path.mkdir()
         baseline={'identity':IDENTITY,'clock':record('host','hostBeforeUI',mono=100_000,pid=100)}
@@ -270,14 +344,17 @@ class BoundedCollectorTests(unittest.TestCase):
             self.assertFalse(any('DocumentManagerUICore.Service'==arg for args in calls for arg in args))
             self.assertLessEqual(result['window']['endUnixSeconds']-result['window']['startUnixSeconds'],600)
             self.assertFalse(result['uiResultInferred'])
+            self.assertEqual([x['event'] for x in result['clocks']], ['hostAfterUI','hostAfterCollection'])
+            self.assertEqual(result['finalClockStage'], 'hostSnapshot')
+            self.assertEqual(result['finalClockScope'], 'afterCollectionAttempt')
 
     def test_unsupported_help_or_missing_discovery_has_no_fallback_query(self):
-        for problem in ('help','discovery','truncation','ownership'):
+        for problem in ('help','discovery','truncation','ownership','identityShape'):
             with self.subTest(problem=problem),tempfile.TemporaryDirectory() as directory:
                 target=self.make_collection(directory)
                 def capture(args,path,timeout=15,limit=ENV.MAX_OUTPUT):
                     if path.name=='log-show-help.log':return capture_result(path,'unsupported' if problem=='help' else HELP,64)
-                    value=capture_result(path,'' if problem=='discovery' else SERVICE)
+                    value=capture_result(path,'' if problem=='discovery' else SERVICE.replace('running-active-Visible','unknown-state') if problem=='identityShape' else SERVICE)
                     if problem=='truncation':value['truncated']=True
                     return value
                 with patch.object(ENV,'PICKER_TIMING',target), \
@@ -288,7 +365,57 @@ class BoundedCollectorTests(unittest.TestCase):
                 result=json.loads((target/'collection.json').read_text())
                 self.assertEqual(result['status'],'gaps')
                 self.assertFalse(any('--process' in c.args[0] for c in commands.call_args_list))
+                self.assertEqual([x['event'] for x in result['clocks']], ['hostAfterUI','hostAfterCollection'])
+                self.assertEqual(result['finalClockScope'], 'afterCollectionAttempt')
+                self.assertEqual(result['finalClockStage'], result['stage'])
+                self.assertEqual(result['stage'], {'help':'installedLogHelp','discovery':'serviceIdentity',
+                    'truncation':'serviceDiscovery','ownership':'identityValidation','identityShape':'serviceIdentity'}[problem])
                 if problem=='ownership':commands.assert_not_called()
+
+    def test_final_clock_follows_failed_command_without_query_retry_or_gap_erasure(self):
+        for failed_name,stage in [('ui-service-456.log','observedServiceQueries'),
+                                  ('host-memory.log','hostSnapshot')]:
+            with self.subTest(stage=stage), tempfile.TemporaryDirectory() as directory:
+                target=self.make_collection(directory); events=[]
+                failure=OSError('test command failed')
+                def capture(args,path,timeout=15,limit=ENV.MAX_OUTPUT):
+                    events.append(path.name)
+                    if path.name==failed_name: raise failure
+                    if path.name=='log-show-help.log':return capture_result(path,HELP,64)
+                    if path.name=='service-discovery.log':return capture_result(path,SERVICE)
+                    return capture_result(path,'2026-10-05 09:03:03.325 Df ObservedPickerService[456:abc] [observed:subsystem] event\n')
+                def clock(event):
+                    events.append(event)
+                    return record('host',event,mono=500_000+len(events)*100,pid=101)
+                with patch.object(ENV,'PICKER_TIMING',target),patch.object(ENV,'picker_identity',return_value=IDENTITY), \
+                     patch.object(ENV,'paired_clock',side_effect=clock),patch.object(ENV,'capture_draining',side_effect=capture):
+                    with self.assertRaises(OSError) as caught:ENV.collect_picker_timing()
+                self.assertIs(caught.exception,failure)
+                saved=json.loads((target/'collection.json').read_text())
+                self.assertEqual(saved['status'],'gaps');self.assertEqual(saved['gaps'],['OSError'])
+                self.assertEqual(saved['stage'],stage);self.assertEqual(saved['finalClockStage'],stage)
+                self.assertEqual(saved['finalClockScope'],'afterCollectionAttempt')
+                self.assertEqual(events[-2:],[failed_name,'hostAfterCollection'])
+                self.assertEqual(events.count(failed_name),1)
+                self.assertEqual([x['event'] for x in saved['clocks']],['hostAfterUI','hostAfterCollection'])
+                self.assertGreater(saved['clocks'][1]['monotonicBeforeUS'],saved['clocks'][0]['monotonicAfterUS'])
+                self.assertNotIn('test command failed',json.dumps(saved))
+
+    def test_missing_final_clock_does_not_mask_original_identity_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target=self.make_collection(directory);failure=ValueError('identity rejected')
+            def clock(event):
+                if event=='hostAfterCollection':raise OSError('clock unavailable')
+                return record('host',event,mono=500_000,pid=101)
+            with patch.object(ENV,'PICKER_TIMING',target),patch.object(ENV,'picker_identity',side_effect=failure), \
+                 patch.object(ENV,'paired_clock',side_effect=clock),patch.object(ENV,'capture_draining') as commands:
+                with self.assertRaises(ValueError) as caught:ENV.collect_picker_timing()
+            commands.assert_not_called();self.assertIs(caught.exception,failure)
+            saved=json.loads((target/'collection.json').read_text())
+            self.assertEqual(saved['status'],'gaps')
+            self.assertEqual(saved['gaps'],['ValueError','finalClockUnavailable'])
+            self.assertEqual(saved['finalClockStage'],'identityValidation')
+            self.assertEqual([x['event'] for x in saved['clocks']],['hostAfterUI'])
 
     def test_identity_rejects_other_source_device_or_run_before_collection(self):
         owner={'schema':1,'id':DEVICE,'name':'Tetherless-CI-owned','runtime':IDENTITY['runtime'],

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import Foundation
+import Dispatch // MUTATION_SCOPE_TIMING
 import Testing
 @testable import TetherlessCore
 
@@ -34,6 +35,52 @@ private actor ScopeSignal {
     }
 }
 
+// BEGIN MUTATION_SCOPE_TIMING_DECLARATIONS
+private enum ScopeTimingEvent: String {
+    case admittedOuterBefore
+    case admittedParentEnter
+    case admittedChildEnter
+    case admittedChildExit
+    case admittedChildScopeBefore
+    case admittedChildScopeEnter
+    case admittedChildSignalBefore
+    case admittedChildSignalAfter
+    case admittedChildResumeWaitBefore
+    case admittedChildResumeWaitAfter
+    case admittedChildScopeAfter
+    case admittedParentChildCreated
+    case admittedParentWaitBefore
+    case admittedParentWaitAfter
+    case admittedParentReturning
+    case admittedOuterAfter
+    case admittedParentSignalBefore
+    case admittedParentSignalAfter
+    case admittedParentValueBefore
+    case admittedParentValueAfter
+    case admittedTestEnd
+    case lateOuterBefore
+    case lateChildEnter
+    case lateChildExit
+    case lateChildResumeWaitBefore
+    case lateChildResumeWaitAfter
+    case lateChildScopeBefore
+    case lateChildScopeAfter
+    case lateOuterAfter
+    case lateParentOwnerAcquired
+    case lateParentSignalBefore
+    case lateParentSignalAfter
+    case lateParentExpectBefore
+    case lateParentExpectAfter
+    case lateTestEnd
+}
+private enum ScopeTimingTrace {
+    static func emit(_ event: ScopeTimingEvent) {
+        let monotonic = DispatchTime.now().uptimeNanoseconds
+        let utc = Date().timeIntervalSince1970
+        print("mutation_scope_timing event=\(event.rawValue) monotonic_ns=\(monotonic) utc_unix_s=\(utc)")
+    }
+}
+// END MUTATION_SCOPE_TIMING_DECLARATIONS
 @Suite("Mutation scope lifetime (lock adapter tested separately)", .timeLimit(.minutes(1)))
 struct MutationScopeTests {
     @Test func nestedScopeAcquiresOnce() async throws {
@@ -59,38 +106,73 @@ struct MutationScopeTests {
     @Test func admittedChildKeepsLeaseAfterParentReturns() async throws {
         let lock = ScopeTestLock()
         let admitted = ScopeSignal(), resume = ScopeSignal()
+        ScopeTimingTrace.emit(.admittedOuterBefore) // MUTATION_SCOPE_TIMING
         let child = try await MutationScope.withLease(identity: "device", acquire: lock.acquire) {
+            ScopeTimingTrace.emit(.admittedParentEnter) // MUTATION_SCOPE_TIMING
             let child = Task {
+                ScopeTimingTrace.emit(.admittedChildEnter) // MUTATION_SCOPE_TIMING
+                defer { ScopeTimingTrace.emit(.admittedChildExit) } // MUTATION_SCOPE_TIMING
+                ScopeTimingTrace.emit(.admittedChildScopeBefore) // MUTATION_SCOPE_TIMING
                 try await MutationScope.withLease(identity: "device", acquire: lock.acquire) {
+                    ScopeTimingTrace.emit(.admittedChildScopeEnter) // MUTATION_SCOPE_TIMING
+                    ScopeTimingTrace.emit(.admittedChildSignalBefore) // MUTATION_SCOPE_TIMING
                     await admitted.signal()
+                    ScopeTimingTrace.emit(.admittedChildSignalAfter) // MUTATION_SCOPE_TIMING
+                    ScopeTimingTrace.emit(.admittedChildResumeWaitBefore) // MUTATION_SCOPE_TIMING
                     await resume.wait()
+                    ScopeTimingTrace.emit(.admittedChildResumeWaitAfter) // MUTATION_SCOPE_TIMING
                 }
+                ScopeTimingTrace.emit(.admittedChildScopeAfter) // MUTATION_SCOPE_TIMING
             }
+            ScopeTimingTrace.emit(.admittedParentChildCreated) // MUTATION_SCOPE_TIMING
+            ScopeTimingTrace.emit(.admittedParentWaitBefore) // MUTATION_SCOPE_TIMING
             await admitted.wait()
+            ScopeTimingTrace.emit(.admittedParentWaitAfter) // MUTATION_SCOPE_TIMING
+            ScopeTimingTrace.emit(.admittedParentReturning) // MUTATION_SCOPE_TIMING
             return child
         }
+        ScopeTimingTrace.emit(.admittedOuterAfter) // MUTATION_SCOPE_TIMING
         #expect(lock.counts.0 == 1)
         #expect(lock.counts.1 == 0)
         #expect(throws: ScopeTestError.busy) { _ = try lock.acquire() }
+        ScopeTimingTrace.emit(.admittedParentSignalBefore) // MUTATION_SCOPE_TIMING
         await resume.signal()
+        ScopeTimingTrace.emit(.admittedParentSignalAfter) // MUTATION_SCOPE_TIMING
+        ScopeTimingTrace.emit(.admittedParentValueBefore) // MUTATION_SCOPE_TIMING
         try await child.value
+        ScopeTimingTrace.emit(.admittedParentValueAfter) // MUTATION_SCOPE_TIMING
         #expect(lock.counts.1 == 1)
+        ScopeTimingTrace.emit(.admittedTestEnd) // MUTATION_SCOPE_TIMING
     }
     @Test func lateChildCannotBorrowClosedScope() async throws {
         let lock = ScopeTestLock()
         let resume = ScopeSignal()
+        ScopeTimingTrace.emit(.lateOuterBefore) // MUTATION_SCOPE_TIMING
         let child = try await MutationScope.withLease(identity: "device", acquire: lock.acquire) {
             Task {
+                ScopeTimingTrace.emit(.lateChildEnter) // MUTATION_SCOPE_TIMING
+                defer { ScopeTimingTrace.emit(.lateChildExit) } // MUTATION_SCOPE_TIMING
+                ScopeTimingTrace.emit(.lateChildResumeWaitBefore) // MUTATION_SCOPE_TIMING
                 await resume.wait()
+                ScopeTimingTrace.emit(.lateChildResumeWaitAfter) // MUTATION_SCOPE_TIMING
+                ScopeTimingTrace.emit(.lateChildScopeBefore) // MUTATION_SCOPE_TIMING
                 try await MutationScope.withLease(identity: "device", acquire: lock.acquire) {}
+                ScopeTimingTrace.emit(.lateChildScopeAfter) // MUTATION_SCOPE_TIMING
             }
         }
+        ScopeTimingTrace.emit(.lateOuterAfter) // MUTATION_SCOPE_TIMING
         #expect(lock.counts.1 == 1)
         let otherOwnerRelease = try lock.acquire()
+        ScopeTimingTrace.emit(.lateParentOwnerAcquired) // MUTATION_SCOPE_TIMING
+        ScopeTimingTrace.emit(.lateParentSignalBefore) // MUTATION_SCOPE_TIMING
         await resume.signal()
+        ScopeTimingTrace.emit(.lateParentSignalAfter) // MUTATION_SCOPE_TIMING
+        ScopeTimingTrace.emit(.lateParentExpectBefore) // MUTATION_SCOPE_TIMING
         await #expect(throws: ScopeTestError.busy) { try await child.value }
+        ScopeTimingTrace.emit(.lateParentExpectAfter) // MUTATION_SCOPE_TIMING
         #expect(lock.counts.0 == 2)
         otherOwnerRelease()
+        ScopeTimingTrace.emit(.lateTestEnd) // MUTATION_SCOPE_TIMING
     }
     @Test func differentResourceCannotBorrowScope() async throws {
         let first = ScopeTestLock(), second = ScopeTestLock()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pinned PIN privacy and temporary wireless cancellation safety gate.
+"""Pinned PIN/native-log privacy and temporary wireless cancellation safety gate.
 
 The existing imported-record path remains available. This gate is not completion
 of PAIR-01: do not enable wireless generation until the native worker can be
@@ -54,9 +54,31 @@ def patch_gateway(source):
     source = once(source,
         'verboseLog("[IdeviceGateway] startWirelessPair() received pin: \\(pinStr)")',
         'verboseLog("[IdeviceGateway] pairing code is ready")')
-    return once(source,
+    source = once(source,
         'debugLog("[IdeviceGateway] pin_callback received user entered PIN: \'\\(pin)\'")',
         'debugLog("[IdeviceGateway] pairing code was supplied")')
+    # The native tracing subscriber is process-global and initializes only once.
+    # Debug's first call previously selected Trace even for enabled == false.
+    # Consume the same supported initializer with no console/file sinks in both
+    # build modes; later user preferences and DEBUG start cannot enable it.
+    return once(source, '''    public override func setLogging(_ enabled: Bool) {
+        let lowerBoundLevel = IdeviceLogLevel(rawValue: 0)
+        #if DEBUG
+        let upperBoundLevel = IdeviceLogLevel(rawValue: 5)
+        #else
+        let upperBoundLevel = IdeviceLogLevel(rawValue: enabled ? 1 : 0)
+        #endif
+        // set actual logging
+        idevice_init_logger(upperBoundLevel, lowerBoundLevel, nil)
+        super.setLogging(enabled)
+    }''', '''    public override func setLogging(_ enabled: Bool) {
+        // Native payload logging is disabled for the lifetime of this process.
+        // The native logger is Once-initialized; a later false call cannot undo
+        // an earlier enabled subscriber. Preserve the Swift logging preference.
+        let disabled = IdeviceLogLevel(rawValue: 0)
+        _ = idevice_init_logger(disabled, disabled, nil)
+        super.setLogging(enabled)
+    }''')
 
 
 def patch_wrapper(source):
