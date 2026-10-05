@@ -1,0 +1,71 @@
+{
+  "run": "37334149741",
+  "source_commit": "c5e70c0850d3d1c97cee6cb02ba9bd06060e04b7",
+  "artifact_zip_sha256": "4ec950881fa9765554be351401ae9f30c47a27eb60316b7414bbb256357e443e",
+  "inventory_sha256": "a346f6e87d55ddfad6623ff9fe151252c0f647c382003dbe7f47609c07c4e74b",
+  "files": [
+    {
+      "crate": "netconfig-rs-0.1.6",
+      "config_path": ".cargo/config.toml",
+      "archive_sha256": "733ad7a1352f0748a620368f2ea5cd94f0e449c5108fbac86ace31df1601bf6f",
+      "file_sha256": "c870ffcd2eb0fe71a29cbaf92366c31cb3105d06366ebc0fd6bc992c9112fb0a",
+      "bytes": 251,
+      "source_url": "https://github.com/tun-rs/netconfig-rs/blob/8d68c20ff9446fd66b6d2f1f9950f67224854f8c/.cargo/config.toml",
+      "source_commit": "8d68c20ff9446fd66b6d2f1f9950f67224854f8c",
+      "source_git_blob": "70f2085fa337c195ab054db2545905f9c3c05098",
+      "source_lf_sha256": "d4186dae78dafb7e67e42376c17670988138e3ebee1c242c414d7fce128800b1",
+      "source_lf_bytes": 242,
+      "derivation": "Official immutable Git source LF bytes expanded to CRLF; resulting byte size and SHA256 exactly match authenticated archive-extraction inventory. No registry archive is modified.",
+      "parsed": {
+        "registries": {
+          "crates-io": {
+            "protocol": "sparse"
+          }
+        },
+        "build": {}
+      }
+    },
+    {
+      "crate": "route_manager-0.2.11",
+      "config_path": ".cargo/config.toml",
+      "archive_sha256": "319bb478ff9aae1dc7a544fa599e9eb47e2521621dc3921fba6abcaaa312092c",
+      "file_sha256": "c870ffcd2eb0fe71a29cbaf92366c31cb3105d06366ebc0fd6bc992c9112fb0a",
+      "bytes": 251,
+      "source_url": "https://github.com/tun-rs/route_manager/blob/4296c90be63ef2187653a5d8d8a3dfe65e971bd4/.cargo/config.toml",
+      "source_commit": "4296c90be63ef2187653a5d8d8a3dfe65e971bd4",
+      "source_git_blob": "70f2085fa337c195ab054db2545905f9c3c05098",
+      "source_lf_sha256": "d4186dae78dafb7e67e42376c17670988138e3ebee1c242c414d7fce128800b1",
+      "source_lf_bytes": 242,
+      "derivation": "Official immutable Git source LF bytes expanded to CRLF; resulting byte size and SHA256 exactly match authenticated archive-extraction inventory. No registry archive is modified.",
+      "parsed": {
+        "registries": {
+          "crates-io": {
+            "protocol": "sparse"
+          }
+        },
+        "build": {}
+      }
+    },
+    {
+      "crate": "tun-rs-2.8.1",
+      "config_path": ".cargo/config.toml",
+      "archive_sha256": "a88c6aea62111e48fb67b733d6bbdc2019272e6d6f7108c9b0f4cd25d715d38a",
+      "file_sha256": "ea04d31b5ebd3b5362f092d479a1537e78454ae789336a96db85bbad2cf64d07",
+      "bytes": 660,
+      "source_url": "https://github.com/tun-rs/tun-rs/blob/0c426fec4a3a5403ec25999be982a323122d87de/.cargo/config.toml",
+      "source_commit": "0c426fec4a3a5403ec25999be982a323122d87de",
+      "source_git_blob": "0f2ec0d88412be988313623234aff30544777a7d",
+      "source_lf_sha256": "1b16722c503f1307bc5e7be1c945feb4de0aa56eccd34e1645f54e5df11c971b",
+      "source_lf_bytes": 638,
+      "derivation": "Official immutable Git source LF bytes expanded to CRLF; resulting byte size and SHA256 exactly match authenticated archive-extraction inventory. No registry archive is modified.",
+      "parsed": {
+        "registries": {
+          "crates-io": {
+            "protocol": "sparse"
+          }
+        },
+        "build": {}
+      }
+    }
+  ]
+}

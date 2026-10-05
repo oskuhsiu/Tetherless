@@ -99,13 +99,12 @@ print(json.dumps({"home":str(home),"offline":os.environ["CARGO_NET_OFFLINE"],"ve
         self.assertEqual(value, {"home": str(self.home), "offline": "true", "vendor": str(self.work / "vendor")})
         self.assertTrue(audit_vendor_inputs(receipt)["original_inputs_unchanged"])
 
-    def test_enclosing_workspace_is_rejected_without_manifest_changes(self):
+    def test_unrelated_ancestor_manifest_does_not_change_explicit_workspace_context(self):
         enclosing = self.root / "Cargo.toml"
         enclosing.write_text('[workspace]\nmembers=[]\n')
-        with self.assertRaisesRegex(VerificationError, "enclosing Cargo"):
-            self.prepare()
+        self.prepare()
         self.assertEqual(enclosing.read_text(), '[workspace]\nmembers=[]\n')
-        self.assertFalse((self.work / "vendor").exists())
+        self.assertTrue((self.work / "vendor").is_dir())
 
     def test_ambient_source_config_and_symlink_are_rejected(self):
         config_dir = self.source / ".cargo"
@@ -116,11 +115,11 @@ print(json.dumps({"home":str(home),"offline":os.environ["CARGO_NET_OFFLINE"],"ve
             self.prepare()
         self.assertTrue(config.is_symlink())
 
-    def test_authenticated_crate_local_config_cannot_override_global_config(self):
+    def test_inactive_crate_local_config_is_retained_without_override(self):
         self.make_crate({".cargo/config.toml": b'[net]\noffline = false\n'})
-        with self.assertRaisesRegex(VerificationError, "ambient Cargo"):
-            self.prepare()
-        self.assertFalse((self.home / "config.toml").exists())
+        receipt = self.prepare()
+        self.assertTrue((self.home / "config.toml").exists())
+        self.assertTrue(audit_vendor_inputs(receipt)["original_inputs_unchanged"])
         self.assertEqual((self.work / "vendor/fixture-1.0.0/.cargo/config.toml").read_bytes(), self.original_files[".cargo/config.toml"])
 
     def test_home_config_or_home_symlink_is_rejected(self):
@@ -169,7 +168,7 @@ print(json.dumps({"home":str(home),"offline":os.environ["CARGO_NET_OFFLINE"],"ve
         audit = audit_vendor_inputs(receipt)
         self.assertFalse(audit["original_inputs_unchanged"])
         self.assertFalse(audit["cargo_config_unchanged"])
-        self.assertIn("fixture-1.0.0/.cargo/config.toml", audit["unsafe_paths"])
+        self.assertIn("fixture-1.0.0/.cargo/config.toml", audit["generated_files"])
 
     def test_generated_global_legacy_config_cannot_shadow_isolated_toml(self):
         receipt = self.prepare()
@@ -202,6 +201,7 @@ print(json.dumps({"home":str(home),"offline":os.environ["CARGO_NET_OFFLINE"],"ve
         with patch.object(run_helper_tests, "native_environment", side_effect=environment), \
              patch.object(run_helper_tests, "verify_toolchain", return_value={}), \
              patch.object(run_helper_tests, "stage", side_effect=staged), \
+             patch.object(run_helper_tests, "prepare_offline_vendor", side_effect=lambda **kw: prepare_offline_vendor(**dict(kw, derive_metadata=False))), \
              patch.object(run_helper_tests, "capture_helper_command", side_effect=failed_command):
             with self.assertRaisesRegex(VerificationError, "controlled Cargo failure"):
                 run_helper_tests.execute(args)

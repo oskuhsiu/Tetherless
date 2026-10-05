@@ -135,6 +135,28 @@ jobs:
               '--toolchain-lock', str(root / 'evidence/toolchain-lock.observed.json'),
               '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()], check=True)
           PY
+      - name: Acquire pinned OpenSSL inputs for subsequent provider verification
+        id: openssl-input-checkout
+        if: always()
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          repository: krzyzanowskim/OpenSSL
+          ref: fdc9231384f37f053dffe058fd6dfc6c5072dae5
+          path: .component/openssl-pristine
+          persist-credentials: false
+          submodules: false
+          sparse-checkout: |
+            Frameworks/OpenSSL.xcframework/ios-arm64
+            Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-simulator
+            macosx/include/OpenSSL
+            macosx/lib
+      - name: Retain exact OpenSSL bytes without executing native inputs
+        if: always() && steps.openssl-input-checkout.outcome == 'success'
+        timeout-minutes: 2
+        run: |
+          python3 Integration/Dependencies/idevice/retain_openssl_inputs.py \
+            --source .component/openssl-pristine --output .component/openssl-inputs
       - name: Preserve component evidence and partial failure logs only
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -145,10 +167,12 @@ jobs:
             .component/evidence/
             .component/completed/
             .component/review-sources/
+            .component/openssl-inputs.tar
             .component/helper-work/completed/*.txt
             .component/helper-work/completed/*.txt.status.json
             .component/helper-work/completed/vendor-layout.json
             .component/helper-work/completed/vendor-input-audit.json
+            .component/helper-work/completed/derived-vendor-input-audit.json
             .component/helper-work/completed/workspace-input-audit.json
             .component/helper-work/completed/source-manifest.json
             .component/helper-work/vendor-config-inventory.json

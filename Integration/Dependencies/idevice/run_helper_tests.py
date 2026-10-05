@@ -20,6 +20,7 @@ from build_xcframework import (file_hash, inventory, native_environment,
     reject_ambient_cargo_config, require_equal, vendor_crates, verify_toolchain)
 
 from offline_vendor import prepare_offline_vendor, audit_vendor_inputs, audit_workspace_inputs
+from derived_cbindgen import derived_audit_receipt
 from bounded_process import (capture_helper_command, COMMAND_TIMEOUT_SECONDS, MAX_LOG_BYTES,
     SUMMARY_TAIL_BYTES, TERM_GRACE_SECONDS, KILL_JOIN_SECONDS)
 
@@ -74,7 +75,7 @@ def execute(args: argparse.Namespace) -> dict:
     if (source / "ffi/src/staged_acquisition.rs").exists():
         raise VerificationError("composite acquisition must be absent from helper-only source")
     before = (source / "Cargo.lock").read_bytes()
-    vendor_receipt = prepare_offline_vendor(source=source, work=args.work_dir, cache=args.crate_cache, env=env)
+    vendor_receipt = prepare_offline_vendor(source=source, work=args.work_dir, cache=args.crate_cache, env=env, derive_metadata=True)
     crates = vendor_receipt["crates"]
     env["CARGO_ENCODED_RUSTFLAGS"] = "--remap-path-prefix=" + str(args.work_dir) + "=/tetherless-helper-test"
     defaults = tomllib.loads((source / "ffi/Cargo.toml").read_text())["features"]["default"]
@@ -99,16 +100,20 @@ def execute(args: argparse.Namespace) -> dict:
                              "passed": passed, "command": command})
     finally:
         audit = audit_vendor_inputs(vendor_receipt)
+        derived_audit = (audit_vendor_inputs(derived_audit_receipt(vendor_receipt))
+                         if vendor_receipt.get("derived_build") else None)
         workspace_audit = audit_workspace_inputs(source, source_manifest, vendor_receipt["workspace_lock_sha256"])
         (completed / "vendor-input-audit.json").write_bytes(canonical_json(audit))
         (completed / "workspace-input-audit.json").write_bytes(canonical_json(workspace_audit))
-        if not audit["original_inputs_unchanged"] or not workspace_audit["original_inputs_unchanged"]:
+        (completed / "derived-vendor-input-audit.json").write_bytes(canonical_json(derived_audit))
+        if (not audit["original_inputs_unchanged"] or not workspace_audit["original_inputs_unchanged"]
+                or (derived_audit is not None and not derived_audit["original_inputs_unchanged"])):
             raise VerificationError("authenticated workspace/vendor input changed; retained input-audit JSON files")
     evidence = {"schema": 1, "profile_kind": "helper-only-native-tests", "tests": outcomes,
                 "source_commit": profile["upstream"]["commit"],
                 "profile_sha256": file_hash(HERE / PROFILE),
                 "toolchain_sha256": sha256(toolchain_bytes), "toolchain_observations": observations,
-                "tooling_sha256": {p.name: file_hash(p) for p in (HERE / "apply_patch.py", HERE / "build_xcframework.py", HERE / "bounded_process.py", HERE / "offline_vendor.py", Path(__file__))},
+                "tooling_sha256": {p.name: file_hash(p) for p in (HERE / "apply_patch.py", HERE / "build_xcframework.py", HERE / "bounded_process.py", HERE / "offline_vendor.py", HERE / "derived_cbindgen.py", Path(__file__))},
                 "vendor_layout": {key: value for key, value in vendor_receipt.items() if key != "authenticated_inputs"},
                 "process_limits": {"command_seconds": COMMAND_TIMEOUT_SECONDS, "log_bytes": MAX_LOG_BYTES,
                     "tail_bytes": SUMMARY_TAIL_BYTES, "term_grace_seconds": TERM_GRACE_SECONDS,

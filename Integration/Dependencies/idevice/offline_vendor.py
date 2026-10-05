@@ -10,16 +10,6 @@ from apply_patch import VerificationError, canonical_json, safe_path, sha256
 from build_xcframework import file_hash, locked_packages, reject_ambient_cargo_config, vendor_crates
 
 
-PACKAGED_CONFIG_RULE = {
-    "name": "dialoguer", "version": "0.12.0",
-    "source": "registry+https://github.com/rust-lang/crates.io-index",
-    "archive_sha256": "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96",
-    "path": ".cargo/config.toml",
-    "file_sha256": "362771141e605c79a39783cb704a5736c746688c4ec9c20c9c448c75e2e8d2fa",
-}
-REVIEWED_ALIASES = {"format": "fmt", "format-check": "fmt --check",
-                    "lint": "clippy --all-targets --all-features -- -D warnings",
-                    "test-cover": "llvm-cov --all-features --lcov --output-path lcov.info"}
 MAX_CONFIG_FILES = 1024
 MAX_CONFIG_FILE_BYTES = 64 * 1024
 MAX_CONFIG_TOTAL_BYTES = 256 * 1024
@@ -55,13 +45,17 @@ def setting_names(data: bytes, budget: dict) -> list[list[str]]:
     return result
 
 
-def inventory_packaged_configs(vendor: Path, records: list[tuple[dict, dict]], output: Path) -> dict:
-    """Inspect all authenticated crate-root configs before rejecting any one.
+def inventory_packaged_configs(vendor: Path, records: list[tuple[dict, dict]], output: Path,
+                               cargo_cwds: list[Path]) -> dict:
+    """Inventory sibling vendor configs outside the owned Cargo discovery chains.
 
     Archive extraction/authentication has already finished. Reads and emitted
     key metadata are bounded; file contents and values never enter this report.
     """
-    rows, blocked, bytes_read, count_exceeded = [], False, 0, False
+    rows, bytes_read, count_exceeded = [], 0, False
+    discovered = {str(parent / ".cargo" / name)
+                  for cwd in cargo_cwds for parent in [cwd.absolute(), *cwd.absolute().parents]
+                  for name in ("config", "config.toml")}
     budget = {"keys": MAX_CONFIG_KEYS, "key_bytes": MAX_CONFIG_KEY_TOTAL_BYTES}
     for package, checksums in records:
         stem = package["name"] + "-" + package["version"]
@@ -69,10 +63,9 @@ def inventory_packaged_configs(vendor: Path, records: list[tuple[dict, dict]], o
         cargo_dir = directory / ".cargo"
         if directory.is_symlink() or cargo_dir.is_symlink():
             if len(rows) >= MAX_CONFIG_FILES:
-                blocked, count_exceeded = True, True
+                count_exceeded = True
                 break
             rows.append({"crate": stem, "path": ".cargo", "status": "unsafe_symlink", "setting_names": []})
-            blocked = True
             continue
         for name in ("config", "config.toml"):
             path, relative = cargo_dir / name, ".cargo/" + name
@@ -81,7 +74,7 @@ def inventory_packaged_configs(vendor: Path, records: list[tuple[dict, dict]], o
             if len(rows) >= MAX_CONFIG_FILES:
                 # The pinned lock has at most 726 root config paths. Retain a
                 # bounded failure receipt if a different input exceeds the cap.
-                blocked, count_exceeded = True, True
+                count_exceeded = True
                 break
             row = {"crate": stem, "path": relative, "archive_sha256": package["checksum"],
                    "file_sha256": checksums["files"].get(relative), "setting_names": [], "status": "unreviewed"}
@@ -107,20 +100,18 @@ def inventory_packaged_configs(vendor: Path, records: list[tuple[dict, dict]], o
                         except (ValueError, RecursionError, UnicodeError):
                             row["status"] = "invalid_or_over_budget_setting_names"
                         else:
-                            rule = PACKAGED_CONFIG_RULE
-                            if (all(package.get(key) == rule[key] for key in ("name", "version", "source"))
-                                    and package["checksum"] == rule["archive_sha256"]
-                                    and checksums["package"] == rule["archive_sha256"]
-                                    and relative == rule["path"] and row["file_sha256"] == rule["file_sha256"]
-                                    and tomllib.loads(data.decode()) == {"alias": REVIEWED_ALIASES}):
-                                row["status"] = "reviewed_exact_match"
-            blocked |= row["status"] != "reviewed_exact_match"
+                            row["status"] = "parsed"
+            row["effective_for_owned_cargo"] = str(path.absolute()) in discovered
+            row["discovery_class"] = "effective" if row["effective_for_owned_cargo"] else "inactive_sibling"
         if count_exceeded:
             break
     result = {"schema": 1, "scope": "authenticated crate-root Cargo config metadata only",
               "all_packages_examined": not count_exceeded,
               "config_count_budget_exceeded": count_exceeded,
-              "package_count": len(records), "configs": rows, "blocked": blocked,
+              "package_count": len(records), "configs": rows,
+              "blocked": any(row.get("effective_for_owned_cargo", False) for row in rows),
+              "owned_cargo_cwds": [str(cwd.absolute()) for cwd in cargo_cwds],
+              "admission_scope": "config content is diagnostic; only owned cwd discovery chains are effective",
               "values_retained": False, "limits": {"files": MAX_CONFIG_FILES,
                   "file_bytes": MAX_CONFIG_FILE_BYTES, "total_read_bytes": MAX_CONFIG_TOTAL_BYTES,
                   "keys": MAX_CONFIG_KEYS, "key_bytes": MAX_CONFIG_KEY_BYTES,
@@ -128,47 +119,13 @@ def inventory_packaged_configs(vendor: Path, records: list[tuple[dict, dict]], o
                   "inventory_bytes": MAX_CONFIG_INVENTORY_BYTES}}
     encoded = canonical_json(result)
     if len(encoded) > MAX_CONFIG_INVENTORY_BYTES:
-        # Preserve a bounded failure receipt; never print configuration values.
-        result = {"schema": 1, "blocked": True, "all_packages_examined": False,
+        # Preserve bounded diagnostic uncertainty; inactive contents are not admission gates.
+        result = {"schema": 1, "blocked": False, "all_packages_examined": False,
                   "values_retained": False, "error": "inventory_byte_budget_exceeded"}
         encoded = canonical_json(result)
     with output.open("xb") as stream:
         stream.write(encoded)
     return result
-
-
-def check_packaged_cargo_config(directory: Path, package: dict, checksums: dict) -> list[dict]:
-    """One reviewed alias-only config; authentication remains mandatory.
-
-    The expected file came from immutable upstream source. Only an actual
-    lock-authenticated registry archive containing those exact bytes can pass.
-    Nothing is removed, rewritten, or allowed by maintainer/version name alone.
-    """
-    reject_ambient_cargo_config(directory.parent)
-    cargo_dir = directory / ".cargo"
-    if directory.is_symlink() or cargo_dir.is_symlink():
-        raise VerificationError("ambient Cargo configuration symlink is unsupported")
-    accepted = []
-    for name in ("config", "config.toml"):
-        path = cargo_dir / name
-        if not path.exists() and not path.is_symlink():
-            continue
-        rule = PACKAGED_CONFIG_RULE
-        relative = ".cargo/" + name
-        identity_matches = (directory.name == rule["name"] + "-" + rule["version"]
-                            and all(package.get(key) == rule[key] for key in ("name", "version", "source")))
-        if (not identity_matches or package.get("checksum") != rule["archive_sha256"]
-                or checksums.get("package") != rule["archive_sha256"]
-                or relative != rule["path"] or path.is_symlink() or not path.is_file()
-                or checksums.get("files", {}).get(relative) != rule["file_sha256"]
-                or file_hash(path) != rule["file_sha256"]
-                or tomllib.loads(path.read_text()) != {"alias": REVIEWED_ALIASES}):
-            raise VerificationError("ambient Cargo configuration must be absent: " + str(path))
-        accepted.append({"crate": package["name"] + "-" + package["version"],
-                         "path": relative, "archive_sha256": rule["archive_sha256"],
-                         "file_sha256": rule["file_sha256"],
-                         "scope": "exact reviewed alias-only packaged config"})
-    return accepted
 
 
 def require_config_absent(root: Path) -> None:
@@ -178,7 +135,8 @@ def require_config_absent(root: Path) -> None:
             raise VerificationError("offline Cargo config destination must be new")
 
 
-def prepare_offline_vendor(*, source: Path, work: Path, cache: Path, env: dict[str, str]) -> dict:
+def prepare_offline_vendor(*, source: Path, work: Path, cache: Path, env: dict[str, str],
+                           derive_metadata: bool = False) -> dict:
     source, work, cache = source.absolute(), work.absolute(), cache.absolute()
     if source != work / "source" or source.is_symlink() or work.is_symlink():
         raise VerificationError("expected the owned source directory beneath the fresh work root")
@@ -191,17 +149,10 @@ def prepare_offline_vendor(*, source: Path, work: Path, cache: Path, env: dict[s
     vendor = work / "vendor"
     if vendor.exists() or vendor.is_symlink():
         raise VerificationError("sibling vendor destination must be new")
-    # Cargo metadata walks manifest ancestors to discover workspaces. The new
-    # vendor directory must not be below either idevice or another Cargo root.
-    for parent in vendor.parents:
-        manifest = parent / "Cargo.toml"
-        if manifest.exists() or manifest.is_symlink():
-            raise VerificationError("vendor would be nested inside an enclosing Cargo project")
     reject_ambient_cargo_config(source)
-    reject_ambient_cargo_config(vendor)
     lock_bytes = (source / "Cargo.lock").read_bytes()
     crates = vendor_crates(lock_bytes, cache, vendor)
-    inputs, packaged_configs, records = {}, [], []
+    inputs, records = {}, []
     for package in locked_packages(lock_bytes):
         stem = f"{package['name']}-{package['version']}"
         directory = vendor / stem
@@ -217,29 +168,33 @@ def prepare_offline_vendor(*, source: Path, work: Path, cache: Path, env: dict[s
         inputs[stem + "/.cargo-checksum.json"] = file_hash(checksum_path)
         records.append((package, checksums))
     inventory_path = work / "vendor-config-inventory.json"
-    inventory = inventory_packaged_configs(vendor, records, inventory_path)
+    inventory = inventory_packaged_configs(vendor, records, inventory_path, [source])
     if inventory["blocked"]:
         raise VerificationError("ambient Cargo configuration rejected; see vendor-config-inventory.json (metadata only)")
-    for package, checksums in records:
-        directory = vendor / (package["name"] + "-" + package["version"])
-        packaged_configs += check_packaged_cargo_config(directory, package, checksums)
+    derived, build_vendor = None, vendor
+    if derive_metadata:
+        from derived_cbindgen import prepare_derived_vendor
+        build_vendor = work / "build-vendor"
+        derived = prepare_derived_vendor(vendor=vendor, destination=build_vendor, source=source,
+                                         originals=inputs, crates=crates, env=env)
     config = home / "config.toml"
     # Use an absolute TOML-quoted path: nested cargo metadata may run with a cwd
     # inside a vendored crate, independent of the top-level --manifest-path.
     text = ('[source.crates-io]\nreplace-with = "tetherless-vendor"\n\n'
-            '[source.tetherless-vendor]\ndirectory = ' + json.dumps(str(vendor), ensure_ascii=False) + '\n\n'
+            '[source.tetherless-vendor]\ndirectory = ' + json.dumps(str(build_vendor), ensure_ascii=False) + '\n\n'
             '[net]\noffline = true\n')
-    if tomllib.loads(text)["source"]["tetherless-vendor"]["directory"] != str(vendor):
+    if tomllib.loads(text)["source"]["tetherless-vendor"]["directory"] != str(build_vendor):
         raise VerificationError("offline vendor path does not round-trip through TOML")
     with config.open("x", encoding="utf-8") as stream:
         stream.write(text)
     return {"schema": 1, "vendor_directory": str(vendor), "cargo_home": str(home),
             "cargo_config": str(config), "cargo_config_sha256": sha256(text.encode()),
             "workspace_lock_sha256": sha256(lock_bytes), "crates": crates,
-            "reviewed_packaged_configs": packaged_configs,
+            "derived_build": derived,
+            "effective_cargo_cwds": [str(source)],
             "config_inventory": str(inventory_path), "config_inventory_sha256": file_hash(inventory_path),
             "authenticated_inputs": inputs, "top_level_frozen": True,
-            "nested_metadata_offline": True, "nested_metadata_frozen": False}
+            "nested_metadata_offline": True, "nested_metadata_frozen": bool(derived)}
 
 
 def audit_vendor_inputs(receipt: dict) -> dict:
@@ -269,8 +224,7 @@ def audit_vendor_inputs(receipt: dict) -> dict:
             unsafe.append(name)
         elif path.is_file() and name not in originals:
             generated[name] = file_hash(path)
-            if path.name in ("config", "config.toml") and path.parent.name == ".cargo":
-                unsafe.append(name)
+            # New sibling-vendor configs are recorded outputs, outside owned Cargo cwd chains.
     config = Path(receipt["cargo_config"])
     home = Path(receipt["cargo_home"])
     legacy_config = home / "config"
@@ -281,16 +235,19 @@ def audit_vendor_inputs(receipt: dict) -> dict:
                             and file_hash(config) == receipt["cargo_config_sha256"])
     except OSError:
         config_unchanged = False
-    return {"schema": 1, "original_inputs_unchanged": not(changed or missing or unsafe) and config_unchanged,
+    pristine_extra = bool(receipt.get("derived_build")) and receipt.get("input_kind") != "derived_build_vendor" and bool(generated)
+    return {"schema": 1, "original_inputs_unchanged": not(changed or missing or unsafe or pristine_extra) and config_unchanged,
+            "unexpected_pristine_outputs": pristine_extra,
             "vendor_root_valid": True,
             "changed_authenticated_inputs": changed, "missing_authenticated_inputs": missing,
             "unsafe_paths": sorted(set(unsafe)), "generated_files": generated,
-            "cargo_config_unchanged": config_unchanged, "nested_metadata_frozen": False}
+            "cargo_config_unchanged": config_unchanged,
+            "nested_metadata_frozen": receipt.get("nested_metadata_frozen", False)}
 
 
 def audit_workspace_inputs(source: Path, source_manifest: dict, lock_sha256: str) -> dict:
     """Verify all staged original inputs on success and on command failure."""
-    changed, missing, unsafe = {}, [], []
+    changed, missing, unsafe, generated_headers = {}, [], [], {}
     if source.is_symlink() or not source.is_dir():
         return {"schema": 1, "original_inputs_unchanged": False, "source_root_valid": False,
                 "workspace_lock_unchanged": False, "changed_inputs": {}, "missing_inputs": [],
@@ -316,11 +273,32 @@ def audit_workspace_inputs(source: Path, source_manifest: dict, lock_sha256: str
         except (VerificationError, OSError):
             unsafe.append(name)
     try:
+        reject_ambient_cargo_config(source)
+    except (VerificationError, OSError):
+        unsafe.append("effective_workspace_or_ancestor_cargo_config")
+    try:
         path = safe_path(source, "Cargo.lock")
         lock_unchanged = path.is_file() and file_hash(path) == lock_sha256
     except (VerificationError, OSError):
         lock_unchanged = False
+    for name in ("ffi/idevice.h", "cpp/include/idevice.h"):
+        try:
+            path = safe_path(source, name)
+            if name in source_manifest["files"]:
+                generated_headers[name] = {"status": "registered_input_audited_above"}
+            elif path.is_file():
+                generated_headers[name] = {"status": "generated", "sha256": file_hash(path),
+                                           "bytes": path.stat().st_size}
+            elif path.exists():
+                generated_headers[name] = {"status": "unsafe_nonregular_output"}
+                unsafe.append(name)
+            else:
+                generated_headers[name] = {"status": "not_generated"}
+        except (VerificationError, OSError):
+            generated_headers[name] = {"status": "unsafe_or_unreadable_output"}
+            unsafe.append(name)
     return {"schema": 1, "source_root_valid": True,
             "original_inputs_unchanged": not(changed or missing or unsafe) and lock_unchanged,
             "workspace_lock_unchanged": lock_unchanged, "changed_inputs": changed,
-            "missing_inputs": missing, "unsafe_paths": sorted(set(unsafe))}
+            "missing_inputs": missing, "unsafe_paths": sorted(set(unsafe)),
+            "known_generated_headers": generated_headers}

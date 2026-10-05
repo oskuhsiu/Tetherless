@@ -1,3 +1,5 @@
+> Historical checkpoint. The current helper recipe is described in DERIVED_METADATA_REPAIR.md; it uses a separately audited build-vendor copy and classifies configs by actual Cargo discovery scope.
+
 # Helper-only sibling-vendor repair
 
 ## Exact failure evidence
