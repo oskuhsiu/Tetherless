@@ -114,8 +114,22 @@ def check_production_features(build_log: Path, graph_log: Path, source: Path, de
         if event.get("manifest_path") == str(source / "ffi/Cargo.toml"):
             if not set(defaults + target["extra_features"]).issubset(set(enabled)) or "default" not in enabled:
                 raise VerificationError("Apple FFI artifact did not preserve default/selected features")
-            if "staticlib" not in event.get("target", {}).get("crate_types", []):
+            selected_target = event.get("target", {})
+            # Cargo reports the package's build script under the same manifest
+            # before its library. It is a host executable, not the FFI archive.
+            if (selected_target.get("kind") == ["custom-build"]
+                    and selected_target.get("crate_types") == ["bin"]
+                    and selected_target.get("name") == "build-script-build"
+                    and selected_target.get("src_path") == str(source / "ffi/build.rs")):
+                continue
+            if (selected_target.get("kind") != ["staticlib"]
+                    or selected_target.get("crate_types") != ["staticlib"]
+                    or selected_target.get("name") != "idevice_ffi"
+                    or selected_target.get("src_path") != str(source / "ffi/src/lib.rs")):
                 raise VerificationError("selected FFI compiler artifact is not the staticlib target")
+            library = source.parent / "target" / target["rust"] / "release/libidevice_ffi.a"
+            if str(library) not in event.get("filenames", []):
+                raise VerificationError("selected FFI compiler artifact does not identify the target release archive")
             matched.append({"package_id": event.get("package_id"), "features": enabled, "filenames": event.get("filenames", [])})
     if len(matched) != 1:
         raise VerificationError("need exactly one selected FFI compiler artifact feature receipt")

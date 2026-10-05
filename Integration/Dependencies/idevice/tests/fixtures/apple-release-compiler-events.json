@@ -1,0 +1,144 @@
+[
+  {
+    "cfgs": [
+      "osslconf=\"OPENSSL_NO_ENGINE\"",
+      "osslconf=\"OPENSSL_NO_SSL3_METHOD\"",
+      "openssl",
+      "ossl101",
+      "ossl102",
+      "ossl102f",
+      "ossl102h",
+      "ossl110",
+      "ossl110f",
+      "ossl110g",
+      "ossl110h",
+      "ossl111",
+      "ossl111b",
+      "ossl111c",
+      "ossl111d",
+      "ossl300",
+      "ossl320",
+      "ossl330",
+      "ossl340",
+      "ossl350"
+    ],
+    "env": [],
+    "linked_libs": [],
+    "linked_paths": [
+      "native=/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/provider/lib"
+    ],
+    "out_dir": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/target/aarch64-apple-ios/release/build/openssl-sys-f17a4b2f7ffbbb23/out",
+    "package_id": "registry+https://github.com/rust-lang/crates.io-index#openssl-sys@0.9.112",
+    "reason": "build-script-executed"
+  },
+  {
+    "executable": null,
+    "features": [
+      "afc",
+      "aws-lc",
+      "core_device",
+      "core_device_proxy",
+      "debug_proxy",
+      "default",
+      "dvt",
+      "heartbeat",
+      "house_arrest",
+      "installation_proxy",
+      "misagent",
+      "mobile_image_mounter",
+      "obfuscate",
+      "openssl",
+      "remote_pairing",
+      "rsd",
+      "springboardservices",
+      "tcp",
+      "tss",
+      "tunnel_tcp_stack",
+      "usbmuxd",
+      "xpc"
+    ],
+    "filenames": [
+      "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/target/release/build/idevice-ffi-8bd0c4339c34ff45/build-script-build"
+    ],
+    "fresh": false,
+    "manifest_path": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/source/ffi/Cargo.toml",
+    "package_id": "path+file:///Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/source/ffi#idevice-ffi@0.1.68",
+    "profile": {
+      "debug_assertions": false,
+      "debuginfo": 0,
+      "opt_level": "0",
+      "overflow_checks": false,
+      "test": false
+    },
+    "reason": "compiler-artifact",
+    "target": {
+      "crate_types": [
+        "bin"
+      ],
+      "doc": false,
+      "doctest": false,
+      "edition": "2024",
+      "kind": [
+        "custom-build"
+      ],
+      "name": "build-script-build",
+      "src_path": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/source/ffi/build.rs",
+      "test": false
+    }
+  },
+  {
+    "executable": null,
+    "features": [
+      "afc",
+      "aws-lc",
+      "core_device",
+      "core_device_proxy",
+      "debug_proxy",
+      "default",
+      "dvt",
+      "heartbeat",
+      "house_arrest",
+      "installation_proxy",
+      "misagent",
+      "mobile_image_mounter",
+      "obfuscate",
+      "openssl",
+      "remote_pairing",
+      "rsd",
+      "springboardservices",
+      "tcp",
+      "tss",
+      "tunnel_tcp_stack",
+      "usbmuxd",
+      "xpc"
+    ],
+    "filenames": [
+      "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/target/aarch64-apple-ios/release/libidevice_ffi.a"
+    ],
+    "fresh": false,
+    "manifest_path": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/source/ffi/Cargo.toml",
+    "package_id": "path+file:///Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/source/ffi#idevice-ffi@0.1.68",
+    "profile": {
+      "debug_assertions": false,
+      "debuginfo": 0,
+      "opt_level": "z",
+      "overflow_checks": false,
+      "test": false
+    },
+    "reason": "compiler-artifact",
+    "target": {
+      "crate_types": [
+        "staticlib"
+      ],
+      "doc": true,
+      "doctest": false,
+      "edition": "2024",
+      "kind": [
+        "staticlib"
+      ],
+      "name": "idevice_ffi",
+      "src_path": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/source/ffi/src/lib.rs",
+      "test": true
+    }
+  }
+]

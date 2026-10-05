@@ -38,7 +38,8 @@ SYSTEM_FLAGS = ["-lSystem", "-lc++", "-lobjc", "-lz", "-liconv", "-framework", "
 def artifact(source, target, defaults):
     return {"reason": "compiler-artifact", "package_id": "path+file://controlled#idevice-ffi@0.1.68",
             "manifest_path": str(source / "ffi/Cargo.toml"), "features": ["default", *defaults, *target["extra_features"]],
-            "target": {"name": "idevice_ffi", "crate_types": ["staticlib"]},
+            "target": {"name": "idevice_ffi", "kind": ["staticlib"], "crate_types": ["staticlib"],
+                       "src_path": str(source / "ffi/src/lib.rs")},
             "filenames": [str(source.parent / "target" / target["rust"] / "release/libidevice_ffi.a")]}
 
 
