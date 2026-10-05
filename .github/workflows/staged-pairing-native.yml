@@ -147,6 +147,10 @@ jobs:
             .component/review-sources/
             .component/helper-work/completed/*.txt
             .component/helper-work/completed/*.txt.status.json
+            .component/helper-work/completed/vendor-layout.json
+            .component/helper-work/completed/vendor-input-audit.json
+            .component/helper-work/completed/workspace-input-audit.json
+            .component/helper-work/completed/source-manifest.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14

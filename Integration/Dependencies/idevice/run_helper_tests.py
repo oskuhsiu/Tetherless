@@ -19,6 +19,7 @@ from apply_patch import HERE, VerificationError, canonical_json, load_lock, sha2
 from build_xcframework import (file_hash, inventory, native_environment,
     reject_ambient_cargo_config, require_equal, vendor_crates, verify_toolchain)
 
+from offline_vendor import prepare_offline_vendor, audit_vendor_inputs, audit_workspace_inputs
 from bounded_process import (capture_helper_command, COMMAND_TIMEOUT_SECONDS, MAX_LOG_BYTES,
     SUMMARY_TAIL_BYTES, TERM_GRACE_SECONDS, KILL_JOIN_SECONDS)
 
@@ -73,40 +74,42 @@ def execute(args: argparse.Namespace) -> dict:
     if (source / "ffi/src/staged_acquisition.rs").exists():
         raise VerificationError("composite acquisition must be absent from helper-only source")
     before = (source / "Cargo.lock").read_bytes()
-    crates = vendor_crates(before, args.crate_cache, source / "vendor")
-    (source / ".cargo").mkdir()
-    (source / ".cargo/config.toml").write_text('[source.crates-io]\nreplace-with = "tetherless-vendor"\n\n'
-        '[source.tetherless-vendor]\ndirectory = "vendor"\n\n[net]\noffline = true\n')
+    vendor_receipt = prepare_offline_vendor(source=source, work=args.work_dir, cache=args.crate_cache, env=env)
+    crates = vendor_receipt["crates"]
     env["CARGO_ENCODED_RUSTFLAGS"] = "--remap-path-prefix=" + str(args.work_dir) + "=/tetherless-helper-test"
     defaults = tomllib.loads((source / "ffi/Cargo.toml").read_text())["features"]["default"]
     if "openssl" in defaults:
         raise VerificationError("helper-only tests must preserve the upstream AWS-LC defaults")
     completed = args.work_dir / "completed"
     completed.mkdir()
+    (completed / "vendor-layout.json").write_bytes(canonical_json(vendor_receipt))
+    (completed / "source-manifest.json").write_bytes(canonical_json(source_manifest))
     outcomes = []
-    for suite in profile["native_test_filters"]:
-        command = [binaries["cargo"], "test", "--frozen", "-p", suite["package"], "--lib",
-                   "--target", "aarch64-apple-darwin"]
-        if suite["package"] == "idevice":
-            command += ["--features", ",".join(defaults)]
-        command.append(suite["filter"])
-        log = completed / (suite["package"] + ".txt")
-        output = capture_helper_command(command, source=source, env=env, log=log)
-        passed = verify_fixture_summary(output, suite)
-        outcomes.append({"package": suite["package"], "filter": suite["filter"],
-                         "passed": passed, "command": command})
-    if (source / "Cargo.lock").read_bytes() != before:
-        raise VerificationError("Cargo.lock changed during native tests")
-    for name, expected in source_manifest["files"].items():
-        path = source / name
-        actual = sha256(os.readlink(path).encode()) if name in source_manifest["symlinks"] and path.is_symlink() else file_hash(path)
-        if actual != expected:
-            raise VerificationError("source changed during fixture tests: " + name)
+    try:
+        for suite in profile["native_test_filters"]:
+            command = [binaries["cargo"], "test", "--frozen", "-p", suite["package"], "--lib",
+                       "--target", "aarch64-apple-darwin"]
+            if suite["package"] == "idevice":
+                command += ["--features", ",".join(defaults)]
+            command.append(suite["filter"])
+            log = completed / (suite["package"] + ".txt")
+            output = capture_helper_command(command, source=source, env=env, log=log)
+            passed = verify_fixture_summary(output, suite)
+            outcomes.append({"package": suite["package"], "filter": suite["filter"],
+                             "passed": passed, "command": command})
+    finally:
+        audit = audit_vendor_inputs(vendor_receipt)
+        workspace_audit = audit_workspace_inputs(source, source_manifest, vendor_receipt["workspace_lock_sha256"])
+        (completed / "vendor-input-audit.json").write_bytes(canonical_json(audit))
+        (completed / "workspace-input-audit.json").write_bytes(canonical_json(workspace_audit))
+        if not audit["original_inputs_unchanged"] or not workspace_audit["original_inputs_unchanged"]:
+            raise VerificationError("authenticated workspace/vendor input changed; retained input-audit JSON files")
     evidence = {"schema": 1, "profile_kind": "helper-only-native-tests", "tests": outcomes,
                 "source_commit": profile["upstream"]["commit"],
                 "profile_sha256": file_hash(HERE / PROFILE),
                 "toolchain_sha256": sha256(toolchain_bytes), "toolchain_observations": observations,
-                "tooling_sha256": {p.name: file_hash(p) for p in (HERE / "apply_patch.py", HERE / "build_xcframework.py", HERE / "bounded_process.py", Path(__file__))},
+                "tooling_sha256": {p.name: file_hash(p) for p in (HERE / "apply_patch.py", HERE / "build_xcframework.py", HERE / "bounded_process.py", HERE / "offline_vendor.py", Path(__file__))},
+                "vendor_layout": {key: value for key, value in vendor_receipt.items() if key != "authenticated_inputs"},
                 "process_limits": {"command_seconds": COMMAND_TIMEOUT_SECONDS, "log_bytes": MAX_LOG_BYTES,
                     "tail_bytes": SUMMARY_TAIL_BYTES, "term_grace_seconds": TERM_GRACE_SECONDS,
                     "kill_join_seconds": KILL_JOIN_SECONDS},
