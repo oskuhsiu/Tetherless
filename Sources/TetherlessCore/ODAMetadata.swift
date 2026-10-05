@@ -130,11 +130,37 @@ public enum ODAMetadata {
         guard !raw.isEmpty, raw.utf8.count <= 16_384,
               !raw.unicodeScalars.contains(where: { $0.value <= 32 || $0.value == 127 }),
               let url = URL(string: raw, relativeTo: base)?.absoluteURL,
-              let c = URLComponents(url: url, resolvingAgainstBaseURL: true),
+              var c = URLComponents(url: url, resolvingAgainstBaseURL: true),
               c.scheme?.lowercased() == "https", let host = c.host, !host.isEmpty,
               c.user == nil, c.password == nil, c.fragment == nil,
               url.absoluteString.utf8.count <= 16_384 else { throw ODAMetadataFailure.invalidURL }
-        return url
+        // Foundation's RFC 1808 compatibility resolution can leave /../ at
+        // the root, including after `standardized`. Apply RFC 3986 section
+        // 5.2.4 to the encoded path only: never decode escapes or edit queries.
+        let path = removingDotSegments(c.percentEncodedPath)
+        guard path != c.percentEncodedPath else { return url }
+        c.percentEncodedPath = path
+        guard let normalized = c.url, normalized.absoluteString.utf8.count <= 16_384 else {
+            throw ODAMetadataFailure.invalidURL
+        }
+        return normalized
+    }
+
+    private static func removingDotSegments(_ path: String) -> String {
+        // A validated HTTPS authority has an empty or slash-prefixed path.
+        guard path.hasPrefix("/") else { return path }
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false)
+        var result = [Substring]()
+        for index in 1..<parts.count {
+            switch parts[index] {
+            case ".": break
+            case "..": if !result.isEmpty { result.removeLast() }
+            default: result.append(parts[index]); continue
+            }
+            // A final dot segment denotes a directory; retain its final slash.
+            if index == parts.count - 1 { result.append("") }
+        }
+        return "/" + result.joined(separator: "/")
     }
 
     // Internal test injection exercises small exact limits without huge fixtures.

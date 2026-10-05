@@ -87,10 +87,38 @@ import Foundation
         let bad=Data("{\"oda\":false}".utf8)
         do { _=try ValidatedODAMetadata.select(bad,source:source,fallback:fallback); fatalError("Malformed data used fallback") }
         catch ODAMetadataFailure.invalidSchema {}
-        do { _=try ValidatedODAMetadata.select(Data("{\"oda\":\"http://unsafe.invalid\"}".utf8),source:source,fallback:fallback); fatalError("Unsafe reference used fallback") }
-        catch ODAMetadataFailure.invalidURL {}
-        let list=try ValidatedODAMetadata.servers(Data("{\"servers\":[],\"oda\":\"../package.json\"}".utf8),source:source)
-        guard case .path(let reference) = list.oda, reference == "https://example.invalid/package.json" else { fatalError("Relative resolution failed") }
+        for raw in ["http://unsafe.invalid", "../package.json#blocked", "//user@unsafe.invalid/package.json", "https://", "https://["] {
+            let data=try JSONSerialization.data(withJSONObject:["oda":raw])
+            do { _=try ValidatedODAMetadata.select(data,source:source,fallback:fallback); fatalError("Unsafe reference used fallback") }
+            catch ODAMetadataFailure.invalidURL {}
+            do { _=try ValidatedODAMetadata.servers(data,source:source); fatalError("Unsafe reference reached server model") }
+            catch ODAMetadataFailure.invalidURL {}
+        }
+        let nested=URL(string:"https://example.invalid/catalog/v1/list.json?old=1")!
+        let references: [(String,URL,String)] = [
+            ("../package.json",source,"https://example.invalid/package.json"),
+            ("../../../package.json",source,"https://example.invalid/package.json"),
+            ("../package.json",nested,"https://example.invalid/catalog/package.json"),
+            ("../../../../package.json",nested,"https://example.invalid/package.json"),
+            ("../packages/.",source,"https://example.invalid/packages/"),
+            ("../packages/..",source,"https://example.invalid/"),
+            ("../../pkg%2Fname.json?next=/a/../b&v=%2f%3F%23",source,"https://example.invalid/pkg%2Fname.json?next=/a/../b&v=%2f%3F%23"),
+            ("../../%2E%2E/package.json",source,"https://example.invalid/%2E%2E/package.json"),
+            ("../../a//b.json?x=1&x=2",source,"https://example.invalid/a//b.json?x=1&x=2"),
+            ("../../package.json?",source,"https://example.invalid/package.json?"),
+            ("?next=/a/../b&v=%2F",source,"https://example.invalid/list.json?next=/a/../b&v=%2F")
+        ]
+        for (index,fixture) in references.enumerated() {
+            let (raw,base,expected)=fixture
+            let data=try JSONSerialization.data(withJSONObject:["servers":[],"oda":raw] as [String:Any])
+            let list=try ValidatedODAMetadata.servers(data,source:base)
+            guard case .path(let reference) = list.oda else { fatalError("Lost reference model") }
+            // Only fixed, public .invalid fixtures are interpolated on failure.
+            guard reference == expected else { fatalError("Synthetic reference \(index): \(reference)") }
+            let selected=try ValidatedODAMetadata.select(data,source:base,fallback:fallback)
+            guard case .reference(let url) = selected else { fatalError("Reference became package") }
+            guard url.absoluteString == expected else { fatalError("Synthetic selection \(index): \(url.absoluteString)") }
+        }
         print("PASS")
     }
 }

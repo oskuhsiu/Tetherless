@@ -39,6 +39,57 @@ struct ODAMetadataTests {
         #expect(doc.servers.count == 1 && doc.servers[0].isHidden)
         #expect(doc.servers[0].name == "伺服器 🌐")
     }
+    @Test func relativeReferencesClampDotSegmentsAtTheAuthorityRoot() throws {
+        let root = URL(string: "https://example.invalid/list.json")!
+        let nested = URL(string: "https://example.invalid/catalog/v1/list.json?old=1")!
+        let cases: [(String, URL, String)] = [
+            ("../package.json", root, "https://example.invalid/package.json"),
+            ("../../../package.json", root, "https://example.invalid/package.json"),
+            ("./packages/../package.json", root, "https://example.invalid/package.json"),
+            ("../package.json", nested, "https://example.invalid/catalog/package.json"),
+            ("../../../../package.json", nested, "https://example.invalid/package.json"),
+            ("/catalog/./../package.json", nested, "https://example.invalid/package.json"),
+            ("https://other.invalid/a/../package.json", nested, "https://other.invalid/package.json"),
+            ("//other.invalid/../package.json", nested, "https://other.invalid/package.json"),
+            ("..", root, "https://example.invalid/"),
+            ("../", root, "https://example.invalid/"),
+            (".", nested, "https://example.invalid/catalog/v1/"),
+            ("../packages/..", root, "https://example.invalid/"),
+            ("../packages/.", root, "https://example.invalid/packages/"),
+            ("../.package..json", root, "https://example.invalid/.package..json")
+        ]
+        for (raw, base, expected) in cases {
+            let resolved = try ODAMetadata.resolveURL(raw, relativeTo: base)
+            #expect(resolved.absoluteString == expected)
+            #expect(resolved.baseURL == nil)
+        }
+    }
+    @Test func pathNormalizationPreservesEscapesEmptySegmentsAndQueries() throws {
+        let base = URL(string: "https://example.invalid/catalog/list.json?old=1")!
+        let cases = [
+            ("../../pkg%2Fname%20one.json?next=/a/../b&v=%2f%3F%23", "https://example.invalid/pkg%2Fname%20one.json?next=/a/../b&v=%2f%3F%23"),
+            ("../../%2E%2E/package.json", "https://example.invalid/%2E%2E/package.json"),
+            ("../../%252E%252E/package.json", "https://example.invalid/%252E%252E/package.json"),
+            ("../../a//b.json?x=1&x=2", "https://example.invalid/a//b.json?x=1&x=2"),
+            ("../../a//../b.json", "https://example.invalid/a/b.json"),
+            ("../../package.json?", "https://example.invalid/package.json?"),
+            ("?next=/a/../b&v=%2F", "https://example.invalid/catalog/list.json?next=/a/../b&v=%2F")
+        ]
+        for (raw, expected) in cases {
+            #expect(try ODAMetadata.resolveURL(raw, relativeTo: base).absoluteString == expected)
+        }
+        #expect(try ODAMetadata.resolveURL("https://example.invalid").absoluteString == "https://example.invalid")
+    }
+    @Test func rawAndResolvedURLSizeLimitsRemainIndependent() throws {
+        let prefix = "https://example.invalid/"
+        let atLimit = prefix + String(repeating: "a", count: 16_384 - prefix.utf8.count)
+        #expect(try ODAMetadata.resolveURL(atLimit).absoluteString == atLimit)
+        for raw in [atLimit + "a", String(repeating: "a", count: 16_384)] {
+            #expect(throws: ODAMetadataFailure.invalidURL) {
+                try ODAMetadata.resolveURL(raw, relativeTo: URL(string: prefix)!)
+            }
+        }
+    }
     @Test func duplicateAndEscapedEquivalentKeysRejectBeforeDecoder() {
         for json in ["{\"oda\":null,\"oda\":null}", #"{"servers":[],"serv\u0065rs":[]}"#,
                      "{\"oda\":{\"s\":\"\(sha)\",\"l\":\"AA==\",\"l\":\"BB==\"}}"] {
@@ -123,7 +174,8 @@ struct ODAMetadataTests {
     }
     @Test func invalidAbsoluteAndRelativeURLsNeverUseFallback() {
         let base = URL(string:"https://example.invalid/source.json")!
-        for raw in ["http://a.invalid", "file:///tmp/payload", "https://user:secret@a.invalid", "https://a.invalid/#secret", "\nhttps://a.invalid", "", "https://a.invalid/ path"] {
+        for raw in ["http://a.invalid", "file:///tmp/payload", "https://user:secret@a.invalid", "https://a.invalid/#secret", "\nhttps://a.invalid", "", "https://a.invalid/ path",
+                    "../package.json#blocked", "//user@a.invalid/../package.json", "https://", "https://["] {
             #expect(throws: ODAMetadataFailure.invalidURL) { try ODAMetadata.resolveURL(raw, relativeTo: base) }
         }
     }
