@@ -1,0 +1,81 @@
+name: Staged pairing Swift source fixtures
+on:
+  push:
+    branches: [verify/staged-pairing-native]
+    paths:
+      - 'Sources/TetherlessCore/NativeCallLifetime.swift'
+      - 'Sources/TetherlessCore/PairingPromotion.swift'
+      - 'Sources/TetherlessCore/PairingRecord.swift'
+      - 'Sources/TetherlessCore/PrivateFileStore.swift'
+      - 'Tests/TetherlessCoreTests/NativeCallLifetimeTests.swift'
+      - 'Tests/TetherlessCoreTests/PairingPromotionTests.swift'
+      - 'Integration/Native/PairingBonjourListener.swift'
+      - 'Integration/fixtures/PairingBonjourListenerTests.swift'
+      - 'Integration/verify_pairing_host_app.py'
+      - 'Integration/tests/test_verify_pairing_host_app.py'
+      - 'Integration/Dependencies/idevice/bounded_process.py'
+      - 'Integration/Dependencies/idevice/apply_patch.py'
+      - 'Package.swift'
+      - '.github/workflows/staged-pairing-swift.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: staged-pairing-swift-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  swift-source-fixtures:
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Record exact source and bounded fixture scope
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          test ! -e .pairing-swift-evidence
+          mkdir .pairing-swift-evidence
+          python3 - <<'PY'
+          import json, os, platform
+          from pathlib import Path
+          Path('.pairing-swift-evidence/run-context.json').write_text(json.dumps({
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'runner_arch': platform.machine(),
+              'image_os': os.environ.get('ImageOS'),
+              'image_version': os.environ.get('ImageVersion'),
+              'developer_dir': os.environ['DEVELOPER_DIR'],
+              'scope': '19 Swift source fixtures per configuration; registration spies and local socket pairs',
+              'actual_idevice_ffi': False,
+              'device_or_product_acceptance': False
+          }, indent=2) + '\n')
+          PY
+      - name: Execute exact Debug and Release Swift source fixtures
+        timeout-minutes: 6
+        run: |
+          python3 Integration/verify_pairing_host_app.py \
+            --source-root . --output-root .pairing-swift-evidence/fixtures
+      - name: Check portable verification wrapper
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s Integration/tests -p test_verify_pairing_host_app.py -v \
+            2>&1 | tee .pairing-swift-evidence/portable-wrapper-tests.log
+      - name: Retain source fixture evidence without build products
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 2
+        with:
+          name: pairing-host-swift-${{ github.sha }}-${{ github.run_attempt }}
+          path: .pairing-swift-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
