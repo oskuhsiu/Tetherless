@@ -32,17 +32,10 @@ jobs:
         timeout-minutes: 3
         run: |
           set -euo pipefail
-          test "$(uname -m)" = arm64
-          test -d "$DEVELOPER_DIR"
-          command -v rustup
-          command -v cmake
-          command -v ninja
-          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
           test ! -e .component
           mkdir -p .component/evidence .component/acquisition-home .component/acquisition-cargo
-          python3 -m unittest discover -s Integration/Dependencies/idevice/tests -v
           python3 - <<'PY'
-          import json, os, platform
+          import json, os, platform, shutil, sys
           from pathlib import Path
           Path('.component/evidence/run-context.json').write_text(json.dumps({
               'scope': 'helper-only host fixtures; not application or device acceptance',
@@ -50,11 +43,23 @@ jobs:
               'run_id': os.environ['GITHUB_RUN_ID'],
               'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
               'runner_arch': platform.machine(),
+              'python_version': platform.python_version(),
+              'python_executable': sys.executable,
+              'developer_dir_present': Path(os.environ['DEVELOPER_DIR']).is_dir(),
+              'tool_paths': {name: shutil.which(name) for name in ('rustup', 'cmake', 'ninja')},
               'image_os': os.environ.get('ImageOS'),
               'image_version': os.environ.get('ImageVersion'),
               'toolchain_status': 'first-observed candidate, not previously accepted build identity'
           }, indent=2) + '\n')
           PY
+          test "$(uname -m)" = arm64
+          test -d "$DEVELOPER_DIR"
+          command -v rustup
+          command -v cmake
+          command -v ninja
+          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+          python3 -m unittest discover -s Integration/Dependencies/idevice/tests -v \
+            2>&1 | tee .component/evidence/portable-tests.log
       - name: Acquire exact public upstream source without submodules or saved credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         timeout-minutes: 5
