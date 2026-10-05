@@ -55,7 +55,7 @@ struct OnboardingView: View {
                 guard hostPairingRequest == request, hostPairingPresentation == request else { return }
                 hostPairingRequest = nil
                 switch outcome {
-                case .saved: status = "Pairing record saved and checked against this app. Run the normal connection check next."
+                case .saved: status = "Pairing record saved after checking this app's protected container. Saving does not establish that the running connection is using this record. Connection and renewal remain unverified."
                 case .cancelled: status = "Pairing cancelled. Existing pairing was retained."
                 case .recoveryRequired: status = "Saving may have completed. Recheck stored pairing before trying again."
                 default: status = "Pairing could not be completed. Existing pairing was retained."

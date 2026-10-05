@@ -104,6 +104,16 @@ def patch_clear(source):
         '    private func clearTempDirItems(at url: URL, coordinatorError: Error?) throws {',
         '''    private func clearTempDirItems(at url: URL, coordinatorError: Error?, check: () throws -> Void) throws {
         try check()''')
+    source = once(source, '''        let fileURLs = try FileManager.default.contentsOfDirectory(at: url,
+                                                                   includingPropertiesForKeys: [],
+                                                                   options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles])''',
+        '''        let fileURLs = try FileManager.default.contentsOfDirectory(at: url,
+                                                                   includingPropertiesForKeys: [],
+                                                                   options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles])
+            // TransferWorkspace owns this pool and its stable usage.lock.
+            // The device-mutation lease does not replace that separate lock.
+            // Normal transfer admission alone reclaims its abandoned stages.
+            .filter { $0.lastPathComponent != "tetherless-oda-transfers-v1" }''')
     source = once(source,
         '    private func removeBackupDirItems(at url: URL, installedBundleIDs: Set<String>, coordinatorError: Error?) throws {',
         '''    private func removeBackupDirItems(at url: URL, installedBundleIDs: Set<String>, coordinatorError: Error?, check: () throws -> Void) throws {

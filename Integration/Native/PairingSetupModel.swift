@@ -22,13 +22,17 @@ import IdeviceGateway
     private var deadline: TimeInterval = 0
 
     var isRunning: Bool { phase != .ready && phase != .finished }
-    static var supported: Bool {
-        #if targetEnvironment(simulator)
+    private static var platformSupported: Bool {
+        #if targetEnvironment(simulator) || targetEnvironment(macCatalyst)
         return false
         #else
         guard #available(iOS 27.0, *) else { return false }
-        return Minimuxer.shared.gateway is IdeviceGateway
+        guard !ProcessInfo.processInfo.isiOSAppOnMac else { return false }
+        return UIDevice.current.userInterfaceIdiom == .phone
         #endif
+    }
+    static var supported: Bool {
+        platformSupported && Minimuxer.shared.gateway is IdeviceGateway
     }
 
     func start() {
@@ -83,7 +87,7 @@ import IdeviceGateway
         return UInt32(min(Double(maximum), milliseconds.rounded(.down)))
     }
 
-    private func makeHost() async throws -> BoundedPairingHostBridge {
+    private func makeHost(nativeBackend: Bool) async throws -> BoundedPairingHostBridge {
         let generation = promotion.generation
         let callback: @MainActor @Sendable (UUID, String) -> Void = { [weak self] generation, value in
             guard let self, !self.cancellation.isCancelled,
@@ -99,7 +103,7 @@ import IdeviceGateway
                     // Protocol host-role model accepted by the pinned responder;
                     // this metadata is never used as current-phone identity proof.
                     continuation.resume(returning: try BoundedPairingHostBridge(name: "Tetherless", model: "Mac17,7",
-                        generation: generation, nativeBackend: true, onPIN: callback))
+                        generation: generation, nativeBackend: nativeBackend, onPIN: callback))
                 } catch { continuation.resume(throwing: error) }
             }
         }
@@ -108,7 +112,13 @@ import IdeviceGateway
     private func runLeased() async -> Outcome {
         do {
             try checkCancellation()
-            let host = try await makeHost()
+            // Selection may have changed while awaiting the existing lease.
+            // Recheck immediately before native preparation; never substitute
+            // a cached eligibility value or mutate the running gateway here.
+            let nativeBackend = Minimuxer.shared.gateway is IdeviceGateway
+            guard Self.platformSupported, nativeBackend else { return .unavailable }
+            _ = try remaining(until: deadline, maximum: 120_000)
+            let host = try await makeHost(nativeBackend: nativeBackend)
             let hostCancellation = cancellation.register { host.cancel() }
             let candidate: Data
             let peer: PairingPeerAddress
@@ -178,8 +188,15 @@ import IdeviceGateway
         let challenge = try PairingValidationChallenge(libraryDirectory: library)
         do {
             var verified = false
-            for endpoint in endpoints {
-                let timeout = try remaining(until: end, maximum: 10_000)
+            for (index, endpoint) in endpoints.enumerated() {
+                // All attempts share the original end. Reserve a proportional
+                // share for each remaining endpoint, including this one. Native
+                // close must still join even if cleanup consumes the remainder.
+                let available = try remaining(until: end, maximum: 10_000)
+                guard let timeout = PairingValidationBudget.timeoutMilliseconds(
+                    remainingMilliseconds: available, endpointsRemaining: endpoints.count - index) else {
+                    throw NativeHostBridgeError.timedOut
+                }
                 let validator = try NativeStagedPairingValidator()
                 let registration = cancellation.register { validator.cancel() }
                 do {

@@ -38,9 +38,13 @@ struct PairingSetupView: View {
                 }
                 if model.phase == .ready {
                     SwiftUI.Section {
-                        Text("Start when you are ready to switch to Settings. Tetherless will check that the new record can access this app on this iPhone before saving it.")
-                        SwiftUI.Button("Start pairing") { model.start() }
-                            .buttonStyle(.borderedProminent).accessibilityIdentifier("pairing.setupStart")
+                        Text("Start when you are ready to switch to Settings. Tetherless will check access to this app's protected container before saving the new record.")
+                        if PairingSetupModel.supported {
+                            SwiftUI.Button("Start pairing") { model.start() }
+                                .buttonStyle(.borderedProminent).accessibilityIdentifier("pairing.setupStart")
+                        } else {
+                            Text("Pairing is unavailable in this configuration. You can still import an authorized pairing file.")
+                        }
                     }
                 }
                 if let outcome = model.outcome, model.phase == .finished {
@@ -78,11 +82,11 @@ struct PairingSetupView: View {
         case .preparing: return "Preparing a private pairing session."
         case .waiting: return "Ready for the pairing request from this iPhone."
         case .pairing: return "Complete the pairing prompt in Settings."
-        case .validating: return "Checking that the new pairing belongs to this iPhone."
+        case .validating: return "Checking access to this app's protected container."
         case .stopping: return "Stopping pairing and closing the connection."
         case .finished:
             switch model.outcome {
-            case .saved: return "Pairing record saved and checked against this app. The normal connection and renewal check is still required."
+            case .saved: return "Pairing record saved after checking this app's protected container. Saving does not establish that the running connection is using this record. Connection and renewal remain unverified."
             case .cancelled: return "Pairing cancelled. Existing pairing was retained."
             case .unavailable: return "Pairing is unavailable in this configuration. You can still import an authorized pairing file."
             case .recoveryRequired: return "Saving may have completed. Recheck the stored pairing before trying again."

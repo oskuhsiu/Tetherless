@@ -10,6 +10,7 @@ import hashlib
 import sys
 
 MODEL = 'SideStore/Views/Settings/Advanced/PairingFile/WirelessPair/WirelessPairViewModel.swift'
+VIEW = 'SideStore/Views/Settings/Advanced/PairingFile/WirelessPair/WirelessPairView.swift'
 WRAPPER = 'SideStore/Core/DeviceApi/MinimuxerWrapper.swift'
 SERVICE = 'Dependencies/minimuxer/Sources/Services/WirelessPairService.swift'
 GATEWAY = 'Dependencies/minimuxer/DeviceGateway/idevice/IdeviceGateway.swift'
@@ -21,6 +22,7 @@ BLOBS = {
     WRAPPER: 'd6fcf7f9203c7a9db3236efef3ae5aa209be7778',
     SERVICE: '1a24b36ddad6f1c6c13ae8daa06a14b65d1fdabd',
     GATEWAY: 'e9310d0236e244813ce945236bdb99af2582f649',
+    VIEW: 'ceed7ac68c1f802e45127d209fa22a2041069039',
 }
 
 UNAVAILABLE = ('Wireless pairing is unavailable in this build while safe cancellation '
@@ -147,8 +149,15 @@ def patch_model(source):
     return body(source, trigger, '    nonisolated static func pairingFileName(', trigger_denied)
 
 
+def patch_view(source):
+    # apply() verifies the exact inherited presentation before loading this
+    # replacement. Both host capability conditions remain closed in product
+    # configuration; no legacy client or wrapper API is restored.
+    return (Path(__file__).with_name('Overrides') / 'WirelessPairView.swift').read_text()
+
+
 PATCHES = {MODEL: patch_model, WRAPPER: patch_wrapper,
-           SERVICE: patch_service, GATEWAY: patch_gateway}
+           SERVICE: patch_service, GATEWAY: patch_gateway, VIEW: patch_view}
 
 
 def apply(root: Path):
