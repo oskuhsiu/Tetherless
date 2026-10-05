@@ -32,9 +32,43 @@ struct OnboardingView: View {
     @State private var observationGeneration = UUID()
     @AppStorage("tetherless.autorenew.enabled") private var renewalPermitted = false
 
-    private var pairingBusy: Bool { pairingImport.isBusy || pairingPresentation != nil }
+    #if TETHERLESS_BOUNDED_PAIRING_HOST && TETHERLESS_STAGED_PAIRING_VALIDATION && canImport(IDevice) && canImport(IdeviceGateway)
+    @State private var hostPairingRequest: PairingSetupRequest?
+    @State private var hostPairingPresentation: PairingSetupRequest?
+    #endif
+    private var pairingBusy: Bool {
+        #if TETHERLESS_BOUNDED_PAIRING_HOST && TETHERLESS_STAGED_PAIRING_VALIDATION && canImport(IDevice) && canImport(IdeviceGateway)
+        if hostPairingPresentation != nil { return true }
+        #endif
+        return pairingImport.isBusy || pairingPresentation != nil
+    }
 
     var body: some View {
+        #if TETHERLESS_BOUNDED_PAIRING_HOST && TETHERLESS_STAGED_PAIRING_VALIDATION && canImport(IDevice) && canImport(IdeviceGateway)
+        let hostDismissalRequest = hostPairingPresentation
+        return existingBody.fullScreenCover(item: $hostPairingRequest, onDismiss: {
+            guard let hostDismissalRequest, hostPairingPresentation == hostDismissalRequest else { return }
+            hostPairingPresentation = nil
+            Task { @MainActor in await reload() }
+        }) { request in
+            PairingSetupView { outcome in
+                guard hostPairingRequest == request, hostPairingPresentation == request else { return }
+                hostPairingRequest = nil
+                switch outcome {
+                case .saved: status = "Pairing record saved and checked against this app. Run the normal connection check next."
+                case .cancelled: status = "Pairing cancelled. Existing pairing was retained."
+                case .recoveryRequired: status = "Saving may have completed. Recheck stored pairing before trying again."
+                default: status = "Pairing could not be completed. Existing pairing was retained."
+                }
+                Task { @MainActor in await reload() }
+            }
+        }
+        #else
+        return existingBody
+        #endif
+    }
+
+    private var existingBody: some View {
         let dismissalRequest = pairingPresentation
         return SwiftUI.NavigationStack {
             SwiftUI.Form {
@@ -177,6 +211,18 @@ struct OnboardingView: View {
                 observedRow("Protected pairing record", present: readiness.pairingStored, component: .pairing)
                 SwiftUI.Button("Choose pairing file") { choosePairingFile() }
                     .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.importPairing")
+                #if TETHERLESS_BOUNDED_PAIRING_HOST && TETHERLESS_STAGED_PAIRING_VALIDATION && canImport(IDevice) && canImport(IdeviceGateway)
+                if PairingSetupModel.supported {
+                    SwiftUI.Button(readiness.pairingStored ? "Replace pairing on this iPhone" : "Pair this iPhone") {
+                        guard !working, !pairingBusy else { return }
+                        status = nil; pairingImportFailure = nil
+                        let request = PairingSetupRequest()
+                        hostPairingPresentation = request
+                        hostPairingRequest = request
+                    }
+                    .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.wirelessPairing")
+                }
+                #endif
                 Text("Keep pairing files private. Tetherless stores its copy locally and does not upload it. A computer may be needed once for bootstrap on your supported setup.")
             }
         case .connection:
