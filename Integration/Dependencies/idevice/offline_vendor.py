@@ -213,6 +213,8 @@ def audit_vendor_inputs(receipt: dict) -> dict:
             if not path.is_file():
                 missing.append(name)
             else:
+                if path.stat().st_nlink != 1:
+                    unsafe.append(name)
                 actual = file_hash(path)
                 if actual != expected:
                     changed[name] = {"expected_sha256": expected, "actual_sha256": actual}
@@ -223,6 +225,8 @@ def audit_vendor_inputs(receipt: dict) -> dict:
         if path.is_symlink():
             unsafe.append(name)
         elif path.is_file() and name not in originals:
+            if path.stat().st_nlink != 1:
+                unsafe.append(name)
             generated[name] = file_hash(path)
             # New sibling-vendor configs are recorded outputs, outside owned Cargo cwd chains.
     config = Path(receipt["cargo_config"])

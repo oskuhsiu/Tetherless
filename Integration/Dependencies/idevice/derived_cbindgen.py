@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import shutil
+import stat
 
 from apply_patch import VerificationError, canonical_json, safe_path, sha256
 from build_xcframework import file_hash
@@ -14,6 +16,11 @@ SOURCE_PATH = "src/bindgen/cargo/cargo_metadata.rs"
 SOURCE_SHA256 = "d616faea349e4e7ff5a81f944e9c25c3a7b1acc4d7cc421e437464c906d4bd8d"
 PATCHED_SHA256 = "fb696646cd0ad4c47711303ac8a8cad26cde38a00923077e87b0d2e364a0b90f"
 CONTEXT_VARIABLE = "TETHERLESS_CBINDGEN_WORKSPACE_MANIFEST"
+README_CRATE = "nskeyedarchiver_converter-0.1.3"
+README_ARCHIVE_SHA256 = "36c53158d1bf37bbbdd165f5220fda8bb5757c89eb700107992152c64c6cad7e"
+README_SHA256 = "8f9d7995df53d0b3c75999fb5b253930513d761808f54f1b118c5c02cfee6f31"
+README_LOGICAL = README_CRATE + "/README.md"
+README_OBSERVED = README_CRATE + "/README.MD"
 OLD_COMMAND = '''            let mut cmd = Command::new(cargo);
             cmd.arg("metadata");'''
 NEW_COMMAND = '''            // Tetherless build-only adaptation: resolve metadata through the
@@ -73,6 +80,38 @@ def inventory_difference(expected: dict, actual: dict) -> dict:
             "file_contents_retained": False}
 
 
+def reconcile_reviewed_readme(vendor: Path, expected: dict, actual: dict, crates: dict) -> dict:
+    """Prove the one observed spelling alias; never normalize names or file data."""
+    absent = expected.keys() - actual.keys()
+    if (absent != {README_LOGICAL} or actual.keys() - expected.keys()
+            or any(actual[name] != expected[name] for name in actual.keys() & expected.keys())
+            or crates.get(README_CRATE) != README_ARCHIVE_SHA256
+            or expected.get(README_LOGICAL) != README_SHA256
+            or expected.get(README_OBSERVED) != README_SHA256
+            or actual.get(README_OBSERVED) != README_SHA256):
+        return {"applied": False, "reason": "not_the_exact_reviewed_alias_difference"}
+    try:
+        logical = safe_path(vendor, README_LOGICAL)
+        observed = safe_path(vendor, README_OBSERVED)
+        if logical.is_symlink() or observed.is_symlink():
+            return {"applied": False, "reason": "symlink_is_not_a_filename_alias"}
+        left, right = logical.stat(), observed.stat()
+        if (not stat.S_ISREG(left.st_mode) or not stat.S_ISREG(right.st_mode)
+                or left.st_nlink != 1 or right.st_nlink != 1
+                or (left.st_dev, left.st_ino) != (right.st_dev, right.st_ino)
+                or not os.path.samefile(logical, observed)
+                or file_hash(logical) != README_SHA256 or file_hash(observed) != README_SHA256):
+            return {"applied": False, "reason": "filesystem_identity_or_exact_hash_not_proved"}
+    except (VerificationError, OSError):
+        return {"applied": False, "reason": "logical_lookup_not_proved"}
+    return {"applied": True, "reason": "exact_logical_hashes_and_same_regular_file",
+            "crate": README_CRATE, "archive_sha256": README_ARCHIVE_SHA256,
+            "logical_path": README_LOGICAL, "enumerated_path": README_OBSERVED,
+            "sha256": README_SHA256, "device": left.st_dev, "inode": left.st_ino,
+            "link_count": left.st_nlink, "samefile": True,
+            "checksum_keys_preserved": True}
+
+
 def patch_metadata_source(data: bytes) -> bytes:
     if sha256(data) != SOURCE_SHA256:
         raise VerificationError("cbindgen metadata source preimage mismatch")
@@ -105,8 +144,15 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
         if path.is_symlink():
             raise VerificationError("unexpected pristine vendor symlink")
         if path.is_file():
+            if path.stat().st_nlink != 1:
+                raise VerificationError("unexpected pristine vendor hardlink")
             actual[str(path.relative_to(vendor))] = file_hash(path)
     difference = inventory_difference(originals, actual)
+    reconciliation = (reconcile_reviewed_readme(vendor, originals, actual, crates)
+                      if actual != originals else {"applied": False, "reason": "exact_inventory_match"})
+    difference["readme_reconciliation"] = reconciliation
+    admitted = actual == originals or reconciliation["applied"]
+    difference["admitted"] = admitted
     diagnostic = destination.parent / "vendor-derivation-inventory.json"
     encoded = canonical_json(difference)
     if len(encoded) > 1024 * 1024:
@@ -117,7 +163,7 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
         encoded = canonical_json(difference)
     with diagnostic.open("xb") as stream:
         stream.write(encoded)
-    if not difference["exact_match"]:
+    if not admitted:
         counts = difference["counts"]
         raise VerificationError("pristine vendor inventory changed before derivation; "
                                 f"missing={counts['missing']} extra={counts['extra']} changed={counts['changed']}; "
@@ -149,6 +195,7 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
                 "cwd": str(source), "workspace_lock_sha256": file_hash(lock),
                 "frozen": True, "scope": "patched cbindgen metadata commands only"},
             "inventory_diagnostic": str(diagnostic), "inventory_diagnostic_sha256": file_hash(diagnostic),
+            "readme_reconciliation": reconciliation,
             "pristine_registry_files_modified": False}
 
 

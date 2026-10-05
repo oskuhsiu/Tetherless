@@ -77,15 +77,18 @@ class PreparationDiagnosticTests(DerivedCbindgenTests):
     # Only these two additional wiring cases run from this class. The original
     # suite is imported for fixture setup rather than weakening its assertions.
     def test_inventory_mismatch_is_retained_before_original_error(self):
-        real = derived.inventory_difference
-        def mismatch(expected, actual):
-            return real(dict(expected, **{"controlled-missing": "0" * 64}), actual)
-        with patch.object(derived, "inventory_difference", side_effect=mismatch):
-            with self.assertRaisesRegex(VerificationError, "missing=1 extra=0 changed=0"):
+        original_rglob = Path.rglob
+        def with_extra(path, pattern, *args, **kwargs):
+            if path == self.work / "vendor":
+                (path / "controlled-extra").write_text("unexpected file after authentication")
+            return original_rglob(path, pattern, *args, **kwargs)
+        with patch.object(Path, "rglob", with_extra):
+            with self.assertRaisesRegex(VerificationError, "missing=0 extra=1 changed=0"):
                 self.prepare()
         receipt = json.loads((self.work / "vendor-derivation-inventory.json").read_bytes())
         self.assertFalse(receipt["exact_match"])
-        self.assertEqual(receipt["details"]["missing"][0]["path"], "controlled-missing")
+        self.assertFalse(receipt["admitted"])
+        self.assertEqual(receipt["details"]["extra"][0]["path"], "controlled-extra")
         self.assertFalse((self.work / "build-vendor").exists())
 
     def test_matching_inventory_receipt_is_bound_to_derived_layout(self):
