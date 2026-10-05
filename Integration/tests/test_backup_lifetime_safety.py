@@ -179,6 +179,15 @@ class BackupLifetimeTests(unittest.TestCase):
         self.assertEqual(text.count('final class RemoveBackupDataOperation:'), 1)
         self.assertNotIn('OPERATION_HERE', text)
 
+    def test_harness_scenarios_do_not_inherit_main_actor(self):
+        text = harness()
+        entry = text.split('    static func main() async throws {', 1)[1].split('    }', 1)[0]
+        self.assertEqual(entry.strip(), 'try await runChecks()')
+        suite = text.split('    nonisolated static func runChecks() async throws {', 1)[1]
+        self.assertEqual(suite.count('NativeMutationGate.withLease {'), 3)
+        self.assertIn('let child: Task<Bool, Error>', suite)
+        self.assertNotIn('@MainActor', suite)
+
     @unittest.skipUnless(SWIFTC, 'Swift compiler unavailable; native parse remains unverified')
     def test_generated_native_source_parses(self):
         with tempfile.TemporaryDirectory() as tmp:

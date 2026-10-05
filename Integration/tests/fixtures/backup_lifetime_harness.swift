@@ -222,6 +222,13 @@ final class CancellationTarget: @unchecked Sendable {
     }
     static func exists(_ url: URL) -> Bool { FileManager.default.fileExists(atPath: url.path) }
     static func main() async throws {
+        try await runChecks()
+    }
+
+    // Async @main is implicitly MainActor-isolated. These scenarios exercise
+    // nonisolated operations and lease bodies, with no UIKit/actor-owned state.
+    // Keep their closures in that same isolation domain under Swift 6 checking.
+    nonisolated static func runChecks() async throws {
         let root = try NativeRenewalStorage.root()
         let path = root.appendingPathComponent("device-mutation.lock")
         let unrelated = try makeBackup(root, "unrelated-app")
