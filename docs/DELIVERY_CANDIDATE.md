@@ -90,8 +90,12 @@ reaping on failure; it is not accumulated without a bound first. Case-insensitiv
 parsing. ZIP central-directory reads are capped at 32 MiB. File size and
 CRC are checked while streaming. Duplicate/unsafe paths, encrypted archive
 entries, unsupported special files, root-escaping links and known private/signing
-material (including inside nested IPAs) fail closed. Source directory symlinks
-are not followed; safe in-root links are retained with their target identity.
+material (including inside nested IPAs) fail closed. Source links are not followed to collect content. A bounded metadata-only chain
+inspection rejects escapes, private targets, loops and special files. Safe
+in-root links are retained with their exact target identity and explicit
+present/missing plus included/excluded target status. A generated output may be
+absent before compilation without inventing its bytes; see the
+[SideBackup boundary repair](delivery/PREPARED_SOURCE_LINKS.md).
 Dependencies are never executed; there is no custom Mach-O, code-signature,
 certificate or APK-signature parser and no network download.
 

@@ -189,6 +189,109 @@ class DeliveryTests(unittest.TestCase):
         (root / 'outside').symlink_to('../outside'); self.commit(root)
         with self.assertRaises(ValueError): self.collect(root)
 
+    def test_dangling_in_root_link_keeps_identity_and_explicit_missing_status(self):
+        root = self.root / 'prepared'; root.mkdir()
+        (root / 'pointer').symlink_to('future/input.txt')
+        entries, omissions = [], []
+        d.collect_tree(root, 'prepared', entries, omissions, d.Budget())
+        entry = entries[0]
+        self.assertEqual(entry['target'], 'future/input.txt')
+        self.assertEqual(entry['sha256'], hashlib.sha256(b'future/input.txt').hexdigest())
+        self.assertEqual(entry['targetResolution'], {'path': 'future/input.txt', 'existence': 'missing',
+            'pathPolicy': 'included', 'crossedExcludedPath': False, 'contentRead': False, 'missingAt': 'future'})
+        self.assertEqual(omissions, [])
+        self.assertFalse((root / 'future').exists())
+
+    def test_pinned_sidebackup_link_before_and_after_build_stays_metadata_only(self):
+        root = self.root / 'prepared'; resources = root / 'AltStore/Resources'; resources.mkdir(parents=True)
+        target = '../../build/SideBackup.ipa'
+        self.assertEqual(hashlib.sha1(b'blob 26\0' + target.encode()).hexdigest(), '54a080c4e8a5029ad8d22842c16acde4d6d01b43')
+        (resources / 'SideBackup.ipa').symlink_to(target)
+        first, second = self.root / 'before.tar.gz', self.root / 'after.tar.gz'
+        d.snapshot_prepared(root, first, '1' * 40)
+        before = json.loads(first.with_name(first.name + '.json').read_text())
+        entry = before['files'][0]
+        self.assertEqual(entry['targetResolution']['existence'], 'missing')
+        self.assertEqual(entry['targetResolution']['pathPolicy'], 'excluded')
+        self.assertEqual(entry['targetResolution']['path'], 'build/SideBackup.ipa')
+        self.assertEqual(entry['targetResolution']['missingAt'], 'build')
+        (root / 'build').mkdir(); (root / 'build/SideBackup.ipa').write_text('ordinary generated-output fixture')
+        real_open = d.open_regular
+        def reject_generated_content(path):
+            if path.is_relative_to(root / 'build'):
+                raise AssertionError('Generated output content was read through a source link')
+            return real_open(path)
+        with patch.object(d, 'open_regular', side_effect=reject_generated_content):
+            d.snapshot_prepared(root, second, '1' * 40)
+        after = json.loads(second.with_name(second.name + '.json').read_text())
+        self.assertEqual(after['files'][0]['targetResolution']['existence'], 'present')
+        self.assertEqual(after['files'][0]['targetResolution']['pathPolicy'], 'excluded')
+        self.assertFalse(after['files'][0]['targetResolution']['contentRead'])
+        self.assertEqual(entry['sha256'], after['files'][0]['sha256'])
+        self.assertEqual(before['archive']['sha256'], after['archive']['sha256'])
+        with tarfile.open(second) as archive:
+            self.assertEqual(archive.getnames(), ['prepared/AltStore/Resources/SideBackup.ipa'])
+            member = archive.getmembers()[0]
+            self.assertTrue(member.issym()); self.assertEqual(member.linkname, target)
+
+    def test_source_link_chain_escape_and_private_targets_are_rejected_before_read(self):
+        root = self.root / 'prepared'; root.mkdir()
+        (root / 'pointer').symlink_to('build/hop')
+        (root / 'build').mkdir()
+        for destination in ('../../outside', '../.git/config', '../.env', '../private.pem', '../CodeSigning.xcconfig'):
+            with self.subTest(destination=destination):
+                hop = root / 'build/hop'; hop.symlink_to(destination)
+                with patch.object(d, 'open_regular', side_effect=AssertionError('No target bytes may be read')):
+                    with self.assertRaises(ValueError):
+                        d.collect_file(root, 'pointer', 'prepared', d.Budget())
+                hop.unlink()
+        (root / 'build').rmdir(); (root / 'build').symlink_to('../outside', target_is_directory=True)
+        with self.assertRaises(ValueError): d.collect_file(root, 'pointer', 'prepared', d.Budget())
+
+    def test_source_link_chain_can_end_at_missing_in_root_target(self):
+        root = self.root / 'prepared'; root.mkdir(); (root / 'dir').mkdir()
+        (root / 'pointer').symlink_to('dir/hop')
+        (root / 'dir/hop').symlink_to('../future/output')
+        entry = d.collect_file(root, 'pointer', 'prepared', d.Budget())
+        self.assertEqual(entry['target'], 'dir/hop')
+        self.assertEqual(entry['targetResolution']['path'], 'future/output')
+        self.assertEqual(entry['targetResolution']['existence'], 'missing')
+        self.assertEqual(entry['targetResolution']['pathPolicy'], 'included')
+
+    def test_source_link_expansion_precedes_parent_components(self):
+        root = self.root / 'prepared'; (root / 'deep/dir').mkdir(parents=True)
+        (root / 'deep/result.txt').write_text('ordinary source')
+        (root / 'alias').symlink_to('deep/dir')
+        (root / 'pointer').symlink_to('alias/../result.txt')
+        entry = d.collect_file(root, 'pointer', 'prepared', d.Budget())
+        self.assertEqual(entry['targetResolution']['path'], 'deep/result.txt')
+        self.assertEqual(entry['targetResolution']['existence'], 'present')
+        self.assertFalse((root / 'result.txt').exists())
+
+    def test_source_link_loops_special_targets_and_unrelated_errors_stay_fail_closed(self):
+        root = self.root / 'prepared'; root.mkdir()
+        (root / 'first').symlink_to('second'); (root / 'second').symlink_to('first')
+        with patch.object(d, 'MAX_LINK_HOPS', 2):
+            with self.assertRaisesRegex(ValueError, 'hop budget'):
+                d.collect_file(root, 'first', 'prepared', d.Budget())
+        os.mkfifo(root / 'fifo'); (root / 'fifo-link').symlink_to('fifo')
+        with self.assertRaisesRegex(ValueError, 'special file'):
+            d.collect_file(root, 'fifo-link', 'prepared', d.Budget())
+        (root / 'file').write_text('ordinary source')
+        with self.assertRaisesRegex(ValueError, 'non-directory'):
+            d.inspect_source_link(root, 'pointer', 'file/child')
+        with patch.object(Path, 'lstat', side_effect=PermissionError('synthetic denied metadata')):
+            with self.assertRaises(PermissionError):
+                d.inspect_source_link(root, 'pointer', 'unreadable')
+
+    def test_committed_dangling_source_link_is_recorded_against_exact_blob(self):
+        root = self.repository(); (root / 'pointer').symlink_to('future/input.txt'); self.commit(root)
+        entries, _, omissions = self.collect(root)
+        entry = next(e for e in entries if e['path'].endswith('/pointer'))
+        self.assertTrue(entry['matchesGitBlob']); self.assertTrue(entry['matchesGitMode'])
+        self.assertEqual(entry['targetResolution']['existence'], 'missing')
+        self.assertEqual(omissions, [])
+
     def test_no_symlink_directory_traversal_or_special_files(self):
         root = self.repository(); (root / 'dir').mkdir(); (root / 'dir/file').write_text('source')
         self.commit(root)

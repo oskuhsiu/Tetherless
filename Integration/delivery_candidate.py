@@ -32,6 +32,7 @@ MAX_METADATA_BYTES = 8 * 1024 * 1024
 MAX_NESTED_IPA_BYTES = 256 * 1024 * 1024
 MAX_ARCHIVE_READ = 32 * 1024 * 1024
 MAX_GIT_BYTES = 32 * 1024 * 1024
+MAX_LINK_HOPS = 32
 EXCLUDED = {'.git', '.build', '.swiftpm', '__pycache__', 'DerivedData', 'xcuserdata',
             '.DS_Store', '.env', '.aws', '.ssh', '.gnupg', 'node_modules', '.cache',
             '.generated', 'artifacts', 'build', 'native-build.log'}
@@ -237,16 +238,74 @@ def collect_git(root: Path, label: str, sources: list, repositories: list, omiss
         sources.append(entry)
 
 
+
+def inspect_source_link(root: Path, name: str, target: str) -> dict:
+    """Inspect only in-root path/link metadata; a generated target may be absent.
+
+    Resolve components in filesystem order, expanding each link before processing
+    subsequent '..' components. Never open target contents or enter private paths.
+    Only ENOENT is an admissible missing-input observation; other errors propagate.
+    """
+    safe_link(name, target)
+    pending = list(PurePosixPath(name).parent.parts) + target.split('/')
+    resolved, missing, hops = [], [], 0
+    crossed_excluded = False
+    while pending:
+        if len(pending) + len(resolved) > MAX_DEPTH:
+            raise ValueError('Source link path exceeds depth budget')
+        part = pending.pop(0)
+        if part in ('', '.'):
+            continue
+        if part == '..':
+            if not resolved:
+                raise ValueError('Source link escapes its input root')
+            resolved.pop()
+            continue
+        candidate = '/'.join([*resolved, part])
+        # Source collection excludes all PEM/config secrets, even though public
+        # PEM certificates may be allowed in the separate final-app inventory.
+        if (private_path(candidate) or PurePosixPath(candidate).suffix.lower() == '.pem'
+                or PurePosixPath(candidate).name == 'CodeSigning.xcconfig'):
+            raise ValueError('Source link targets private input material')
+        crossed_excluded = crossed_excluded or is_excluded(candidate)
+        try:
+            mode = (root / candidate).lstat().st_mode
+        except FileNotFoundError:
+            if not missing:
+                missing.append(candidate)
+            resolved.append(part)
+            continue
+        if stat.S_ISLNK(mode):
+            hops += 1
+            if hops > MAX_LINK_HOPS:
+                raise ValueError('Source link chain exceeds hop budget')
+            following = os.readlink(root / candidate)
+            safe_link(candidate, following)
+            pending = following.split('/') + pending
+            continue
+        if not stat.S_ISDIR(mode) and pending:
+            raise ValueError('Source link path traverses a non-directory')
+        if not stat.S_ISDIR(mode) and not stat.S_ISREG(mode):
+            raise ValueError('Source link targets a special file')
+        resolved.append(part)
+    destination = '/'.join(resolved) or '.'
+    result = {'path': destination, 'existence': 'missing' if missing else 'present',
+              'pathPolicy': 'excluded' if is_excluded(destination) else 'included',
+              'crossedExcludedPath': crossed_excluded, 'contentRead': False}
+    if missing:
+        result['missingAt'] = missing[0]
+    return result
+
+
 def collect_file(root: Path, name: str, label: str, budget: Budget) -> dict:
     path = root / name
     mode = path.lstat().st_mode
     if stat.S_ISLNK(mode):
         target = os.readlink(path)
-        safe_link(name, target)
-        if not path.resolve(strict=True).is_relative_to(root.resolve()):
-            raise ValueError('Source link escapes its input root')
+        resolution = inspect_source_link(root, name, target)
         budget.add(len(target.encode()))
         return {'path': f'{label}/{name}', 'type': 'symlink', 'target': target,
+                'targetResolution': resolution,
                 'sha256': hashlib.sha256(target.encode()).hexdigest(), 'size': len(target.encode()),
                 'origin': label, '_local': path}
     if not stat.S_ISREG(mode):
