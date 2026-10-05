@@ -1,13 +1,45 @@
 {
-  "environment": ["Set up job", "Select toolchain and allocate an isolated unbooted simulator"],
-  "prepare": ["Prepare the same production integration", "Add UI-only test target without changing production sources"],
-  "build": ["Build complete app for Simulator (no Apple account)"],
-  "signature": ["Verify actual simulator signature and Keychain identity"],
-  "boot": ["Boot the isolated simulator only after compilation"],
-  "install_launch": ["Install and launch the complete app in a fresh simulator"],
-  "fixture": ["Seed only an invalid public document for the actual picker", "Install isolated public-document source for the actual picker"],
-  "ui": ["Exercise first setup and local navigation in the real app"],
-  "postcheck": ["Verify the selected invalid document was not modified"],
-  "evidence": ["Record installation and file-provider services on failure", "Retain app stdout and crash reports from the actual test result", "Export actual UI screenshots", "Summarize actual compiler diagnostics", "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"],
-  "cleanup": ["Shut down only the simulator created by this job"]
+  "environment": [
+    "Set up job",
+    "Select toolchain and allocate an isolated unbooted simulator"
+  ],
+  "prepare": [
+    "Prepare the same production integration",
+    "Add UI-only test target without changing production sources"
+  ],
+  "build": [
+    "Build complete app for Simulator (no Apple account)"
+  ],
+  "signature": [
+    "Verify actual simulator signature and Keychain identity"
+  ],
+  "boot": [
+    "Boot the isolated simulator only after compilation"
+  ],
+  "install_launch": [
+    "Install and launch the complete app in a fresh simulator"
+  ],
+  "fixture": [
+    "Seed only an invalid public document for the actual picker",
+    "Install isolated public-document source for the actual picker"
+  ],
+  "ui": [
+    "Exercise first setup and local navigation in the real app"
+  ],
+  "postcheck": [
+    "Verify the selected invalid document was not modified"
+  ],
+  "evidence": [
+    "Record installation and file-provider services on failure",
+    "Retain app stdout and crash reports from the actual test result",
+    "Export actual UI screenshots",
+    "Summarize actual compiler diagnostics",
+    "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+    "Record owned picker clock baseline",
+    "Collect owned picker service timing",
+    "Correlate explicit picker clocks without mapping video timestamps"
+  ],
+  "cleanup": [
+    "Shut down only the simulator created by this job"
+  ]
 }

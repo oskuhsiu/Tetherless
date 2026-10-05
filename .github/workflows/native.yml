@@ -96,6 +96,15 @@ jobs:
           python3 Integration/inspect_pairing_api.py \
             --artifacts-root .generated/DerivedData/SourcePackages/artifacts \
             --output "artifacts/pairing-api-${{ matrix.configuration }}.json"
+      - name: Compile and link packaged pairing declarations (never execute)
+        id: pairing_link_surface
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 16
+        run: |
+          python3 Integration/probe_pairing_link.py \
+            --artifacts-root .generated/DerivedData/SourcePackages/artifacts \
+            --output-root "artifacts/pairing-link-${{ matrix.configuration }}"
       - name: Package unsigned candidate with byte inventory (release gates stay open)
         env:
           CONFIGURATION: ${{ matrix.configuration }}

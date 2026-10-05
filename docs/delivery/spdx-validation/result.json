@@ -1,0 +1,66 @@
+{
+  "checkedOnUTC": "2026-10-05",
+  "errorCount": 0,
+  "errors": [],
+  "historicalInputUnchanged": true,
+  "input": {
+    "baseline": "3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+    "packages": 32,
+    "path": "docs/supply-chain/candidate-sbom.spdx.json",
+    "relationships": 37,
+    "sha256": "e249a287e44af82fed07e6525b6bc18d801989ee67101ce1745dbb21e1b17ebc",
+    "size": 27588,
+    "spdxVersion": "SPDX-2.3"
+  },
+  "negativeControl": {
+    "description": "Removed top-level SPDXID in an in-memory copy only",
+    "errors": [
+      {
+        "instancePointer": "",
+        "keyword": "required",
+        "message": "'SPDXID' is a required property",
+        "schemaPointer": "/required"
+      }
+    ],
+    "outcome": "expected-rejection"
+  },
+  "network": {
+    "instanceTransmitted": false,
+    "validationRemoteRetrievalAllowed": false,
+    "validationRemoteRetrievalAttempts": []
+  },
+  "outcome": "pass",
+  "reproductionCommand": "python3 docs/delivery/spdx-validation/validate.py",
+  "schema": {
+    "annotatedTagSHA1": "f7f7bce5511a23fe3c9d8a1edca0d870a7d0bea5",
+    "attribution": "SPDX Specification 2.3; copyright 2010-2022 Linux Foundation and its Contributors; retained schema bytes unchanged",
+    "draft": "http://json-schema.org/draft-07/schema#",
+    "formatKeywords": [],
+    "gitBlobSHA1": "ee61e6686e885f8139c132647fd0b4f483b8fb81",
+    "id": "http://spdx.org/rdf/terms/2.3",
+    "licenseDeclaredBySource": "Creative Commons Attribution 3.0 Unported",
+    "licenseURL": "https://github.com/spdx/spdx-spec/blob/aadf3b0b8dbbabdb4d880b0fc714255fea436ff7/LICENSE",
+    "references": [],
+    "revision": "aadf3b0b8dbbabdb4d880b0fc714255fea436ff7",
+    "schemaSelfValidation": "passed",
+    "sha256": "239208b7ac287b3cf5d9a9af23f9d69863971102a5e1587a27a398b43490b89b",
+    "size": 45312,
+    "sourceRepository": "https://github.com/spdx/spdx-spec",
+    "sourceURL": "https://github.com/spdx/spdx-spec/blob/aadf3b0b8dbbabdb4d880b0fc714255fea436ff7/schemas/spdx-schema.json",
+    "specificationURL": "https://spdx.github.io/spdx-spec/v2.3/",
+    "tag": "v2.3",
+    "tagSignatureStatus": "unsigned; no signature-authentication claim",
+    "title": "SPDX 2.3"
+  },
+  "schemaVersion": 1,
+  "scope": "JSON Schema structural validation of unchanged historical candidate only. Not full SPDX semantic compliance, final linked-binary SBOM, vulnerability scan, provenance attestation, license clearance, source completeness, native build or device evidence.",
+  "validator": {
+    "additionalInstallations": false,
+    "class": "jsonschema.Draft7Validator",
+    "formatCheckerEnabled": true,
+    "implementation": "python-jsonschema",
+    "python": "3.12.14",
+    "referencingVersion": "0.37.0",
+    "version": "4.26.0"
+  }
+}

@@ -41,3 +41,28 @@ Core/adapter tests add both event orders, duplicate/late/wrong-generation events
 Authorize one changed-source verification on both existing product lanes, alongside native Debug/Release checks for the reviewed independent privacy/backup/delivery increment. Preserve each result independently. Expected observation: real selection is accepted, actual import starts only after matching dismissal, the real parser rejects invalid content, source bytes remain intact, and the remaining untouched UI flow executes. Any earlier compile/environment failure or later UI failure stays failed and must be classified from its own evidence before another run. A pass does not establish valid pairing import, preexisting-record retention, Apple authorization, installation or unattended physical renewal.
 
 The same next native workflow also repairs the demonstrated maintenance-test wait bridge, requires all six formerly skipped transient-preimage contracts to execute after verified preparation, and produces explicitly incomplete candidate byte/source/notice inventories. These are separate evidence levels and do not turn this into a release.
+
+## Next diagnostic decision: distinguish first-picker readiness on iOS 26.2
+
+Recorded 2026-10-05 before the next changed-source full-product run. Current product source is `c5f5547fc481a8243ba5b511fbac6315f57796e6`, [run 37286010497](https://github.com/oskuhsiu/Tetherless/actions/runs/37286010497), attempt 1. The iOS 18.6 job `111684962352` passed the complete original flow in 148.362 seconds: two real cancellations, one selection, typed invalid-content rejection, protected-store absence, source preservation, relaunch and navigation. The iOS 26.2 job `111684962133` failed **before any cancellation or selection**, at its original first-Cancel ten-second readiness assertion. Build, signature, boot, install, launch and public-document setup passed. Neither result proves valid pairing or physical renewal.
+
+### Observed failure and missing discriminator
+
+Complete 26.2 application stdout is 1,593,511 bytes. Its fixed lifecycle scan contains only `requestBegan`, `pickerCreated` and `plistTypeAllowed`, with no presentation warning. The failure hierarchy has empty presentation containers. Later video frames show Recents and a close glyph, but their media timestamps were not calibrated to XCTest elapsed time. Indirect service logs first show the app-bound DocumentManager UI service visible about 19 seconds after the request. The existing broad predicate omitted the actual service identity and truncated output. A later populated screen does not prove which control existed within the original deadline or establish a presenter defect.
+
+One hypothesis is late host attachment/presentation; another is prompt presentation followed by delayed service rendering or accessibility availability. Current evidence cannot distinguish them. This next run changes observation only, rather than choosing a speculative production fix.
+
+### Narrow discriminating change
+
+- Emit fixed, value-free host-appearance, single-present-attempt, completion, delegate and teardown events with bracketed monotonic/Unix clock samples and fixed attachment/presentation Booleans. Weak captures retain no new host or picker lifetime. No URL, filename, request identifier, raw error or arbitrary metadata is included
+- Capture three XCTest clock samples in memory around the existing first tap and single ten-second wait. Attach them only after that wait returns; no extra UI query, warm-up or screenshot runs inside the measured wait
+- Capture an owned-device/source-bound host clock baseline, then a bounded exact-window service slice using the actual app-bound PID observed in RunningBoard evidence. Unsupported installed-tool syntax, missing identity, empty/mismatched rows, truncation or command timeout remain explicit evidence gaps. Do not broaden to guessed process identities
+- Retain fixed-size output while actively draining, with command deadlines. Correlate explicit clock intervals and uncertainty; do not map raw video timestamps to XCTest deadlines without calibration
+
+### Expected observations and stopping condition
+
+A missing/late host attachment or present attempt identifies an earlier boundary than a prompt attempt with late completion. Prompt completion followed by delayed observed service/AX readiness supports the downstream readiness boundary. Missing service or clock evidence leaves that comparison inconclusive, never successful. Host pressure observations are contextual and do not by themselves prove causation.
+
+The existing runtime matrix, architecture/toolchain requirements, single ten-second first-Cancel wait, two actual system cancellations, one real document selection, typed parser rejection, original bytes, store checks, relaunch and remaining navigation assertions are unchanged. Every failed lane stays failed. A later populated sheet cannot retroactively pass the deadline. Do not rotate selectors, lengthen waits, warm the picker, change permissions, reset unrelated services or relaunch an unchanged test to seek green.
+
+After independent review, permit one changed-source verification through the existing two-lane full-product workflow. Record its exact implementation SHA, run/attempt/job and artifact identities after GitHub creates them; no run/result is claimed in this prospective record. Inspect its earliest failed boundary and the new evidence before any further expensive run. Packaging/native verification on the temporary development branch remains separate and does not close this UI condition.

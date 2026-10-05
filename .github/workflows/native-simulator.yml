@@ -69,7 +69,11 @@ jobs:
         run: python3 Integration/document_fixture_app.py
       - name: Add UI-only test target without changing production sources
         run: python3 Integration/prepare_ui_tests.py .generated/SideStore
+      - name: Record owned picker clock baseline
+        id: picker_baseline
+        run: python3 Integration/simulator_environment.py begin-picker-timing
       - name: Exercise first setup and local navigation in the real app
+        id: product_ui
         run: |
           xcodebuild test \
             -project .generated/SideStore/AltStore.xcodeproj \
@@ -85,6 +89,9 @@ jobs:
       - name: Verify the selected invalid document was not modified
         if: ${{ always() && steps.document_fixture.outcome == 'success' }}
         run: python3 Integration/ui_document_fixture.py verify
+      - name: Collect owned picker service timing
+        if: ${{ always() && steps.picker_baseline.outcome == 'success' && steps.product_ui.outcome != 'skipped' }}
+        run: python3 Integration/simulator_environment.py collect-picker-timing
       - name: Record installation and file-provider services on failure
         if: failure()
         run: python3 Integration/simulator_environment.py diagnose
@@ -101,6 +108,11 @@ jobs:
           if [ -d native-ui.xcresult ]; then
             xcrun xcresulttool export attachments --path native-ui.xcresult --output-path native-ui-attachments
           fi
+      - name: Correlate explicit picker clocks without mapping video timestamps
+        if: ${{ always() && steps.picker_baseline.outcome == 'success' && steps.product_ui.outcome != 'skipped' }}
+        run: |
+          python3 Integration/retain_ui_diagnostics.py native-picker-timing native-ui-diagnostics \
+            --correlate-picker native-ui-attachments --timing-report native-picker-timing/correlation.json
       - name: Summarize actual compiler diagnostics
         if: always()
         run: |
@@ -118,6 +130,7 @@ jobs:
         with:
           name: native-launch-${{ matrix.configuration }}-${{ github.sha }}
           path: |
+            native-picker-timing
             native-simulator-environment
             native-simulator-owner.json
             native-ui-document-fixture.json

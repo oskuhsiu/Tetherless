@@ -1,0 +1,33 @@
+{
+  "errorCount": 0,
+  "errors": [],
+  "formatCheckerEnabled": true,
+  "historicalInputUnchanged": true,
+  "inputSHA256": "e249a287e44af82fed07e6525b6bc18d801989ee67101ce1745dbb21e1b17ebc",
+  "negativeControl": {
+    "description": "Removed top-level SPDXID in an in-memory copy only",
+    "errors": [
+      {
+        "instancePointer": "",
+        "keyword": "required",
+        "message": "'SPDXID' is a required property",
+        "schemaPointer": "/required"
+      }
+    ],
+    "outcome": "expected-rejection"
+  },
+  "outcome": "pass",
+  "remoteRetrievalAttempts": [],
+  "schemaFormatKeywordCount": 0,
+  "schemaReferenceCount": 0,
+  "schemaSHA256": "239208b7ac287b3cf5d9a9af23f9d69863971102a5e1587a27a398b43490b89b",
+  "schemaSelfValidation": "passed",
+  "scope": "Pinned historical JSON Schema structural validation only; no complete semantic compliance or final linked-binary claim.",
+  "validator": {
+    "class": "jsonschema.Draft7Validator",
+    "implementation": "python-jsonschema",
+    "python": "3.12.14",
+    "referencingVersion": "0.37.0",
+    "version": "4.26.0"
+  }
+}

@@ -10,6 +10,8 @@ import json
 import os
 from pathlib import Path
 import re
+import selectors
+import signal
 import subprocess
 import tempfile
 import time
@@ -19,6 +21,7 @@ OWNER = Path('native-simulator-owner.json')
 DIAGNOSTICS = Path('native-simulator-health')
 MAX_OUTPUT = 262_144
 SMOKE = Path('native-launch-evidence.json')
+PICKER_TIMING = Path('native-picker-timing')
 PREFLIGHT = Path('native-simulator-environment')
 DEVELOPER = '/Applications/Xcode_26.3.app/Contents/Developer'
 DEVICE_TYPE = 'com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation'
@@ -211,6 +214,258 @@ def capture(args: list[str], path: Path, timeout: int = 15) -> dict:
 
 
 
+
+def paired_clock(event: str) -> dict:
+    if event not in ('hostBeforeUI', 'hostAfterUI', 'hostAfterCollection'):
+        raise ValueError('Unknown host clock event')
+    before = time.monotonic_ns() // 1000
+    wall = time.time_ns() // 1000
+    after = time.monotonic_ns() // 1000
+    return {'schemaVersion': 1, 'source': 'host', 'event': event, 'processID': os.getpid(),
+            'monotonicBeforeUS': before, 'unixTimeUS': wall, 'monotonicAfterUS': after}
+
+
+def capture_draining(args: list[str], path: Path, timeout: float = 15,
+                     limit: int = MAX_OUTPUT) -> dict:
+    """Drain under a deadline into bounded memory; never spool unbounded output.
+
+    Only the process group created for this read-only command is terminated.
+    No Simulator/service reset, remote kill, retry or command substitution.
+    """
+    if limit < 2 or limit > MAX_OUTPUT or timeout <= 0 or timeout > 30:
+        raise ValueError('Unsupported collector bounds')
+    if path.exists() or path.is_symlink():
+        raise FileExistsError('Refusing to replace diagnostic evidence')
+    started = time.monotonic()
+    result = {'command': args, 'timeoutSeconds': timeout, 'outputLimitBytes': limit}
+    head_limit = limit // 2
+    tail_limit = limit - head_limit
+    head, tail = bytearray(), bytearray()
+    total = 0
+    eof = False
+    process = None
+    stop_at = started + timeout
+    killed_at = None
+    try:
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   start_new_session=True)
+        assert process.stdout is not None
+        os.set_blocking(process.stdout.fileno(), False)
+        with selectors.DefaultSelector() as selected:
+            selected.register(process.stdout, selectors.EVENT_READ)
+            while not eof:
+                now = time.monotonic()
+                if now >= stop_at and killed_at is None:
+                    result['timeout'] = True
+                    killed_at = now
+                    try: os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError: pass
+                if killed_at is not None and now - killed_at >= 1:
+                    result['drainIncomplete'] = True
+                    break
+                for key, _ in selected.select(timeout=min(0.05, max(0, stop_at - now)) if killed_at is None else 0.05):
+                    try: block = os.read(key.fd, 65_536)
+                    except BlockingIOError: continue
+                    if not block:
+                        eof = True
+                        break
+                    total += len(block)
+                    needed = head_limit - len(head)
+                    if needed > 0:
+                        head.extend(block[:needed]); block = block[needed:]
+                    if block:
+                        tail.extend(block)
+                        if len(tail) > tail_limit: del tail[:-tail_limit]
+            process.stdout.close()
+        try:
+            result['exitCode'] = process.wait(timeout=max(0.01, stop_at - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            result['timeout'] = True
+            try: os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+            try: result['exitCode'] = process.wait(timeout=1)
+            except subprocess.TimeoutExpired: result['processExitUnobserved'] = True
+    except OSError as error:
+        result['errorType'] = type(error).__name__
+    finally:
+        if process is not None:
+            if process.stdout is not None: process.stdout.close()
+            if process.poll() is None:
+                try: os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError: pass
+                try: process.wait(timeout=1)
+                except subprocess.TimeoutExpired: result['processExitUnobserved'] = True
+    path.write_bytes(head + tail)
+    result.update(elapsedSeconds=round(time.monotonic() - started, 3), originalBytes=total,
+                  originalBytesComplete=eof and not result.get('processExitUnobserved', False),
+                  retainedBytes=len(head) + len(tail), omittedBytes=total - len(head) - len(tail),
+                  truncated=total > len(head) + len(tail), headBytes=len(head),
+                  tailOffset=total - len(tail), file=path.name)
+    return result
+
+
+def capture_complete(result: dict) -> bool:
+    return (result.get('exitCode') == 0 and result.get('originalBytesComplete') is True and
+            not any(result.get(key) for key in ('timeout', 'truncated', 'drainIncomplete',
+                                                'errorType', 'processExitUnobserved')))
+
+
+def read_small_json(path: Path) -> dict:
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 65_536:
+        raise ValueError('Unsafe evidence identity')
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict): raise ValueError('Expected evidence object')
+    return value
+
+
+def picker_identity() -> dict:
+    owner, smoke = read_small_json(OWNER), read_small_json(SMOKE)
+    sha = os.environ.get('GITHUB_SHA', '')
+    run, attempt = os.environ.get('GITHUB_RUN_ID', ''), os.environ.get('GITHUB_RUN_ATTEMPT', '')
+    device = owned_device(listing())
+    bundle = smoke.get('bundleID', '')
+    if (not re.fullmatch(r'[0-9a-f]{40}', sha) or not run.isdecimal() or not attempt.isdecimal() or
+            owner.get('sourceCommit') != sha or smoke.get('sourceCommit') != sha or
+            owner['id'] != smoke.get('simulatorID') or identifier(device['udid']) != owner['id'] or
+            device.get('state') != 'Booted' or smoke.get('smokePassed') is not True or
+            not re.fullmatch(r'org\.tetherless\.Tetherless(?:\.[A-Za-z0-9-]+)*', bundle)):
+        raise ValueError('Unbound picker timing identity')
+    return {'sourceCommit': sha, 'runID': int(run), 'runAttempt': int(attempt),
+            'simulatorID': owner['id'], 'runtime': owner['runtime'], 'bundleID': bundle}
+
+
+def begin_picker_timing() -> None:
+    identity = picker_identity()
+    PICKER_TIMING.mkdir(exist_ok=False)
+    record = {'schemaVersion': 1, 'identity': identity, 'clock': paired_clock('hostBeforeUI'),
+              'scope': 'read-only timing baseline; no picker or service warm-up'}
+    (PICKER_TIMING/'baseline.json').write_text(json.dumps(record, indent=2) + '\n')
+
+
+def discover_picker_services(text: str, bundle: str) -> list[dict]:
+    """Parse the actual app-bound RunningBoard monitor shape seen in artifacts.
+
+    Never guess that a bundle/service identifier is its executable/process name.
+    Unknown or conflicting identity stays a gap; no broad process fallback.
+    """
+    service = 'com.apple.DocumentManagerUICore.Service'
+    pattern = re.compile(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+\s+Df fileproviderd\[\d+:[0-9a-f]+\] '
+        r'\[com\.apple\.runningboard:monitor\] Received state update for (\d+) '
+        r'\(xpcservice<' + re.escape(service) + r'\(\[app<' + re.escape(bundle) +
+        r'\(\(null\)\)>:(\d+)\]\)>[^\r\n]{0,512}, (?:running-active-Visible|running-active-NotVisible|none-NotVisible)$')
+    identities = {}
+    for line in text.splitlines():
+        if 'Received state update for ' not in line or service not in line or bundle not in line: continue
+        match = pattern.fullmatch(line)
+        if not match: raise ValueError('Unsupported observed UI-service identity shape')
+        pid, app = map(int, match.groups())
+        if not (0 < pid <= 2_147_483_647 and 0 < app <= 2_147_483_647):
+            raise ValueError('Invalid observed process identity')
+        if pid in identities and identities[pid] != app:
+            raise ValueError('Ambiguous app-bound UI-service identity')
+        identities[pid] = app
+    if not identities or len(identities) > 4:
+        raise ValueError('Missing or excessive observed UI-service identities')
+    return [{'servicePID': pid, 'appPID': app, 'serviceIdentifier': service}
+            for pid, app in sorted(identities.items())]
+
+
+
+def observed_process_rows(text: str, expected_pid: int) -> dict:
+    """A header-only successful query is not observed UI-service evidence."""
+    rows = []
+    pattern = re.compile(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+\s+\S+\s+'
+                         r'([A-Za-z0-9_.-]{1,128})\[(\d+):[0-9a-fA-F]+\](?:\s|$)')
+    unsupported = False
+    for line in text.splitlines():
+        if not re.match(r'^\d{4}-\d\d-\d\d ', line): continue
+        match = pattern.match(line)
+        if match is None: unsupported = True
+        else: rows.append((match[1], int(match[2])))
+    if unsupported: raise ValueError('Unsupported direct-process row shape')
+    if not rows: raise ValueError('No direct UI-service event rows')
+    if any(pid != expected_pid for _, pid in rows): raise ValueError('Direct query returned another PID')
+    names = sorted({name for name, _ in rows})
+    if len(names) != 1: raise ValueError('Observed PID maps to multiple process names')
+    return {'matchingRows': len(rows), 'observedProcessName': names[0], 'processID': expected_pid}
+
+
+def collect_picker_timing() -> None:
+    record = {'schemaVersion': 1, 'status': 'incomplete', 'commands': [], 'gaps': [],
+              'clocks': [paired_clock('hostAfterUI')], 'stage': 'identityValidation', 'uiResultInferred': False}
+    manifest = PICKER_TIMING/'collection.json'
+    if manifest.exists(): raise FileExistsError('Picker evidence already collected')
+    def save(): manifest.write_text(json.dumps(record, indent=2) + '\n')
+    try:
+        baseline = read_small_json(PICKER_TIMING/'baseline.json')
+        identity = picker_identity()
+        if baseline.get('identity') != identity: raise ValueError('Timing identity changed')
+        record['identity'] = identity
+        record['stage'] = 'clockWindow'
+        before = baseline['clock']; after = record['clocks'][0]
+        elapsed = (after['monotonicBeforeUS'] - before['monotonicAfterUS']) / 1_000_000
+        wall_elapsed = (after['unixTimeUS'] - before['unixTimeUS']) / 1_000_000
+        if elapsed < 0 or wall_elapsed < 0 or abs(wall_elapsed - elapsed) > 1:
+            raise ValueError('Host clock moved; cannot bind a service-log interval')
+        end = (after['unixTimeUS'] + 999_999)//1_000_000
+        start = max(before['unixTimeUS']//1_000_000, end - 600)
+        clipped = start * 1_000_000 > before['unixTimeUS']
+        record['window'] = {'startUnixSeconds': start, 'endUnixSeconds': end,
+                            'roundingUncertaintySeconds': 1, 'maximumSeconds': 600,
+                            'clipped': clipped, 'elapsedSeconds': elapsed}
+        if clipped: record['gaps'].append('windowClipped')
+        prefix = ['xcrun', 'simctl', 'spawn', identity['simulatorID'], 'log']
+        record['stage'] = 'installedLogHelp'
+        help_result = capture_draining(prefix + ['show', '--help'], PICKER_TIMING/'log-show-help.log', limit=32_768)
+        record['commands'].append(help_result)
+        help_text = (PICKER_TIMING/'log-show-help.log').read_text(errors='replace')
+        # The retained installed-tool help uses exit64 for valid usage output.
+        supported = (help_result.get('exitCode') in (0, 64) and help_result.get('originalBytesComplete') and
+                     not any(help_result.get(k) for k in ('timeout','truncated','drainIncomplete','errorType')) and
+                     all(token in help_text for token in ('usage: log show', '--process <pid>', '--start <date>',
+                                                          '--end <date>', '--timezone', '--predicate', 'compact', '@unixtime')))
+        record['installedHelpSupported'] = bool(supported)
+        save()
+        if not supported: raise ValueError('Installed log options not verified')
+        common = prefix + ['show', '--start', '@'+str(start), '--end', '@'+str(end), '--style', 'compact', '--timezone', 'UTC']
+        predicate = ('process == "fileproviderd" AND eventMessage CONTAINS "com.apple.DocumentManagerUICore.Service" '
+                     'AND eventMessage CONTAINS "' + identity['bundleID'] + '"')
+        record['stage'] = 'serviceDiscovery'
+        discovery = capture_draining(common + ['--predicate', predicate], PICKER_TIMING/'service-discovery.log')
+        record['commands'].append(discovery); save()
+        if not capture_complete(discovery): raise ValueError('UI-service discovery incomplete')
+        record['stage'] = 'serviceIdentity'
+        identities = discover_picker_services((PICKER_TIMING/'service-discovery.log').read_text(), identity['bundleID'])
+        record['observedServices'] = identities; save()
+        record['stage'] = 'observedServiceQueries'
+        for service in identities:
+            result = capture_draining(common + ['--process', str(service['servicePID'])],
+                                      PICKER_TIMING/f"ui-service-{service['servicePID']}.log")
+            record['commands'].append(result)
+            if not capture_complete(result): record['gaps'].append('uiServiceQueryIncomplete')
+            else:
+                try:
+                    result['observedProcess'] = observed_process_rows(
+                        (PICKER_TIMING/result['file']).read_text(), service['servicePID'])
+                except ValueError:
+                    record['gaps'].append('uiServiceRowsUnverified')
+            save()
+        record['stage'] = 'hostSnapshot'
+        for args, name in ((['vm_stat'], 'host-memory.log'), (['df', '-h'], 'host-disk.log')):
+            result = capture_draining(args, PICKER_TIMING/name, limit=65_536)
+            record['commands'].append(result)
+            if not capture_complete(result): record['gaps'].append('hostSnapshotIncomplete')
+        record['clocks'].append(paired_clock('hostAfterCollection'))
+        record['status'] = 'complete' if not record['gaps'] else 'gaps'
+        save()
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        record['status'] = 'gaps'
+        record['gaps'].append(type(error).__name__)
+        if PICKER_TIMING.is_dir(): save()
+        raise
+    if record['gaps']: raise RuntimeError('Picker timing collection has explicit gaps')
+
+
 def install_failure_commands(device: dict) -> list[tuple[list[str], str]]:
     """Read back an uncertain install without retrying or accepting its result.
 
@@ -304,7 +559,7 @@ def shutdown() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['allocate', 'diagnose', 'shutdown'])
+    parser.add_argument('action', choices=['allocate', 'diagnose', 'shutdown', 'begin-picker-timing', 'collect-picker-timing'])
     parser.add_argument('--configuration', choices=CONFIGURATIONS)
     args = parser.parse_args()
     if args.configuration and args.action != 'allocate':
@@ -312,7 +567,8 @@ def main() -> None:
     if args.action == 'allocate':
         allocate(args.configuration)
     else:
-        {'diagnose': diagnose, 'shutdown': shutdown}[args.action]()
+        {'diagnose': diagnose, 'shutdown': shutdown, 'begin-picker-timing': begin_picker_timing,
+         'collect-picker-timing': collect_picker_timing}[args.action]()
 
 
 if __name__ == '__main__':

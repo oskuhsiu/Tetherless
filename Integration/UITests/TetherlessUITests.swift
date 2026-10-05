@@ -39,9 +39,18 @@ final class TetherlessUITests: XCTestCase {
         // Two separate real picker presentations. A blank picker is still a
         // test failure; do not replace its system Cancel with an app-owned button.
         for attempt in 1...2 {
+            // Clock samples stay in memory until the SAME existing wait ends.
+            // No attachment IO, additional AX query or action can warm the picker.
+            let beforeTap = attempt == 1 ? pickerClock(.beforeFirstPickerTap) : nil
             app.buttons["onboarding.importPairing"].tap()
             let cancelImport = app.buttons["Cancel"].firstMatch
-            XCTAssertTrue(cancelImport.waitForExistence(timeout: 10), "System picker did not load on presentation \(attempt)")
+            let waitStart = attempt == 1 ? pickerClock(.firstCancelWaitStart) : nil
+            let cancelAppeared = cancelImport.waitForExistence(timeout: 10)
+            let waitEnd = attempt == 1 ? pickerClock(.firstCancelWaitEnd, found: cancelAppeared) : nil
+            if let beforeTap, let waitStart, let waitEnd {
+                attachPickerClocks([beforeTap, waitStart, waitEnd])
+            }
+            XCTAssertTrue(cancelAppeared, "System picker did not load on presentation \(attempt)")
             XCTAssertTrue(cancelImport.isHittable)
             capture(app, "01-picker-\(attempt)")
             cancelImport.tap()
@@ -320,6 +329,35 @@ final class TetherlessUITests: XCTestCase {
         let prompt = app.alerts["Pairing File"]
         if prompt.waitForExistence(timeout: 5) { prompt.buttons["Cancel"].tap() }
     }
+    private enum PickerClockEvent: String {
+        case beforeFirstPickerTap, firstCancelWaitStart, firstCancelWaitEnd
+    }
+    private struct PickerClock: Encodable {
+        let schemaVersion = 1
+        let source = "uiTest"
+        let event: String
+        let processID: Int
+        let monotonicBeforeUS: UInt64
+        let unixTimeUS: UInt64
+        let monotonicAfterUS: UInt64
+        let found: Bool?
+    }
+    private func pickerClock(_ event: PickerClockEvent, found: Bool? = nil) -> PickerClock? {
+        let before = ProcessInfo.processInfo.systemUptime * 1_000_000
+        let wall = Date().timeIntervalSince1970 * 1_000_000
+        let after = ProcessInfo.processInfo.systemUptime * 1_000_000
+        guard [before, wall, after].allSatisfy({ $0.isFinite && $0 >= 0 && $0 < 9_007_199_254_740_992 }) else { return nil }
+        return PickerClock(event: event.rawValue, processID: Int(ProcessInfo.processInfo.processIdentifier),
+                           monotonicBeforeUS: UInt64(before), unixTimeUS: UInt64(wall), monotonicAfterUS: UInt64(after), found: found)
+    }
+    private func attachPickerClocks(_ clocks: [PickerClock]) {
+        guard let data = try? JSONEncoder().encode(clocks), data.count <= 4096 else { return }
+        let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+        attachment.name = "picker-clock-first-presentation"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
