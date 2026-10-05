@@ -53,7 +53,7 @@
   "overlays": [
     {
       "path": "ffi/src/staged_pairing.rs",
-      "sha256": "27cb432e982e8bc5b61eb7849a614385098adb195c33631a38e7576cffcdcdd7",
+      "sha256": "e827e5a464782009f4be7ab5557fecc449fe266836a3851bd1cbc97fa5637933",
       "kind": "add"
     },
     {

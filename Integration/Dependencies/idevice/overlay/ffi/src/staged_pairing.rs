@@ -478,7 +478,7 @@ mod tests {
     fn plist_response(binary: bool) -> Vec<u8> {
         // Normal locked-library serializers, not a hand-invented XML grammar.
         let value = plist::Value::Dictionary([
-            ("Status".into(), plist::Value::String("Complete".into())),
+            (String::from("Status"), plist::Value::String("Complete".into())),
         ].into_iter().collect());
         let mut bytes = Vec::new();
         if binary { value.to_writer_binary(&mut bytes).unwrap(); }
@@ -495,9 +495,9 @@ mod tests {
         let mut result = Vec::new();
         for request in ["RSDCheckin", "StartService"] {
             let value = plist::Value::Dictionary([
-                ("Request".into(), plist::Value::String(request.into())),
-                ("EnableServiceSSL".into(), plist::Value::Boolean(false)),
-                ("ProtocolVersion".into(), plist::Value::Integer(2.into())),
+                (String::from("Request"), plist::Value::String(request.into())),
+                (String::from("EnableServiceSSL"), plist::Value::Boolean(false)),
+                (String::from("ProtocolVersion"), plist::Value::Integer(2.into())),
             ].into_iter().collect());
             let mut bytes = Vec::new();
             if binary { value.to_writer_binary(&mut bytes).unwrap(); }
