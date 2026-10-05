@@ -26,7 +26,10 @@ evidence upload. These are first-run build supervision bounds, not changed
 application or UI acceptance deadlines. Evidence uploads are limited to run
 context, source/toolchain/crate manifests, native command logs and an explicit
 4 MiB maximum subset of public openssl-sys 0.9.112, openssl 0.10.76,
-tokio-openssl 0.6.5 and jktcp 0.1.7 source files plus any available explicitly allowlisted license/notice files.
+tokio-openssl 0.6.5 and jktcp 0.1.7 source files, plus selected source and build/config metadata of
+dialoguer 0.12.0, cbindgen 0.29.2, plist_ffi 0.1.6 and idevice-srp 0.6.0 and any
+available explicitly
+allowlisted license/notice files.
 That subset is reauthenticated
 against the exact Cargo.lock archive checksums and records requested absent files
 without substitution. Its review-checksums.json files cover only the retained

@@ -10,9 +10,13 @@ import tarfile
 import tomllib
 
 PACKAGES = {
+    'idevice-srp-0.6.0': ['Cargo.toml', '.cargo_vcs_info.json', 'src/lib.rs', 'src/server.rs', 'src/client.rs', 'src/groups.rs'],
+    'dialoguer-0.12.0': ['Cargo.toml', '.cargo/config.toml', '.cargo_vcs_info.json'],
+    'cbindgen-0.29.2': ['Cargo.toml', 'Cargo.lock', '.cargo_vcs_info.json', 'src/bindgen/cargo/cargo_metadata.rs', 'src/bindgen/cargo/cargo.rs'],
+    'plist_ffi-0.1.6': ['Cargo.toml', 'Cargo.toml.orig', 'Cargo.lock', 'build.rs', 'cbindgen.toml', 'plist.h', '.cargo_vcs_info.json'],
     'tokio-openssl-0.6.5': ['Cargo.toml', 'src/lib.rs'],
     'openssl-sys-0.9.112': ['Cargo.toml', 'build/main.rs', 'build/find_normal.rs', 'build/cfgs.rs', 'build/expando.c', 'src/lib.rs'],
-    'openssl-0.10.76': ['Cargo.toml', 'src/lib.rs', 'src/ssl/mod.rs', 'src/ssl/connector.rs', 'src/ssl/bio.rs'],
+    'openssl-0.10.76': ['Cargo.toml', 'src/lib.rs', 'src/ssl/mod.rs', 'src/ssl/connector.rs', 'src/ssl/bio.rs', 'src/ssl/callbacks.rs', 'src/ssl/error.rs'],
     'jktcp-0.1.7': ['Cargo.toml', 'src/lib.rs', 'src/adapter.rs', 'src/stream.rs', 'src/packets.rs', 'src/handle.rs'],
 }
 # Preserve available crate notices alongside the selected public source.
