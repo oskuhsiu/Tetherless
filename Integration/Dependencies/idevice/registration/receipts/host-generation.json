@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "status": "local_source_candidate_pending_independent_review_and_native_compilation",
+  "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "preimages": {
+    "idevice/src/remote_pairing/opack.rs": {
+      "bytes": 20881,
+      "sha256": "3001ea414840f6bd412d453ea87a4e2f086afc5089abca7a0b0287969e70290c",
+      "git_blob": "f5e9d672c8c8255b75e5f13643bf8197d2b7f7c3"
+    },
+    "idevice/src/remote_pairing/responder.rs": {
+      "bytes": 21535,
+      "sha256": "1135424851fd3dbf523cb95169b83bd2a972ffc386f9fff1159e773ff61f173b",
+      "git_blob": "891cfdb05d8767dfc0e590077dcf9bbe95b7f630"
+    }
+  },
+  "files": {
+    "HOST_GENERATION_REVIEW.md": {
+      "bytes": 9912,
+      "sha256": "686d234e4b6f7d0fc51eb0292fed8a2d9d90835e69d9cb62baa54ba267a0ddaf",
+      "git_blob": "f63bbde828756f2d8b2ff5aae2cb4424618b80f5"
+    },
+    "evidence/portable-tests.log": {
+      "bytes": 2061,
+      "sha256": "b98234a530ead9d0c0ace29e8908dc4f5dee5152992731dd3187592323bb2bb1",
+      "git_blob": "e4fcafd1e97f8a0d098aeebc16e23b2a78a3afd9"
+    },
+    "host-generation.patch": {
+      "bytes": 47834,
+      "sha256": "7afcec5edccb566c6174fc5c052415506dc3e451e7e603e580d3d454ccd14ae5",
+      "git_blob": "510de2e72109d8ae5605c9aaf8e227bb9352fcb7"
+    },
+    "idevice-srp-server-reference.rs": {
+      "bytes": 5866,
+      "sha256": "68c3ca6df8758e4320fcaadfd00c84cb99da553448391141b8e23f42b7dc070a",
+      "git_blob": "17b8082cf64e397c3aed250dae0af8e7f7dffed3"
+    },
+    "overlay/ffi/src/bounded_pairing_host.rs": {
+      "bytes": 23079,
+      "sha256": "3b8f8ee659e81bb7e06efe0ede74aba833e6c44f44d9c553e4e10ae3888e723f",
+      "git_blob": "33993c0bf1676f1f1ea52a2faf6c8d6401f56db1"
+    },
+    "overlay/idevice/src/remote_pairing/opack.rs": {
+      "bytes": 28449,
+      "sha256": "3ead51d183ee5667f0a9c838e43c6f9cbfa755c6c8354563e0fa81d3e78f7235",
+      "git_blob": "ff40c0e8b5fde3f07e29b291fddf77b867a4ce48"
+    },
+    "overlay/idevice/src/remote_pairing/responder.rs": {
+      "bytes": 35354,
+      "sha256": "2194dec98ea37aec7de109bc6ff0f2fa8acb3db7de9bd268f5adaae83f608954",
+      "git_blob": "e42af12d9300a3a5d3cdfa352fbe9d610a703126"
+    },
+    "probes/host_probe.c": {
+      "bytes": 3216,
+      "sha256": "42129aec681d6e9f20660c64390a5a704609dc907e5b649334aaa9b2ecc23788",
+      "git_blob": "65e29ec593fdb8e150b3074595cc668b6bd692f5"
+    },
+    "probes/host_probe.swift": {
+      "bytes": 1051,
+      "sha256": "e926e8506bb848a061f1437557cf0144ae7da83874dcef8bedfc9f6e0afd7496",
+      "git_blob": "092bad3b5285d834a741dfea2c00538c5d813425"
+    },
+    "tests/test_host_generation_sources.py": {
+      "bytes": 10590,
+      "sha256": "441f5680f7d5c7045ca3da9243cf66fdf44d86834431b45e1c98028f775178f5",
+      "git_blob": "07ee5f1ed6eadf7868b8c958a2ffc0a1ab4936e9"
+    }
+  },
+  "required_lib_declaration": "#[cfg(all(unix, feature = \"remote_pairing\"))]\npub mod bounded_pairing_host;",
+  "required_symbols": [
+    "tetherless_pairing_host_prepare",
+    "tetherless_pairing_host_cancel",
+    "tetherless_pairing_host_free",
+    "tetherless_pairing_host_accept_fd"
+  ],
+  "native_test_filters": {
+    "idevice-ffi": [
+      "bounded_pairing_host::"
+    ],
+    "idevice": [
+      "bounded_host_tests",
+      "bounded_host_frame_tests",
+      "bounded_opack_tests"
+    ]
+  },
+  "evidence": {
+    "portable_tests": {
+      "passed": 11,
+      "failed": 0
+    },
+    "rust_tests": {
+      "present": 20,
+      "executed": 0
+    },
+    "rustc_available": false,
+    "cargo_available": false,
+    "swift_available": false,
+    "apple_header_compile_link": "not_run",
+    "device_handshake": "not_run",
+    "publication": "not_attempted"
+  }
+}

@@ -1,0 +1,3257 @@
+{
+  "schema": 1,
+  "enabled": false,
+  "status": "Target-input metadata contract only; opt-in route approved for implementation, activation pending source and native verification",
+  "upstream": {
+    "repository": "krzyzanowskim/OpenSSL",
+    "commit": "fdc9231384f37f053dffe058fd6dfc6c5072dae5",
+    "git_tree": "e7c94a8efdade4b77561c7176ba7cc4865bc32ee",
+    "package_version": "3.6.2000",
+    "openssl_version": "3.6.2"
+  },
+  "baseline_source_lock_sha256": "1eb853a7ecbf77dccd3a692549a9a8e137b569bc95d283e876242bc1b258b376",
+  "existing_locked_crates": [
+    {
+      "name": "openssl",
+      "version": "0.10.76",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "951c002c75e16ea2c65b8c7e4d3d51d5530d8dfa7d060b4776828c88cfb18ecf"
+    },
+    {
+      "name": "openssl-sys",
+      "version": "0.9.112",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "57d55af3b3e226502be1526dfdba67ab0e9c96fc293004e79576b2b9edb0dbdb"
+    },
+    {
+      "name": "tokio-openssl",
+      "version": "0.6.5",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "59df6849caa43bb7567f9a36f863c447d95a11d5903c9cc334ba32576a27eadd"
+    }
+  ],
+  "targets": {
+    "aarch64-apple-ios": {
+      "repository_platform": "iphoneos",
+      "headers": {
+        "root": "iphoneos/include/OpenSSL",
+        "git_tree": "1dce790de77a6e786d6d85d6983e8419a33a51c6",
+        "blob_count": 143,
+        "entries": [
+          {
+            "path": "iphoneos/include/OpenSSL/aes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f72a354aff9bcfe3434aabf6131c4cc6ec08937f",
+            "size": 3311
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/asn1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e3f5088a047291dadb8693bb345cae946f06873e",
+            "size": 57744
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/asn1err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4d38c6c598c01ab0c847490e24c66840b3903957",
+            "size": 5169
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/asn1t.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c692593dcfbb17a0b0f58c90e6ad7c5edb13426",
+            "size": 38602
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/async.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6438ca5dd8fe5cf0b0a33d5b2ad4cbd0a780baad",
+            "size": 3019
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/asyncerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c8acd33457b8d21accb0d3089010e710377995d1",
+            "size": 739
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/bio.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "00380d9b8c9897c662dc8b0bf7186a7359b960ee",
+            "size": 41405
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/bioerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ebdb3edd893df5e9dcde20608382bebf4528c26b",
+            "size": 2355
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/blowfish.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e061a06bcea8bd98656ad3743ac00bd5eecbfbaf",
+            "size": 2136
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/bn.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2faec79197d5c557a0abfd966c180a04e47bc609",
+            "size": 22309
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/bnerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5aad2883fd4bf7c0db58970b8f5e55e3559135e5",
+            "size": 1329
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/buffer.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da480115eecb43e8062994248854ecea5a55beb7",
+            "size": 1591
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/buffererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d6b4b1eddc358e23d666240c37a6fa8e4fa8f98b",
+            "size": 587
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/byteorder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4604db71fd388448d5614f587b61e4df4c0aaf31",
+            "size": 8444
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/camellia.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b9e6d212d0b93000789dc514c28187c300e7934a",
+            "size": 3266
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cast.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "23c0a1aee024ba620fc32e566b4b25c487154147",
+            "size": 1880
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cmac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "39f9306f07c0bd43f9ebbad4c90d2133fc6a274d",
+            "size": 1449
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cmp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dca2c3ae05d46018506f9cfcbefe4500c0e27e20",
+            "size": 48141
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cmp_util.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "447dcc74d02c62b37206d2d09c1577a0359ea223",
+            "size": 1627
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cmperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "923599d6c52f164ce3783a77dd89152d6312b403",
+            "size": 4821
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cms.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6c09d61d32569239b6ce724148b65787b18c6b21",
+            "size": 31540
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cmserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "54d281590088d8b4b30e2360da6b4e3e836501bd",
+            "size": 4657
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/comp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "86bb62fc99fb310160e05800ea4e82d6b006b91f",
+            "size": 4697
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/comperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7038b4deb6559e1083dc02a6e339418e3019c1da",
+            "size": 1002
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/conf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "224a04e0842316c7f78135cdc671c57f6c42a5fd",
+            "size": 10388
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/conf_api.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3899fb93bc4a4e3a5bb450e2a25336650314b55c",
+            "size": 1328
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/conferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6c7eff31bcd6f5b93ed1ccadd3d214bd591b8de0",
+            "size": 1697
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/configuration.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7ddd320f7c2354e4078f1c92a355d819f8040445",
+            "size": 5230
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/conftypes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "54f436fad849359657cf205ed4f69549a80d2642",
+            "size": 1176
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/core.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c24f5cfb969419b9cf28d4ed7d6b3138d4f0a62a",
+            "size": 7820
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/core_dispatch.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5edab3c2d4643a77c670da1a260d7c1845a3d00b",
+            "size": 47494
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/core_names.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "91deb3ef2cbaeb6c26b09fd198f4490d5de77aa3",
+            "size": 29925
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/core_object.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "df0c79436d880ee96cca41d4a1d0271692879788",
+            "size": 1047
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/crmf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e76419925b4c3db9065ca626fad274a7732cd0ab",
+            "size": 19647
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/crmferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "713b331f47e0ead3ac9106f4c1d77e35fd097c13",
+            "size": 1858
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/crypto.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74749f843503546b5e01ed5bbd95c929a00dfc45",
+            "size": 24770
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cryptoerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5d098f34458d3543f379ab2b6fc698129100ca23",
+            "size": 1986
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cryptoerr_legacy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a229e41ce3bbafb2d3fc14f22c5008c64caea54e",
+            "size": 48019
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ct.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "291cd87a79ea3b5a8ca238377d70acb141c91b62",
+            "size": 22240
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/cterr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "17d2e2c7ba2b6eca0dfc44e8263f867e38bb5792",
+            "size": 1241
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/decoder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "43360299c35478d8d9d446ec93617e37290cfdd9",
+            "size": 4907
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/decodererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "06139c631d07e5a658563c28078830079516639d",
+            "size": 740
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/des.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b9323048e1a718acc8c4573e92fc40301ff9ec93",
+            "size": 7764
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/dh.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f3b5980318784584501e16473eb4acfe48511268",
+            "size": 13025
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/dherr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da6c3fa98d89f8506e698cdd81e1ac3b2a2e3464",
+            "size": 1702
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/dsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e2c2fa6f86243bfdcd1e50c6e9efd4c5fb93de03",
+            "size": 10982
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/dsaerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fd4b3b50b23c0c71db324570185a99ee80f1bd7d",
+            "size": 1164
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/dtls1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "23517eb78fd95e68e2bda1327b9882ea6a078708",
+            "size": 1239
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/e_os2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8819f1e07e3377554bdf952145e27b86925029d5",
+            "size": 8443
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/e_ostime.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6ff27e33494da9b7de1b5d0f48477cba3d107027",
+            "size": 1147
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ebcdic.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "36ce9b7c28bdefdd7900fd969aa92caff157abf9",
+            "size": 1025
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ec.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3fb59fb4bc5a2e960eab742e984c1c1bb0249d60",
+            "size": 62313
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ecdh.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014f1218b3398dd2191046f54fb24b57a53caac1",
+            "size": 361
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ecdsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014f1218b3398dd2191046f54fb24b57a53caac1",
+            "size": 361
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ecerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "58e577c2529e5bd9d51a48d86c7180a9c447fb0c",
+            "size": 3359
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/encoder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "59fc40dddf17a7df8ad4b52cbd8eb38277b27be6",
+            "size": 4570
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/encodererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "32e9d99f4fb869d7b83311b28e5f924fbc5e123b",
+            "size": 741
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/engine.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8d7989af65671c6fd177bb826a81829658c3b054",
+            "size": 37536
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/engineerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74d81beb94957b39fbb78367a5d89a55d24f6768",
+            "size": 2034
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014e2b4637ed14601f23b10088b9b76e7406642e",
+            "size": 20436
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ess.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "bb6410e729641eaab040a55e04f14e8d23a5466c",
+            "size": 8706
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/esserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a66d192f41ab4ff5c29368f938e7e47e0c7e0c82",
+            "size": 982
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/evp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "24814b3da5fd336dc07b8fa60cd44210b7b592c3",
+            "size": 96306
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/evperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e7c4123828cdbacb35d6debed52465dbca082916",
+            "size": 5528
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/fips_names.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3e310bb4a8f2ac5994f26e0d3823e908c9dc2a44",
+            "size": 1638
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/fipskey.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5a5b8449386d9c0b5dd022b63ada1f788576ae77",
+            "size": 1250
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/hmac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dbfbaaa025a0bdd4721e25526561aefc7ee7d9fe",
+            "size": 1892
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/hpke.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9848e6e2685082327b8b80eef9e58154b9f64d30",
+            "size": 6081
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/http.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7765015baa57962ec088c640306ebaae51a9e1b0",
+            "size": 4717
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/httperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "0712ce3839b0c2eb540438b916a24e5581aa2fe0",
+            "size": 1892
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/idea.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d91a9f6c59df4932715eea7b9d120c2728e74583",
+            "size": 2285
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/indicator.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dc2bac17f9a9dd2b94a49aa106ea564cc52056c0",
+            "size": 818
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/kdf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4a928d5aa5a9a59dba1f417e1848027206be5363",
+            "size": 5184
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/kdferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ab0842a2253c64e742acf54cc5aaef3aa50c5123",
+            "size": 480
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/lhash.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6e9bc88c38f041169cb5119de1d1eb2cd1f6dc33",
+            "size": 33375
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/macros.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "21e33221b49944aa2f871da5993ae7c07e60f1e8",
+            "size": 11094
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/md2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "123b4647cc049adcffd3decd64c4ae702a0b79f9",
+            "size": 1336
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/md4.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74120a4eb92cd141cee9a74a28c2fa87bc65edcd",
+            "size": 1610
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/md5.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f869d7039eb39b74d1cac547ee0770a7b8526738",
+            "size": 1608
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/mdc2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f139db2d4453314b2ba93b904b22cdc5acab8a8e",
+            "size": 1312
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ml_kem.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fe5b0e2b7b89dda9712bc2189929986fb63dce8a",
+            "size": 959
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/modes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b1777c1cf16376dd2aaa38ba3bc3737b7cc8ab75",
+            "size": 8135
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/obj_mac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "236e88fdfced796aad28e4c4463b169263de130c",
+            "size": 292300
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/objects.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8aa01e18d92022b4e4bc86899414bb0149d24565",
+            "size": 7567
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/objectserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5ca10ea8b0ffe5e62a9fe6c69413182d783500bd",
+            "size": 686
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ocsp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da9ab2ce6143cec9f04568ae72f05997404dd264",
+            "size": 27860
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ocsperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "942fadd816866646325272857874258d6d8b7b55",
+            "size": 1636
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/opensslconf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4fdcbf77b17724214d36c935cd251bf4cea69403",
+            "size": 1122
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/opensslv.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d9edb9e610b349e4cb2552bdae2d70201d35ca5f",
+            "size": 3447
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ossl_typ.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "1736027a7a06082f2035cd1797a9a07eb384738b",
+            "size": 561
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/param_build.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8737909f64bd2c8ac9adef63679dc7ee934453ef",
+            "size": 2363
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/params.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f1da32bbbbf60eccf5c340c7c1a5b4676ea919f9",
+            "size": 7149
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pem.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2c73f17e6387d6107db1f01f2ffa81c16ec538d7",
+            "size": 22667
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pem2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "cf67adcd6948183d8f0d5f260ea32a50aba21358",
+            "size": 523
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pemerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "34b5c2be368c20320ed642dd7a8bc365f47d87c1",
+            "size": 1836
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pkcs12.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4e1e2e8df6c769daa51f8b8ce2b595452c597382",
+            "size": 17127
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pkcs12err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "35f5c649f5ac8b7c47bf1b23fbb5b4a4f52bf726",
+            "size": 1427
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pkcs7.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d0cbe08f9564d8ef228fe6ffea33bb04dd234e05",
+            "size": 21874
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/pkcs7err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2393f0ed77ab575c3a57b0984f924b538271f4c8",
+            "size": 2242
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/prov_ssl.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "269c3b805737871c152f614ccc42bd8999ac8854",
+            "size": 969
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/proverr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2a3e01d4cd37fc75119905112fa86aa10849d2f3",
+            "size": 6452
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/provider.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c6a819935d946efbc2bc4bca2120834651a98971",
+            "size": 3383
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/quic.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "31b33d53185e3f4af136f23f4d9b1a22dff24156",
+            "size": 2101
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/rand.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "216cc9377450b09c7ad51fa65bfca24075f17117",
+            "size": 4058
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/randerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c1ce068ba18e3697f103e496fb021e84d70f536",
+            "size": 2486
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/rc2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2ce0b59dd37dfe8bc7c22d8c1e16980d68146c3a",
+            "size": 1771
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/rc4.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "97aee437893bd16da7031ed75ff1013ba4b69e64",
+            "size": 1075
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/rc5.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9dc2456991c3f97106d01b6368c4807d4310b433",
+            "size": 2146
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ripemd.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "40954e4acd27df6098fe5cf81adb7516ae9ce8ce",
+            "size": 1537
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/rsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "640440b7745c379deca122b7abd7861d645b15b0",
+            "size": 22275
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/rsaerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a4b58156ca9c0f76cb3824a0c9ea3156aa58948c",
+            "size": 3861
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/safestack.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "49b212e864954d49110e60abdab24f784bca0a9f",
+            "size": 31977
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/seed.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "cab6e8c8c60d9758073881e2ff63c14b9a349b24",
+            "size": 3611
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/self_test.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e4adf74992980977dc28a47009fc119ba93f19f4",
+            "size": 4816
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/sha.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "834cbaec91c72e7e6669847b13891339124ea9ed",
+            "size": 4404
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/shim.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c383b6d2a88745feb9c890b93c707eed4993590",
+            "size": 1020
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/srp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "00fa1c66af3aed5635b755655e3931fb0c5e5148",
+            "size": 15162
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/srtp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "0a438885552dbe3ca7899ab4e9eda808d43ffa8f",
+            "size": 1888
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ssl.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ad21dabaaabc932def63e1738787a4c232749ad9",
+            "size": 122373
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ssl2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9a4323e6a32318f3fa65cce0daf55a5f3b7ea14d",
+            "size": 625
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ssl3.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "841dabb165599b3ad6906bdc489158c9743bb3f5",
+            "size": 12748
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/sslerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "db5df5a34d2c9e0b2463d9fa0708b7e4163b67f4",
+            "size": 15413
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/sslerr_legacy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "794a3e2cf82edc23b64b5c5c5356c7d3cbf4a427",
+            "size": 18269
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/stack.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f0581efef582119b69574392d34c495bb5d11d69",
+            "size": 3290
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/store.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4fd161ed8e1c970c16751cb9de6c3c7b6634de4f",
+            "size": 14099
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/storeerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "10081125924f207ccc2899aa12f586bca3a4170b",
+            "size": 1702
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/symhacks.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f46de44adee094d108e74872bb57fd16ad29c815",
+            "size": 1102
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/thread.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "edd7c56a2c3684e1cc72907f1905e0c70c6b3f74",
+            "size": 865
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/tls1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "46f47d3dd7e26a687967cdfe8cf5140db495f19b",
+            "size": 63577
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/trace.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f50a94f772896429e55189f0255e5062024bf587",
+            "size": 10823
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ts.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9e4f3ed381c1d307263aa5c7f65755fb4709592b",
+            "size": 19419
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/tserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c4d099018e529dfaeb42938849917ad9fdc68361",
+            "size": 2077
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/txt_db.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d6313fa4d67fed77c55bca6d383050bb57b4b657",
+            "size": 1635
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/types.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3334a547eaf9e8a3159c0ad210441330d203230f",
+            "size": 7354
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/ui.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3ef2d511e7174fe44b222ef56dd1d4b60e51b106",
+            "size": 18513
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/uierr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c4060bc47a8ef794a0a3d710686870b00ab560d",
+            "size": 1062
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/whrlpool.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "89aa60ea07eddff7e608938224e8489f16c56508",
+            "size": 1681
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/x509.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "16c8e6c9436b546e7b52d3fcee195fd9f7189a61",
+            "size": 67562
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/x509_acert.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dd676d02e2224862bb02507b9895a6a5f27c33df",
+            "size": 21923
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/x509_vfy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d4d85ac7d2a0fd453061c19cc6470c67ee2f54a2",
+            "size": 47818
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/x509err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "157452a1ed7ac78093337e48e3773bbb44d96849",
+            "size": 2316
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/x509v3.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6b4b27b2804c35aecf173b34c75c4e754d0b2ef9",
+            "size": 129372
+          },
+          {
+            "path": "iphoneos/include/OpenSSL/x509v3err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fa062b08e9c7b00298f557505669a9fe57d3c9c5",
+            "size": 3578
+          }
+        ],
+        "content_sha256_verified": false
+      },
+      "libraries": [
+        {
+          "path": "iphoneos/lib/libssl.a",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "0d29704915d8cdfb504bf8386fec89b75448e664",
+          "size": 1608840
+        },
+        {
+          "path": "iphoneos/lib/libcrypto.a",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "f58baf0f4f0e9b06e79faa37f014e2096db766b4",
+          "size": 7920488
+        }
+      ],
+      "environment": {
+        "AARCH64_APPLE_IOS_OPENSSL_LIB_DIR": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios/lib",
+        "AARCH64_APPLE_IOS_OPENSSL_INCLUDE_DIR": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios/include",
+        "AARCH64_APPLE_IOS_OPENSSL_STATIC": "1",
+        "AARCH64_APPLE_IOS_OPENSSL_NO_VENDOR": "1"
+      },
+      "binary_bytes_verified": false,
+      "native_compile_link_verified": false,
+      "header_views": {
+        "verified_source": "iphoneos/include/OpenSSL",
+        "uppercase_destination": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios/include/OpenSSL",
+        "lowercase_destination": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios/include/openssl",
+        "method": "Both views must expose exactly the same verified complete header tree; use byte-identical copies or explicit safe internal aliases in a new isolated directory. On case-insensitive filesystems one physical directory may satisfy both lookups. Never alias outside the verified input root."
+      },
+      "required_header_configuration": {
+        "path": "iphoneos/include/OpenSSL/configuration.h",
+        "git_blob": "7ddd320f7c2354e4078f1c92a355d819f8040445",
+        "sha256": "01aaeb2d4ea6e701dfe569f6f239557d77a2025bb383c802141f97e7804a0713",
+        "required_definitions": [
+          "OPENSSL_NO_SSLKEYLOG",
+          "OPENSSL_NO_DYNAMIC_ENGINE"
+        ],
+        "source_text_verified": true,
+        "native_input_must_reverify": true,
+        "native_preprocessor_assertions_required": true,
+        "binary_configuration_correspondence_verified": false
+      }
+    },
+    "aarch64-apple-ios-sim": {
+      "repository_platform": "iphonesimulator",
+      "headers": {
+        "root": "iphonesimulator/include/OpenSSL",
+        "git_tree": "98bfcdcdd41de19df1cd957e1eaea559492bfc4b",
+        "blob_count": 143,
+        "entries": [
+          {
+            "path": "iphonesimulator/include/OpenSSL/aes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f72a354aff9bcfe3434aabf6131c4cc6ec08937f",
+            "size": 3311
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/asn1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e3f5088a047291dadb8693bb345cae946f06873e",
+            "size": 57744
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/asn1err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4d38c6c598c01ab0c847490e24c66840b3903957",
+            "size": 5169
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/asn1t.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c692593dcfbb17a0b0f58c90e6ad7c5edb13426",
+            "size": 38602
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/async.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6438ca5dd8fe5cf0b0a33d5b2ad4cbd0a780baad",
+            "size": 3019
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/asyncerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c8acd33457b8d21accb0d3089010e710377995d1",
+            "size": 739
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/bio.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "00380d9b8c9897c662dc8b0bf7186a7359b960ee",
+            "size": 41405
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/bioerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ebdb3edd893df5e9dcde20608382bebf4528c26b",
+            "size": 2355
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/blowfish.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e061a06bcea8bd98656ad3743ac00bd5eecbfbaf",
+            "size": 2136
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/bn.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2faec79197d5c557a0abfd966c180a04e47bc609",
+            "size": 22309
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/bnerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5aad2883fd4bf7c0db58970b8f5e55e3559135e5",
+            "size": 1329
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/buffer.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da480115eecb43e8062994248854ecea5a55beb7",
+            "size": 1591
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/buffererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d6b4b1eddc358e23d666240c37a6fa8e4fa8f98b",
+            "size": 587
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/byteorder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4604db71fd388448d5614f587b61e4df4c0aaf31",
+            "size": 8444
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/camellia.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b9e6d212d0b93000789dc514c28187c300e7934a",
+            "size": 3266
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cast.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "23c0a1aee024ba620fc32e566b4b25c487154147",
+            "size": 1880
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cmac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "39f9306f07c0bd43f9ebbad4c90d2133fc6a274d",
+            "size": 1449
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cmp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dca2c3ae05d46018506f9cfcbefe4500c0e27e20",
+            "size": 48141
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cmp_util.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "447dcc74d02c62b37206d2d09c1577a0359ea223",
+            "size": 1627
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cmperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "923599d6c52f164ce3783a77dd89152d6312b403",
+            "size": 4821
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cms.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6c09d61d32569239b6ce724148b65787b18c6b21",
+            "size": 31540
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cmserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "54d281590088d8b4b30e2360da6b4e3e836501bd",
+            "size": 4657
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/comp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "86bb62fc99fb310160e05800ea4e82d6b006b91f",
+            "size": 4697
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/comperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7038b4deb6559e1083dc02a6e339418e3019c1da",
+            "size": 1002
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/conf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "224a04e0842316c7f78135cdc671c57f6c42a5fd",
+            "size": 10388
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/conf_api.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3899fb93bc4a4e3a5bb450e2a25336650314b55c",
+            "size": 1328
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/conferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6c7eff31bcd6f5b93ed1ccadd3d214bd591b8de0",
+            "size": 1697
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/configuration.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7ddd320f7c2354e4078f1c92a355d819f8040445",
+            "size": 5230
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/conftypes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "54f436fad849359657cf205ed4f69549a80d2642",
+            "size": 1176
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/core.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c24f5cfb969419b9cf28d4ed7d6b3138d4f0a62a",
+            "size": 7820
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/core_dispatch.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5edab3c2d4643a77c670da1a260d7c1845a3d00b",
+            "size": 47494
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/core_names.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "91deb3ef2cbaeb6c26b09fd198f4490d5de77aa3",
+            "size": 29925
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/core_object.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "df0c79436d880ee96cca41d4a1d0271692879788",
+            "size": 1047
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/crmf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e76419925b4c3db9065ca626fad274a7732cd0ab",
+            "size": 19647
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/crmferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "713b331f47e0ead3ac9106f4c1d77e35fd097c13",
+            "size": 1858
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/crypto.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74749f843503546b5e01ed5bbd95c929a00dfc45",
+            "size": 24770
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cryptoerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5d098f34458d3543f379ab2b6fc698129100ca23",
+            "size": 1986
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cryptoerr_legacy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a229e41ce3bbafb2d3fc14f22c5008c64caea54e",
+            "size": 48019
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ct.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "291cd87a79ea3b5a8ca238377d70acb141c91b62",
+            "size": 22240
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/cterr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "17d2e2c7ba2b6eca0dfc44e8263f867e38bb5792",
+            "size": 1241
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/decoder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "43360299c35478d8d9d446ec93617e37290cfdd9",
+            "size": 4907
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/decodererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "06139c631d07e5a658563c28078830079516639d",
+            "size": 740
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/des.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b9323048e1a718acc8c4573e92fc40301ff9ec93",
+            "size": 7764
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/dh.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f3b5980318784584501e16473eb4acfe48511268",
+            "size": 13025
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/dherr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da6c3fa98d89f8506e698cdd81e1ac3b2a2e3464",
+            "size": 1702
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/dsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e2c2fa6f86243bfdcd1e50c6e9efd4c5fb93de03",
+            "size": 10982
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/dsaerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fd4b3b50b23c0c71db324570185a99ee80f1bd7d",
+            "size": 1164
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/dtls1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "23517eb78fd95e68e2bda1327b9882ea6a078708",
+            "size": 1239
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/e_os2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8819f1e07e3377554bdf952145e27b86925029d5",
+            "size": 8443
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/e_ostime.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6ff27e33494da9b7de1b5d0f48477cba3d107027",
+            "size": 1147
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ebcdic.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "36ce9b7c28bdefdd7900fd969aa92caff157abf9",
+            "size": 1025
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ec.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3fb59fb4bc5a2e960eab742e984c1c1bb0249d60",
+            "size": 62313
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ecdh.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014f1218b3398dd2191046f54fb24b57a53caac1",
+            "size": 361
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ecdsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014f1218b3398dd2191046f54fb24b57a53caac1",
+            "size": 361
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ecerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "58e577c2529e5bd9d51a48d86c7180a9c447fb0c",
+            "size": 3359
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/encoder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "59fc40dddf17a7df8ad4b52cbd8eb38277b27be6",
+            "size": 4570
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/encodererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "32e9d99f4fb869d7b83311b28e5f924fbc5e123b",
+            "size": 741
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/engine.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8d7989af65671c6fd177bb826a81829658c3b054",
+            "size": 37536
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/engineerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74d81beb94957b39fbb78367a5d89a55d24f6768",
+            "size": 2034
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014e2b4637ed14601f23b10088b9b76e7406642e",
+            "size": 20436
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ess.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "bb6410e729641eaab040a55e04f14e8d23a5466c",
+            "size": 8706
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/esserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a66d192f41ab4ff5c29368f938e7e47e0c7e0c82",
+            "size": 982
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/evp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "24814b3da5fd336dc07b8fa60cd44210b7b592c3",
+            "size": 96306
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/evperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e7c4123828cdbacb35d6debed52465dbca082916",
+            "size": 5528
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/fips_names.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3e310bb4a8f2ac5994f26e0d3823e908c9dc2a44",
+            "size": 1638
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/fipskey.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5a5b8449386d9c0b5dd022b63ada1f788576ae77",
+            "size": 1250
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/hmac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dbfbaaa025a0bdd4721e25526561aefc7ee7d9fe",
+            "size": 1892
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/hpke.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9848e6e2685082327b8b80eef9e58154b9f64d30",
+            "size": 6081
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/http.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7765015baa57962ec088c640306ebaae51a9e1b0",
+            "size": 4717
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/httperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "0712ce3839b0c2eb540438b916a24e5581aa2fe0",
+            "size": 1892
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/idea.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d91a9f6c59df4932715eea7b9d120c2728e74583",
+            "size": 2285
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/indicator.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dc2bac17f9a9dd2b94a49aa106ea564cc52056c0",
+            "size": 818
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/kdf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4a928d5aa5a9a59dba1f417e1848027206be5363",
+            "size": 5184
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/kdferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ab0842a2253c64e742acf54cc5aaef3aa50c5123",
+            "size": 480
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/lhash.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6e9bc88c38f041169cb5119de1d1eb2cd1f6dc33",
+            "size": 33375
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/macros.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "21e33221b49944aa2f871da5993ae7c07e60f1e8",
+            "size": 11094
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/md2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "123b4647cc049adcffd3decd64c4ae702a0b79f9",
+            "size": 1336
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/md4.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74120a4eb92cd141cee9a74a28c2fa87bc65edcd",
+            "size": 1610
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/md5.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f869d7039eb39b74d1cac547ee0770a7b8526738",
+            "size": 1608
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/mdc2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f139db2d4453314b2ba93b904b22cdc5acab8a8e",
+            "size": 1312
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ml_kem.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fe5b0e2b7b89dda9712bc2189929986fb63dce8a",
+            "size": 959
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/modes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b1777c1cf16376dd2aaa38ba3bc3737b7cc8ab75",
+            "size": 8135
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/obj_mac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "236e88fdfced796aad28e4c4463b169263de130c",
+            "size": 292300
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/objects.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8aa01e18d92022b4e4bc86899414bb0149d24565",
+            "size": 7567
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/objectserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5ca10ea8b0ffe5e62a9fe6c69413182d783500bd",
+            "size": 686
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ocsp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da9ab2ce6143cec9f04568ae72f05997404dd264",
+            "size": 27860
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ocsperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "942fadd816866646325272857874258d6d8b7b55",
+            "size": 1636
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/opensslconf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e2912e3bc0be62a84074111aa5cddc380341d970",
+            "size": 1632
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/opensslv.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d9edb9e610b349e4cb2552bdae2d70201d35ca5f",
+            "size": 3447
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ossl_typ.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "1736027a7a06082f2035cd1797a9a07eb384738b",
+            "size": 561
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/param_build.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8737909f64bd2c8ac9adef63679dc7ee934453ef",
+            "size": 2363
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/params.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f1da32bbbbf60eccf5c340c7c1a5b4676ea919f9",
+            "size": 7149
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pem.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2c73f17e6387d6107db1f01f2ffa81c16ec538d7",
+            "size": 22667
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pem2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "cf67adcd6948183d8f0d5f260ea32a50aba21358",
+            "size": 523
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pemerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "34b5c2be368c20320ed642dd7a8bc365f47d87c1",
+            "size": 1836
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pkcs12.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4e1e2e8df6c769daa51f8b8ce2b595452c597382",
+            "size": 17127
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pkcs12err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "35f5c649f5ac8b7c47bf1b23fbb5b4a4f52bf726",
+            "size": 1427
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pkcs7.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d0cbe08f9564d8ef228fe6ffea33bb04dd234e05",
+            "size": 21874
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/pkcs7err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2393f0ed77ab575c3a57b0984f924b538271f4c8",
+            "size": 2242
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/prov_ssl.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "269c3b805737871c152f614ccc42bd8999ac8854",
+            "size": 969
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/proverr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2a3e01d4cd37fc75119905112fa86aa10849d2f3",
+            "size": 6452
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/provider.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c6a819935d946efbc2bc4bca2120834651a98971",
+            "size": 3383
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/quic.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "31b33d53185e3f4af136f23f4d9b1a22dff24156",
+            "size": 2101
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/rand.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "216cc9377450b09c7ad51fa65bfca24075f17117",
+            "size": 4058
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/randerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c1ce068ba18e3697f103e496fb021e84d70f536",
+            "size": 2486
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/rc2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2ce0b59dd37dfe8bc7c22d8c1e16980d68146c3a",
+            "size": 1771
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/rc4.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "97aee437893bd16da7031ed75ff1013ba4b69e64",
+            "size": 1075
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/rc5.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9dc2456991c3f97106d01b6368c4807d4310b433",
+            "size": 2146
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ripemd.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "40954e4acd27df6098fe5cf81adb7516ae9ce8ce",
+            "size": 1537
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/rsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "640440b7745c379deca122b7abd7861d645b15b0",
+            "size": 22275
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/rsaerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a4b58156ca9c0f76cb3824a0c9ea3156aa58948c",
+            "size": 3861
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/safestack.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "49b212e864954d49110e60abdab24f784bca0a9f",
+            "size": 31977
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/seed.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "cab6e8c8c60d9758073881e2ff63c14b9a349b24",
+            "size": 3611
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/self_test.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e4adf74992980977dc28a47009fc119ba93f19f4",
+            "size": 4816
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/sha.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "834cbaec91c72e7e6669847b13891339124ea9ed",
+            "size": 4404
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/shim.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c383b6d2a88745feb9c890b93c707eed4993590",
+            "size": 1020
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/srp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "00fa1c66af3aed5635b755655e3931fb0c5e5148",
+            "size": 15162
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/srtp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "0a438885552dbe3ca7899ab4e9eda808d43ffa8f",
+            "size": 1888
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ssl.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ad21dabaaabc932def63e1738787a4c232749ad9",
+            "size": 122373
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ssl2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9a4323e6a32318f3fa65cce0daf55a5f3b7ea14d",
+            "size": 625
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ssl3.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "841dabb165599b3ad6906bdc489158c9743bb3f5",
+            "size": 12748
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/sslerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "db5df5a34d2c9e0b2463d9fa0708b7e4163b67f4",
+            "size": 15413
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/sslerr_legacy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "794a3e2cf82edc23b64b5c5c5356c7d3cbf4a427",
+            "size": 18269
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/stack.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f0581efef582119b69574392d34c495bb5d11d69",
+            "size": 3290
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/store.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4fd161ed8e1c970c16751cb9de6c3c7b6634de4f",
+            "size": 14099
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/storeerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "10081125924f207ccc2899aa12f586bca3a4170b",
+            "size": 1702
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/symhacks.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f46de44adee094d108e74872bb57fd16ad29c815",
+            "size": 1102
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/thread.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "edd7c56a2c3684e1cc72907f1905e0c70c6b3f74",
+            "size": 865
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/tls1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "46f47d3dd7e26a687967cdfe8cf5140db495f19b",
+            "size": 63577
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/trace.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f50a94f772896429e55189f0255e5062024bf587",
+            "size": 10823
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ts.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9e4f3ed381c1d307263aa5c7f65755fb4709592b",
+            "size": 19419
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/tserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c4d099018e529dfaeb42938849917ad9fdc68361",
+            "size": 2077
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/txt_db.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d6313fa4d67fed77c55bca6d383050bb57b4b657",
+            "size": 1635
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/types.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3334a547eaf9e8a3159c0ad210441330d203230f",
+            "size": 7354
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/ui.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3ef2d511e7174fe44b222ef56dd1d4b60e51b106",
+            "size": 18513
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/uierr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c4060bc47a8ef794a0a3d710686870b00ab560d",
+            "size": 1062
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/whrlpool.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "89aa60ea07eddff7e608938224e8489f16c56508",
+            "size": 1681
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/x509.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "16c8e6c9436b546e7b52d3fcee195fd9f7189a61",
+            "size": 67562
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/x509_acert.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dd676d02e2224862bb02507b9895a6a5f27c33df",
+            "size": 21923
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/x509_vfy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d4d85ac7d2a0fd453061c19cc6470c67ee2f54a2",
+            "size": 47818
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/x509err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "157452a1ed7ac78093337e48e3773bbb44d96849",
+            "size": 2316
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/x509v3.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6b4b27b2804c35aecf173b34c75c4e754d0b2ef9",
+            "size": 129372
+          },
+          {
+            "path": "iphonesimulator/include/OpenSSL/x509v3err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fa062b08e9c7b00298f557505669a9fe57d3c9c5",
+            "size": 3578
+          }
+        ],
+        "content_sha256_verified": false
+      },
+      "libraries": [
+        {
+          "path": "iphonesimulator/lib/libssl.a",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "f80811df9c4a87ee8057b1f4fe398e491df47bdc",
+          "size": 3061160
+        },
+        {
+          "path": "iphonesimulator/lib/libcrypto.a",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "1e387b814dfbffbff46e37f366a4f05bf4b29084",
+          "size": 15071056
+        }
+      ],
+      "environment": {
+        "AARCH64_APPLE_IOS_SIM_OPENSSL_LIB_DIR": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios-sim/lib",
+        "AARCH64_APPLE_IOS_SIM_OPENSSL_INCLUDE_DIR": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios-sim/include",
+        "AARCH64_APPLE_IOS_SIM_OPENSSL_STATIC": "1",
+        "AARCH64_APPLE_IOS_SIM_OPENSSL_NO_VENDOR": "1"
+      },
+      "binary_bytes_verified": false,
+      "native_compile_link_verified": false,
+      "header_views": {
+        "verified_source": "iphonesimulator/include/OpenSSL",
+        "uppercase_destination": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios-sim/include/OpenSSL",
+        "lowercase_destination": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-ios-sim/include/openssl",
+        "method": "Both views must expose exactly the same verified complete header tree; use byte-identical copies or explicit safe internal aliases in a new isolated directory. On case-insensitive filesystems one physical directory may satisfy both lookups. Never alias outside the verified input root."
+      },
+      "required_header_configuration": {
+        "path": "iphonesimulator/include/OpenSSL/configuration.h",
+        "git_blob": "7ddd320f7c2354e4078f1c92a355d819f8040445",
+        "sha256": "01aaeb2d4ea6e701dfe569f6f239557d77a2025bb383c802141f97e7804a0713",
+        "required_definitions": [
+          "OPENSSL_NO_SSLKEYLOG",
+          "OPENSSL_NO_DYNAMIC_ENGINE"
+        ],
+        "source_text_verified": true,
+        "native_input_must_reverify": true,
+        "native_preprocessor_assertions_required": true,
+        "binary_configuration_correspondence_verified": false
+      }
+    },
+    "aarch64-apple-darwin": {
+      "repository_platform": "macosx",
+      "headers": {
+        "root": "macosx/include/OpenSSL",
+        "git_tree": "9d90b44edcf9ee5496e75754ce6b185838658bb5",
+        "blob_count": 143,
+        "entries": [
+          {
+            "path": "macosx/include/OpenSSL/aes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f72a354aff9bcfe3434aabf6131c4cc6ec08937f",
+            "size": 3311
+          },
+          {
+            "path": "macosx/include/OpenSSL/asn1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e3f5088a047291dadb8693bb345cae946f06873e",
+            "size": 57744
+          },
+          {
+            "path": "macosx/include/OpenSSL/asn1err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4d38c6c598c01ab0c847490e24c66840b3903957",
+            "size": 5169
+          },
+          {
+            "path": "macosx/include/OpenSSL/asn1t.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c692593dcfbb17a0b0f58c90e6ad7c5edb13426",
+            "size": 38602
+          },
+          {
+            "path": "macosx/include/OpenSSL/async.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6438ca5dd8fe5cf0b0a33d5b2ad4cbd0a780baad",
+            "size": 3019
+          },
+          {
+            "path": "macosx/include/OpenSSL/asyncerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c8acd33457b8d21accb0d3089010e710377995d1",
+            "size": 739
+          },
+          {
+            "path": "macosx/include/OpenSSL/bio.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "00380d9b8c9897c662dc8b0bf7186a7359b960ee",
+            "size": 41405
+          },
+          {
+            "path": "macosx/include/OpenSSL/bioerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ebdb3edd893df5e9dcde20608382bebf4528c26b",
+            "size": 2355
+          },
+          {
+            "path": "macosx/include/OpenSSL/blowfish.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e061a06bcea8bd98656ad3743ac00bd5eecbfbaf",
+            "size": 2136
+          },
+          {
+            "path": "macosx/include/OpenSSL/bn.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2faec79197d5c557a0abfd966c180a04e47bc609",
+            "size": 22309
+          },
+          {
+            "path": "macosx/include/OpenSSL/bnerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5aad2883fd4bf7c0db58970b8f5e55e3559135e5",
+            "size": 1329
+          },
+          {
+            "path": "macosx/include/OpenSSL/buffer.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da480115eecb43e8062994248854ecea5a55beb7",
+            "size": 1591
+          },
+          {
+            "path": "macosx/include/OpenSSL/buffererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d6b4b1eddc358e23d666240c37a6fa8e4fa8f98b",
+            "size": 587
+          },
+          {
+            "path": "macosx/include/OpenSSL/byteorder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4604db71fd388448d5614f587b61e4df4c0aaf31",
+            "size": 8444
+          },
+          {
+            "path": "macosx/include/OpenSSL/camellia.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b9e6d212d0b93000789dc514c28187c300e7934a",
+            "size": 3266
+          },
+          {
+            "path": "macosx/include/OpenSSL/cast.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "23c0a1aee024ba620fc32e566b4b25c487154147",
+            "size": 1880
+          },
+          {
+            "path": "macosx/include/OpenSSL/cmac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "39f9306f07c0bd43f9ebbad4c90d2133fc6a274d",
+            "size": 1449
+          },
+          {
+            "path": "macosx/include/OpenSSL/cmp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dca2c3ae05d46018506f9cfcbefe4500c0e27e20",
+            "size": 48141
+          },
+          {
+            "path": "macosx/include/OpenSSL/cmp_util.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "447dcc74d02c62b37206d2d09c1577a0359ea223",
+            "size": 1627
+          },
+          {
+            "path": "macosx/include/OpenSSL/cmperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "923599d6c52f164ce3783a77dd89152d6312b403",
+            "size": 4821
+          },
+          {
+            "path": "macosx/include/OpenSSL/cms.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6c09d61d32569239b6ce724148b65787b18c6b21",
+            "size": 31540
+          },
+          {
+            "path": "macosx/include/OpenSSL/cmserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "54d281590088d8b4b30e2360da6b4e3e836501bd",
+            "size": 4657
+          },
+          {
+            "path": "macosx/include/OpenSSL/comp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "86bb62fc99fb310160e05800ea4e82d6b006b91f",
+            "size": 4697
+          },
+          {
+            "path": "macosx/include/OpenSSL/comperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7038b4deb6559e1083dc02a6e339418e3019c1da",
+            "size": 1002
+          },
+          {
+            "path": "macosx/include/OpenSSL/conf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "224a04e0842316c7f78135cdc671c57f6c42a5fd",
+            "size": 10388
+          },
+          {
+            "path": "macosx/include/OpenSSL/conf_api.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3899fb93bc4a4e3a5bb450e2a25336650314b55c",
+            "size": 1328
+          },
+          {
+            "path": "macosx/include/OpenSSL/conferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6c7eff31bcd6f5b93ed1ccadd3d214bd591b8de0",
+            "size": 1697
+          },
+          {
+            "path": "macosx/include/OpenSSL/configuration.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "808d0144258d18722aaa0aaa67511503a9a7e5ce",
+            "size": 5235
+          },
+          {
+            "path": "macosx/include/OpenSSL/conftypes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "54f436fad849359657cf205ed4f69549a80d2642",
+            "size": 1176
+          },
+          {
+            "path": "macosx/include/OpenSSL/core.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c24f5cfb969419b9cf28d4ed7d6b3138d4f0a62a",
+            "size": 7820
+          },
+          {
+            "path": "macosx/include/OpenSSL/core_dispatch.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5edab3c2d4643a77c670da1a260d7c1845a3d00b",
+            "size": 47494
+          },
+          {
+            "path": "macosx/include/OpenSSL/core_names.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "91deb3ef2cbaeb6c26b09fd198f4490d5de77aa3",
+            "size": 29925
+          },
+          {
+            "path": "macosx/include/OpenSSL/core_object.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "df0c79436d880ee96cca41d4a1d0271692879788",
+            "size": 1047
+          },
+          {
+            "path": "macosx/include/OpenSSL/crmf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e76419925b4c3db9065ca626fad274a7732cd0ab",
+            "size": 19647
+          },
+          {
+            "path": "macosx/include/OpenSSL/crmferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "713b331f47e0ead3ac9106f4c1d77e35fd097c13",
+            "size": 1858
+          },
+          {
+            "path": "macosx/include/OpenSSL/crypto.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74749f843503546b5e01ed5bbd95c929a00dfc45",
+            "size": 24770
+          },
+          {
+            "path": "macosx/include/OpenSSL/cryptoerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5d098f34458d3543f379ab2b6fc698129100ca23",
+            "size": 1986
+          },
+          {
+            "path": "macosx/include/OpenSSL/cryptoerr_legacy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a229e41ce3bbafb2d3fc14f22c5008c64caea54e",
+            "size": 48019
+          },
+          {
+            "path": "macosx/include/OpenSSL/ct.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "291cd87a79ea3b5a8ca238377d70acb141c91b62",
+            "size": 22240
+          },
+          {
+            "path": "macosx/include/OpenSSL/cterr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "17d2e2c7ba2b6eca0dfc44e8263f867e38bb5792",
+            "size": 1241
+          },
+          {
+            "path": "macosx/include/OpenSSL/decoder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "43360299c35478d8d9d446ec93617e37290cfdd9",
+            "size": 4907
+          },
+          {
+            "path": "macosx/include/OpenSSL/decodererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "06139c631d07e5a658563c28078830079516639d",
+            "size": 740
+          },
+          {
+            "path": "macosx/include/OpenSSL/des.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b9323048e1a718acc8c4573e92fc40301ff9ec93",
+            "size": 7764
+          },
+          {
+            "path": "macosx/include/OpenSSL/dh.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f3b5980318784584501e16473eb4acfe48511268",
+            "size": 13025
+          },
+          {
+            "path": "macosx/include/OpenSSL/dherr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da6c3fa98d89f8506e698cdd81e1ac3b2a2e3464",
+            "size": 1702
+          },
+          {
+            "path": "macosx/include/OpenSSL/dsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e2c2fa6f86243bfdcd1e50c6e9efd4c5fb93de03",
+            "size": 10982
+          },
+          {
+            "path": "macosx/include/OpenSSL/dsaerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fd4b3b50b23c0c71db324570185a99ee80f1bd7d",
+            "size": 1164
+          },
+          {
+            "path": "macosx/include/OpenSSL/dtls1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "23517eb78fd95e68e2bda1327b9882ea6a078708",
+            "size": 1239
+          },
+          {
+            "path": "macosx/include/OpenSSL/e_os2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8819f1e07e3377554bdf952145e27b86925029d5",
+            "size": 8443
+          },
+          {
+            "path": "macosx/include/OpenSSL/e_ostime.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6ff27e33494da9b7de1b5d0f48477cba3d107027",
+            "size": 1147
+          },
+          {
+            "path": "macosx/include/OpenSSL/ebcdic.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "36ce9b7c28bdefdd7900fd969aa92caff157abf9",
+            "size": 1025
+          },
+          {
+            "path": "macosx/include/OpenSSL/ec.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3fb59fb4bc5a2e960eab742e984c1c1bb0249d60",
+            "size": 62313
+          },
+          {
+            "path": "macosx/include/OpenSSL/ecdh.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014f1218b3398dd2191046f54fb24b57a53caac1",
+            "size": 361
+          },
+          {
+            "path": "macosx/include/OpenSSL/ecdsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014f1218b3398dd2191046f54fb24b57a53caac1",
+            "size": 361
+          },
+          {
+            "path": "macosx/include/OpenSSL/ecerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "58e577c2529e5bd9d51a48d86c7180a9c447fb0c",
+            "size": 3359
+          },
+          {
+            "path": "macosx/include/OpenSSL/encoder.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "59fc40dddf17a7df8ad4b52cbd8eb38277b27be6",
+            "size": 4570
+          },
+          {
+            "path": "macosx/include/OpenSSL/encodererr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "32e9d99f4fb869d7b83311b28e5f924fbc5e123b",
+            "size": 741
+          },
+          {
+            "path": "macosx/include/OpenSSL/engine.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8d7989af65671c6fd177bb826a81829658c3b054",
+            "size": 37536
+          },
+          {
+            "path": "macosx/include/OpenSSL/engineerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74d81beb94957b39fbb78367a5d89a55d24f6768",
+            "size": 2034
+          },
+          {
+            "path": "macosx/include/OpenSSL/err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "014e2b4637ed14601f23b10088b9b76e7406642e",
+            "size": 20436
+          },
+          {
+            "path": "macosx/include/OpenSSL/ess.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "bb6410e729641eaab040a55e04f14e8d23a5466c",
+            "size": 8706
+          },
+          {
+            "path": "macosx/include/OpenSSL/esserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a66d192f41ab4ff5c29368f938e7e47e0c7e0c82",
+            "size": 982
+          },
+          {
+            "path": "macosx/include/OpenSSL/evp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "24814b3da5fd336dc07b8fa60cd44210b7b592c3",
+            "size": 96306
+          },
+          {
+            "path": "macosx/include/OpenSSL/evperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e7c4123828cdbacb35d6debed52465dbca082916",
+            "size": 5528
+          },
+          {
+            "path": "macosx/include/OpenSSL/fips_names.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3e310bb4a8f2ac5994f26e0d3823e908c9dc2a44",
+            "size": 1638
+          },
+          {
+            "path": "macosx/include/OpenSSL/fipskey.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5a5b8449386d9c0b5dd022b63ada1f788576ae77",
+            "size": 1250
+          },
+          {
+            "path": "macosx/include/OpenSSL/hmac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dbfbaaa025a0bdd4721e25526561aefc7ee7d9fe",
+            "size": 1892
+          },
+          {
+            "path": "macosx/include/OpenSSL/hpke.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9848e6e2685082327b8b80eef9e58154b9f64d30",
+            "size": 6081
+          },
+          {
+            "path": "macosx/include/OpenSSL/http.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "7765015baa57962ec088c640306ebaae51a9e1b0",
+            "size": 4717
+          },
+          {
+            "path": "macosx/include/OpenSSL/httperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "0712ce3839b0c2eb540438b916a24e5581aa2fe0",
+            "size": 1892
+          },
+          {
+            "path": "macosx/include/OpenSSL/idea.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d91a9f6c59df4932715eea7b9d120c2728e74583",
+            "size": 2285
+          },
+          {
+            "path": "macosx/include/OpenSSL/indicator.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dc2bac17f9a9dd2b94a49aa106ea564cc52056c0",
+            "size": 818
+          },
+          {
+            "path": "macosx/include/OpenSSL/kdf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4a928d5aa5a9a59dba1f417e1848027206be5363",
+            "size": 5184
+          },
+          {
+            "path": "macosx/include/OpenSSL/kdferr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ab0842a2253c64e742acf54cc5aaef3aa50c5123",
+            "size": 480
+          },
+          {
+            "path": "macosx/include/OpenSSL/lhash.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6e9bc88c38f041169cb5119de1d1eb2cd1f6dc33",
+            "size": 33375
+          },
+          {
+            "path": "macosx/include/OpenSSL/macros.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "21e33221b49944aa2f871da5993ae7c07e60f1e8",
+            "size": 11094
+          },
+          {
+            "path": "macosx/include/OpenSSL/md2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "123b4647cc049adcffd3decd64c4ae702a0b79f9",
+            "size": 1336
+          },
+          {
+            "path": "macosx/include/OpenSSL/md4.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "74120a4eb92cd141cee9a74a28c2fa87bc65edcd",
+            "size": 1610
+          },
+          {
+            "path": "macosx/include/OpenSSL/md5.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f869d7039eb39b74d1cac547ee0770a7b8526738",
+            "size": 1608
+          },
+          {
+            "path": "macosx/include/OpenSSL/mdc2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f139db2d4453314b2ba93b904b22cdc5acab8a8e",
+            "size": 1312
+          },
+          {
+            "path": "macosx/include/OpenSSL/ml_kem.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fe5b0e2b7b89dda9712bc2189929986fb63dce8a",
+            "size": 959
+          },
+          {
+            "path": "macosx/include/OpenSSL/modes.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "b1777c1cf16376dd2aaa38ba3bc3737b7cc8ab75",
+            "size": 8135
+          },
+          {
+            "path": "macosx/include/OpenSSL/obj_mac.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "236e88fdfced796aad28e4c4463b169263de130c",
+            "size": 292300
+          },
+          {
+            "path": "macosx/include/OpenSSL/objects.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8aa01e18d92022b4e4bc86899414bb0149d24565",
+            "size": 7567
+          },
+          {
+            "path": "macosx/include/OpenSSL/objectserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "5ca10ea8b0ffe5e62a9fe6c69413182d783500bd",
+            "size": 686
+          },
+          {
+            "path": "macosx/include/OpenSSL/ocsp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "da9ab2ce6143cec9f04568ae72f05997404dd264",
+            "size": 27860
+          },
+          {
+            "path": "macosx/include/OpenSSL/ocsperr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "942fadd816866646325272857874258d6d8b7b55",
+            "size": 1636
+          },
+          {
+            "path": "macosx/include/OpenSSL/opensslconf.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e2912e3bc0be62a84074111aa5cddc380341d970",
+            "size": 1632
+          },
+          {
+            "path": "macosx/include/OpenSSL/opensslv.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d9edb9e610b349e4cb2552bdae2d70201d35ca5f",
+            "size": 3447
+          },
+          {
+            "path": "macosx/include/OpenSSL/ossl_typ.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "1736027a7a06082f2035cd1797a9a07eb384738b",
+            "size": 561
+          },
+          {
+            "path": "macosx/include/OpenSSL/param_build.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "8737909f64bd2c8ac9adef63679dc7ee934453ef",
+            "size": 2363
+          },
+          {
+            "path": "macosx/include/OpenSSL/params.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f1da32bbbbf60eccf5c340c7c1a5b4676ea919f9",
+            "size": 7149
+          },
+          {
+            "path": "macosx/include/OpenSSL/pem.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2c73f17e6387d6107db1f01f2ffa81c16ec538d7",
+            "size": 22667
+          },
+          {
+            "path": "macosx/include/OpenSSL/pem2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "cf67adcd6948183d8f0d5f260ea32a50aba21358",
+            "size": 523
+          },
+          {
+            "path": "macosx/include/OpenSSL/pemerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "34b5c2be368c20320ed642dd7a8bc365f47d87c1",
+            "size": 1836
+          },
+          {
+            "path": "macosx/include/OpenSSL/pkcs12.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4e1e2e8df6c769daa51f8b8ce2b595452c597382",
+            "size": 17127
+          },
+          {
+            "path": "macosx/include/OpenSSL/pkcs12err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "35f5c649f5ac8b7c47bf1b23fbb5b4a4f52bf726",
+            "size": 1427
+          },
+          {
+            "path": "macosx/include/OpenSSL/pkcs7.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d0cbe08f9564d8ef228fe6ffea33bb04dd234e05",
+            "size": 21874
+          },
+          {
+            "path": "macosx/include/OpenSSL/pkcs7err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2393f0ed77ab575c3a57b0984f924b538271f4c8",
+            "size": 2242
+          },
+          {
+            "path": "macosx/include/OpenSSL/prov_ssl.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "269c3b805737871c152f614ccc42bd8999ac8854",
+            "size": 969
+          },
+          {
+            "path": "macosx/include/OpenSSL/proverr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2a3e01d4cd37fc75119905112fa86aa10849d2f3",
+            "size": 6452
+          },
+          {
+            "path": "macosx/include/OpenSSL/provider.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c6a819935d946efbc2bc4bca2120834651a98971",
+            "size": 3383
+          },
+          {
+            "path": "macosx/include/OpenSSL/quic.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "31b33d53185e3f4af136f23f4d9b1a22dff24156",
+            "size": 2101
+          },
+          {
+            "path": "macosx/include/OpenSSL/rand.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "216cc9377450b09c7ad51fa65bfca24075f17117",
+            "size": 4058
+          },
+          {
+            "path": "macosx/include/OpenSSL/randerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c1ce068ba18e3697f103e496fb021e84d70f536",
+            "size": 2486
+          },
+          {
+            "path": "macosx/include/OpenSSL/rc2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "2ce0b59dd37dfe8bc7c22d8c1e16980d68146c3a",
+            "size": 1771
+          },
+          {
+            "path": "macosx/include/OpenSSL/rc4.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "97aee437893bd16da7031ed75ff1013ba4b69e64",
+            "size": 1075
+          },
+          {
+            "path": "macosx/include/OpenSSL/rc5.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9dc2456991c3f97106d01b6368c4807d4310b433",
+            "size": 2146
+          },
+          {
+            "path": "macosx/include/OpenSSL/ripemd.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "40954e4acd27df6098fe5cf81adb7516ae9ce8ce",
+            "size": 1537
+          },
+          {
+            "path": "macosx/include/OpenSSL/rsa.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "640440b7745c379deca122b7abd7861d645b15b0",
+            "size": 22275
+          },
+          {
+            "path": "macosx/include/OpenSSL/rsaerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "a4b58156ca9c0f76cb3824a0c9ea3156aa58948c",
+            "size": 3861
+          },
+          {
+            "path": "macosx/include/OpenSSL/safestack.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "49b212e864954d49110e60abdab24f784bca0a9f",
+            "size": 31977
+          },
+          {
+            "path": "macosx/include/OpenSSL/seed.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "cab6e8c8c60d9758073881e2ff63c14b9a349b24",
+            "size": 3611
+          },
+          {
+            "path": "macosx/include/OpenSSL/self_test.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "e4adf74992980977dc28a47009fc119ba93f19f4",
+            "size": 4816
+          },
+          {
+            "path": "macosx/include/OpenSSL/sha.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "834cbaec91c72e7e6669847b13891339124ea9ed",
+            "size": 4404
+          },
+          {
+            "path": "macosx/include/OpenSSL/shim.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c383b6d2a88745feb9c890b93c707eed4993590",
+            "size": 1020
+          },
+          {
+            "path": "macosx/include/OpenSSL/srp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "00fa1c66af3aed5635b755655e3931fb0c5e5148",
+            "size": 15162
+          },
+          {
+            "path": "macosx/include/OpenSSL/srtp.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "0a438885552dbe3ca7899ab4e9eda808d43ffa8f",
+            "size": 1888
+          },
+          {
+            "path": "macosx/include/OpenSSL/ssl.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "ad21dabaaabc932def63e1738787a4c232749ad9",
+            "size": 122373
+          },
+          {
+            "path": "macosx/include/OpenSSL/ssl2.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9a4323e6a32318f3fa65cce0daf55a5f3b7ea14d",
+            "size": 625
+          },
+          {
+            "path": "macosx/include/OpenSSL/ssl3.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "841dabb165599b3ad6906bdc489158c9743bb3f5",
+            "size": 12748
+          },
+          {
+            "path": "macosx/include/OpenSSL/sslerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "db5df5a34d2c9e0b2463d9fa0708b7e4163b67f4",
+            "size": 15413
+          },
+          {
+            "path": "macosx/include/OpenSSL/sslerr_legacy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "794a3e2cf82edc23b64b5c5c5356c7d3cbf4a427",
+            "size": 18269
+          },
+          {
+            "path": "macosx/include/OpenSSL/stack.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f0581efef582119b69574392d34c495bb5d11d69",
+            "size": 3290
+          },
+          {
+            "path": "macosx/include/OpenSSL/store.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "4fd161ed8e1c970c16751cb9de6c3c7b6634de4f",
+            "size": 14099
+          },
+          {
+            "path": "macosx/include/OpenSSL/storeerr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "10081125924f207ccc2899aa12f586bca3a4170b",
+            "size": 1702
+          },
+          {
+            "path": "macosx/include/OpenSSL/symhacks.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f46de44adee094d108e74872bb57fd16ad29c815",
+            "size": 1102
+          },
+          {
+            "path": "macosx/include/OpenSSL/thread.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "edd7c56a2c3684e1cc72907f1905e0c70c6b3f74",
+            "size": 865
+          },
+          {
+            "path": "macosx/include/OpenSSL/tls1.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "46f47d3dd7e26a687967cdfe8cf5140db495f19b",
+            "size": 63577
+          },
+          {
+            "path": "macosx/include/OpenSSL/trace.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f50a94f772896429e55189f0255e5062024bf587",
+            "size": 10823
+          },
+          {
+            "path": "macosx/include/OpenSSL/ts.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9e4f3ed381c1d307263aa5c7f65755fb4709592b",
+            "size": 19419
+          },
+          {
+            "path": "macosx/include/OpenSSL/tserr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "c4d099018e529dfaeb42938849917ad9fdc68361",
+            "size": 2077
+          },
+          {
+            "path": "macosx/include/OpenSSL/txt_db.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d6313fa4d67fed77c55bca6d383050bb57b4b657",
+            "size": 1635
+          },
+          {
+            "path": "macosx/include/OpenSSL/types.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3334a547eaf9e8a3159c0ad210441330d203230f",
+            "size": 7354
+          },
+          {
+            "path": "macosx/include/OpenSSL/ui.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "3ef2d511e7174fe44b222ef56dd1d4b60e51b106",
+            "size": 18513
+          },
+          {
+            "path": "macosx/include/OpenSSL/uierr.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "9c4060bc47a8ef794a0a3d710686870b00ab560d",
+            "size": 1062
+          },
+          {
+            "path": "macosx/include/OpenSSL/whrlpool.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "89aa60ea07eddff7e608938224e8489f16c56508",
+            "size": 1681
+          },
+          {
+            "path": "macosx/include/OpenSSL/x509.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "16c8e6c9436b546e7b52d3fcee195fd9f7189a61",
+            "size": 67562
+          },
+          {
+            "path": "macosx/include/OpenSSL/x509_acert.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "dd676d02e2224862bb02507b9895a6a5f27c33df",
+            "size": 21923
+          },
+          {
+            "path": "macosx/include/OpenSSL/x509_vfy.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "d4d85ac7d2a0fd453061c19cc6470c67ee2f54a2",
+            "size": 47818
+          },
+          {
+            "path": "macosx/include/OpenSSL/x509err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "157452a1ed7ac78093337e48e3773bbb44d96849",
+            "size": 2316
+          },
+          {
+            "path": "macosx/include/OpenSSL/x509v3.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "6b4b27b2804c35aecf173b34c75c4e754d0b2ef9",
+            "size": 129372
+          },
+          {
+            "path": "macosx/include/OpenSSL/x509v3err.h",
+            "mode": "100644",
+            "type": "blob",
+            "sha": "fa062b08e9c7b00298f557505669a9fe57d3c9c5",
+            "size": 3578
+          }
+        ],
+        "content_sha256_verified": false
+      },
+      "libraries": [
+        {
+          "path": "macosx/lib/libssl.a",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "a9191a6db4aabecab8a22c7316aac9a515f6a120",
+          "size": 3173672
+        },
+        {
+          "path": "macosx/lib/libcrypto.a",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "5462f1729148cf971667afc6791d72bd22673838",
+          "size": 15711656
+        }
+      ],
+      "environment": {
+        "AARCH64_APPLE_DARWIN_OPENSSL_LIB_DIR": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-darwin/lib",
+        "AARCH64_APPLE_DARWIN_OPENSSL_INCLUDE_DIR": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-darwin/include",
+        "AARCH64_APPLE_DARWIN_OPENSSL_STATIC": "1",
+        "AARCH64_APPLE_DARWIN_OPENSSL_NO_VENDOR": "1"
+      },
+      "binary_bytes_verified": false,
+      "native_compile_link_verified": false,
+      "header_views": {
+        "verified_source": "macosx/include/OpenSSL",
+        "uppercase_destination": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-darwin/include/OpenSSL",
+        "lowercase_destination": "${VERIFIED_OPENSSL_INPUTS}/aarch64-apple-darwin/include/openssl",
+        "method": "Both views must expose exactly the same verified complete header tree; use byte-identical copies or explicit safe internal aliases in a new isolated directory. On case-insensitive filesystems one physical directory may satisfy both lookups. Never alias outside the verified input root."
+      },
+      "required_header_configuration": {
+        "path": "macosx/include/OpenSSL/configuration.h",
+        "git_blob": "808d0144258d18722aaa0aaa67511503a9a7e5ce",
+        "sha256": "97e8953d286d3a2480035ec43e869cdcc2911dd2591900bfe079ad92e0d52f01",
+        "required_definitions": [
+          "OPENSSL_NO_SSLKEYLOG",
+          "OPENSSL_NO_DYNAMIC_ENGINE"
+        ],
+        "source_text_verified": true,
+        "native_input_must_reverify": true,
+        "native_preprocessor_assertions_required": true,
+        "binary_configuration_correspondence_verified": false
+      }
+    }
+  },
+  "producer_evidence": {
+    "path": "scripts/build.sh",
+    "git_blob": "65f0c109ced0bacd0aa4526531d1ccefa526a55e",
+    "source_claim": "Apple Configure invocations include no-shared; producer recipe is evidence, not proof of downloaded binary content",
+    "executed": false
+  },
+  "evidence_sha256": {
+    "upstream/LICENSE.txt": "97f8c5963a5159e790bcc908106ff22143f2f7f708bcc950f055aee96aecc0bb",
+    "upstream/OpenSSL.json": "f40571739f3ea22a75c2fa2bd6527d326cf30a4cfbc705771a89d71714065307",
+    "upstream/Package.swift": "da0fb480c7944e515a15960ed87afdd0f8b5522e4f98fee191ce224f05248323",
+    "upstream/iphoneos/include/OpenSSL/configuration.h": "01aaeb2d4ea6e701dfe569f6f239557d77a2025bb383c802141f97e7804a0713",
+    "upstream/iphonesimulator/include/OpenSSL/configuration.h": "01aaeb2d4ea6e701dfe569f6f239557d77a2025bb383c802141f97e7804a0713",
+    "upstream/macosx/include/OpenSSL/configuration.h": "97e8953d286d3a2480035ec43e869cdcc2911dd2591900bfe079ad92e0d52f01",
+    "upstream/scripts/build.sh": "ef87f76fb3e69600ff954b6e08bde6c1160c1dd59abdf5c80f5733322b8f933c"
+  },
+  "isolation": {
+    "inherit_ambient_openssl_or_pkg_config_environment": false,
+    "permit_global_host_openssl_fallback": false,
+    "target_inputs_must_be_explicit": true,
+    "change_main_default_features": false,
+    "change_cargo_lock": false
+  },
+  "package_resolution": {
+    "spm_binary_target": "Frameworks/OpenSSL.xcframework",
+    "equivalence_to_platform_static_libraries": "Not established by package-resolution success or metadata; separate static/header paths must be present and verified",
+    "automatic_framework_to_static_mapping": false,
+    "expected_framework_directories": {
+      "aarch64-apple-ios": "Frameworks/OpenSSL.xcframework/ios-arm64/OpenSSL.framework",
+      "aarch64-apple-ios-sim": "Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-simulator/OpenSSL.framework",
+      "aarch64-apple-darwin": "Frameworks/OpenSSL.xcframework/macos-arm64_x86_64/OpenSSL.framework"
+    },
+    "required_static_inputs_are_siblings_of_frameworks": true
+  },
+  "pending": [
+    "Obtain six exact static archives and all three complete header trees through authorized native CI input preparation",
+    "Verify each artifact Git blob and size before making target-specific lowercase header views; record resulting SHA256 inventories",
+    "Review the opt-in existing-library TLS source change and its feature selection",
+    "Run fixture-only tests and target compile/link checks with these explicit static inputs",
+    "Keep consumer integration and main composite gates unchanged until their separate completion criteria pass"
+  ],
+  "linkage_ownership": {
+    "status": "Unresolved; target inputs alone do not approve final link composition",
+    "provider_repository": "krzyzanowskim/OpenSSL",
+    "provider_commit": "fdc9231384f37f053dffe058fd6dfc6c5072dae5",
+    "duplicate_provider_permitted": false,
+    "existing_framework_may_be_removed_implicitly": false,
+    "requirement": "Review the final native link arrangement so the existing consumer framework and Rust archive do not introduce conflicting or duplicate OpenSSL ownership; no equivalence is inferred from identical package version alone."
+  },
+  "evidence_git_blobs": {
+    "upstream/LICENSE.txt": "90901d2164de30132ba592000b492a5bc49a258e",
+    "upstream/OpenSSL.json": "cb0536e1b3b50f28b6f0c11b87874898a00f0048",
+    "upstream/Package.swift": "204b148fda86330297b51adcae018c26d30dcbb2",
+    "upstream/iphoneos/include/OpenSSL/configuration.h": "7ddd320f7c2354e4078f1c92a355d819f8040445",
+    "upstream/iphonesimulator/include/OpenSSL/configuration.h": "7ddd320f7c2354e4078f1c92a355d819f8040445",
+    "upstream/macosx/include/OpenSSL/configuration.h": "808d0144258d18722aaa0aaa67511503a9a7e5ce",
+    "upstream/scripts/build.sh": "65f0c109ced0bacd0aa4526531d1ccefa526a55e"
+  }
+}

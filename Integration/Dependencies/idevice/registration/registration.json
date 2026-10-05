@@ -1,0 +1,56 @@
+{
+  "baseline_main_source_lock_sha256": "9352c4601afa296fdd4b40c36a68a98d612b7a5d9bd8cdf86abe72270de830cd",
+  "capture_source": {
+    "path": "bounded_process.py",
+    "scope": "reviewed bounded capture; host native stage observed by parent",
+    "sha256": "7724f6c3eb7d624f49a2651b30f1d6e6bb2c47d356449cd495fad28b2dd144e4"
+  },
+  "helper_ci_report": {
+    "artifact_sha256": "e092e87c9fc36c32e2627c8b3731b0e5fdb0537393bd7544bd96fb30360798fa",
+    "independently_verified_by_this_worker": false,
+    "macos_tooling_checks": 134,
+    "native_results": {
+      "bounded_rsd": 25,
+      "staged_pairing": 18
+    },
+    "source": "parent reported run37348967899 at6bf7b891"
+  },
+  "immutable_helper_profile_sha256": "f0198213de5859aa8550fb6de175a49cfda9040c15c29fba8a8a604f79cfd77d",
+  "pending": [
+    "Actual host72/combined92 fixture execution and native provider evidence",
+    "Apple C/Swift final link receipts and separate product integration approval"
+  ],
+  "profiles": {
+    "acquisition-only": {
+      "additional_features": [
+        "openssl"
+      ],
+      "authored_fixtures": 72,
+      "enabled": false,
+      "overlay_count": 11,
+      "path": "candidate-profiles/acquisition-only.json",
+      "sha256": "96d5abf7da2789f1695fc4096dc0deaebb87ae97912c77038d4e5874a206cdf4",
+      "test_only_execution_authorized": true
+    },
+    "combined": {
+      "additional_features": [
+        "openssl"
+      ],
+      "authored_fixtures": 92,
+      "enabled": false,
+      "overlay_count": 14,
+      "path": "candidate-profiles/combined.json",
+      "sha256": "2cf224f48563811cd38f130a1011d3c9c00ae15f24a19c2cb4b13a2ff46a6679",
+      "test_only_execution_authorized": true
+    }
+  },
+  "registered_source_receipts": {
+    "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
+    "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
+    "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
+    "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
+  },
+  "schema": 1,
+  "status": "Explicit opt-in host fixture source registration; artifact/product activation disabled",
+  "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76"
+}

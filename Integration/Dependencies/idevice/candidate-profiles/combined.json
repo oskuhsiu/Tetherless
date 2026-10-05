@@ -1,0 +1,272 @@
+{
+  "activation": {
+    "c_swift_link_receipt": null,
+    "consumer_integration_allowed": false,
+    "enabled": false,
+    "native_fixture_receipt": null,
+    "observed_toolchain_receipt": null,
+    "openssl": {
+      "actual_target_bytes_receipt": "registration/receipts/provider-contract.json",
+      "actual_target_bytes_receipt_sha256": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e",
+      "contract_path": "split-provider/target-inputs.json",
+      "contract_sha256": "20ee6e1e873cc8f6f83bf42b97e8760569a70ff95818d570a45e3966d63a9935",
+      "single_provider_linkage_receipt": null
+    },
+    "source_registration_verified": true,
+    "test_only_execution_authorized": true
+  },
+  "build_additional_features": [
+    "openssl"
+  ],
+  "consumer": {
+    "commit": "12be70dc2627307a16bfd2dc7a009080d5bec909",
+    "license_blob": "0ad25db4bd1d86c452db3f9602ccdbe172438f52",
+    "package_swift_blob": "9d2057d5e9130ae4e1a16aeb39670f70619b7db5",
+    "repository": "SideStore/minimuxer"
+  },
+  "edits": [
+    {
+      "after_sha256": "2f89a17998df876f11e2c35806b7a9030f935896872743bf188877efc598c7f1",
+      "before_sha256": "36111caf4c2bec04713859fb42b6ffd1ccb18850f22333fe224d62d642c411e3",
+      "new": "#[cfg(feature = \"house_arrest\")]\npub mod house_arrest;\n#[cfg(feature = \"house_arrest\")]\npub mod staged_pairing;\n#[cfg(all(feature = \"remote_pairing\", feature = \"house_arrest\", feature = \"tcp\", feature = \"rsd\", feature = \"tunnel_tcp_stack\", feature = \"openssl\"))]\npub mod staged_acquisition;\n#[cfg(all(unix, feature = \"remote_pairing\"))]\npub mod bounded_pairing_host;\n",
+      "old": "#[cfg(feature = \"house_arrest\")]\npub mod house_arrest;\n",
+      "path": "ffi/src/lib.rs"
+    },
+    {
+      "after_sha256": "3f11aafb4329728937689ef48783b32e696153c836d9fcc17f7d85fb14597000",
+      "before_sha256": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075",
+      "new": "plist = { version = \"1.7.1\", features = [\"enable_unstable_features_that_may_break_with_minor_version_bumps\"] }",
+      "old": "plist = \"1.7.1\"",
+      "path": "ffi/Cargo.toml"
+    }
+  ],
+  "evidence_sha256": {
+    "upstream/.github/workflows/ci.yml": "b5dee0a296b10e0f3b8b7f6993c2cb99c8b6d20ea37da2e20e880687ec278b44",
+    "upstream/.gitmodules": "af90802a99b765d0ce69bdcaa9fec8b24f7d51989e4ebf92d383db17dd44166b",
+    "upstream/Cargo.lock": "3c1a7710f0cd02f9100e91b97c9f8abc6546f115f7f3255551c990628aea0e16",
+    "upstream/Cargo.toml": "c390ce8ae9f2cee08b07d7bf726e928cf6fbcf2fbb9d9d02d9e9c266adcb41bf",
+    "upstream/LICENSE.txt": "131488ce7e302b9f62e3236793e57c86a208d3dfaf03e6d7d03ddc0fc82392ed",
+    "upstream/ffi/Cargo.toml": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075",
+    "upstream/ffi/build.rs": "4ed0afafbed97141a713f0a0ca6d2d2b78d79c7020342de20768856bc2a8310f",
+    "upstream/ffi/plist.h": "f3f055f92a9ff298a873bf6d2a5f6e47d5d405bef3d8b0153797c48c51ceff4c",
+    "upstream/ffi/src/lib.rs": "36111caf4c2bec04713859fb42b6ffd1ccb18850f22333fe224d62d642c411e3",
+    "upstream/idevice/Cargo.toml": "25626cb8dadd573abe483a0b1f5577c15026954a615b3d445e9aa54b451a469c",
+    "upstream/idevice/src/remote_pairing/mod.rs": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14",
+    "upstream/idevice/src/remote_pairing/opack.rs": "3001ea414840f6bd412d453ea87a4e2f086afc5089abca7a0b0287969e70290c",
+    "upstream/idevice/src/remote_pairing/responder.rs": "1135424851fd3dbf523cb95169b83bd2a972ffc386f9fff1159e773ff61f173b",
+    "upstream/idevice/src/remote_pairing/socket.rs": "7cf15ff60df0fea5612b0fd3b29b3e740e48b7450f9e3f88b2f9efbad99df836",
+    "upstream/idevice/src/remote_pairing/tunnel.rs": "b9910973a3252833b18b87a77bbf937573db3843f72caf949bd20e04ec563f0b",
+    "upstream/idevice/src/services/rsd.rs": "bdb483a6bbc30b586e4d2d04190d432219059149298c2bca85f9033042bd03f7",
+    "upstream/idevice/src/xpc/format.rs": "5a7e23455b0acef0c1b2adeb3878f55b3347d47c1476123655e4d8c4e515d963",
+    "upstream/idevice/src/xpc/http2/frame.rs": "66401681f71282c6c32f10ae806ff1d09a62e33aba59d49d27dcb9093428fc2a",
+    "upstream/idevice/src/xpc/http2/mod.rs": "020d77abec682abb17d58068693be3b10df5d8694932bf9ea06c8fd1deb2f6f9",
+    "upstream/idevice/src/xpc/mod.rs": "e4c86bc271f262ac06fab86316ecb604e744e8df4fb1e4945e5f9a3926a38f69",
+    "upstream/justfile": "78fc2d7fe3e7d25559f29dc7c7dbda8c14fa7a74e261a54431916056c437078b",
+    "upstream/minimuxer-LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+    "upstream/swift/Package.swift": "04dbaefcb9183b154399c9fc397efbd602a552327424075ce19ffd4c0f6f74d7",
+    "upstream/swift/include/module.modulemap": "d9f7093c17127841806e2ddffdf540ef1728ed29be75304687952bdb61ae9b82"
+  },
+  "fixture_inventory": {
+    "authored_count": 92,
+    "cargo_list_receipt": null,
+    "executed": false
+  },
+  "link_probes_complete": true,
+  "native_test_filters": [
+    {
+      "expected_passed": 18,
+      "filter": "staged_pairing::",
+      "package": "idevice-ffi"
+    },
+    {
+      "expected_passed": 25,
+      "filter": "bounded_rsd_tests",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 9,
+      "filter": "staged_acquisition::",
+      "package": "idevice-ffi"
+    },
+    {
+      "expected_passed": 3,
+      "filter": "remote_pairing::staged_contributory_tests::",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 2,
+      "filter": "remote_pairing::socket::staged_rp_socket_tests::",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 4,
+      "filter": "remote_pairing::tunnel::staged_openssl::tests::",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 4,
+      "filter": "remote_pairing::tunnel::staged_openssl_fixtures::",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 7,
+      "filter": "remote_pairing::tunnel::staged_packet_io::",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 8,
+      "filter": "bounded_pairing_host::",
+      "package": "idevice-ffi"
+    },
+    {
+      "expected_passed": 5,
+      "filter": "bounded_host_tests",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 3,
+      "filter": "bounded_host_frame_tests",
+      "package": "idevice"
+    },
+    {
+      "expected_passed": 4,
+      "filter": "bounded_opack_tests",
+      "package": "idevice"
+    }
+  ],
+  "native_test_filters_complete": true,
+  "overlays": [
+    {
+      "kind": "add",
+      "path": "ffi/src/staged_pairing.rs",
+      "sha256": "e827e5a464782009f4be7ab5557fecc449fe266836a3851bd1cbc97fa5637933"
+    },
+    {
+      "before_sha256": "e4c86bc271f262ac06fab86316ecb604e744e8df4fb1e4945e5f9a3926a38f69",
+      "kind": "replace",
+      "path": "idevice/src/xpc/mod.rs",
+      "sha256": "133875a825e20ff09dfacd4653d81977c03718fb6802d1d2dffdb365375acb16"
+    },
+    {
+      "before_sha256": "5a7e23455b0acef0c1b2adeb3878f55b3347d47c1476123655e4d8c4e515d963",
+      "kind": "replace",
+      "path": "idevice/src/xpc/format.rs",
+      "sha256": "ffb0cad9b15afbbf0a0d71e57bae73c8506f7d089a12d9508245a046f1ce6d74"
+    },
+    {
+      "before_sha256": "020d77abec682abb17d58068693be3b10df5d8694932bf9ea06c8fd1deb2f6f9",
+      "kind": "replace",
+      "path": "idevice/src/xpc/http2/mod.rs",
+      "sha256": "02f97206bef9a00d4cde14845443c23d9c0aba1d4c190588eced8b43da1100d8"
+    },
+    {
+      "before_sha256": "66401681f71282c6c32f10ae806ff1d09a62e33aba59d49d27dcb9093428fc2a",
+      "kind": "replace",
+      "path": "idevice/src/xpc/http2/frame.rs",
+      "sha256": "2d6c1299f7337c3f6a1e1514eb626b86f27cde50e8efe58367ece08f689ff1be"
+    },
+    {
+      "before_sha256": "bdb483a6bbc30b586e4d2d04190d432219059149298c2bca85f9033042bd03f7",
+      "kind": "replace",
+      "path": "idevice/src/services/rsd.rs",
+      "sha256": "016838732e04cd3cf920c4c0401fd42a8c3fc510470a9d6841de2659d65d51f4"
+    },
+    {
+      "kind": "add",
+      "path": "ffi/src/staged_acquisition.rs",
+      "sha256": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d"
+    },
+    {
+      "before_sha256": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/mod.rs",
+      "sha256": "738436e19a5a3e7d422ddf609404aa36d14df62c8a92a169f9bfa74df07a2c3f"
+    },
+    {
+      "before_sha256": "7cf15ff60df0fea5612b0fd3b29b3e740e48b7450f9e3f88b2f9efbad99df836",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/socket.rs",
+      "sha256": "98320de9588fc7e8bd713c43149845d04b6aa66df92a0ad3e3b8416a8a529b67"
+    },
+    {
+      "kind": "add",
+      "path": "idevice/src/remote_pairing/tunnel/staged_packet_io.rs",
+      "sha256": "6eccade39710d27ef0cbb9635c80abc98e314ca508acf0ca5c20218dd24bac34"
+    },
+    {
+      "before_sha256": "b9910973a3252833b18b87a77bbf937573db3843f72caf949bd20e04ec563f0b",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/tunnel.rs",
+      "sha256": "4c1d3c6196d30dc2e66a4e3c814af02a65162b26bfe69be67c02ea9766069163"
+    },
+    {
+      "kind": "add",
+      "path": "ffi/src/bounded_pairing_host.rs",
+      "sha256": "3b8f8ee659e81bb7e06efe0ede74aba833e6c44f44d9c553e4e10ae3888e723f"
+    },
+    {
+      "before_sha256": "3001ea414840f6bd412d453ea87a4e2f086afc5089abca7a0b0287969e70290c",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/opack.rs",
+      "sha256": "3ead51d183ee5667f0a9c838e43c6f9cbfa755c6c8354563e0fa81d3e78f7235"
+    },
+    {
+      "before_sha256": "1135424851fd3dbf523cb95169b83bd2a972ffc386f9fff1159e773ff61f173b",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/responder.rs",
+      "sha256": "2194dec98ea37aec7de109bc6ff0f2fa8acb3db7de9bd268f5adaae83f608954"
+    }
+  ],
+  "patch_complete": true,
+  "probe_sets": {
+    "host": {
+      "c": {
+        "path": "probes/host_probe.c",
+        "sha256": "42129aec681d6e9f20660c64390a5a704609dc907e5b649334aaa9b2ecc23788"
+      },
+      "swift": {
+        "path": "probes/host_probe.swift",
+        "sha256": "e926e8506bb848a061f1437557cf0144ae7da83874dcef8bedfc9f6e0afd7496"
+      }
+    },
+    "pairing": {
+      "c": {
+        "path": "probes/pairing_probe.c",
+        "sha256": "f398ec7dff51fa4c3468fbaddfe9ce41961bfd84a5754c0a9c63962fc4dddefd"
+      },
+      "swift": {
+        "path": "probes/pairing_probe.swift",
+        "sha256": "de282eca88cb5899ee6c2d14dbcd2cfc4ef2ec0febafb897342a69aec19ac77c"
+      }
+    }
+  },
+  "profile_kind": "registered-combined-candidate",
+  "registered_source_complete": true,
+  "registration_receipts": {
+    "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
+    "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
+    "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
+    "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
+  },
+  "required_ffi_symbols": [
+    "tetherless_pairing_validation_new",
+    "tetherless_pairing_validation_cancel",
+    "tetherless_pairing_validation_free",
+    "tetherless_pairing_validate_house_arrest",
+    "tetherless_pairing_validate_staged",
+    "tetherless_pairing_host_prepare",
+    "tetherless_pairing_host_cancel",
+    "tetherless_pairing_host_free",
+    "tetherless_pairing_host_accept_fd"
+  ],
+  "schema": 1,
+  "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8",
+  "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",
+  "status": "Reviewed component source and host input recipe; native fixtures pending; artifact/product activation disabled",
+  "upstream": {
+    "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+    "repository": "SideStore/idevice",
+    "tree": "5df506b11db33b97d3b963e3be3f095729a409da",
+    "url": "https://github.com/SideStore/idevice/tree/3e55c8486b2057e40c1f74aaaa1155c82341cf76"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "status": "Local source-only contributory-guard candidate; source re-review and native/runtime gates pending; publication blocked",
+  "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "overlay_root": "/workspace/scratch/30ad10c9f5dc/tetherless-contributory-acquisition/Integration/Dependencies/idevice/overlay",
+  "files": [
+    {
+      "path": "ffi/src/staged_acquisition.rs",
+      "mode": "add",
+      "overlay_sha256": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d"
+    },
+    {
+      "path": "idevice/src/remote_pairing/mod.rs",
+      "mode": "replace",
+      "overlay_sha256": "738436e19a5a3e7d422ddf609404aa36d14df62c8a92a169f9bfa74df07a2c3f",
+      "preimage_sha256": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14"
+    },
+    {
+      "path": "idevice/src/remote_pairing/socket.rs",
+      "mode": "replace",
+      "overlay_sha256": "98320de9588fc7e8bd713c43149845d04b6aa66df92a0ad3e3b8416a8a529b67",
+      "preimage_sha256": "7cf15ff60df0fea5612b0fd3b29b3e740e48b7450f9e3f88b2f9efbad99df836"
+    },
+    {
+      "path": "idevice/src/remote_pairing/tunnel/staged_packet_io.rs",
+      "mode": "add",
+      "overlay_sha256": "6eccade39710d27ef0cbb9635c80abc98e314ca508acf0ca5c20218dd24bac34"
+    },
+    {
+      "path": "idevice/src/remote_pairing/tunnel.rs",
+      "mode": "replace",
+      "overlay_sha256": "4c1d3c6196d30dc2e66a4e3c814af02a65162b26bfe69be67c02ea9766069163",
+      "preimage_sha256": "b9910973a3252833b18b87a77bbf937573db3843f72caf949bd20e04ec563f0b"
+    }
+  ],
+  "ffi_lib_insertion": "#[cfg(all(feature = \"remote_pairing\", feature = \"house_arrest\", feature = \"tcp\", feature = \"rsd\", feature = \"tunnel_tcp_stack\", feature = \"openssl\"))]\npub mod staged_acquisition;",
+  "required_stage_helper_sha256": "27cb432e982e8bc5b61eb7849a614385098adb195c33631a38e7576cffcdcdd7",
+  "test_filters": {
+    "idevice": [
+      "remote_pairing::socket::staged_rp_socket_tests::",
+      "remote_pairing::tunnel::staged_openssl::tests::",
+      "remote_pairing::tunnel::staged_openssl_fixtures::",
+      "remote_pairing::tunnel::staged_packet_io::",
+      "remote_pairing::staged_contributory_tests::"
+    ],
+    "idevice-ffi": [
+      "staged_acquisition::"
+    ]
+  },
+  "rust_tests_prepared": 29,
+  "rust_tests_executed": false,
+  "portable_tests_passed": 12,
+  "evidence": [
+    {
+      "path": "evidence/openssl-3.6.2/ssl/record/methods/tls_common.c",
+      "sha256": "c76bc9f4146c40a05cde3d3daff18f0ff7d91e15859cf40318bf592532250544",
+      "git_blob": "3971124d994e3024e7ea6b56cc80d107aab0ad35"
+    },
+    {
+      "path": "evidence/openssl-3.6.2/ssl/statem/statem.c",
+      "sha256": "8e73d78d32e44e6983e4b1889b7dfa1dae4546362a584a8cb626296ca1cbe2ef",
+      "git_blob": "3342cb06d2081d8ededdf133e985cf8e7a7edf66"
+    },
+    {
+      "path": "evidence/openssl-3.6.2/ssl/statem/statem_clnt.c",
+      "sha256": "984459f9d2bd62f493755438cb1cd7c468122a813e19db68815bc68fd06cbf25",
+      "git_blob": "6e440622f1f5a493c05e3ec7afa0e19b78c569f6"
+    },
+    {
+      "path": "evidence/openssl-3.6.2/ssl/statem/statem_local.h",
+      "sha256": "2e44868ad8d69cf43f026fb3c506cf52f8d9434b8ab50f45d675abe37e4bddd0",
+      "git_blob": "0ec4351cfde6da1b12ed015107b291dbb849cc27"
+    },
+    {
+      "path": "evidence/vendor/iphoneos/include/OpenSSL/configuration.h",
+      "sha256": "01aaeb2d4ea6e701dfe569f6f239557d77a2025bb383c802141f97e7804a0713",
+      "git_blob": "7ddd320f7c2354e4078f1c92a355d819f8040445"
+    },
+    {
+      "path": "evidence/vendor/iphoneos/include/OpenSSL/opensslconf.h",
+      "sha256": "c3a9f594cabb376bcb1dc475d89e09e4079739dd9f0218d6013793c3d06b11b2",
+      "git_blob": "4fdcbf77b17724214d36c935cd251bf4cea69403"
+    },
+    {
+      "path": "evidence/vendor/iphoneos/include/OpenSSL/ssl.h",
+      "sha256": "c45367fb81616550550632de04ec9e3315939cb4a31a7f04d6e8750351305824",
+      "git_blob": "ad21dabaaabc932def63e1738787a4c232749ad9"
+    },
+    {
+      "path": "evidence/vendor/iphoneos/include/OpenSSL/ssl3.h",
+      "sha256": "f5b61c8e9f6a30f54d54178bf9f915a10cbacb6c3dadbf9753096bc31fe24edf",
+      "git_blob": "841dabb165599b3ad6906bdc489158c9743bb3f5"
+    }
+  ],
+  "ownership_review_required": true,
+  "contributory_review_required": true,
+  "incremental_source_paths": [
+    "idevice/src/remote_pairing/mod.rs",
+    "ffi/src/staged_acquisition.rs"
+  ]
+}

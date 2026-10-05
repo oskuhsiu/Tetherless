@@ -61,7 +61,7 @@ def read_json(path: Path) -> dict | list:
 
 
 def load_lock(root: Path = HERE, lock_filename: str = "source-lock.json") -> dict:
-    if lock_filename not in ("source-lock.json", "helper-test-profile.json"):
+    if lock_filename not in ("source-lock.json", "helper-test-profile.json", "candidate-profiles/host-only.json", "candidate-profiles/acquisition-only.json", "candidate-profiles/combined.json"):
         raise VerificationError("unsupported source profile")
     lock = read_json(root / lock_filename)
     if lock.get("schema") != 1:
