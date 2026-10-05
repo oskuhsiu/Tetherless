@@ -96,6 +96,15 @@ final class PairingFileManager: NSObject {
         let record = try PairingRecord(data: Data(contents.utf8), expected: expected(preferred))
         return try NativeMutationGate.withSynchronousLease { try commit(record) }
     }
+    /// Generated remote records reach this entry only after joined staged
+    /// validation, through PairingPromotion's synchronous cancellation winner.
+    /// Keep the validated XML bytes; generic import normalization is separate.
+    @discardableResult
+    func saveValidatedRemotePairingRecord(_ record: PairingRecord) throws -> any PairingFile {
+        guard record.kind == .remote else { throw PrivateFileError.invalidContent }
+        guard record.xml.count <= 4096 else { throw PrivateFileError.tooLarge }
+        return try NativeMutationGate.withSynchronousLease { try commit(record) }
+    }
     /// Internal capability: a wireless session owns the same process lease until
     /// its callback finishes. Do not call this outside that session/import scope.
     fileprivate func commit(_ record: PairingRecord) throws -> any PairingFile {

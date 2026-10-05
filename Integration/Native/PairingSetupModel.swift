@@ -149,9 +149,9 @@ import IdeviceGateway
                 try store.read(AppConstants.Pairing.remotePairingFileName)
             }, commit: { [self] record in
                 // No await can intervene between the thread-safe winner and
-                // the existing reentrant, atomic protected-store operation.
+                // the existing reentrant protected-store commit and readback.
                 guard cancellation.beginPromotion() else { throw CancellationError() }
-                _ = try PairingFileManager.shared.savePairingFile(contents: record.content, preferred: .rppairing)
+                _ = try PairingFileManager.shared.saveValidatedRemotePairingRecord(record)
                 PairingFileManager.shared.preferredProtocol = .rppairing
             })
             switch result {

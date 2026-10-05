@@ -18,7 +18,14 @@ class PairingHostSourceTests(unittest.TestCase):
                          'Integration/pairing_safety.py', 'Sources/TetherlessCore/PrivateFileStore.swift']:
             if BASE != ROOT:
                 self.assertFalse((ROOT / relative).exists())
-        self.assertEqual(hashlib.sha256((BASE / 'Integration/Overrides/PairingFileManager.swift').read_bytes()).hexdigest(),
+        source = (BASE / 'Integration/Overrides/PairingFileManager.swift').read_text()
+        start = '    /// Generated remote records reach this entry only after joined staged\n'
+        end = '    /// Internal capability: a wireless session owns the same process lease until\n'
+        self.assertEqual(source.count(start), 1)
+        before, rest = source.split(start, 1)
+        _, after = rest.split(end, 1)
+        # The additive typed entry must leave every existing manager byte intact.
+        self.assertEqual(hashlib.sha256((before + end + after).encode()).hexdigest(),
                          '6ef6d342f3fd2f291b3e935a190cd4dd00b40c74bdf5cceb4a779d6c9f9cf84a')
 
     def test_native_bridge_reserves_entry_and_copies_pin_before_dispatch(self):

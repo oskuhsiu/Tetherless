@@ -20,7 +20,14 @@ class PairingCompositionContractTests(unittest.TestCase):
 
     def test_existing_protected_import_store_is_unchanged(self):
         source = BASE / 'Integration/Overrides/PairingFileManager.swift'
-        self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(),
+        text = source.read_text()
+        start = '    /// Generated remote records reach this entry only after joined staged\n'
+        end = '    /// Internal capability: a wireless session owns the same process lease until\n'
+        self.assertEqual(text.count(start), 1)
+        before, rest = text.split(start, 1)
+        _, after = rest.split(end, 1)
+        # Only the typed entry is new. The generic import/reset/commit bytes stay pinned.
+        self.assertEqual(hashlib.sha256((before + end + after).encode()).hexdigest(),
                          '6ef6d342f3fd2f291b3e935a190cd4dd00b40c74bdf5cceb4a779d6c9f9cf84a')
         new = (ROOT / 'Integration/Overrides/OnboardingView.swift').read_text()
         self.assertIn('hostPairingPresentation == hostDismissalRequest', new)
@@ -40,8 +47,9 @@ class PairingCompositionContractTests(unittest.TestCase):
     def test_generation_is_not_identity_and_commit_uses_existing_store(self):
         source = (ROOT / 'Integration/Native/PairingSetupModel.swift').read_text()
         commit = source.split('}, commit: { [self] record in', 1)[1].split('})', 1)[0]
-        self.assertLess(commit.index('cancellation.beginPromotion()'), commit.index('savePairingFile'))
-        self.assertIn('preferred: .rppairing', commit)
+        self.assertLess(commit.index('cancellation.beginPromotion()'), commit.index('saveValidatedRemotePairingRecord'))
+        self.assertIn('saveValidatedRemotePairingRecord(record)', commit)
+        self.assertNotIn('record.content', commit)
         self.assertIn('PairingPeerAddress.connectedPeer(descriptor: socket.descriptor)', source)
         self.assertIn('Bundle.main.bundleIdentifier', source)
         self.assertIn('try await challenge.closeAfterValidation()', source)

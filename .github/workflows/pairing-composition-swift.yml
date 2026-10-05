@@ -11,7 +11,12 @@ on:
       - 'Integration/Native/PairingEndpointResolver.swift'
       - 'Integration/Native/PairingSetupModel.swift'
       - 'Integration/Native/PairingSetupView.swift'
+      - 'Integration/Native/NativePairingMutation.swift'
       - 'Integration/Overrides/OnboardingView.swift'
+      - 'Integration/Overrides/PairingFileManager.swift'
+      - 'Integration/fixtures/PairingGeneratedPromotionCommon.swift'
+      - 'Integration/fixtures/PairingGeneratedPromotionMain.swift'
+      - 'Integration/fixtures/PairingGeneratedPromotionSupport.swift'
       - 'Integration/fixtures/NativeStagedPairingValidatorTests.swift'
       - 'Integration/fixtures/PairingBonjourListenerTests.swift'
       - 'Integration/fixtures/PairingCompositionPackage.swift'
@@ -19,19 +24,24 @@ on:
       - 'Integration/fixtures/PairingValidationFFISpy/include/IDevice.h'
       - 'Integration/fixtures/PairingValidationFFISpy/spy.c'
       - 'Integration/tests/test_pairing_composition.py'
+      - 'Integration/tests/test_pairing_generated_promotion.py'
+      - 'Integration/tests/test_pairing_generated_promotion_workflow.py'
       - 'Integration/tests/test_verify_pairing_composition.py'
       - 'Integration/verify_pairing_composition.py'
       - 'Sources/TetherlessCore/NativeCallLifetime.swift'
+      - 'Sources/TetherlessCore/MutationScope.swift'
       - 'Sources/TetherlessCore/PairingCancellationController.swift'
       - 'Sources/TetherlessCore/PairingNumericEndpoint.swift'
       - 'Sources/TetherlessCore/PairingPromotion.swift'
       - 'Sources/TetherlessCore/PairingRecord.swift'
+      - 'Sources/TetherlessCore/PairingReset.swift'
       - 'Sources/TetherlessCore/PairingValidationChallenge.swift'
       - 'Sources/TetherlessCore/PrivateFileStore.swift'
       - 'Tests/TetherlessCoreTests/NativeCallLifetimeTests.swift'
       - 'Tests/TetherlessCoreTests/PairingCancellationControllerTests.swift'
       - 'Tests/TetherlessCoreTests/PairingNumericEndpointTests.swift'
       - 'Tests/TetherlessCoreTests/PairingPromotionTests.swift'
+      - 'Tests/TetherlessCoreTests/PairingPromotionBoundaryTests.swift'
       - 'Tests/TetherlessCoreTests/PairingValidatedPromotionTests.swift'
       - 'Tests/TetherlessCoreTests/PairingValidationChallengeTests.swift'
   workflow_dispatch:
@@ -93,6 +103,89 @@ jobs:
         with:
           name: pairing-composition-swift-${{ github.sha }}-${{ github.run_attempt }}
           path: .pairing-composition-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+  generated-promotion-fixtures:
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Record promotion source and synthetic seam scope
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          test ! -e .pairing-generated-promotion-evidence
+          mkdir .pairing-generated-promotion-evidence
+          python3 - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          paths = [
+              '.github/workflows/pairing-composition-swift.yml',
+              'Integration/Overrides/PairingFileManager.swift',
+              'Integration/Native/PairingSetupModel.swift',
+              'Integration/Native/NativePairingMutation.swift',
+              'Integration/fixtures/PairingGeneratedPromotionCommon.swift',
+              'Integration/fixtures/PairingGeneratedPromotionMain.swift',
+              'Integration/fixtures/PairingGeneratedPromotionSupport.swift',
+              'Integration/tests/test_pairing_generated_promotion.py',
+              'Integration/tests/test_pairing_generated_promotion_workflow.py',
+              'Integration/verify_pairing_composition.py',
+              'Integration/Dependencies/idevice/apply_patch.py',
+              'Integration/Dependencies/idevice/bounded_process.py',
+              'Sources/TetherlessCore/PairingRecord.swift',
+              'Sources/TetherlessCore/PrivateFileStore.swift',
+              'Sources/TetherlessCore/PairingReset.swift',
+              'Sources/TetherlessCore/MutationScope.swift',
+              'Sources/TetherlessCore/PairingPromotion.swift',
+              'Sources/TetherlessCore/PairingCancellationController.swift',
+          ]
+          Path('.pairing-generated-promotion-evidence/run-context.json').write_text(json.dumps({
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'runner_arch': platform.machine(),
+              'image_os': os.environ.get('ImageOS'),
+              'image_version': os.environ.get('ImageVersion'),
+              'developer_dir': os.environ['DEVELOPER_DIR'],
+              'source_sha256': {path: hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in paths},
+              'expected_cases_per_configuration': 8,
+              'configurations': ['debug', 'optimized'],
+              'scope': 'Actual manager/store/reset/synchronous-wrapper fixtures with synthetic external parser, app state and process-lease acquisition',
+              'actual_idevice_ffi': False,
+              'real_parser_or_os_process_lock': False,
+              'device_or_product_acceptance': False
+          }, indent=2) + '\n')
+          PY
+      - name: Execute actual manager Debug and optimized fixtures
+        timeout-minutes: 9
+        env:
+          TETHERLESS_PAIRING_GENERATED_EVIDENCE_ROOT: ${{ github.workspace }}/.pairing-generated-promotion-evidence/fixtures
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          python3 -m unittest discover -s Integration/tests -p test_pairing_generated_promotion.py -v \
+            2>&1 | tee .pairing-generated-promotion-evidence/tests.log
+      - name: Check exact promotion workflow contract
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s Integration/tests -p test_pairing_generated_promotion_workflow.py -v \
+            2>&1 | tee .pairing-generated-promotion-evidence/workflow-tests.log
+      - name: Retain promotion evidence without fixture binaries or stores
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 2
+        with:
+          name: pairing-generated-promotion-${{ github.sha }}-${{ github.run_attempt }}
+          path: .pairing-generated-promotion-evidence/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
