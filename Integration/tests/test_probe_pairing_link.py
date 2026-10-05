@@ -50,7 +50,9 @@ class FakeTools:
 class PairingLinkProbeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.base = Path(self.temp.name)
+        # macOS may expose its owned temp directory through a /var alias.
+        # Canonicalize only this test-created root, never production inputs.
+        self.base = Path(self.temp.name).resolve()
         self.artifacts = self.base / 'artifacts'
         self.framework = self.artifacts / 'devicegateway/IDevice/IDevice.xcframework'
         self.framework.mkdir(parents=True)
@@ -75,6 +77,34 @@ class PairingLinkProbeTests(unittest.TestCase):
     def tearDown(self):
         for item in self.patches: item.stop()
         self.temp.cleanup()
+
+    def test_owned_fixture_alias_is_canonicalized_but_raw_symlink_inputs_stay_rejected(self):
+        # Model macOS's platform temp alias on every host, exercising the actual
+        # fixture setup rather than weakening the probe's no-symlink policy.
+        real_parent = self.base / 'owned-temp-parent'
+        real_parent.mkdir()
+        alias_parent = self.base / 'platform-temp-alias'
+        alias_parent.symlink_to(real_parent, target_is_directory=True)
+        nested = PairingLinkProbeTests('test_both_compilers_and_platforms_are_separate_and_never_executed')
+        with patch.object(tempfile, 'tempdir', str(alias_parent)):
+            nested.setUp()
+        try:
+            raw_base = Path(nested.temp.name)
+            self.assertNotEqual(raw_base, nested.base)
+            self.assertEqual(raw_base.resolve(), nested.base)
+            self.assertTrue(nested.base.is_relative_to(real_parent))
+            tools = FakeTools()
+            result = m.probe(nested.artifacts, nested.output, tools)
+            self.assertEqual(result['status'], 'passed')
+            rejected_tools = FakeTools()
+            result = m.probe(raw_base / 'artifacts', nested.base / 'rejected-input', rejected_tools)
+            self.assertEqual(result['status'], 'unsupported_package_identity')
+            self.assertEqual(rejected_tools.calls, [])
+            with self.assertRaisesRegex(ValueError, 'output parent has a symlink component'):
+                m.probe(nested.artifacts, raw_base / 'rejected-output', rejected_tools)
+            self.assertEqual(rejected_tools.calls, [])
+        finally:
+            nested.tearDown()
 
     def test_both_compilers_and_platforms_are_separate_and_never_executed(self):
         tools = FakeTools()
