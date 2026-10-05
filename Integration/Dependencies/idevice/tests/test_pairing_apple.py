@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import bounded_process
 import build_pairing_apple as apple
+from test_pairing_result_header import generated_fixture, write_generated_fixture
 from apply_patch import VerificationError, canonical_json, git_blob, sha256
 from test_apple_source_bundle import make_archive, write_vendor, write_workspace
 
@@ -56,7 +57,7 @@ class AppleFixture:
         root.mkdir()
         self.recipe = root / "recipe"
         self.profile = json.loads((ROOT / apple.PROFILE).read_bytes())
-        names = [apple.PROFILE, "split-provider/header_probe.c"]
+        names = [apple.PROFILE, "split-provider/header_probe.c", "overlay/ffi/pairing_result_abi.h"]
         names += [p["path"] for group in self.profile["probe_sets"].values() for p in group.values()]
         for name in names:
             path = self.recipe / name
@@ -202,10 +203,10 @@ class AppleFixture:
             (out.parent / "output").write_bytes(selected_output)
             library = work / "target" / target_name / "release/libidevice_ffi.a"
             library.write_bytes(b"opaque Rust archive fixture; never inspected or executed\n" + target_name.encode() + b"\n")
-            (source / "ffi/idevice.h").write_text("\n".join("void " + symbol + "(void);" for symbol in self.profile["required_ffi_symbols"]))
+            other = "\n".join("void " + symbol + "(void);" for symbol in self.profile["required_ffi_symbols"])
             if self.mismatched_headers and target_name.endswith("-sim"):
-                with (source / "ffi/idevice.h").open("a") as stream:
-                    stream.write("\n// controlled simulator header difference\n")
+                other += "\n// controlled simulator header difference\n"
+            write_generated_fixture(source, other.encode())
             event = artifact(source, target, self.defaults)
             if self.bad_features == "artifact":
                 event["features"].append(apple.FORBIDDEN_FEATURE)
@@ -409,7 +410,7 @@ class AppleRunnerTests(unittest.TestCase):
             self.assert_audits(fixture, target)
             self.assertEqual(row["source_manifest"]["source_profile"], apple.PROFILE)
             self.assertEqual(row["system_link_flags"], SYSTEM_FLAGS)
-            self.assertEqual(len(row["link_probes"]), 4)
+            self.assertEqual(len(row["link_probes"]), 6)
             self.assertFalse(row["header_probe_linked_or_executed"])
             self.assertIn("-fsyntax-only", row["header_probe_command"])
             self.assertNotIn("-o", row["header_probe_command"])

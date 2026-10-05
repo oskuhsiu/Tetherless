@@ -1,22 +1,26 @@
 # Tetherless development status
 
-Evidence checkpoint: **2026-10-05 22:19 UTC**. All five Rust lanes at 1ed3b9c
-report success; the full acquisition transcript's three tests are independently
-reconciled. Apple iOS-arm64 release Rust compilation succeeds, then artifact
-selection fails before any Simulator slice or C/Swift probes. A selector repair
-is under review. The exact historical UI-event query ends inconclusively and that
-diagnostic path stops. The original 16-task plan remains open; no app, release or
-consolidated phone readiness is claimed.
+Evidence checkpoint: **2026-10-05 23:25 UTC**. At bdb4d45, all five Rust lanes
+report success. Apple device Rust compilation, exact Cargo artifact selection and
+the C host link probe pass; the Swift host probe fails on an imported result-type
+name collision. Its repair remains pending. Typed pairing-record promotion and
+its harness pass eight actual-manager cases per configuration at bf077f8; 41
+composition cases also pass per mode. Host Core passes; iOS Core fails three
+unchanged 60-second Swift Testing limits while all 33 XCTest cases pass.
+Saving a record does not prove the active backend uses it. The original 16-task plan remains
+open; no app, release or consolidated phone readiness is claimed.
 
 - develop: **3d97ef75a224a76f84ba6741da8d9a6b89f99217**, unchanged
-- Published diagnostic source on **verify/staged-pairing-native**:
-  **ec7e229cc3b6d7bbf715225dc545481c213f81dd**; tree
-  5a70ead2300f3b161ea42fa13d53c18149662041, 544 leaves
-- Native proof source: **1ed3b9c96810fa78c387da15ecbee8a544a1b68c**; tree
-  76ad67dc62e7a24d1716154f6f78df5ceca78a39, 540 leaves. ec7e229 adds only four
-  diagnostic files; native results stay attributed to 1ed3b9c
-- Next repair candidate: exact commit and CI identities pending; no new execution
-  is inferred from the completed results below
+- Published source on **verify/staged-pairing-native**:
+  **bf077f8ee433524422efc0ae6c2a8720c8cd6d4e**; tree
+  6e8e2532794dc6cef7fd5206d3afa989bba177eb, 552 leaves
+- Latest native proof source: **bdb4d45c717a2a661d5a8814b6b6d18d5f88e0a3**;
+  tree 2aa598314ff123c608494a513ea5334fb8399d9f, 546 leaves. The 11-file promotion
+  successor leaves the native recipe unchanged; native results stay tied to bdb4d45
+- Apple header repair and gated UI work remain in review, without native-success
+  credit. The ODA cleanup candidate has no blocking source-review findings and is
+  unpublished; its Swift cases remain unrun. Automatic iOS Core retry is forbidden;
+  no rerun is planned
 - Earlier native app verification branch verify/native-gates-c5f5547 remains at
   **1fc8968f1d37b59717cd655b9b8f7fc8ccc7f566**. Its Debug/Core/iOS Core results do
   not validate the later app composition or newer native artifacts
@@ -29,12 +33,17 @@ records exact runs, artifacts, failures and verification limits.
 
 | Source and run | Established result | Limit |
 |---|---|---|
-| 1ed3b9c, [native proof 37378994528](https://github.com/oskuhsiu/Tetherless/actions/runs/37378994528) | All five Rust lanes succeed by API status. Acquisition transcript: three native success/cancellation/deadline fixtures independently verify, with source/provider audits, hashes and joins | Current host 26, acquisition 74, combined 100 and host transcript 10 artifacts are not yet separately reconciled. Their earlier 3ae artifacts remain verified; neither result is physical compatibility |
-| Same 1ed3b9c run, Apple producer | Actual iOS-arm64 release Rust build succeeds in 197.595 seconds, with provider-header and feature-graph checks | Artifact selector rejects a legitimate same-manifest custom-build/bin record before the staticlib. No Simulator slice, C/Swift probes or XCFramework; selector repair under review |
+| bf077f8, [Swift promotion/composition 37386817674](https://github.com/oskuhsiu/Tetherless/actions/runs/37386817674) | Independently reconciled: eight actual-manager cases pass in each Debug/optimized configuration; 41 composition cases pass in each Debug/Release mode. Source hashes and all command joins verify | Manager harness uses synthetic parser/app state/process-lease acquisition; composition uses a C ownership spy. No native parser, OS lock, live backend, real Rust ABI or UIKit acceptance |
+| bf077f8, [host Core 37386817620](https://github.com/oskuhsiu/Tetherless/actions/runs/37386817620) | Raw logs independently verify 345 Swift Testing + 33 XCTest cases in each Debug/Release mode, including eight new promotion-boundary cases | Host evidence; [app run 37386817575](https://github.com/oskuhsiu/Tetherless/actions/runs/37386817575) is skipped |
+| bf077f8, [iOS Core 37386817629](https://github.com/oskuhsiu/Tetherless/actions/runs/37386817629) | All 33 XCTest cases pass, including eight promotion-boundary cases; the separate 20-case Swift Testing target also passes | The 339-case Core target fails three unchanged 60-second limits. A 101.863-second gap occurs between adjacent trace statements after an await returned. Cause unknown; classifier forbids automatic retry and no rerun is planned |
+| bdb4d45, [native proof 37384014669](https://github.com/oskuhsiu/Tetherless/actions/runs/37384014669) | All five Rust lanes report success by API status | Current Rust artifacts are not separately reconciled here. Earlier 3ae component/host transcript and 1ed acquisition transcript artifacts retain their exact scope |
+| Same bdb4d45 run, Apple producer | Device release Rust build passes in 177.527 seconds; exact Cargo selection and the C host link probe pass | Swift host probe fails on the duplicate enum/UInt32 name TetherlessPairingHostResult. Source review identifies the analogous validation-result collision; its probe was not reached. No Simulator slice or XCFramework |
+| Historical 1ed3b9c, [native proof 37378994528](https://github.com/oskuhsiu/Tetherless/actions/runs/37378994528) | All five Rust lanes succeed by API status. Acquisition transcript: three native success/cancellation/deadline fixtures independently verify, with source/provider audits, hashes and joins | That run’s host 26, acquisition 74, combined 100 and host transcript 10 artifacts are not yet separately reconciled. Their earlier 3ae artifacts remain verified; neither result is physical compatibility |
+| Same historical 1ed3b9c run, Apple producer | Actual iOS-arm64 release Rust build succeeds in 197.595 seconds, with provider-header and feature-graph checks | Artifact selector rejects a legitimate same-manifest custom-build/bin record before the staticlib. That selector failure is resolved by bdb4d45; this earlier run produced no probes or XCFramework |
 | ec7e229, [exact-event query 37381049415](https://github.com/oskuhsiu/Tetherless/actions/runs/37381049415) | Bounded export/query/cleanup pass; one exact hash/time/activity record matches | Static template is “assertion failure: <value>”; no operation/error is recovered, and four unsupported lines prevent complete identification. Stop this diagnostic path without rerun or widening |
 | 3ae371e, [native proof 37375339856](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339856) | Verified host 26 including six M5 tests, acquisition 74, combined 100 and ten complete synthetic host transcript tests pass; source/provider audits, hashes and command joins verify | Acquisition transcript's three tests stop at Rust E0277 compilation of synthetic peer Properties: {}; Apple producer stops before compilation on a Swift version-stream comparison. No Apple artifact, app or device acceptance |
 | 3ae371e, [Swift composition 37375339728](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339728) | 41 cases pass in each Debug/Release mode; all 24 source hashes and command joins verify | Synthetic C ownership spy; no actual Rust ABI or UIKit compilation |
-| 3ae371e, [host Core 37375339731](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339731) | Raw job log verifies 345 Swift Testing + 25 XCTest cases in each Debug/Release configuration | No new iOS Core run was triggered; its reviewed evidence remains at ad9b33f |
+| 3ae371e, [host Core 37375339731](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339731) | Raw job log verifies 345 Swift Testing + 25 XCTest cases in each Debug/Release configuration | No iOS Core run was triggered at 3ae; later bf077 evidence is recorded separately |
 | 3ae371e analysis of historical 3d97 UI, [37375339797](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339797) | Archive export/query and cleanup succeed; sanitizer records 803 events from 807 nonblank lines | Four unparsed/out-of-scope records leave gaps. Enumeration precedes root activation; warning/timeout mentions establish no actionable cause or product fix |
 | 6bf7b89, [37348967899](https://github.com/oskuhsiu/Tetherless/actions/runs/37348967899) | Actual Rust helper/RSD suites pass 18 + 25 fixtures; retained checksums, vendor audits, README alias identity and process cleanup pass | Host fixtures only; no whole pairing transcript, iOS ABI or app activation |
 | Historical 1366ace, [37362664851](https://github.com/oskuhsiu/Tetherless/actions/runs/37362664851) | Host-only profile passes 20 fixtures. Acquisition and combined profiles compile and pass preceding 18/25 suites | Both then abort in the same composite cancellation fixture with stack overflow/SIGABRT. Keep these failures tied to 1366ace |
@@ -69,9 +78,20 @@ transcript success now has native evidence at 1ed3b9c. The Apple artifact and re
 C/Swift probes, diagnostic iOS consumer and actual UIKit composition remain open.
 
 The earlier synthetic-peer typing and version-stream blockers are resolved at
-1ed3b9c. The current Apple boundary is artifact selection after successful device
-compilation. Pairing promotion entry remains separate active development, with
-no activation claim. These paths are separate from paused app-signing work.
+1ed3b9c, and exact Cargo artifact selection now passes at bdb4d45. The current
+Apple boundary is Swift import of the generated result types, after successful
+device compilation and C host linking. Its narrow repair remains pending.
+
+The 11-file typed promotion/harness slice is published at bf077f8. Its actual
+manager passes eight cases per configuration and the composition spy passes 41
+per mode; host Core also passes. iOS Core passes the new XCTest cases but fails
+three unchanged Swift Testing deadlines. Exact-record
+persistence and live-backend
+readiness remain separate: existing reload passes new bytes but reuses the cached
+protocol, and it does not prove all callers and native adapter workers have
+quiesced. Do not treat saved bytes, restart or reload success as active-backend
+proof. A safe handoff using the committed record and intended protocol remains
+open. Pairing gates stay off; this work is separate from paused app-signing scope.
 A same-container challenge is not hardware attestation and cannot exclude an
 active relay or compromised OS.
 
@@ -92,6 +112,15 @@ portable checks pass; its real Swift spy remains pending the normal native
 Integration phase. Earlier 1fc IDevice logger-Off tests do not validate EMProxy,
 erase prior logs or reconfigure an already initialized subscriber.
 
+Portable journal/lock coverage already includes write-ahead and commit failures,
+partial success, cancellation and reconciliation without duplicate mutation.
+The concrete unpaused cleanup gap is cross-cleaner ownership: generic cache
+clearing can delete `tmp/tetherless-oda-transfers-v1`, including its active stage
+and stable `usage.lock`. Its four-file candidate has no blocking independent
+source-review findings: 23 portable checks pass and five Swift checks are skipped.
+It remains unpublished and needs actual Swift composition execution. Native
+integration and physical interruption/recovery still need their own evidence.
+
 ## Timing evidence is not a production lock fix
 
 Three original 60-second tests failed in the earlier 3ace iOS Core run. At 1366ace,
@@ -101,11 +130,19 @@ instrumented test bodies are about 0.26 seconds. These distinct runs preserve
 their assertions and bounds. They establish neither a unique cause for the
 earlier stalls nor a production locking repair.
 
+At bf077f8, iOS Core repeats the three unchanged 60-second failures. The interval
+from `admittedParentWaitAfter` to adjacent `admittedParentReturning` is
+101.862882459 seconds, after the await returned and with no intervening await or
+lease operation. Scheduling, diagnostic I/O, test-framework or runtime causes
+remain unresolved. This is not proof of a production lock defect. The aligned
+classifier identifies the repeated symptom, prohibits automatic retry and requires
+new evidence before any run; no rerun is planned.
+
 ## Remaining closure boundaries
 
 | Type | Required closure |
 |---|---|
-| Feasible active, non-device | Review and verify the Apple artifact selector; then obtain the Simulator slice, C/Swift probes and XCFramework before diagnostic-consumer/actual UIKit evidence. Continue the separate pairing promotion entry with gates off. Stop the exhausted exact-event path; any different UI work needs a new evidence-backed decision. Integrate one candidate without weakened assertions |
+| Feasible active, non-device | Repair and verify generated-header Swift import; then complete both API probes, Simulator slice and XCFramework before diagnostic-consumer/actual UIKit evidence. Respect the repeated iOS Core failure’s no-retry decision and verify a quiescent committed-record/protocol handoff, with gates off. Execute the reviewed ODA cleanup candidate’s Swift composition checks before integration credit. Stop the exhausted exact-event path; any different UI work needs a new evidence-backed decision. Integrate one candidate without weakened assertions |
 | Delivery and external evidence | Complete corresponding/producer source, linked notices, applicable relinking materials and durable delivery. Establish essential ADI authenticity/admission and acquisition/use basis, exact Unicorn combined-license compatibility and retained binary provenance |
 | Paused | Signing-admission, manager-replacement integration and aggregate install RAM/disk budget work remain unpublished and uncredited, including dependent startup/Core Data callback ownership. This pairing work neither reviews nor bypasses that pause |
 | Physical, later | One consolidated authorized phone phase after feasible implementation and non-device gates: login/2FA, permissions, valid pairing/recovery, install/launch, profile application/readback, next-day locked-screen renewal and expiry crossing |

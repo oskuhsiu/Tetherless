@@ -179,6 +179,17 @@
       "kind": "replace",
       "path": "idevice/src/remote_pairing/responder.rs",
       "sha256": "fb03dbd4b6c727ca2432269d8ad763b93e2cdc51d251b830f827316825c27909"
+    },
+    {
+      "before_sha256": "4ed0afafbed97141a713f0a0ca6d2d2b78d79c7020342de20768856bc2a8310f",
+      "kind": "replace",
+      "path": "ffi/build.rs",
+      "sha256": "86c02e14c2dc7ec9e492de85cf5e079d01f87f97976c0ba78f1a1d358ebe5382"
+    },
+    {
+      "kind": "add",
+      "path": "ffi/pairing_result_abi.h",
+      "sha256": "d9067c1343c078fc208221330f65f13afdbaeeb50aff7dc3e14ad64d284f6450"
     }
   ],
   "patch_complete": true,
@@ -190,6 +201,10 @@
     "pairing": {
       "c": "tetherless_c_link_probe",
       "swift": "tetherless_swift_link_probe"
+    },
+    "result_constants": {
+      "c": "tetherless_result_constants_c_probe",
+      "swift": "tetherless_result_constants_swift_probe"
     }
   },
   "probe_sets": {
@@ -212,6 +227,16 @@
         "path": "probes/pairing_probe.swift",
         "sha256": "de282eca88cb5899ee6c2d14dbcd2cfc4ef2ec0febafb897342a69aec19ac77c"
       }
+    },
+    "result_constants": {
+      "c": {
+        "path": "probes/result_constants_probe.c",
+        "sha256": "7d883b423b97d66e04e25ea0ccc64c77446b72043f0f048b10c12854dbfd92e1"
+      },
+      "swift": {
+        "path": "probes/result_constants_probe.swift",
+        "sha256": "04baa6277469de8377e251404d5a69c6d5cfff0b990e8b0e11e8940b1810cc0d"
+      }
     }
   },
   "profile_kind": "apple-pairing-production-verification",
@@ -225,6 +250,7 @@
     "registration/receipts/host-controller-signature-validation.json": "b04ed250fcf75a03315dc6e7ba2b84ed269a1549c3ac9a023ea20a95839e69b0",
     "registration/receipts/host-controller-signature.json": "a4b8e30b2a83e2dca1122221021b3a44be8647dfe239cb1c139bc60437dcc3a9",
     "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
+    "registration/receipts/pairing-result-header.json": "b90a4c85e9618a093569f59fee64f7968d6f3bb9cb44106d23e81abbd18ea625",
     "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
   },
   "required_ffi_symbols": [
@@ -238,6 +264,14 @@
     "tetherless_pairing_host_free",
     "tetherless_pairing_host_accept_fd"
   ],
+  "result_header_contract": {
+    "declarations": "overlay/ffi/pairing_result_abi.h",
+    "generated_baseline": "ffi/idevice.cbindgen-baseline.h",
+    "generated_scoped": "ffi/idevice.cbindgen-scoped.h",
+    "native_import_verified": false,
+    "schema": 1,
+    "scope": "Exactly two uint32 result aliases and integer constant expression macros; original Rust enums unchanged"
+  },
   "schema": 1,
   "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8",
   "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",

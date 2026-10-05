@@ -1,0 +1,38 @@
+{
+  "archive_sha256": "befbfd072a8e81c02f8c507aefce431fe5e7d051f83d48a23ffc9b9fe5a11799",
+  "commit": "76f41c090c0587d940a0ef81a41c8b995f074926",
+  "evidence": "Git blob verified source at the commit named by authenticated registry archive .cargo_vcs_info.json; newly retained source files are not independently re-extracted from that archive",
+  "files": {
+    "src/bindgen/bindings.rs": {
+      "bytes": 8908,
+      "git_blob": "981da85fe79ebfc0854bed356d319452fac18a54",
+      "sha256": "7709dd21eff1648afe873175577da593bcc3c6b49bfd75292b68bc5570864d86"
+    },
+    "src/bindgen/builder.rs": {
+      "bytes": 12665,
+      "git_blob": "a6b6c983cca341458055f88d87557f83acbefe37",
+      "sha256": "8b4e67cfb45d021ad2f044c21b2f704c0916bcb01369f6ae9e35a649cb67cdfe"
+    },
+    "src/bindgen/config.rs": {
+      "bytes": 39325,
+      "git_blob": "e92b6547e33b1e00265696ed90ce9f2a08079281",
+      "sha256": "a37336fbc5c00a4d53970de840a8c6ae50492cc9bc5072bfc242be590f97dec4"
+    },
+    "src/bindgen/ir/enumeration.rs": {
+      "bytes": 53155,
+      "git_blob": "f0af34bcc99ad3975e78e13ba2b9046cab93e557",
+      "sha256": "0afe09615689ac94c9e3118316c9ac91640ac1c3149a7c63ee49cf8e817850f5"
+    },
+    "src/bindgen/language_backend/clike.rs": {
+      "bytes": 35268,
+      "git_blob": "dba5a10ac176c706714d56730f310cec98fafa97",
+      "sha256": "3f492d6db33346a35951bd97b3115cd7f24447721e9296dc14a2736639d96447"
+    }
+  },
+  "license_path": "LICENSE",
+  "license_sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+  "repository": "mozilla/cbindgen",
+  "schema": 1,
+  "vcs_info_sha256": "0a89e5765e6dfddb37c884a7b21081059e0baef954d92f89b28e0693b79dd9da",
+  "version": "0.29.2"
+}

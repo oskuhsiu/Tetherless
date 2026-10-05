@@ -1,0 +1,77 @@
+/Users/runner/work/Tetherless/Tetherless/Integration/Dependencies/idevice/probes/host_probe.swift:9:12: error: 'TetherlessPairingHostResult' is ambiguous for type lookup in this context
+ 7 |     let prepare: @convention(c) (UnsafePointer<UInt8>?, UInt, UnsafePointer<UInt8>?, UInt,
+ 8 |         UnsafeMutablePointer<OpaquePointer?>?, UnsafeMutablePointer<TetherlessPairingHostAdvertisement>?)
+ 9 |         -> TetherlessPairingHostResult = tetherless_pairing_host_prepare
+   |            `- error: 'TetherlessPairingHostResult' is ambiguous for type lookup in this context
+10 |     let cancel: @convention(c) (OpaquePointer?) -> Bool = tetherless_pairing_host_cancel
+11 |     let release: @convention(c) (OpaquePointer?) -> Void = tetherless_pairing_host_free
+
+/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/headers/idevice.h:127:6: note: found this candidate
+  125 | typedef uint32_t TetherlessPairingValidationResult;
+  126 | 
+  127 | enum TetherlessPairingHostResult {
+      |      `- note: found this candidate
+  128 |   TetherlessPairingHostOk = 0,
+  129 |   TetherlessPairingHostInvalidArgument = 1,
+      :
+  135 |   TetherlessPairingHostBudget = 8,
+  136 | };
+  137 | typedef uint32_t TetherlessPairingHostResult;
+      |                  `- note: found this candidate
+  138 | 
+  139 | typedef enum IdeviceLoggerError {
+
+/Users/runner/work/Tetherless/Tetherless/Integration/Dependencies/idevice/probes/host_probe.swift:13:21: error: 'nil' requires a contextual type
+11 |     let release: @convention(c) (OpaquePointer?) -> Void = tetherless_pairing_host_free
+12 |     let callback: @convention(c) (UnsafePointer<UInt8>?, UInt, UnsafeMutableRawPointer?) -> Void = { _, _, _ in }
+13 |     let a = prepare(nil, 0, nil, 0, nil, nil)
+   |                     `- error: 'nil' requires a contextual type
+14 |     let b = cancel(nil)
+15 |     let c: TetherlessPairingHostResult = tetherless_pairing_host_accept_fd(
+
+/Users/runner/work/Tetherless/Tetherless/Integration/Dependencies/idevice/probes/host_probe.swift:13:29: error: 'nil' requires a contextual type
+11 |     let release: @convention(c) (OpaquePointer?) -> Void = tetherless_pairing_host_free
+12 |     let callback: @convention(c) (UnsafePointer<UInt8>?, UInt, UnsafeMutableRawPointer?) -> Void = { _, _, _ in }
+13 |     let a = prepare(nil, 0, nil, 0, nil, nil)
+   |                             `- error: 'nil' requires a contextual type
+14 |     let b = cancel(nil)
+15 |     let c: TetherlessPairingHostResult = tetherless_pairing_host_accept_fd(
+
+/Users/runner/work/Tetherless/Tetherless/Integration/Dependencies/idevice/probes/host_probe.swift:13:37: error: 'nil' requires a contextual type
+11 |     let release: @convention(c) (OpaquePointer?) -> Void = tetherless_pairing_host_free
+12 |     let callback: @convention(c) (UnsafePointer<UInt8>?, UInt, UnsafeMutableRawPointer?) -> Void = { _, _, _ in }
+13 |     let a = prepare(nil, 0, nil, 0, nil, nil)
+   |                                     `- error: 'nil' requires a contextual type
+14 |     let b = cancel(nil)
+15 |     let c: TetherlessPairingHostResult = tetherless_pairing_host_accept_fd(
+
+/Users/runner/work/Tetherless/Tetherless/Integration/Dependencies/idevice/probes/host_probe.swift:13:42: error: 'nil' requires a contextual type
+11 |     let release: @convention(c) (OpaquePointer?) -> Void = tetherless_pairing_host_free
+12 |     let callback: @convention(c) (UnsafePointer<UInt8>?, UInt, UnsafeMutableRawPointer?) -> Void = { _, _, _ in }
+13 |     let a = prepare(nil, 0, nil, 0, nil, nil)
+   |                                          `- error: 'nil' requires a contextual type
+14 |     let b = cancel(nil)
+15 |     let c: TetherlessPairingHostResult = tetherless_pairing_host_accept_fd(
+
+/Users/runner/work/Tetherless/Tetherless/Integration/Dependencies/idevice/probes/host_probe.swift:15:12: error: 'TetherlessPairingHostResult' is ambiguous for type lookup in this context
+13 |     let a = prepare(nil, 0, nil, 0, nil, nil)
+14 |     let b = cancel(nil)
+15 |     let c: TetherlessPairingHostResult = tetherless_pairing_host_accept_fd(
+   |            `- error: 'TetherlessPairingHostResult' is ambiguous for type lookup in this context
+16 |         nil, -1, 1, callback, nil, nil, 0, nil
+17 |     )
+
+/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/headers/idevice.h:127:6: note: found this candidate
+  125 | typedef uint32_t TetherlessPairingValidationResult;
+  126 | 
+  127 | enum TetherlessPairingHostResult {
+      |      `- note: found this candidate
+  128 |   TetherlessPairingHostOk = 0,
+  129 |   TetherlessPairingHostInvalidArgument = 1,
+      :
+  135 |   TetherlessPairingHostBudget = 8,
+  136 | };
+  137 | typedef uint32_t TetherlessPairingHostResult;
+      |                  `- note: found this candidate
+  138 | 
+  139 | typedef enum IdeviceLoggerError {

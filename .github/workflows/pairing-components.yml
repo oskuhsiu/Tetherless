@@ -342,7 +342,7 @@ jobs:
               '--toolchain-lock', str(root / 'evidence/toolchain-lock.observed.json'),
               '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()]
           if proof == 'apple-producer':
-              command += ['--recipe-lock-sha256', '4f0c435f9760e0d6ed12477353ffc86c3f9e0e2886452711bcb24d4c84c3c60c']
+              command += ['--recipe-lock-sha256', '9bc04f19024f7b974d2846d8b82e1fcde6a76f0ea22f367cd5d132242a989733']
           (root / 'evidence/invocation.json').write_text(json.dumps({'proof': proof, 'argv': command}, indent=2) + '\n')
           # Each native command is supervised by the unchanged reviewed runner.
           # Retain entry-point errors as well, including failures before work/completed exists.
@@ -370,11 +370,13 @@ jobs:
             .proof/apple-producer-work/create-xcframework.txt.status.json
             .proof/apple-producer-work/aarch64-apple-ios/completed/*.txt
             .proof/apple-producer-work/aarch64-apple-ios/completed/*.json
+            .proof/apple-producer-work/aarch64-apple-ios/completed/generated-headers/
             .proof/apple-producer-work/aarch64-apple-ios/vendor-config-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios/vendor-derivation-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios/derived-vendor-input-audit.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.txt
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.json
+            .proof/apple-producer-work/aarch64-apple-ios-sim/completed/generated-headers/
             .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-config-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-derivation-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/derived-vendor-input-audit.json

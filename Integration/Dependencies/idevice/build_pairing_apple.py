@@ -19,9 +19,10 @@ from bounded_process import capture_helper_command, MAX_LOG_BYTES, COMMAND_TIMEO
 from offline_vendor import prepare_offline_vendor
 from run_pairing_component_tests import load_provider, retain_openssl_outputs, retain_input_audits
 from apple_source_bundle import create_source_bundle
+from pairing_result_header import retain_headers, verify_headers
 
 PROFILE = "candidate-profiles/apple-verification.json"
-PROFILE_SHA256 = "66f9a415750622daad8aba407a4f02aceb3632446f6a97a463d843c7bfb40cb7"
+PROFILE_SHA256 = "315f7b321804b46b94c24f89fa5f354f205a0ce1128a8ae8b518f68b6ff82cad"
 FORBIDDEN_FEATURE = "tetherless-synthetic-peer"
 TARGETS = [
     {"rust": "aarch64-apple-ios", "sdk": "iphoneos", "clang": "arm64-apple-ios17.0", "deployment": "17.0", "extra_features": ["openssl", "obfuscate"]},
@@ -208,6 +209,8 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
     source = work / "source"
     source_manifest, vendor_receipt, provider_receipt = {}, {}, None
     env, binaries = {}, {}
+    header_evidence = None
+    header_retention_attempted = False
     try:
         env, binaries = native_environment(config, work)
         observations = bounded_toolchain(config, work, env, binaries, evidence)
@@ -253,6 +256,12 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
         report = release_command(binaries["cargo"], target, report=True)
         run(report, "04-native-static-libs.txt")
         system_flags = system_link_flags(read_bounded_log(evidence / "04-native-static-libs.txt").decode())
+        header_retention_attempted = True
+        header_evidence = retain_headers(source, evidence)
+        if any(row["status"] != "retained" for row in header_evidence["files"].values()):
+            raise VerificationError("required generated header evidence was not retained")
+        header_contract = verify_headers(source, HERE / "overlay/ffi/pairing_result_abi.h")
+        (evidence / "pairing-result-header-check.json").write_bytes(canonical_json(header_contract))
         header = safe_path(source, "ffi/idevice.h").read_bytes()
         verify_generated_header(header, profile["required_ffi_symbols"])
         headers = work / "headers"
@@ -284,12 +293,22 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
                   "toolchain_observations": observations, "sdk_root": sdk, "compiler_paths": tools,
                   "header_probe_command": header_probe, "header_probe_linked_or_executed": False,
                   "feature_graph_command": graph, "production_features": features, "build_command": cargo_command,
-                  "native_static_libs_command": report, "system_link_flags": system_flags, "openssl_outputs": outputs, "link_probes": links}
+                  "result_header_contract": header_contract, "native_static_libs_command": report, "system_link_flags": system_flags, "openssl_outputs": outputs, "link_probes": links}
     finally:
         primary_failure = sys.exc_info()[0] is not None
+        retention_error = None
+        if not header_retention_attempted:
+            try:
+                retain_headers(source, evidence)
+            except (OSError, VerificationError) as error:
+                retention_error = error
+        # Retaining header evidence must never bypass the four input audits or
+        # replace an existing Cargo/import/link failure with a cleanup error.
         checks = retain_input_audits(source=source, source_manifest=source_manifest, vendor_receipt=vendor_receipt,
                                     provider=provider, provider_receipt=provider_receipt, completed=evidence)
         unchanged = all(checks[key]["original_inputs_unchanged"] for key in ("vendor", "derived_vendor", "workspace"))
+        if retention_error is not None and not primary_failure:
+            raise retention_error
         if (not unchanged or not checks["provider"]["unchanged"]) and not primary_failure:
             raise VerificationError("Apple target input audit failed; all four receipts retained")
     (evidence / "target-evidence.json").write_bytes(canonical_json(result))
