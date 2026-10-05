@@ -9,6 +9,9 @@ from apply_patch import HERE, VerificationError, git_blob, load_lock, read_json,
 
 PROFILES = ("acquisition-only", "combined")
 RECEIPTS = {
+    "registration/receipts/host-controller-signature.json": "a4b8e30b2a83e2dca1122221021b3a44be8647dfe239cb1c139bc60437dcc3a9",
+    "registration/receipts/host-controller-signature-review.json": "f1c14acb97cf95e5f3153358dab5b7011805947a9146b571081732e30e91c062",
+    "registration/receipts/host-controller-signature-validation.json": "b04ed250fcf75a03315dc6e7ba2b84ed269a1549c3ac9a023ea20a95839e69b0",
     "registration/receipts/acquisition-stack-independent-review.json": "e36166d16d94e648000e82b3064240f565305cea1b931d81dc477f100c5291cc",
     "registration/receipts/acquisition-stack-repair.json": "2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554",
     "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e",
@@ -16,7 +19,7 @@ RECEIPTS = {
     "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
     "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
 }
-EXPECTED_COUNTS = {"host-only": (3, 20), "acquisition-only": (11, 74), "combined": (14, 94)}
+EXPECTED_COUNTS = {"host-only": (3, 26), "acquisition-only": (11, 74), "combined": (14, 100)}
 
 
 def verify(root: Path = HERE, source: Path | None = None) -> dict:

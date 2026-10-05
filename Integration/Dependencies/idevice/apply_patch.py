@@ -61,7 +61,7 @@ def read_json(path: Path) -> dict | list:
 
 
 def load_lock(root: Path = HERE, lock_filename: str = "source-lock.json") -> dict:
-    if lock_filename not in ("source-lock.json", "helper-test-profile.json", "candidate-profiles/host-only.json", "candidate-profiles/acquisition-only.json", "candidate-profiles/combined.json"):
+    if lock_filename not in ("source-lock.json", "helper-test-profile.json", "candidate-profiles/host-only.json", "candidate-profiles/acquisition-only.json", "candidate-profiles/combined.json", "candidate-profiles/transcript-only.json", "candidate-profiles/apple-verification.json", "candidate-profiles/host-transcript-only.json"):
         raise VerificationError("unsupported source profile")
     lock = read_json(root / lock_filename)
     if lock.get("schema") != 1:
@@ -154,7 +154,13 @@ def patched_files(root: Path, lock: dict, source_files: dict[str, bytes]) -> dic
             raise VerificationError("unknown overlay operation")
         elif path in files:
             raise VerificationError("overlay cannot replace upstream source without an explicit preimage")
-        data = safe_path(root / "overlay", path).read_bytes()
+        source_path = overlay.get("source_path", "overlay/" + path)
+        if "source_path" in overlay:
+            fixture_directory = {"registered-composite-transcript-tests": "transcript-overlay/",
+                                 "registered-host-transcript-tests": "host-transcript-overlay/"}.get(lock.get("profile_kind"))
+            if fixture_directory is None or source_path != fixture_directory + path:
+                raise VerificationError("unsupported fixture overlay source")
+        data = safe_path(root, source_path).read_bytes()
         if sha256(data) != expected:
             raise VerificationError(f"overlay hash mismatch: {path}")
         files[path] = data

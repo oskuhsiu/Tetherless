@@ -1,5 +1,6 @@
 {
   "activation": {
+    "apple_verification_authorized": true,
     "c_swift_link_receipt": null,
     "consumer_integration_allowed": false,
     "enabled": false,
@@ -13,8 +14,29 @@
       "single_provider_linkage_receipt": null
     },
     "source_registration_verified": true,
-    "test_only_execution_authorized": true
+    "test_only_execution_authorized": false
   },
+  "apple_targets": [
+    {
+      "clang": "arm64-apple-ios17.0",
+      "deployment": "17.0",
+      "extra_features": [
+        "openssl",
+        "obfuscate"
+      ],
+      "rust": "aarch64-apple-ios",
+      "sdk": "iphoneos"
+    },
+    {
+      "clang": "arm64-apple-ios17.0-simulator",
+      "deployment": "17.0",
+      "extra_features": [
+        "openssl"
+      ],
+      "rust": "aarch64-apple-ios-sim",
+      "sdk": "iphonesimulator"
+    }
+  ],
   "build_additional_features": [
     "openssl"
   ],
@@ -68,77 +90,14 @@
   },
   "fixture_inventory": {
     "authored_count": 100,
-    "cargo_list_receipt": null,
-    "executed": false
+    "executed": false,
+    "scope": "production artifact profile does not execute Rust fixtures"
   },
-  "link_probes_complete": true,
-  "native_test_filters": [
-    {
-      "expected_passed": 18,
-      "filter": "staged_pairing::",
-      "package": "idevice-ffi"
-    },
-    {
-      "expected_passed": 25,
-      "filter": "bounded_rsd_tests",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 11,
-      "filter": "staged_acquisition::",
-      "package": "idevice-ffi"
-    },
-    {
-      "expected_passed": 3,
-      "filter": "remote_pairing::staged_contributory_tests::",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 2,
-      "filter": "remote_pairing::socket::staged_rp_socket_tests::",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 4,
-      "filter": "remote_pairing::tunnel::staged_openssl::tests::",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 4,
-      "filter": "remote_pairing::tunnel::staged_openssl_fixtures::",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 7,
-      "filter": "remote_pairing::tunnel::staged_packet_io::",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 8,
-      "filter": "bounded_pairing_host::",
-      "package": "idevice-ffi"
-    },
-    {
-      "expected_passed": 5,
-      "filter": "bounded_host_tests",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 3,
-      "filter": "bounded_host_frame_tests",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 4,
-      "filter": "bounded_opack_tests",
-      "package": "idevice"
-    },
-    {
-      "expected_passed": 6,
-      "filter": "remote_pairing::responder::bounded_controller_signature_tests::",
-      "package": "idevice"
-    }
+  "forbidden_features": [
+    "tetherless-synthetic-peer"
   ],
+  "link_probes_complete": true,
+  "native_test_filters": [],
   "native_test_filters_complete": true,
   "overlays": [
     {
@@ -223,6 +182,16 @@
     }
   ],
   "patch_complete": true,
+  "probe_entry_symbols": {
+    "host": {
+      "c": "tetherless_host_c_link_probe",
+      "swift": "tetherless_host_swift_link_probe"
+    },
+    "pairing": {
+      "c": "tetherless_c_link_probe",
+      "swift": "tetherless_swift_link_probe"
+    }
+  },
   "probe_sets": {
     "host": {
       "c": {
@@ -245,7 +214,7 @@
       }
     }
   },
-  "profile_kind": "registered-combined-candidate",
+  "profile_kind": "apple-pairing-production-verification",
   "registered_source_complete": true,
   "registration_receipts": {
     "registration/receipts/acquisition-stack-independent-review.json": "e36166d16d94e648000e82b3064240f565305cea1b931d81dc477f100c5291cc",
@@ -272,7 +241,7 @@
   "schema": 1,
   "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8",
   "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",
-  "status": "Independently source-reviewed bounded controller signature successor; native fixtures pending; artifact/product activation disabled",
+  "status": "Source-reviewed stack and controller-signature production recipe; actual native26/74/100 and Apple artifact evidence pending; product activation disabled",
   "upstream": {
     "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
     "repository": "SideStore/idevice",

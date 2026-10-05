@@ -1,142 +1,115 @@
 # Tetherless development status
 
-Evidence checkpoint: **2026-10-05 10:28 UTC**. Published `develop` is
-**c5f5547fc481a8243ba5b511fbac6315f57796e6**. Native verification work is on
-**verify/native-gates-c5f5547**, at
-**d5668911cb60564f4b217093deb5da4e83862b67**. Both unsigned native builds and
-packages now pass, with independent artifact checks. These branch changes are
-not yet integrated into `develop` at this checkpoint. Both packages remain
-`candidate-incomplete`; this is continued development, not release readiness.
+Evidence checkpoint: **2026-10-05 20:59 UTC**. At 5a40878, the repaired native
+acquisition profile passes 74 fixtures and the combined profile passes 94,
+including all 20 host fixtures. The earlier stack-overflow failure is retained as
+historical evidence. Whole transcripts, the M5 successor and Apple/app integration
+remain open. The original 16-task plan is not complete; the app is not ready for
+release or the consolidated phone phase.
 
-The [original 16-task matrix](PLAN_PROGRESS.md) separates implemented/scoped
-proof from feasible non-device, paused, external-evidence and physical gaps.
-The scoped native build/package gate is met on the verification branch; the
-original 16-task plan as a whole remains open.
+This candidate adds source-reviewed M5 and whole-transcript work, Apple producer
+recipes and the new proof workflow, plus the prepared historical archive query.
+These additions are unexecuted; exact-commit CI is pending. Completed results
+below remain tied to their recorded revisions, not to this candidate.
 
-## This integration candidate
+- develop: **3d97ef75a224a76f84ba6741da8d9a6b89f99217**, unchanged
+- Candidate branch: **verify/staged-pairing-native**; this candidate's commit and
+  run identities will be recorded after publication and verification
+- Last completed native verification:
+  **5a40878c56d5a458021c29df9e7b2cb471e5e0dd**; tree
+  e0b7aa426a483a2d891925c75844c7143d62926b, 502 leaves verified
+- Earlier native app verification branch verify/native-gates-c5f5547 remains at
+  **1fc8968f1d37b59717cd655b9b8f7fc8ccc7f566**. Its Debug/Core/iOS Core results do
+  not validate the later app composition or newer native artifacts
 
-This increment brings the three independently reviewed native-verification fixes above into the development candidate, retains the inspected d566 evidence, and adds the approved timing-only first-picker discriminator plus an exact-artifact C/Swift compile-and-link observation. The original product UI actions and deadlines remain unchanged. The historical SPDX candidate also has a reproducible pinned-schema structural check with zero errors; this is not final SBOM or licensing clearance.
+The [16-task matrix](PLAN_PROGRESS.md) separates feasible active work, external
+evidence, paused dependencies and physical acceptance. The [checkpoint](checkpoints/2026-10-05-native-pairing-progress.md)
+records exact runs, artifacts, failures and verification limits.
 
-New native/UI evidence for this candidate remains pending until its exact commit's jobs and artifacts are inspected. Prior d566 build/package success does not validate the added Swift timing emitter or compile/link probe. See [the one-run UI decision](simulator-ci/product-import-decision.md#next-diagnostic-decision-distinguish-first-picker-readiness-on-ios-262), [pairing observations](PAIRING_CAPABILITIES.md), [the link probe](PAIRING_LINK_PROBE.md) and [SPDX check](delivery/spdx-validation/README.md). No product gate is removed, and the paused/external/physical gaps below remain.
+## Current evidence
 
-## What is verified now
-
-| Source and evidence | Actual result | Limit |
+| Source and run | Established result | Limit |
 |---|---|---|
-| d566891 [Renewal core 37294413223](https://github.com/oskuhsiu/Tetherless/actions/runs/37294413223) | Debug and Release: 345 Swift Testing tests passed each | Exact native-branch core evidence; separate from physical acceptance |
-| c5f5547 [Renewal core 37286010454](https://github.com/oskuhsiu/Tetherless/actions/runs/37286010454) | Debug and Release: 342 tests passed each | Core execution, not native/device acceptance |
-| c5f5547 [iOS core 37286010392](https://github.com/oskuhsiu/Tetherless/actions/runs/37286010392) | 336 tests passed | iOS Simulator core, not a physical-device result |
-| c5f5547 [full product 37286010497](https://github.com/oskuhsiu/Tetherless/actions/runs/37286010497), iOS 18.6 job 111684962352 | Complete original UI assertions passed: two actual system-picker cancellations; one selected file delivered to the real pairing parser; typed invalid-content rejection; protected-store absence; wizard/resumption/relaunch/navigation and signed-out recovery checks | Invalid-input and signed-out product flow only. Valid pairing, existing-valid-record retention, Apple authentication, installation and renewal remain unverified |
-| Same c5 product run, iOS 26.2 job 111684962133 | Failed at the first picker presentation: Cancel unavailable within the original ten-second readiness bound. Build/signature/boot/install/launch/source preparation passed; later picker UI appeared | No cancellation, selection or import occurred. This lane did not exercise the selected-result repair; no unique product/service/host cause is established |
-| c1482e0 [iOS core 37291091619](https://github.com/oskuhsiu/Tetherless/actions/runs/37291091619) | Passed | Prior branch revision; no d566-specific iOS core run was triggered |
-| c1482e0 [native 37291091604](https://github.com/oskuhsiu/Tetherless/actions/runs/37291091604) | Both configurations collected 352 pre-preparation tests with six unavailable-preimage skips and no failures, then all 13 strict post-preparation contracts with zero skips | The next prebuild source snapshot failed on the legitimate missing `build/SideBackup.ipa` target. Native compilation and complete packaging were not reached |
-| d566891 [native 37294413252](https://github.com/oskuhsiu/Tetherless/actions/runs/37294413252), Debug 111712141173 / Release 111712141436 | **Both succeeded:** 359 pre-preparation tests collected, six intentional unavailable-preimage skips, no failures; all 13 strict prepared contracts pass without skips; snapshot, unsigned compile and package pass | Candidate integrity verified below; no signing/device, complete-source, legal or release clearance |
+| 6bf7b89, [37348967899](https://github.com/oskuhsiu/Tetherless/actions/runs/37348967899) | Actual Rust helper/RSD suites pass 18 + 25 fixtures; retained checksums, vendor audits, README alias identity and process cleanup pass | Host fixtures only; no whole pairing transcript, iOS ABI or app activation |
+| Historical 1366ace, [37362664851](https://github.com/oskuhsiu/Tetherless/actions/runs/37362664851) | Host-only profile passes 20 fixtures. Acquisition and combined profiles compile and pass preceding 18/25 suites | Both then abort in the same composite cancellation fixture with stack overflow/SIGABRT. Keep these failures tied to 1366ace |
+| 5a40878, [37369016726](https://github.com/oskuhsiu/Tetherless/actions/runs/37369016726) | Acquisition passes 74; combined passes 94, including the 20 host fixtures. Source/provider audits, log/status hashes and all command joins verify. The original nine staged-acquisition tests plus two regressions pass | Host component evidence only. M5 successor, whole synthetic transcripts, Apple producer, real IDevice ABI and app activation are not established |
+| ad9b33f, [host Core 37365518439](https://github.com/oskuhsiu/Tetherless/actions/runs/37365518439) and [iOS Core 37365518481](https://github.com/oskuhsiu/Tetherless/actions/runs/37365518481) | Each host Debug/Release configuration passes 345 Swift Testing + 25 XCTest cases; iOS Core passes 339 + 25 | Genuine core evidence; no real IDevice ABI or UIKit Model/View/Onboarding compilation |
+| ad9b33f, [Swift/C-spy 37365518696](https://github.com/oskuhsiu/Tetherless/actions/runs/37365518696), attempt 2 | Approved job retry succeeds: 18 wrapper checks and 41 unique Swift/C-spy cases in each Debug/Release mode pass. All 24 source inputs and joined command logs are reconciled | Initial job never reported a runner or steps and was cancelled without an artifact. Successful spies do not establish real IDevice/Rust ABI or UIKit compilation |
+| 1fc8968, [native app 37303840335](https://github.com/oskuhsiu/Tetherless/actions/runs/37303840335) | Debug passes 402 pre-preparation tests with six intentional skips, all 13 strict contracts without skips, unsigned build/package and C/Swift device/Simulator link probes | Release was cancelled during compilation, with unavailable logs and no artifact. No later full native app build is claimed |
+| 3d97ef7, [full product UI 37298228388](https://github.com/oskuhsiu/Tetherless/actions/runs/37298228388) | iOS 26.2 installs/launches and passes two real picker cancellations; its 241-byte source remains intact | Both lanes fail: 18.6 at installation timeout, 26.2 at source-folder readiness before selection. No new full UI run or selected-file/parser/store/relaunch acceptance |
 
-[Exact c5 product and branch checkpoint](checkpoints/2026-10-05-c5f5547.md)
-retains artifact identities, the unchanged UI contract and evidence limits.
+The older complete invalid-input/signed-out UI contract passed on iOS 18.6 at
+historical c5f5547, [run 37286010497](https://github.com/oskuhsiu/Tetherless/actions/runs/37286010497).
+That result does not validate later source, iOS 26.2, valid pairing, login, install
+or renewal. Original UI selectors, deadlines and acceptance assertions remain intact.
 
-## Scope of the current correction sequence
+## Pairing implementation and next gate
 
-The published c5 product repair makes delegate result and completed dismissal
-rendezvous in either order and consume the result once. The passing iOS 18.6
-full-product run supplies real product-path evidence for that repair. The earlier
-0dfceb5 cancellation-before-result failure is historical, not the current 26.2
-failure classification.
+The old macOS process harness, packaged Cargo configuration, nested-workspace
+metadata and README case-alias blockers are **resolved within the verified host
+fixture path**. Actual native execution establishes that progress; these are no
+longer current blockers.
 
-The native verification branch additionally contains:
+The current repair changes staged-acquisition future placement, not thread stack
+limits, timeouts or original assertions. Its source SHA-256 begins 3057cc16.
+Both repaired profiles now pass, including the previously failing cancellation
+fixture and the new storage regressions. Keep the original stack-overflow artifacts
+and do not expand this result into whole-protocol, Apple-platform or app acceptance.
 
-1. [8db1e68](https://github.com/oskuhsiu/Tetherless/commit/8db1e68c0760c8b34bb78c672e90c26ca8191457): Swift 6 backup-ownership fixture isolation correction; production acceptance assertions remain intact
-2. [c1482e0](https://github.com/oskuhsiu/Tetherless/commit/c1482e0e615f56bfa37fa9437c43aa1669550cec): validated metadata-reference dot-segment normalization, followed by passing strict prepared contracts
-3. [d566891](https://github.com/oskuhsiu/Tetherless/commit/d5668911cb60564f4b217093deb5da4e83862b67): safe source-link inventory handling for the verified prebuild SideBackup link; exact target bytes are retained with missing/excluded metadata, without reading generated target contents
+The 21-file gated app composition plus its wrapper/workflow is published at
+ad9b33f. Core and source/spy evidence are scoped above; the product pairing gate
+remains off. Stored/import/reset routes remain available. Successful synthetic
+whole acquisition and host transcripts, Apple rebuilt artifacts and C/Swift probes,
+the diagnostic iOS consumer and actual UIKit composition still need verification.
 
-The third change has 44 focused delivery/package checks and independent review;
-its actual Debug and Release native execution and packaging now pass. See
-[the source-link diagnosis](delivery/PREPARED_SOURCE_LINKS.md) and
-[candidate packaging scope](DELIVERY_CANDIDATE.md). These three branch commits are
-not yet credited as integrated `develop` evidence at this checkpoint.
+A separate remote-pairing M5 controller-signature check is included in this
+candidate with source review but no execution; its host/combined targets are 26/100, not
+passed counts. Three full acquisition and ten host transcript fixtures and the
+Apple producer also remain pending execution. These are the next active pairing
+requirements, separate from paused app-signing work. A same-container challenge is not
+hardware attestation and cannot exclude an active relay or compromised OS.
 
-## Remaining work, by boundary
+Read-only review of the existing 3d97 UI evidence refines the 26.2 failure: Browse
+Locations remains visible with On My iPhone selected; the local root did not open.
+Fixture installation and LaunchServices registration succeeded, document creation
+was observed by XCTest, and the original file is intact. The installer manifest's
+unupdated flag is not proof that creation failed. The authorized bounded read-only
+query of the existing owned archive is prepared in this candidate but unexecuted. No UI rerun or
+resolved root cause is claimed.
 
-### Verified packages and remaining non-device work
+The five-file EMProxy callback-privacy change is now published at 5a40878. Four
+portable checks pass; its real Swift spy remains pending the normal native
+Integration phase. Earlier 1fc IDevice logger-Off tests do not validate EMProxy,
+erase prior logs or reconfigure an already initialized subscriber.
 
-- Both d566 candidate artifacts pass independent ZIP/TAR/plist and byte checks:
-  all eight checksum-list entries per package; all manifest companions; 3,979
-  source entries, including 3,146 recorded Git blobs/modes; 90 notice entries;
-  nine lockfiles with 47 observed pin occurrences; all 40 historical review
-  hashes and the GPL supplement. The same 833 prepared-file identities are
-  retained before/after build, apart from truthful link-target availability
-- Debug and Release source/notice tarballs are byte-identical. Actual output
-  includes the main app, AltWidget extension, OpenSSL framework and nested
-  SideBackup IPA. The final ZIP inventories match all 156 outer and 14 nested
-  file entries. Five storyboard Info.plists are also listed as null-ID app
-  metadata; exclude those duplicates from bundle counts. This file inventory
-  does not determine the final static linked-component graph
-- Preserve and integrate the exact candidate evidence. Complete producer source,
-  linked notices, relinking materials and durable distribution remain open. The
-  5,065 recorded binary-input entries are hashed but their expanded bytes are not
-  included in the available-source bundle. Empty `missingEvidence` means the
-  configured input roots were present, not complete corresponding source
-- Finish cancellable functional wireless pairing and current-phone identity
-  binding. Both actual slice headers contain the accept/cancel declarations,
-  but Apple LLVM 17 nm failed to read Rust LLVM 22 members. Exports/ABI remain
-  inconclusive; the report's `missing_exports` lists are not absence evidence
-  after a tool failure. Wireless generation remains gated; stored/import routes
-  are preserved
-- Continue remaining temporary-file ingress versus cleanup ownership work. A
-  source audit confirms public-certificate caching and local-profile
-  import/delete/assignment/stale cleanup still cross startup/Core Data callback
-  boundaries. Their closure depends on paused ownership integration; no isolated
-  UI guard or blind synchronous reacquisition establishes it. The audit made no
-  implementation change or native/device test claim
-- Resolve the iOS 26.2 first-picker readiness boundary using a discriminating
-  presenter/service/accessibility timeline. Preserve the original deadline and
-  actual cancellation/selection/parser assertions; later UI appearance alone
-  does not justify a timeout or selector change
-- Complete remaining source/notice and exact-candidate consistency checks while
-  keeping historical review evidence intact
+## Timing evidence is not a production lock fix
 
-### Paused local work, not published or credited
+Three original 60-second tests failed in the earlier 3ace iOS Core run. At 1366ace,
+diagnostic iOS Core passes while recording approximately 54.65-second await-resumption
+gaps and small sampled assertion/body intervals. At ad9b33f, the corresponding
+instrumented test bodies are about 0.26 seconds. These distinct runs preserve
+their assertions and bounds. They establish neither a unique cause for the
+earlier stalls nor a production locking repair.
 
-Signing-admission boundaries, manager-replacement integration and aggregate
-install RAM/disk-budget work are paused and unpublished. Their presence in a
-local work area does not establish review, tests or integration. This checkpoint
-neither resumes that group nor counts it toward completion. Remaining local
-certificate/profile mutation work is also dependent on its paused startup and
-callback ownership boundary; an awaiting parent does not prove a callback can
-borrow its task-local lease.
+## Remaining closure boundaries
 
-### External evidence still required
+| Type | Required closure |
+|---|---|
+| Feasible active, non-device | Complete whole synthetic transcripts, the source-reviewed M5 successor, exact Apple producer/build/link evidence, real ABI and UIKit/diagnostic-consumer compilation. Perform the authorized bounded read-only UI archive analysis. Integrate reviewed changes into one candidate and resolve current full-UI failures without weakened assertions |
+| Delivery and external evidence | Complete corresponding/producer source, linked notices, applicable relinking materials and durable delivery. Establish essential ADI authenticity/admission and acquisition/use basis, exact Unicorn combined-license compatibility and retained binary provenance |
+| Paused | Signing-admission, manager-replacement integration and aggregate install RAM/disk budget work remain unpublished and uncredited, including dependent startup/Core Data callback ownership. This pairing work neither reviews nor bypasses that pause |
+| Physical, later | One consolidated authorized phone phase after feasible implementation and non-device gates: login/2FA, permissions, valid pairing/recovery, install/launch, profile application/readback, next-day locked-screen renewal and expiry crossing |
 
-Essential ADI origin/authentication/admission and acquisition/use basis, exact
-Unicorn combined-license compatibility, retained prebuilt-framework provenance,
-complete corresponding source/relinking material and complete linked-component
-notices remain unresolved. The historical inventory and supplemental GPLv3
-reference text do not close those gates. Matching publisher digests are not
-independent trust evidence.
+The exact 1fc Debug delivery artifact remains independently reconciled: 3,992
+available-source entries, 3,159 Git blobs/modes, 91 notices, eight package checksums,
+40 historical review hashes, nine lockfiles and 47 pin occurrences. It remains
+candidate-incomplete and releaseReady=false. Neither that earlier package nor
+structural SPDX validation establishes complete source, rights or the actual
+linked-component graph for the newer verification branch.
 
-### One physical acceptance phase, later
-
-Finish feasible implementation and non-device checks before requesting the
-owner's phone. Then use [DEVICE_ACCEPTANCE.md](DEVICE_ACCEPTANCE.md) for a single
-consolidated pass: authorized login/2FA and permissions; valid pairing and
-recovery; trusted install/launch; real profile application/readback and effective
-expiry; locked-screen next-day proactive renewal without foreground manager or
-computer; original-expiry crossing and longer real-time observation.
-
-No real login, valid live pairing, profile apply/readback, locked-screen renewal
-or expiry soak is claimed here. `appliedUnverified`, a UI countdown, manual
-refresh or a permission switch is not successful unattended renewal. BOOT-01's
-clean-phone computer-free first install remains separate research.
-
-## Historical evidence retained
-
-- **0dfceb5**, [product run 37277414175](https://github.com/oskuhsiu/Tetherless/actions/runs/37277414175): both runtimes reached selected-file delivery, but dismissal had already cancelled the request; no import began. [Preserved checkpoint](checkpoints/2026-10-05-0dfceb5.md). Its native run stopped earlier in a Swift test harness, not native compilation
-- **9a49417**, [same-artifact UIKit comparison 37273262340](https://github.com/oskuhsiu/Tetherless/actions/runs/37273262340): selected-file delivery on 18.6; bookmark-resolution failure before the delegate on 26.2. This separate diagnostic had collector limits and did not prove product parser/storage acceptance. [Comparison and limits](simulator-ci/runtime-comparison-37273262340.md)
-- **985832f**, [diagnostic 37271883947](https://github.com/oskuhsiu/Tetherless/actions/runs/37271883947): bounded broad-inventory failure before device allocation/build; [decision history](simulator-ci/next-run-decision.md)
-- **89c157d**, [product run 37247923030](https://github.com/oskuhsiu/Tetherless/actions/runs/37247923030): both real cancellations passed, then document-provider bookmark preparation failed before a selection callback. The original 241-byte source was preserved. Neither disappearance nor boot failure explains that run
-- **8c25ff3**, run 37242839315: failed at the unchanged 120-second install bound, before product/control UI. It is not the explanation for the later UI boundaries
-- Takeover **3dd8641**: 212 ordinary source files matched their GitHub blobs. [Core run 37248028123](https://github.com/oskuhsiu/Tetherless/actions/runs/37248028123) and the earlier [native implementation run 37247923028](https://github.com/oskuhsiu/Tetherless/actions/runs/37247923028) remain historical, not validation of later edits
-
-Keep old failures and diagnostics tied to their own versions. Record new run
-outcomes here only after inspecting the exact commit/job/artifact evidence.
-Development work does not authorize `main` promotion or a stable release.
+No real login, live pairing, profile application, unattended renewal or expiry
+soak is claimed. appliedUnverified, displayed expiry, a permission toggle or manual
+refresh is not unattended success. Follow [DEVICE_ACCEPTANCE.md](DEVICE_ACCEPTANCE.md)
+only after the development gates. BOOT-01's clean-phone first installation remains
+separate research. main and release publication remain unchanged and outside
+this authorization.

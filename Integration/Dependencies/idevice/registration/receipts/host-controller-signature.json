@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "status": "source_reviewed_native_execution_pending",
+  "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "production_gate": "PairableHost::new_bounded",
+  "fixture_feature": "tetherless-synthetic-peer",
+  "native_test_filters": {
+    "remote_pairing::responder::bounded_controller_signature_tests::": 6,
+    "bounded_pairing_host::host_transcript::": 10
+  },
+  "prior_fixture_tests": 7,
+  "authored_native_test_delta": 9,
+  "executed_native_tests": 0,
+  "input_files": [
+    {
+      "path": "tetherless-host-generation/source_manifest.json",
+      "sha256": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a"
+    },
+    {
+      "path": "tetherless-host-generation/overlay/ffi/src/bounded_pairing_host.rs",
+      "sha256": "3b8f8ee659e81bb7e06efe0ede74aba833e6c44f44d9c553e4e10ae3888e723f"
+    },
+    {
+      "path": "tetherless-host-generation/overlay/idevice/src/remote_pairing/opack.rs",
+      "sha256": "3ead51d183ee5667f0a9c838e43c6f9cbfa755c6c8354563e0fa81d3e78f7235"
+    },
+    {
+      "path": "tetherless-host-generation/overlay/idevice/src/remote_pairing/responder.rs",
+      "sha256": "2194dec98ea37aec7de109bc6ff0f2fa8acb3db7de9bd268f5adaae83f608954"
+    },
+    {
+      "path": "tetherless-host-transcript-fixtures/Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/host_test_phone.rs",
+      "sha256": "05e1304cf9cef9bb23a0e1da6201f8a7a1ae2275374259144e83063d11032062"
+    },
+    {
+      "path": "tetherless-host-transcript-fixtures/Integration/Dependencies/idevice/overlay/ffi/src/bounded_pairing_host/host_transcript.rs",
+      "sha256": "c4ae09ec1cef28f6f72c835564c2a6b0ef2ef54bc02c9d0360de8f5893188c68"
+    },
+    {
+      "path": "tetherless-host-transcript-fixtures/source_manifest.json",
+      "sha256": "7b0a80e073c106cfde25003343642de9d92b65a17368d7f5f1dd456a76b30f13"
+    },
+    {
+      "path": "tetherless-host-transcript-source-review/REVIEW.md",
+      "sha256": "e8574cb685fae0d13afe55ca36512c5bb243039734dc718536ff6e7586ba35a0"
+    },
+    {
+      "path": "tetherless-idevice-pinned-source/idevice/src/remote_pairing/mod.rs",
+      "sha256": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14"
+    },
+    {
+      "path": "tetherless-idevice-pinned-source/idevice/Cargo.toml",
+      "sha256": "25626cb8dadd573abe483a0b1f5577c15026954a615b3d445e9aa54b451a469c"
+    },
+    {
+      "path": "tetherless-idevice-pinned-source/ffi/Cargo.toml",
+      "sha256": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075"
+    },
+    {
+      "path": "tetherless-idevice-pinned-source/Cargo.lock",
+      "sha256": "3c1a7710f0cd02f9100e91b97c9f8abc6546f115f7f3255551c990628aea0e16"
+    }
+  ],
+  "files": [
+    {
+      "path": "CHECKPOINT.md",
+      "bytes": 7785,
+      "sha256": "59d768ae96387e72a35b9d300b944ae9fae8bea9b38879a5a580ca064ffb90a0"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/src/bounded_pairing_host/host_transcript.rs",
+      "bytes": 24621,
+      "sha256": "4dafb1139f2776f8a56eac78d0e43a75c1b79628e11c0b6f306e9e942dbee637"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/host_test_phone.rs",
+      "bytes": 18706,
+      "sha256": "b5a7a8abb91dc802bd5915d451021ae80e62a5a3550f2f8d4ca6ea981b6fe825"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/responder.rs",
+      "bytes": 44767,
+      "sha256": "fb03dbd4b6c727ca2432269d8ad763b93e2cdc51d251b830f827316825c27909"
+    },
+    {
+      "path": "controller-signature.patch",
+      "bytes": 24578,
+      "sha256": "81245bcb2dce452709648fcdea946e906afafff2ab2e6104c0b808f9efcd4f34"
+    },
+    {
+      "path": "controller-vector.json",
+      "bytes": 704,
+      "sha256": "3987e00ffa869c6b7f0640c9f6617383c5d7e0a18bc3bbfae49a4e4d30315747"
+    },
+    {
+      "path": "core-source-review.json",
+      "bytes": 2096,
+      "sha256": "b0140ce87ab5eb8e78fea0f0b5ea982a9e91d085c5e54b9e2a70536822334754"
+    },
+    {
+      "path": "source-review-receipt.json",
+      "bytes": 1447,
+      "sha256": "f1c14acb97cf95e5f3153358dab5b7011805947a9146b571081732e30e91c062"
+    },
+    {
+      "path": "verify_candidate.py",
+      "bytes": 14630,
+      "sha256": "c2de6fd853233ba165cbf3a624b57bd2d421021422dc4ca8faed1fd9ffc5a10d"
+    }
+  ],
+  "fixture_identity_negative_scenarios": 8,
+  "registration_changes": "none; existing current20/74/94 profiles remain untouched",
+  "module_declaration_changes": "none; retain existing feature-gated host_transcript and host_test_phone suffixes byte-identically",
+  "authored_native_test_names": {
+    "remote_pairing::responder::bounded_controller_signature_tests::": [
+      "accepts_exact_controller_signature_and_identifier_boundary",
+      "requires_exact_key_signature_session_lengths_and_bounded_identifier",
+      "rejects_missing_wrong_type_duplicate_and_fragmented_identity_fields",
+      "rejects_non_utf8_or_control_identifiers_even_with_valid_signatures",
+      "binds_signature_to_session_identifier_public_key_and_strict_verification",
+      "accepted_peer_account_must_match_signed_identifier_and_have_string_type"
+    ],
+    "bounded_pairing_host::host_transcript::": [
+      "actual_host_success_preserves_identity_and_joins_all_owners",
+      "actual_host_rejects_wrong_pin_and_tampered_authenticated_m5",
+      "actual_host_pin_callback_cancel_copies_pin_and_joins",
+      "actual_host_late_cancel_after_verified_srp_joins",
+      "actual_host_deadline_after_verified_srp_joins",
+      "caller_wait_expiry_requires_cancel_and_actual_native_join",
+      "output_capacity_rejection_does_not_consume_successful_token",
+      "actual_host_rejects_valid_aead_invalid_controller_signature",
+      "actual_host_rejects_valid_aead_wrong_controller_public_key",
+      "actual_host_rejects_valid_aead_malformed_or_mismatched_controller_identity"
+    ]
+  }
+}

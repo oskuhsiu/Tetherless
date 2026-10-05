@@ -1,0 +1,226 @@
+{
+  "activation": {
+    "c_swift_link_receipt": null,
+    "consumer_integration_allowed": false,
+    "enabled": false,
+    "native_fixture_receipt": null,
+    "observed_toolchain_receipt": null,
+    "openssl": {
+      "actual_target_bytes_receipt": "registration/receipts/provider-contract.json",
+      "actual_target_bytes_receipt_sha256": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e",
+      "contract_path": "split-provider/target-inputs.json",
+      "contract_sha256": "20ee6e1e873cc8f6f83bf42b97e8760569a70ff95818d570a45e3966d63a9935",
+      "single_provider_linkage_receipt": null
+    },
+    "source_registration_verified": true,
+    "test_only_execution_authorized": true
+  },
+  "build_additional_features": [
+    "openssl",
+    "remote_pairing",
+    "tetherless-synthetic-peer"
+  ],
+  "consumer": {
+    "commit": "12be70dc2627307a16bfd2dc7a009080d5bec909",
+    "license_blob": "0ad25db4bd1d86c452db3f9602ccdbe172438f52",
+    "package_swift_blob": "9d2057d5e9130ae4e1a16aeb39670f70619b7db5",
+    "repository": "SideStore/minimuxer"
+  },
+  "edits": [
+    {
+      "after_sha256": "2f89a17998df876f11e2c35806b7a9030f935896872743bf188877efc598c7f1",
+      "before_sha256": "36111caf4c2bec04713859fb42b6ffd1ccb18850f22333fe224d62d642c411e3",
+      "new": "#[cfg(feature = \"house_arrest\")]\npub mod house_arrest;\n#[cfg(feature = \"house_arrest\")]\npub mod staged_pairing;\n#[cfg(all(feature = \"remote_pairing\", feature = \"house_arrest\", feature = \"tcp\", feature = \"rsd\", feature = \"tunnel_tcp_stack\", feature = \"openssl\"))]\npub mod staged_acquisition;\n#[cfg(all(unix, feature = \"remote_pairing\"))]\npub mod bounded_pairing_host;\n",
+      "old": "#[cfg(feature = \"house_arrest\")]\npub mod house_arrest;\n",
+      "path": "ffi/src/lib.rs"
+    },
+    {
+      "after_sha256": "3da84fb9b35a550aebb21c00cf6b8dceaba7941667c9f64c5db3b8fc52925e8e",
+      "before_sha256": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075",
+      "new": "[package]\nname = \"idevice-ffi\"\nversion = \"0.1.68\"\nedition = \"2024\"\n\n\n[dependencies]\nidevice = { path = \"../idevice\", default-features = false }\nfutures = { version = \"0.3\", optional = true }\ntracing = { version = \"0.1.41\" }\ntracing-subscriber = { version = \"0.3.20\", features = [\"env-filter\"] }\ntracing-appender = { version = \"0.2\" }\nonce_cell = \"1.21.1\"\ntokio = { version = \"1.44.1\", features = [\"full\"] }\nlibc = \"0.2.171\"\nplist = { version = \"1.7.1\", features = [\"enable_unstable_features_that_may_break_with_minor_version_bumps\"] }\nplist_ffi = { version = \"0.1.6\" }\nuuid = { version = \"1.12\", features = [\"v4\"], optional = true }\nserde_json = { version = \"1\", optional = true }\nmdns-sd = { version = \"0.19\", optional = true }\n\n[target.'cfg(windows)'.dependencies]\nwindows-sys = { version = \"0.61\", features = [\"Win32_Networking_WinSock\"] }\n\n[features]\n# Explicitly selected synthetic integration fixtures; never enable in artifacts.\ntetherless-synthetic-peer = [\"idevice/tetherless-synthetic-peer\"]\naws-lc = [\"idevice/aws-lc\"]\nring = [\"idevice/ring\"]\nrustcrypto = [\"idevice/rustcrypto\"]\nopenssl = [\"idevice/openssl\"]\n\n\nafc = [\"idevice/afc\"]\namfi = [\"idevice/amfi\"]\nbt_packet_logger = [\"idevice/bt_packet_logger\"]\ncompanion_proxy = [\"idevice/companion_proxy\"]\ncore_device = [\"idevice/core_device\", \"dep:futures\", \"dep:uuid\", \"rsd\"]\ncore_device_proxy = [\"idevice/core_device_proxy\", \"idevice/tunnel_tcp_stack\"]\ncrashreportcopymobile = [\"idevice/crashreportcopymobile\", \"afc\"]\ncryptexd = [\"idevice/cryptexd\", \"rsd\", \"tss\"]\ndebug_proxy = [\"idevice/debug_proxy\"]\ndiagnostics_relay = [\"idevice/diagnostics_relay\"]\ndvt = [\"idevice/dvt\"]\ndevice_info = [\"idevice/device_info\"]\napplication_listing = [\"idevice/application_listing\"]\ncondition_inducer = [\"idevice/condition_inducer\"]\nenergy_monitor = [\"idevice/energy_monitor\"]\ngraphics = [\"idevice/graphics\"]\nnetwork_monitor = [\"idevice/network_monitor\"]\nsysmontap = [\"idevice/sysmontap\"]\nheartbeat = [\"idevice/heartbeat\"]\nnotification_proxy = [\"idevice/notification_proxy\"]\nhouse_arrest = [\"idevice/house_arrest\", \"afc\"]\ninstallcoordination_proxy = [\"idevice/installcoordination_proxy\", \"rsd\"]\ninstallation_proxy = [\"idevice/installation_proxy\"]\nspringboardservices = [\"idevice/springboardservices\"]\nmisagent = [\"idevice/misagent\"]\nmobileactivationd = [\"idevice/mobileactivationd\"]\nmobilebackup2 = [\"idevice/mobilebackup2\"]\nmobile_image_mounter = [\"idevice/mobile_image_mounter\"]\nlocation_simulation = [\"idevice/location_simulation\"]\npair = [\"idevice/pair\"]\npcapd = [\"idevice/pcapd\"]\npreboard_service = [\"idevice/preboard_service\"]\nobfuscate = [\"idevice/obfuscate\"]\nrestore = [\"idevice/restore\", \"dep:futures\"]\nrestore_recovery = [\"restore\", \"idevice/restore_recovery\"]\nrestore_service = [\"idevice/restore_service\", \"rsd\"]\nremote_pairing = [\"idevice/remote_pairing\", \"dep:mdns-sd\"]\nrsd = [\"idevice/rsd\"]\nsyslog_relay = [\"idevice/syslog_relay\"]\ntcp = [\"idevice/tcp\"]\ntunnel_tcp_stack = [\n  \"idevice/tunnel_tcp_stack\",\n  \"core_device_proxy\",\n  \"rsd\",\n  \"remote_pairing\",\n]\ntunnel_tcp_stack_pcap = [\"idevice/tunnel_tcp_stack_pcap\", \"tunnel_tcp_stack\"]\ntss = [\"idevice/tss\"]\ntunneld = [\"idevice/tunneld\"]\nusbmuxd = [\"idevice/usbmuxd\", \"dep:futures\"]\nwda = [\"idevice/wda\", \"dep:serde_json\"]\nxpc = [\"idevice/xpc\"]\nscreenshotr = [\"idevice/screenshotr\"]\nfull = [\n  \"afc\",\n  \"amfi\",\n  \"bt_packet_logger\",\n  \"companion_proxy\",\n  \"core_device\",\n  \"core_device_proxy\",\n  \"crashreportcopymobile\",\n  \"cryptexd\",\n  \"debug_proxy\",\n  \"diagnostics_relay\",\n  \"dvt\",\n  \"device_info\",\n  \"application_listing\",\n  \"condition_inducer\",\n  \"energy_monitor\",\n  \"graphics\",\n  \"network_monitor\",\n  \"sysmontap\",\n  \"heartbeat\",\n  \"house_arrest\",\n  \"installcoordination_proxy\",\n  \"installation_proxy\",\n  \"location_simulation\",\n  \"misagent\",\n  \"mobileactivationd\",\n  \"mobile_image_mounter\",\n  \"mobilebackup2\",\n  \"notification_proxy\",\n  \"pair\",\n  \"pcapd\",\n  \"preboard_service\",\n  \"restore\",\n  \"restore_recovery\",\n  \"restore_service\",\n  \"remote_pairing\",\n  \"rsd\",\n  \"screenshotr\",\n  \"springboardservices\",\n  \"syslog_relay\",\n  \"tcp\",\n  \"tunnel_tcp_stack\",\n  \"tunnel_tcp_stack_pcap\",\n  \"tss\",\n  \"tunneld\",\n  \"usbmuxd\",\n  \"wda\",\n  \"xpc\",\n]\n# default = [\"full\", \"aws-lc\"]\ndefault = [\n  \"afc\",\n  \"debug_proxy\",\n  \"installation_proxy\",\n  \"misagent\",\n  \"usbmuxd\",\n  \"rsd\",\n  \"tcp\",\n  \"core_device\",\n  \"core_device_proxy\",\n  \"xpc\",\n  \"tunnel_tcp_stack\",\n  \"dvt\",\n  \"remote_pairing\",\n  \"aws-lc\",\n  \"springboardservices\",\n  \"heartbeat\",\n  \"mobile_image_mounter\",\n  \"tss\",\n  \"house_arrest\"\n]\n\n[build-dependencies]\ncbindgen = \"0.29.0\"\n\n[lib]\n#crate-type = [\"staticlib\", \"cdylib\", \"rlib\"]\ncrate-type = [\"staticlib\"]\n",
+      "old": "[package]\nname = \"idevice-ffi\"\nversion = \"0.1.68\"\nedition = \"2024\"\n\n\n[dependencies]\nidevice = { path = \"../idevice\", default-features = false }\nfutures = { version = \"0.3\", optional = true }\ntracing = { version = \"0.1.41\" }\ntracing-subscriber = { version = \"0.3.20\", features = [\"env-filter\"] }\ntracing-appender = { version = \"0.2\" }\nonce_cell = \"1.21.1\"\ntokio = { version = \"1.44.1\", features = [\"full\"] }\nlibc = \"0.2.171\"\nplist = \"1.7.1\"\nplist_ffi = { version = \"0.1.6\" }\nuuid = { version = \"1.12\", features = [\"v4\"], optional = true }\nserde_json = { version = \"1\", optional = true }\nmdns-sd = { version = \"0.19\", optional = true }\n\n[target.'cfg(windows)'.dependencies]\nwindows-sys = { version = \"0.61\", features = [\"Win32_Networking_WinSock\"] }\n\n[features]\naws-lc = [\"idevice/aws-lc\"]\nring = [\"idevice/ring\"]\nrustcrypto = [\"idevice/rustcrypto\"]\nopenssl = [\"idevice/openssl\"]\n\n\nafc = [\"idevice/afc\"]\namfi = [\"idevice/amfi\"]\nbt_packet_logger = [\"idevice/bt_packet_logger\"]\ncompanion_proxy = [\"idevice/companion_proxy\"]\ncore_device = [\"idevice/core_device\", \"dep:futures\", \"dep:uuid\", \"rsd\"]\ncore_device_proxy = [\"idevice/core_device_proxy\", \"idevice/tunnel_tcp_stack\"]\ncrashreportcopymobile = [\"idevice/crashreportcopymobile\", \"afc\"]\ncryptexd = [\"idevice/cryptexd\", \"rsd\", \"tss\"]\ndebug_proxy = [\"idevice/debug_proxy\"]\ndiagnostics_relay = [\"idevice/diagnostics_relay\"]\ndvt = [\"idevice/dvt\"]\ndevice_info = [\"idevice/device_info\"]\napplication_listing = [\"idevice/application_listing\"]\ncondition_inducer = [\"idevice/condition_inducer\"]\nenergy_monitor = [\"idevice/energy_monitor\"]\ngraphics = [\"idevice/graphics\"]\nnetwork_monitor = [\"idevice/network_monitor\"]\nsysmontap = [\"idevice/sysmontap\"]\nheartbeat = [\"idevice/heartbeat\"]\nnotification_proxy = [\"idevice/notification_proxy\"]\nhouse_arrest = [\"idevice/house_arrest\", \"afc\"]\ninstallcoordination_proxy = [\"idevice/installcoordination_proxy\", \"rsd\"]\ninstallation_proxy = [\"idevice/installation_proxy\"]\nspringboardservices = [\"idevice/springboardservices\"]\nmisagent = [\"idevice/misagent\"]\nmobileactivationd = [\"idevice/mobileactivationd\"]\nmobilebackup2 = [\"idevice/mobilebackup2\"]\nmobile_image_mounter = [\"idevice/mobile_image_mounter\"]\nlocation_simulation = [\"idevice/location_simulation\"]\npair = [\"idevice/pair\"]\npcapd = [\"idevice/pcapd\"]\npreboard_service = [\"idevice/preboard_service\"]\nobfuscate = [\"idevice/obfuscate\"]\nrestore = [\"idevice/restore\", \"dep:futures\"]\nrestore_recovery = [\"restore\", \"idevice/restore_recovery\"]\nrestore_service = [\"idevice/restore_service\", \"rsd\"]\nremote_pairing = [\"idevice/remote_pairing\", \"dep:mdns-sd\"]\nrsd = [\"idevice/rsd\"]\nsyslog_relay = [\"idevice/syslog_relay\"]\ntcp = [\"idevice/tcp\"]\ntunnel_tcp_stack = [\n  \"idevice/tunnel_tcp_stack\",\n  \"core_device_proxy\",\n  \"rsd\",\n  \"remote_pairing\",\n]\ntunnel_tcp_stack_pcap = [\"idevice/tunnel_tcp_stack_pcap\", \"tunnel_tcp_stack\"]\ntss = [\"idevice/tss\"]\ntunneld = [\"idevice/tunneld\"]\nusbmuxd = [\"idevice/usbmuxd\", \"dep:futures\"]\nwda = [\"idevice/wda\", \"dep:serde_json\"]\nxpc = [\"idevice/xpc\"]\nscreenshotr = [\"idevice/screenshotr\"]\nfull = [\n  \"afc\",\n  \"amfi\",\n  \"bt_packet_logger\",\n  \"companion_proxy\",\n  \"core_device\",\n  \"core_device_proxy\",\n  \"crashreportcopymobile\",\n  \"cryptexd\",\n  \"debug_proxy\",\n  \"diagnostics_relay\",\n  \"dvt\",\n  \"device_info\",\n  \"application_listing\",\n  \"condition_inducer\",\n  \"energy_monitor\",\n  \"graphics\",\n  \"network_monitor\",\n  \"sysmontap\",\n  \"heartbeat\",\n  \"house_arrest\",\n  \"installcoordination_proxy\",\n  \"installation_proxy\",\n  \"location_simulation\",\n  \"misagent\",\n  \"mobileactivationd\",\n  \"mobile_image_mounter\",\n  \"mobilebackup2\",\n  \"notification_proxy\",\n  \"pair\",\n  \"pcapd\",\n  \"preboard_service\",\n  \"restore\",\n  \"restore_recovery\",\n  \"restore_service\",\n  \"remote_pairing\",\n  \"rsd\",\n  \"screenshotr\",\n  \"springboardservices\",\n  \"syslog_relay\",\n  \"tcp\",\n  \"tunnel_tcp_stack\",\n  \"tunnel_tcp_stack_pcap\",\n  \"tss\",\n  \"tunneld\",\n  \"usbmuxd\",\n  \"wda\",\n  \"xpc\",\n]\n# default = [\"full\", \"aws-lc\"]\ndefault = [\n  \"afc\",\n  \"debug_proxy\",\n  \"installation_proxy\",\n  \"misagent\",\n  \"usbmuxd\",\n  \"rsd\",\n  \"tcp\",\n  \"core_device\",\n  \"core_device_proxy\",\n  \"xpc\",\n  \"tunnel_tcp_stack\",\n  \"dvt\",\n  \"remote_pairing\",\n  \"aws-lc\",\n  \"springboardservices\",\n  \"heartbeat\",\n  \"mobile_image_mounter\",\n  \"tss\",\n  \"house_arrest\"\n]\n\n[build-dependencies]\ncbindgen = \"0.29.0\"\n\n[lib]\n#crate-type = [\"staticlib\", \"cdylib\", \"rlib\"]\ncrate-type = [\"staticlib\"]\n",
+      "path": "ffi/Cargo.toml"
+    },
+    {
+      "after_sha256": "7b829f3c80398b605e46797eea286380dc786c733d92c484527d1f49e2d2e62e",
+      "before_sha256": "25626cb8dadd573abe483a0b1f5577c15026954a615b3d445e9aa54b451a469c",
+      "new": "[features]\n# Explicitly selected synthetic integration fixtures; never enable in artifacts.\ntetherless-synthetic-peer = [\"openssl\", \"remote_pairing\", \"rsd\", \"tunnel_tcp_stack\"]\n",
+      "old": "[features]\n",
+      "path": "idevice/Cargo.toml"
+    }
+  ],
+  "evidence_sha256": {
+    "upstream/.github/workflows/ci.yml": "b5dee0a296b10e0f3b8b7f6993c2cb99c8b6d20ea37da2e20e880687ec278b44",
+    "upstream/.gitmodules": "af90802a99b765d0ce69bdcaa9fec8b24f7d51989e4ebf92d383db17dd44166b",
+    "upstream/Cargo.lock": "3c1a7710f0cd02f9100e91b97c9f8abc6546f115f7f3255551c990628aea0e16",
+    "upstream/Cargo.toml": "c390ce8ae9f2cee08b07d7bf726e928cf6fbcf2fbb9d9d02d9e9c266adcb41bf",
+    "upstream/LICENSE.txt": "131488ce7e302b9f62e3236793e57c86a208d3dfaf03e6d7d03ddc0fc82392ed",
+    "upstream/ffi/Cargo.toml": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075",
+    "upstream/ffi/build.rs": "4ed0afafbed97141a713f0a0ca6d2d2b78d79c7020342de20768856bc2a8310f",
+    "upstream/ffi/plist.h": "f3f055f92a9ff298a873bf6d2a5f6e47d5d405bef3d8b0153797c48c51ceff4c",
+    "upstream/ffi/src/lib.rs": "36111caf4c2bec04713859fb42b6ffd1ccb18850f22333fe224d62d642c411e3",
+    "upstream/idevice/Cargo.toml": "25626cb8dadd573abe483a0b1f5577c15026954a615b3d445e9aa54b451a469c",
+    "upstream/idevice/src/remote_pairing/mod.rs": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14",
+    "upstream/idevice/src/remote_pairing/opack.rs": "3001ea414840f6bd412d453ea87a4e2f086afc5089abca7a0b0287969e70290c",
+    "upstream/idevice/src/remote_pairing/responder.rs": "1135424851fd3dbf523cb95169b83bd2a972ffc386f9fff1159e773ff61f173b",
+    "upstream/idevice/src/remote_pairing/socket.rs": "7cf15ff60df0fea5612b0fd3b29b3e740e48b7450f9e3f88b2f9efbad99df836",
+    "upstream/idevice/src/remote_pairing/tunnel.rs": "b9910973a3252833b18b87a77bbf937573db3843f72caf949bd20e04ec563f0b",
+    "upstream/idevice/src/services/rsd.rs": "bdb483a6bbc30b586e4d2d04190d432219059149298c2bca85f9033042bd03f7",
+    "upstream/idevice/src/xpc/format.rs": "5a7e23455b0acef0c1b2adeb3878f55b3347d47c1476123655e4d8c4e515d963",
+    "upstream/idevice/src/xpc/http2/frame.rs": "66401681f71282c6c32f10ae806ff1d09a62e33aba59d49d27dcb9093428fc2a",
+    "upstream/idevice/src/xpc/http2/mod.rs": "020d77abec682abb17d58068693be3b10df5d8694932bf9ea06c8fd1deb2f6f9",
+    "upstream/idevice/src/xpc/mod.rs": "e4c86bc271f262ac06fab86316ecb604e744e8df4fb1e4945e5f9a3926a38f69",
+    "upstream/justfile": "78fc2d7fe3e7d25559f29dc7c7dbda8c14fa7a74e261a54431916056c437078b",
+    "upstream/minimuxer-LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+    "upstream/swift/Package.swift": "04dbaefcb9183b154399c9fc397efbd602a552327424075ce19ffd4c0f6f74d7",
+    "upstream/swift/include/module.modulemap": "d9f7093c17127841806e2ddffdf540ef1728ed29be75304687952bdb61ae9b82"
+  },
+  "fixture_inventory": {
+    "authored_count": 10,
+    "executed": false,
+    "scope": "Actual caller-owned-FD host generation with synthetic peer including valid-AEAD identity failures; no device compatibility proof"
+  },
+  "link_probes_complete": true,
+  "native_test_filters": [
+    {
+      "expected_passed": 10,
+      "filter": "bounded_pairing_host::host_transcript::",
+      "package": "idevice-ffi"
+    }
+  ],
+  "native_test_filters_complete": true,
+  "overlays": [
+    {
+      "kind": "add",
+      "path": "ffi/src/staged_pairing.rs",
+      "sha256": "e827e5a464782009f4be7ab5557fecc449fe266836a3851bd1cbc97fa5637933"
+    },
+    {
+      "before_sha256": "e4c86bc271f262ac06fab86316ecb604e744e8df4fb1e4945e5f9a3926a38f69",
+      "kind": "replace",
+      "path": "idevice/src/xpc/mod.rs",
+      "sha256": "133875a825e20ff09dfacd4653d81977c03718fb6802d1d2dffdb365375acb16"
+    },
+    {
+      "before_sha256": "5a7e23455b0acef0c1b2adeb3878f55b3347d47c1476123655e4d8c4e515d963",
+      "kind": "replace",
+      "path": "idevice/src/xpc/format.rs",
+      "sha256": "ffb0cad9b15afbbf0a0d71e57bae73c8506f7d089a12d9508245a046f1ce6d74"
+    },
+    {
+      "before_sha256": "020d77abec682abb17d58068693be3b10df5d8694932bf9ea06c8fd1deb2f6f9",
+      "kind": "replace",
+      "path": "idevice/src/xpc/http2/mod.rs",
+      "sha256": "02f97206bef9a00d4cde14845443c23d9c0aba1d4c190588eced8b43da1100d8"
+    },
+    {
+      "before_sha256": "66401681f71282c6c32f10ae806ff1d09a62e33aba59d49d27dcb9093428fc2a",
+      "kind": "replace",
+      "path": "idevice/src/xpc/http2/frame.rs",
+      "sha256": "2d6c1299f7337c3f6a1e1514eb626b86f27cde50e8efe58367ece08f689ff1be"
+    },
+    {
+      "before_sha256": "bdb483a6bbc30b586e4d2d04190d432219059149298c2bca85f9033042bd03f7",
+      "kind": "replace",
+      "path": "idevice/src/services/rsd.rs",
+      "sha256": "016838732e04cd3cf920c4c0401fd42a8c3fc510470a9d6841de2659d65d51f4"
+    },
+    {
+      "kind": "add",
+      "path": "ffi/src/staged_acquisition.rs",
+      "sha256": "3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89"
+    },
+    {
+      "before_sha256": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/mod.rs",
+      "sha256": "22b395b2ecc2fd4bf8f8b4db2bc4e12690489e3ce0d347045d3a6e40196a0919",
+      "source_path": "host-transcript-overlay/idevice/src/remote_pairing/mod.rs"
+    },
+    {
+      "before_sha256": "7cf15ff60df0fea5612b0fd3b29b3e740e48b7450f9e3f88b2f9efbad99df836",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/socket.rs",
+      "sha256": "98320de9588fc7e8bd713c43149845d04b6aa66df92a0ad3e3b8416a8a529b67"
+    },
+    {
+      "kind": "add",
+      "path": "idevice/src/remote_pairing/tunnel/staged_packet_io.rs",
+      "sha256": "6eccade39710d27ef0cbb9635c80abc98e314ca508acf0ca5c20218dd24bac34"
+    },
+    {
+      "before_sha256": "b9910973a3252833b18b87a77bbf937573db3843f72caf949bd20e04ec563f0b",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/tunnel.rs",
+      "sha256": "4c1d3c6196d30dc2e66a4e3c814af02a65162b26bfe69be67c02ea9766069163"
+    },
+    {
+      "kind": "add",
+      "path": "ffi/src/bounded_pairing_host.rs",
+      "sha256": "32ef33431560ded6edfa2803fead89b708e06e7c2edd8ee4ae9e0c74b77ef63b",
+      "source_path": "host-transcript-overlay/ffi/src/bounded_pairing_host.rs"
+    },
+    {
+      "before_sha256": "3001ea414840f6bd412d453ea87a4e2f086afc5089abca7a0b0287969e70290c",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/opack.rs",
+      "sha256": "3ead51d183ee5667f0a9c838e43c6f9cbfa755c6c8354563e0fa81d3e78f7235"
+    },
+    {
+      "before_sha256": "1135424851fd3dbf523cb95169b83bd2a972ffc386f9fff1159e773ff61f173b",
+      "kind": "replace",
+      "path": "idevice/src/remote_pairing/responder.rs",
+      "sha256": "fb03dbd4b6c727ca2432269d8ad763b93e2cdc51d251b830f827316825c27909"
+    },
+    {
+      "kind": "add",
+      "path": "ffi/src/bounded_pairing_host/host_transcript.rs",
+      "sha256": "4dafb1139f2776f8a56eac78d0e43a75c1b79628e11c0b6f306e9e942dbee637",
+      "source_path": "host-transcript-overlay/ffi/src/bounded_pairing_host/host_transcript.rs"
+    },
+    {
+      "kind": "add",
+      "path": "idevice/src/remote_pairing/host_test_phone.rs",
+      "sha256": "b5a7a8abb91dc802bd5915d451021ae80e62a5a3550f2f8d4ca6ea981b6fe825",
+      "source_path": "host-transcript-overlay/idevice/src/remote_pairing/host_test_phone.rs"
+    }
+  ],
+  "patch_complete": true,
+  "probe_sets": {},
+  "profile_kind": "registered-host-transcript-tests",
+  "registered_source_complete": true,
+  "registration_receipts": {
+    "registration/receipts/acquisition-stack-independent-review.json": "e36166d16d94e648000e82b3064240f565305cea1b931d81dc477f100c5291cc",
+    "registration/receipts/acquisition-stack-repair.json": "2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554",
+    "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
+    "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
+    "registration/receipts/host-controller-signature-review.json": "f1c14acb97cf95e5f3153358dab5b7011805947a9146b571081732e30e91c062",
+    "registration/receipts/host-controller-signature-validation.json": "b04ed250fcf75a03315dc6e7ba2b84ed269a1549c3ac9a023ea20a95839e69b0",
+    "registration/receipts/host-controller-signature.json": "a4b8e30b2a83e2dca1122221021b3a44be8647dfe239cb1c139bc60437dcc3a9",
+    "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
+    "registration/receipts/host-transcript-review.md": "e8574cb685fae0d13afe55ca36512c5bb243039734dc718536ff6e7586ba35a0",
+    "registration/receipts/host-transcript-source.json": "7b0a80e073c106cfde25003343642de9d92b65a17368d7f5f1dd456a76b30f13",
+    "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
+  },
+  "required_ffi_symbols": [
+    "tetherless_pairing_validation_new",
+    "tetherless_pairing_validation_cancel",
+    "tetherless_pairing_validation_free",
+    "tetherless_pairing_validate_house_arrest",
+    "tetherless_pairing_validate_staged",
+    "tetherless_pairing_host_prepare",
+    "tetherless_pairing_host_cancel",
+    "tetherless_pairing_host_free",
+    "tetherless_pairing_host_accept_fd"
+  ],
+  "schema": 1,
+  "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8",
+  "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",
+  "status": "Source-reviewed host/M5 fixtures composed on reviewed stack repair; registration review and all ten native transcripts pending",
+  "upstream": {
+    "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+    "repository": "SideStore/idevice",
+    "tree": "5df506b11db33b97d3b963e3be3f095729a409da",
+    "url": "https://github.com/SideStore/idevice/tree/3e55c8486b2057e40c1f74aaaa1155c82341cf76"
+  }
+}

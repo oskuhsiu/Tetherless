@@ -28,7 +28,8 @@ PROFILE = "candidate-profiles/host-only.json"
 EXPECTED_FILTERS = [{"package": "idevice-ffi", "filter": "bounded_pairing_host::", "expected_passed": 8},
                     {"package": "idevice", "filter": "bounded_host_tests", "expected_passed": 5},
                     {"package": "idevice", "filter": "bounded_host_frame_tests", "expected_passed": 3},
-                    {"package": "idevice", "filter": "bounded_opack_tests", "expected_passed": 4}]
+                    {"package": "idevice", "filter": "bounded_opack_tests", "expected_passed": 4},
+                    {"package": "idevice", "filter": "remote_pairing::responder::bounded_controller_signature_tests::", "expected_passed": 6}]
 
 
 def load_host_profile() -> dict:
@@ -121,10 +122,10 @@ def execute(args: argparse.Namespace) -> dict:
                 or not workspace_audit["original_inputs_unchanged"]):
             raise VerificationError("authenticated workspace/vendor input changed; retained input-audit JSON files")
     total_passed = sum(suite["passed"] for suite in outcomes)
-    if total_passed != 20 or len(outcomes) != 4:
-        raise VerificationError("host-only profile must execute all four suites and exactly 20 fixtures")
+    if total_passed != 26 or len(outcomes) != 5:
+        raise VerificationError("host-only profile must execute all five suites and exactly 26 fixtures")
     evidence = {"schema": 1, "profile_kind": "host-only-native-tests", "tests": outcomes,
-                "expected_fixture_count": 20, "observed_fixture_count": total_passed,
+                "expected_fixture_count": 26, "observed_fixture_count": total_passed,
                 "source_commit": profile["upstream"]["commit"],
                 "profile_sha256": file_hash(HERE / PROFILE),
                 "toolchain_sha256": sha256(toolchain_bytes), "toolchain_observations": observations,

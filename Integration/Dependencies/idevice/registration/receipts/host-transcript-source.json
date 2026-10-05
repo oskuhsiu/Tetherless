@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "status": "source_authored_pending_independent_review_and_native_execution",
+  "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "feature": "tetherless-synthetic-peer",
+  "native_test_filter": "bounded_pairing_host::host_transcript::",
+  "native_expected_tests": 7,
+  "native_executed_tests": 0,
+  "input_files": [
+    {
+      "path": "tetherless-host-generation/source_manifest.json",
+      "sha256": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a"
+    },
+    {
+      "path": "tetherless-host-generation/overlay/ffi/src/bounded_pairing_host.rs",
+      "sha256": "3b8f8ee659e81bb7e06efe0ede74aba833e6c44f44d9c553e4e10ae3888e723f"
+    },
+    {
+      "path": "tetherless-host-generation/overlay/idevice/src/remote_pairing/opack.rs",
+      "sha256": "3ead51d183ee5667f0a9c838e43c6f9cbfa755c6c8354563e0fa81d3e78f7235"
+    },
+    {
+      "path": "tetherless-host-generation/overlay/idevice/src/remote_pairing/responder.rs",
+      "sha256": "2194dec98ea37aec7de109bc6ff0f2fa8acb3db7de9bd268f5adaae83f608954"
+    },
+    {
+      "path": "tetherless-idevice-pinned-source/idevice/src/remote_pairing/mod.rs",
+      "sha256": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14"
+    },
+    {
+      "path": "tetherless-idevice-pinned-source/Cargo.lock",
+      "sha256": "3c1a7710f0cd02f9100e91b97c9f8abc6546f115f7f3255551c990628aea0e16"
+    }
+  ],
+  "files": [
+    {
+      "path": "CHECKPOINT.md",
+      "bytes": 7984,
+      "sha256": "44f33c5df88699c132852fa4a553468d60d096186836dca3a6c6ac91ce25c8e4"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/Cargo.toml",
+      "bytes": 4516,
+      "sha256": "c52071e53645cd9ea9dfaa88fde648c0c932ed8e9fdc54625d69121dfa03ef7d"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/src/bounded_pairing_host/host_transcript.rs",
+      "bytes": 22171,
+      "sha256": "c4ae09ec1cef28f6f72c835564c2a6b0ef2ef54bc02c9d0360de8f5893188c68"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/src/bounded_pairing_host.rs",
+      "bytes": 23158,
+      "sha256": "32ef33431560ded6edfa2803fead89b708e06e7c2edd8ee4ae9e0c74b77ef63b"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/Cargo.toml",
+      "bytes": 9348,
+      "sha256": "7b829f3c80398b605e46797eea286380dc786c733d92c484527d1f49e2d2e62e"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/host_test_phone.rs",
+      "bytes": 14743,
+      "sha256": "05e1304cf9cef9bb23a0e1da6201f8a7a1ae2275374259144e83063d11032062"
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/mod.rs",
+      "bytes": 34194,
+      "sha256": "c15248c7ce4fc27abab07bffafbd1049a57f998dba99686e870e31d79a0c9988"
+    },
+    {
+      "path": "host-transcript.patch",
+      "bytes": 39105,
+      "sha256": "4c2b1e224c2f0696924493ea0627c9c00a3ed225a684093641916b392a8458c1"
+    },
+    {
+      "path": "verify_fixture_scope.py",
+      "bytes": 6716,
+      "sha256": "219f20b1758326e486d9b3cee3cef46f5bdb4c5261f02cebaf6a88203e8a5304"
+    }
+  ]
+}

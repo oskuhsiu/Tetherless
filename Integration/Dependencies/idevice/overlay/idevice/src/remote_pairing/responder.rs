@@ -16,6 +16,7 @@ use chacha20poly1305::{
     ChaCha20Poly1305, Key, KeyInit, Nonce,
     aead::{Aead, Payload},
 };
+use ed25519_dalek::{Signature, VerifyingKey};
 use hkdf::Hkdf;
 use idevice_srp::{client::SrpClient, groups::G_3072, server::SrpServer};
 use plist::Value;
@@ -162,6 +163,7 @@ impl<R: super::RpPairingSocketProvider> PairableHost<R> {
     }
 
     /// Caller-owned host path with explicit peer-info and SRP work limits.
+    /// Authenticates the M5 controller identity before replying or accepting peer metadata.
     /// The caller also owns bounded framing, cancellation and the operation deadline.
     pub fn new_bounded(inner: R, host_info: PairableHostInfo) -> Self {
         let mut host = Self::new(inner, host_info);
@@ -417,7 +419,7 @@ impl<R: super::RpPairingSocketProvider> PairableHost<R> {
         let device_tlv = tlv::deserialize_tlv8(&plaintext)?;
         debug!("Decrypted device identity TLV: {device_tlv:#?}");
         let peer_device = if self.bounded_host {
-            bounded_peer_device(&device_tlv)?
+            bounded_authenticated_peer_device(&device_tlv, &session_key)?
         } else { peer_device::parse_peer_device_from_tlv(&device_tlv)? };
 
         // m6
@@ -611,6 +613,56 @@ fn bounded_srp_inputs(public_key: &[u8], proof: &[u8]) -> Result<(), IdeviceErro
         return Err(IdeviceError::UnexpectedResponse("bounded host SRP public value".into()));
     }
     Ok(())
+}
+
+fn controller_identity_error() -> IdeviceError {
+    IdeviceError::UnexpectedResponse("bounded host controller identity rejected".into())
+}
+
+/// Authenticates exactly the pinned client's ControllerX || Identifier || LTPK.
+/// These bounded fields all fit in one TLV8 entry; reject missing, duplicate or
+/// fragmented values rather than authenticate an ambiguous concatenation.
+fn bounded_controller_identity<'a>(
+    entries: &'a [tlv::TLV8Entry], session_key: &[u8],
+) -> Result<&'a str, IdeviceError> {
+    fn component(entries: &[tlv::TLV8Entry], kind: Tt) -> Result<&[u8], IdeviceError> {
+        let mut found = entries.iter().filter(|entry| entry.tlv_type == kind);
+        let value = found.next().ok_or_else(controller_identity_error)?;
+        if found.next().is_some() { return Err(controller_identity_error()); }
+        Ok(&value.data)
+    }
+    if session_key.len() != 64 { return Err(controller_identity_error()); }
+    let identifier = component(entries, Tt::Identifier)?;
+    if identifier.is_empty() || identifier.len() > 128 { return Err(controller_identity_error()); }
+    let identifier = std::str::from_utf8(identifier).map_err(|_| controller_identity_error())?;
+    if identifier.chars().any(char::is_control) { return Err(controller_identity_error()); }
+    let public: &[u8; 32] = component(entries, Tt::PublicKey)?
+        .try_into().map_err(|_| controller_identity_error())?;
+    let signature = Signature::from_slice(component(entries, Tt::Signature)?)
+        .map_err(|_| controller_identity_error())?;
+    let key = VerifyingKey::from_bytes(public).map_err(|_| controller_identity_error())?;
+    let mut controller_x = [0u8; 32];
+    Hkdf::<Sha512>::new(Some(b"Pair-Setup-Controller-Sign-Salt"), session_key)
+        .expand(b"Pair-Setup-Controller-Sign-Info", &mut controller_x)
+        .map_err(|_| controller_identity_error())?;
+    let mut signed = Vec::with_capacity(32 + identifier.len() + 32);
+    signed.extend_from_slice(&controller_x);
+    signed.extend_from_slice(identifier.as_bytes());
+    signed.extend_from_slice(public);
+    key.verify_strict(&signed, &signature).map_err(|_| controller_identity_error())?;
+    Ok(identifier)
+}
+
+fn bounded_authenticated_peer_device(
+    entries: &[tlv::TLV8Entry], session_key: &[u8],
+) -> Result<PeerDevice, IdeviceError> {
+    ensure_no_error(entries)?;
+    let identifier = bounded_controller_identity(entries, session_key)?;
+    let peer = bounded_peer_device(entries)?;
+    // The accepted peer identity must be the identifier whose key possession
+    // was proved. Info remains AEAD-bound; it is not part of the signature.
+    if peer.account_id != identifier { return Err(controller_identity_error()); }
+    Ok(peer)
 }
 
 fn bounded_peer_device(entries: &[tlv::TLV8Entry]) -> Result<PeerDevice, IdeviceError> {
@@ -848,5 +900,129 @@ mod bounded_host_frame_tests {
         assert!(!host_json_bounded(&value, 0, &mut 0));
         let many = serde_json::Value::Array(vec![serde_json::Value::Bool(true); 600]);
         assert!(!host_json_bounded(&many, 0, &mut 0));
+    }
+}
+
+#[cfg(test)]
+mod bounded_controller_signature_tests {
+    use super::*;
+    use ed25519_dalek::SigningKey;
+
+    const SESSION: [u8; 64] = [0x31; 64];
+    const IDENTIFIER: &[u8] = b"synthetic-controller";
+
+    fn identity(identifier: &[u8], session: &[u8]) -> Vec<tlv::TLV8Entry> {
+        let signing = SigningKey::from_bytes(&[0x27; 32]);
+        let public = signing.verifying_key().to_bytes();
+        let mut prefix = [0; 32];
+        Hkdf::<Sha512>::new(Some(b"Pair-Setup-Controller-Sign-Salt"), session)
+            .expand(b"Pair-Setup-Controller-Sign-Info", &mut prefix).unwrap();
+        let mut signed = prefix.to_vec();
+        signed.extend_from_slice(identifier); signed.extend_from_slice(&public);
+        let signature = ed25519_dalek::Signer::sign(&signing, &signed);
+        vec![
+            tlv::TLV8Entry { tlv_type: Tt::Identifier, data: identifier.to_vec() },
+            tlv::TLV8Entry { tlv_type: Tt::PublicKey, data: public.to_vec() },
+            tlv::TLV8Entry { tlv_type: Tt::Signature, data: signature.to_bytes().to_vec() },
+        ]
+    }
+    fn with_info(account: Value) -> Vec<tlv::TLV8Entry> {
+        let mut entries = identity(IDENTIFIER, &SESSION);
+        let value = crate::plist!({ "accountID": account, "altIRK": vec![1u8; 16],
+            "model": "synthetic-model", "name": "synthetic phone", "remotepairing_udid": "synthetic-id" });
+        entries.push(tlv::TLV8Entry { tlv_type: Tt::Info, data: opack::plist_to_opack(&value) });
+        entries
+    }
+
+    #[test]
+    fn accepts_exact_controller_signature_and_identifier_boundary() {
+        let entries = identity(IDENTIFIER, &SESSION);
+        // Independently generated Python Ed25519/HKDF-SHA512 synthetic vector.
+        // This assertion is authored; native execution remains required.
+        let expected_signature = [
+            0xcd, 0x12, 0x9d, 0x24, 0x2b, 0x15, 0x31, 0x81, 0x0e, 0x45, 0x11, 0x0c, 0x89, 0xb4, 0xfd, 0xc9,
+            0x8d, 0xc3, 0x8f, 0x1d, 0x2f, 0x6e, 0x2e, 0x20, 0xc0, 0x99, 0x5b, 0x1b, 0x0a, 0x3b, 0x18, 0x49,
+            0x3e, 0x06, 0x4c, 0xe5, 0x2d, 0xc8, 0x13, 0x4d, 0x93, 0x37, 0xbb, 0x5b, 0xb6, 0x92, 0x4d, 0xba,
+            0x1a, 0x71, 0x84, 0xf1, 0x09, 0x0a, 0x9f, 0xe4, 0xb5, 0x71, 0xaa, 0xcf, 0xca, 0x7c, 0x65, 0x08
+        ];
+        assert!(entries[2].data.as_slice() == expected_signature);
+        assert!(bounded_controller_identity(&entries, &SESSION).is_ok());
+        let boundary = identity(&[b'a'; 128], &SESSION);
+        assert!(bounded_controller_identity(&boundary, &SESSION).is_ok());
+        assert!(bounded_authenticated_peer_device(&with_info(Value::String(
+            "synthetic-controller".into())), &SESSION).is_ok());
+    }
+
+    #[test]
+    fn requires_exact_key_signature_session_lengths_and_bounded_identifier() {
+        for size in [0, 1, 31, 63, 65, 128] {
+            assert!(bounded_controller_identity(&identity(IDENTIFIER, &SESSION), &vec![0; size]).is_err());
+        }
+        for (index, sizes) in [(1, &[0usize, 1, 31, 33, 255][..]), (2, &[0usize, 1, 63, 65, 255][..])] {
+            for &size in sizes {
+                let mut entries = identity(IDENTIFIER, &SESSION);
+                entries[index].data.resize(size, 0);
+                assert!(bounded_controller_identity(&entries, &SESSION).is_err());
+            }
+        }
+        for identifier in [vec![], vec![b'a'; 129]] {
+            assert!(bounded_controller_identity(&identity(&identifier, &SESSION), &SESSION).is_err());
+        }
+    }
+
+    #[test]
+    fn rejects_missing_wrong_type_duplicate_and_fragmented_identity_fields() {
+        for index in 0..3 {
+            let mut missing = identity(IDENTIFIER, &SESSION); missing.remove(index);
+            assert!(bounded_controller_identity(&missing, &SESSION).is_err());
+            let mut wrong_type = identity(IDENTIFIER, &SESSION); wrong_type[index].tlv_type = Tt::Proof;
+            assert!(bounded_controller_identity(&wrong_type, &SESSION).is_err());
+            let mut duplicate = identity(IDENTIFIER, &SESSION); duplicate.push(duplicate[index].clone());
+            assert!(bounded_controller_identity(&duplicate, &SESSION).is_err());
+            let mut split = identity(IDENTIFIER, &SESSION);
+            let data = split[index].data.split_off(1);
+            split.push(tlv::TLV8Entry { tlv_type: split[index].tlv_type, data });
+            assert!(bounded_controller_identity(&split, &SESSION).is_err());
+        }
+    }
+
+    #[test]
+    fn rejects_non_utf8_or_control_identifiers_even_with_valid_signatures() {
+        for identifier in [&[0xff][..], b"bad\nidentifier", b"bad\0identifier", b"bad\x7fidentifier"] {
+            assert!(bounded_controller_identity(&identity(identifier, &SESSION), &SESSION).is_err());
+        }
+    }
+
+    #[test]
+    fn binds_signature_to_session_identifier_public_key_and_strict_verification() {
+        let entries = identity(IDENTIFIER, &SESSION);
+        assert!(bounded_controller_identity(&entries, &[0x32; 64]).is_err());
+        for index in [0, 2] {
+            let mut changed = entries.clone(); changed[index].data[0] ^= 1;
+            assert!(bounded_controller_identity(&changed, &SESSION).is_err());
+        }
+        let mut wrong_key = entries.clone();
+        wrong_key[1].data = SigningKey::from_bytes(&[0x28; 32]).verifying_key().to_bytes().to_vec();
+        assert!(bounded_controller_identity(&wrong_key, &SESSION).is_err());
+        // The canonical identity point is a weak public key. A matching weak R
+        // and zero scalar must not be accepted even when all lengths are exact.
+        let mut weak = entries;
+        weak[1].data = vec![0; 32]; weak[1].data[0] = 1;
+        weak[2].data = vec![0; 64]; weak[2].data[0] = 1;
+        assert!(bounded_controller_identity(&weak, &SESSION).is_err());
+    }
+
+    #[test]
+    fn accepted_peer_account_must_match_signed_identifier_and_have_string_type() {
+        for account in [Value::String("different-controller".into()), Value::Data(IDENTIFIER.to_vec()),
+                        Value::Integer(7.into())] {
+            let entries = with_info(account);
+            assert!(bounded_controller_identity(&entries, &SESSION).is_ok());
+            assert!(bounded_authenticated_peer_device(&entries, &SESSION).is_err());
+        }
+        let mut entries = identity(IDENTIFIER, &SESSION);
+        entries.push(tlv::TLV8Entry { tlv_type: Tt::Info,
+            data: opack::plist_to_opack(&Value::String("not a dictionary".into())) });
+        assert!(bounded_authenticated_peer_device(&entries, &SESSION).is_err());
     }
 }

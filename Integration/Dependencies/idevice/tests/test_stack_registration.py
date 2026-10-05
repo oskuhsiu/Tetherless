@@ -28,9 +28,9 @@ class StackRegistrationTests(unittest.TestCase):
         old = next(row for row in historical["files"] if row["path"] == "ffi/src/staged_acquisition.rs")
         self.assertEqual(old["overlay_sha256"], receipt["changed_source"]["preimage_sha256"])
 
-    def test_profiles_registry_runner_and_receipts_select_exact_74_and_94(self):
+    def test_profiles_registry_runner_and_receipts_select_exact_74_and_100(self):
         registry = json.loads((ROOT / "registration/registration.json").read_bytes())
-        for name, total in (("acquisition-only", 74), ("combined", 94)):
+        for name, total in (("acquisition-only", 74), ("combined", 100)):
             with self.subTest(profile=name):
                 path, profile = runner.load_profile(name)
                 self.assertEqual(registry["profiles"][name]["sha256"], sha256((ROOT / path).read_bytes()))
@@ -48,7 +48,7 @@ class StackRegistrationTests(unittest.TestCase):
                 self.assertFalse(profile["activation"]["consumer_integration_allowed"])
         checked = verify_registration.verify(ROOT)
         self.assertEqual(checked["acquisition-only"]["authored_fixture_count"], 74)
-        self.assertEqual(checked["combined"]["authored_fixture_count"], 94)
+        self.assertEqual(checked["combined"]["authored_fixture_count"], 100)
 
 
 if __name__ == "__main__":

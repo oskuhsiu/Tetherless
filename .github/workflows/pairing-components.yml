@@ -186,3 +186,198 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
+
+  native-proofs:
+    strategy:
+      fail-fast: false
+      matrix:
+        proof: [acquisition-transcript, host-transcript, apple-producer]
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 350
+    env:
+      NATIVE_PROOF: ${{ matrix.proof }}
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      RUSTUP_AUTO_INSTALL: '0'
+      RUSTUP_DIST_SERVER: https://static.rust-lang.org
+      RUSTUP_UPDATE_ROOT: https://static.rust-lang.org/rustup
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Check portable build tooling and isolated evidence directories
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          test ! -e .proof
+          mkdir -p .proof/evidence .proof/acquisition-home .proof/acquisition-cargo
+          python3 - <<'PY'
+          import json, os, platform, shutil, sys
+          from pathlib import Path
+          Path('.proof/evidence/run-context.json').write_text(json.dumps({
+              'scope': 'synthetic transcript or unsigned Apple dependency proof; not application or device acceptance',
+              'proof': os.environ['NATIVE_PROOF'],
+              'job_id': os.environ['GITHUB_JOB'],
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'runner_arch': platform.machine(),
+              'python_version': platform.python_version(),
+              'python_executable': sys.executable,
+              'developer_dir_present': Path(os.environ['DEVELOPER_DIR']).is_dir(),
+              'tool_paths': {name: shutil.which(name) for name in ('rustup', 'cmake', 'ninja')},
+              'image_os': os.environ.get('ImageOS'),
+              'image_version': os.environ.get('ImageVersion'),
+              'toolchain_status': 'first-observed candidate, not previously accepted build identity'
+          }, indent=2) + '\n')
+          PY
+          test "$(uname -m)" = arm64
+          test -d "$DEVELOPER_DIR"
+          command -v rustup
+          command -v cmake
+          command -v ninja
+          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+          python3 -m unittest discover -s Integration/Dependencies/idevice/tests -v \
+            2>&1 | tee .proof/evidence/portable-tests.log
+      - name: Acquire exact public upstream source without submodules or saved credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: SideStore/idevice
+          ref: 3e55c8486b2057e40c1f74aaaa1155c82341cf76
+          path: .proof/pristine
+          persist-credentials: false
+          submodules: false
+      - name: Verify pristine source before any Cargo operation
+        timeout-minutes: 3
+        run: |
+          python3 Integration/Dependencies/idevice/apply_patch.py \
+            --source .proof/pristine --verify-only \
+            > .proof/evidence/pristine-source-verification.json
+          python3 - <<'PYCODE'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'Integration/Dependencies/idevice')
+          from build_xcframework import reject_ambient_cargo_config
+          reject_ambient_cargo_config(Path('.proof/pristine').resolve(strict=True))
+          PYCODE
+      - name: Prepare the exact official Rust candidate with existing rustup
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          rustup --version > .proof/evidence/rustup-version.txt
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update \
+            --target aarch64-apple-ios,aarch64-apple-ios-sim \
+            > .proof/evidence/rustup-install.txt 2>&1
+          python3 Integration/Dependencies/idevice/record_toolchain.py \
+            --output .proof/evidence/toolchain-lock.observed.json \
+            > .proof/evidence/toolchain-lock.sha256
+      - name: Acquire only locked registry crates in a fresh isolated Cargo home
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/.proof"
+          CARGO="$(rustup which --toolchain 1.98.1 cargo)"
+          RUSTC="$(rustup which --toolchain 1.98.1 rustc)"
+          cd "$ROOT/pristine"
+          env -i PATH="$(dirname "$CARGO"):/usr/bin:/bin:/usr/sbin:/sbin" \
+            HOME="$ROOT/acquisition-home" CARGO_HOME="$ROOT/acquisition-cargo" \
+            RUSTC="$RUSTC" RUSTUP_AUTO_INSTALL=0 DEVELOPER_DIR="$DEVELOPER_DIR" \
+            LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
+            "$CARGO" fetch --locked > "$ROOT/evidence/cargo-fetch.txt" 2>&1
+      - name: Retain bounded authenticated public sources for provider review
+        timeout-minutes: 3
+        run: |
+          python3 - <<'PYCODE'
+          import pathlib, subprocess, sys
+          root = pathlib.Path('.proof').resolve(strict=True)
+          caches = list((root / 'acquisition-cargo/registry/cache').glob('*'))
+          if len(caches) != 1 or not caches[0].is_dir() or caches[0].is_symlink():
+              raise SystemExit('expected one isolated registry archive cache')
+          subprocess.run([sys.executable, 'Integration/Dependencies/idevice/retain_review_sources.py',
+              '--lock', 'Integration/Dependencies/idevice/upstream/Cargo.lock',
+              '--cache', str(caches[0]), '--output', str(root / 'review-sources')], check=True)
+          PYCODE
+      - name: Acquire exact reviewed OpenSSL provider inputs
+        id: openssl-input-checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          repository: krzyzanowskim/OpenSSL
+          ref: fdc9231384f37f053dffe058fd6dfc6c5072dae5
+          path: .proof/openssl-pristine
+          persist-credentials: false
+          submodules: false
+          sparse-checkout: |
+            Frameworks/OpenSSL.xcframework/ios-arm64
+            Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-simulator
+            macosx/include/OpenSSL
+            macosx/lib
+      - name: Retain exact OpenSSL bytes without executing native inputs
+        if: steps.openssl-input-checkout.outcome == 'success'
+        timeout-minutes: 2
+        run: |
+          python3 Integration/Dependencies/idevice/retain_openssl_inputs.py \
+            --source .proof/openssl-pristine --output .proof/openssl-inputs
+      - name: Run the exact reviewed native proof offline
+        timeout-minutes: 300
+        run: |
+          set -euo pipefail
+          python3 - <<'PYCODE'
+          import json, os, pathlib, subprocess, sys
+          root = pathlib.Path('.proof').resolve(strict=True)
+          caches = list((root / 'acquisition-cargo/registry/cache').glob('*'))
+          if len(caches) != 1 or not caches[0].is_dir() or caches[0].is_symlink():
+              raise SystemExit('expected one isolated registry archive cache')
+          proof = os.environ['NATIVE_PROOF']
+          runners = {'acquisition-transcript': 'run_pairing_transcript_tests.py',
+                     'host-transcript': 'run_pairing_host_transcript_tests.py',
+                     'apple-producer': 'build_pairing_apple.py'}
+          command = [sys.executable, 'Integration/Dependencies/idevice/' + runners[proof],
+              '--source', str(root / 'pristine'), '--crate-cache', str(caches[0]),
+              '--provider-inputs', str(root / 'openssl-inputs/inputs'),
+              '--work-dir', str(root / (proof + '-work')), '--output', str(root / (proof + '-output')),
+              '--toolchain-lock', str(root / 'evidence/toolchain-lock.observed.json'),
+              '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()]
+          if proof == 'apple-producer':
+              command += ['--recipe-lock-sha256', '4db8f8222cb9af765182d02437e458c6f6c7648f6bd2ca58483fcab640565f90']
+          (root / 'evidence/invocation.json').write_text(json.dumps({'proof': proof, 'argv': command}, indent=2) + '\n')
+          # Each native command is supervised by the unchanged reviewed runner.
+          # Retain entry-point errors as well, including failures before work/completed exists.
+          with (root / 'evidence/entrypoint.log').open('xb') as log:
+              result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+          (root / 'evidence/entrypoint-status.json').write_text(json.dumps({'returncode': result.returncode}) + '\n')
+          raise SystemExit(result.returncode)
+          PYCODE
+      - name: Preserve exact native proof output and bounded failure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 5
+        with:
+          name: pairing-native-proof-${{ matrix.proof }}-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            .proof/evidence/
+            .proof/${{ matrix.proof }}-output/
+            .proof/${{ matrix.proof }}-work/completed/*.txt
+            .proof/${{ matrix.proof }}-work/completed/*.json
+            .proof/${{ matrix.proof }}-work/completed/SHA256SUMS
+            .proof/${{ matrix.proof }}-work/vendor-config-inventory.json
+            .proof/${{ matrix.proof }}-work/vendor-derivation-inventory.json
+            .proof/${{ matrix.proof }}-work/derived-vendor-input-audit.json
+            .proof/apple-producer-work/create-xcframework.txt
+            .proof/apple-producer-work/create-xcframework.txt.status.json
+            .proof/apple-producer-work/aarch64-apple-ios/completed/*.txt
+            .proof/apple-producer-work/aarch64-apple-ios/completed/*.json
+            .proof/apple-producer-work/aarch64-apple-ios/vendor-config-inventory.json
+            .proof/apple-producer-work/aarch64-apple-ios/vendor-derivation-inventory.json
+            .proof/apple-producer-work/aarch64-apple-ios/derived-vendor-input-audit.json
+            .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.txt
+            .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.json
+            .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-config-inventory.json
+            .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-derivation-inventory.json
+            .proof/apple-producer-work/aarch64-apple-ios-sim/derived-vendor-input-audit.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

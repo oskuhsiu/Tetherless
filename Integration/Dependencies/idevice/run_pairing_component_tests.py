@@ -32,7 +32,8 @@ FILTERS = [
     ("idevice", "remote_pairing::tunnel::staged_packet_io::", 7),
 ]
 HOST_FILTERS = [("idevice-ffi", "bounded_pairing_host::", 8), ("idevice", "bounded_host_tests", 5),
-                ("idevice", "bounded_host_frame_tests", 3), ("idevice", "bounded_opack_tests", 4)]
+                ("idevice", "bounded_host_frame_tests", 3), ("idevice", "bounded_opack_tests", 4),
+                ("idevice", "remote_pairing::responder::bounded_controller_signature_tests::", 6)]
 
 
 def load_profile(name: str) -> tuple[str, dict]:
@@ -222,7 +223,7 @@ def execute(args: argparse.Namespace) -> dict:
         unchanged = all(checks[key]["original_inputs_unchanged"] for key in ("vendor", "derived_vendor", "workspace"))
         if (not unchanged or not checks["provider"]["unchanged"]) and not primary_failure:
             raise VerificationError("component input audit failed; retained original/derived/workspace/provider evidence")
-    expected_count = 74 if args.profile == "acquisition-only" else 94
+    expected_count = 74 if args.profile == "acquisition-only" else 100
     if sum(row["passed"] for row in outcomes) != expected_count or len(outcomes) != len(profile["native_test_filters"]):
         raise VerificationError("component fixture aggregate differs from the reviewed selection")
     evidence = {"schema": 1, "scope": "host pairing component fixtures only", "profile": args.profile,

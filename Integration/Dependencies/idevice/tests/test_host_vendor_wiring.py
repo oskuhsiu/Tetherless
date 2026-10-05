@@ -20,8 +20,8 @@ import run_host_tests as host
 from apply_patch import VerificationError
 from bounded_process import capture_helper_command
 
-EXPECTED_COUNTS = [8, 5, 3, 4]
-EXPECTED_LOGS = ['01-idevice-ffi.txt', '02-idevice.txt', '03-idevice.txt', '04-idevice.txt']
+EXPECTED_COUNTS = [8, 5, 3, 4, 6]
+EXPECTED_LOGS = ['01-idevice-ffi.txt', '02-idevice.txt', '03-idevice.txt', '04-idevice.txt', '05-idevice.txt']
 AUDITS = ['vendor-input-audit.json', 'derived-vendor-input-audit.json', 'workspace-input-audit.json']
 
 
@@ -133,16 +133,16 @@ class HostVendorWiringTests(unittest.TestCase):
             self.assertTrue(status['cleanup']['direct_child_reaped'])
             self.assertTrue(status['cleanup']['group_empty'])
 
-    def test_all_four_suites_use_derived_vendor_and_exclusive_logs_with_twenty_fixtures(self):
+    def test_all_five_suites_use_derived_vendor_and_exclusive_logs_with_twenty_six_fixtures(self):
         args = self.args('success')
         evidence = self.execute(args, self.controlled_command)
         self.assertEqual([command[-1] for command in self.commands], [s['filter'] for s in host.EXPECTED_FILTERS])
         self.assertEqual([s['passed'] for s in evidence['tests']], EXPECTED_COUNTS)
         self.assertEqual([s['log_file'] for s in evidence['tests']], EXPECTED_LOGS)
         self.assertEqual([s['status_file'] for s in evidence['tests']], [name + '.status.json' for name in EXPECTED_LOGS])
-        self.assertEqual(evidence['expected_fixture_count'], 20)
-        self.assertEqual(evidence['observed_fixture_count'], 20)
-        self.assert_logs(args.output, 4)
+        self.assertEqual(evidence['expected_fixture_count'], 26)
+        self.assertEqual(evidence['observed_fixture_count'], 26)
+        self.assert_logs(args.output, 5)
         self.assertTrue(all(a['original_inputs_unchanged'] for a in self.read_audits(args.output).values()))
         layout = evidence['vendor_layout']
         self.assertTrue(layout['nested_metadata_frozen'])
@@ -155,7 +155,7 @@ class HostVendorWiringTests(unittest.TestCase):
             self.assertEqual(digest(args.output / name), value)
 
     def test_each_suite_failure_retains_three_audits_generated_headers_and_unique_statuses(self):
-        for failing in range(1, 5):
+        for failing in range(1, 6):
             with self.subTest(suite=failing):
                 args = self.args('failure-' + str(failing))
                 calls = []

@@ -26,7 +26,7 @@ class HostOnlyProfileTests(unittest.TestCase):
         self.assertNotIn(b"pub mod staged_pairing", staged["ffi/src/lib.rs"])
         self.assertEqual(staged["Cargo.lock"], originals["Cargo.lock"])
         self.assertEqual(staged["ffi/Cargo.toml"], originals["ffi/Cargo.toml"])
-        self.assertEqual(sum(e["expected_passed"] for e in profile["native_test_filters"]), 20)
+        self.assertEqual(sum(e["expected_passed"] for e in profile["native_test_filters"]), 26)
         self.assertFalse(profile["activation"]["enabled"])
         self.assertFalse(profile["activation"]["consumer_integration_allowed"])
         self.assertTrue(profile["activation"]["test_only_execution_authorized"])
@@ -59,7 +59,7 @@ class HostOnlyProfileTests(unittest.TestCase):
 
     def test_test_counts_and_source_receipt_remain_exact(self):
         profile = run_host_tests.load_host_profile()
-        self.assertEqual([e["expected_passed"] for e in profile["native_test_filters"]], [8, 5, 3, 4])
+        self.assertEqual([e["expected_passed"] for e in profile["native_test_filters"]], [8, 5, 3, 4, 6])
         profile["native_test_filters"][3]["expected_passed"] = 10  # Must not count six older OPACK tests.
         with patch.object(run_host_tests, "load_lock", return_value=profile):
             with self.assertRaises(apply_patch.VerificationError):

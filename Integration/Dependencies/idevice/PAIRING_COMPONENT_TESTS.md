@@ -1,6 +1,6 @@
 # Pairing component fixture runner
 
-This opt-in host runner selects either 74 acquisition/helper/RSD fixtures or 94
+This opt-in host runner selects either 74 acquisition/helper/RSD fixtures or 100
 fixtures including the separate bounded host module. It produces component-test
 evidence. It does not build an Apple artifact, enable a product route or change
 upstream default features. The main source lock remains the approved baseline;
@@ -31,7 +31,7 @@ python3 Integration/Dependencies/idevice/run_pairing_component_tests.py \
   --toolchain-lock-sha256 "$RECORDED_TOOLCHAIN_LOCK_SHA256"
 ```
 
-Use `--profile combined` for the additional 20 host fixtures. These are separate
+Use `--profile combined` for the additional 26 host fixtures. These are separate
 runs with separate work/output roots. The selected counts are:
 
 - Helper `staged_pairing::`: 18
@@ -42,12 +42,12 @@ runs with separate work/output roots. The selected counts are:
 - OpenSSL tunnel tests: 4
 - OpenSSL tunnel fixtures: 4
 - Owned packet I/O: 7
-- Combined only: host FFI 8, host tests 5, host frame tests 3, OPACK tests 4
+- Combined only: host FFI 8, host tests 5, host frame tests 3, OPACK tests 4, bounded controller signature tests 6
 
 Every suite requires one final passing summary with its exact count and zero
-failed, ignored or measured tests. The total must be exactly 74 or 94. Per-suite
+failed, ignored or measured tests. The total must be exactly 74 or 100. Per-suite
 logs/statuses are numbered from `01-idevice-ffi.txt` through the selected eighth
-or twelfth suite; suites sharing a package never share an evidence path.
+or thirteenth suite; suites sharing a package never share an evidence path.
 
 ## Explicit host provider and compilation inputs
 
@@ -127,7 +127,7 @@ is moved to the requested output directory with hashes, selected profile,
 toolchain observations, feature graphs, compiler inputs, provider outputs and
 fixture results. Produced native test executables are not published as a product.
 
-No native compiler or Rust fixture has been executed by this worker. The 74/94
+No native compiler or Rust fixture has been executed by this worker. The 74/100
 native outcomes, host provider runtime behavior, Apple final linkage and separate
 product integration acceptance remain pending parent-controlled verification.
 
@@ -137,3 +137,9 @@ numeric future-layout diagnostics remain visible in the bounded log. Default
 thread/stack settings, runtime budgets and all other suite commands stay unchanged.
 The historical contributory receipt and both failed 1366ace observations remain
 recorded beside the additive author and independent stack-repair receipts.
+
+The later controller-signature successor adds the exact six-test
+`remote_pairing::responder::bounded_controller_signature_tests::` filter only
+to host-only and combined verification. Acquisition source/profile74 is unchanged.
+The historical host receipt is preserved with additive source, review and
+validation receipts; synthetic host transcript source remains a separate profile.

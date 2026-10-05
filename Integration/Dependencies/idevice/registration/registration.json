@@ -17,7 +17,7 @@
   },
   "immutable_helper_profile_sha256": "f0198213de5859aa8550fb6de175a49cfda9040c15c29fba8a8a604f79cfd77d",
   "pending": [
-    "Actual repaired acquisition74/combined94 fixture execution under unchanged default stack settings",
+    "Actual host26/acquisition74/combined100 fixtures and repaired native layout/runtime evidence",
     "Apple C/Swift final link receipts and separate product integration approval"
   ],
   "previous_native_failure": {
@@ -57,11 +57,20 @@
       "additional_features": [
         "openssl"
       ],
-      "authored_fixtures": 94,
+      "authored_fixtures": 100,
       "enabled": false,
       "overlay_count": 14,
       "path": "candidate-profiles/combined.json",
-      "sha256": "014e8988d815b9a1b0404f463e47edbb3ea1b6523aff7318b157943ac224af9e",
+      "sha256": "2a161b8fc948b2f66403d9a01bb3c0a9bdcad5cbe153b80e69a0f821294e8bb0",
+      "test_only_execution_authorized": true
+    },
+    "host-only": {
+      "additional_features": [],
+      "authored_fixtures": 26,
+      "enabled": false,
+      "overlay_count": 3,
+      "path": "candidate-profiles/host-only.json",
+      "sha256": "3a1b1422f37466022a49db1865140c7ee7c022ca7f67b2232d67eb3aed0f3eb8",
       "test_only_execution_authorized": true
     }
   },
@@ -70,10 +79,13 @@
     "registration/receipts/acquisition-stack-repair.json": "2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554",
     "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
     "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
+    "registration/receipts/host-controller-signature-review.json": "f1c14acb97cf95e5f3153358dab5b7011805947a9146b571081732e30e91c062",
+    "registration/receipts/host-controller-signature-validation.json": "b04ed250fcf75a03315dc6e7ba2b84ed269a1549c3ac9a023ea20a95839e69b0",
+    "registration/receipts/host-controller-signature.json": "a4b8e30b2a83e2dca1122221021b3a44be8647dfe239cb1c139bc60437dcc3a9",
     "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
     "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
   },
   "schema": 1,
-  "status": "Independently reviewed stack-storage source successor; acquisition74/combined94 native rerun pending; artifact/product activation disabled",
+  "status": "Controller-signature source registration successor; source review cleared, native26/74/100 execution pending; no product activation",
   "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76"
 }

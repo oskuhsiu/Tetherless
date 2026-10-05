@@ -42,7 +42,8 @@ ACQUISITION_SUITES = [
     ("idevice", "remote_pairing::tunnel::staged_packet_io::", 7),
 ]
 HOST_SUITES = [("idevice-ffi", "bounded_pairing_host::", 8), ("idevice", "bounded_host_tests", 5),
-               ("idevice", "bounded_host_frame_tests", 3), ("idevice", "bounded_opack_tests", 4)]
+               ("idevice", "bounded_host_frame_tests", 3), ("idevice", "bounded_opack_tests", 4),
+                ("idevice", "remote_pairing::responder::bounded_controller_signature_tests::", 6)]
 
 
 def build_event(out_dir, **overrides):
@@ -218,7 +219,7 @@ class ComponentProfileTests(unittest.TestCase):
                 path, profile = runner.load_profile(name)
                 self.assertEqual(path, "candidate-profiles/" + name + ".json")
                 self.assertEqual([(s["package"], s["filter"], s["expected_passed"]) for s in profile["native_test_filters"]], expected)
-                self.assertEqual(sum(s[2] for s in expected), 74 if name == "acquisition-only" else 94)
+                self.assertEqual(sum(s[2] for s in expected), 74 if name == "acquisition-only" else 100)
                 self.assertEqual(profile["build_additional_features"], ["openssl"])
                 self.assertTrue(profile["activation"]["test_only_execution_authorized"])
                 self.assertFalse(profile["activation"]["enabled"])
@@ -267,7 +268,7 @@ class ComponentRunnerTests(unittest.TestCase):
         actual.mkdir()
         alias = self.root / "alias-parent"
         alias.symlink_to(actual.resolve(), target_is_directory=True)
-        for profile, count in (("acquisition-only", 74), ("combined", 94)):
+        for profile, count in (("acquisition-only", 74), ("combined", 100)):
             with self.subTest(profile=profile):
                 fixture = RunnerFixture(alias / profile, profile)
                 lexical_view = fixture.args.work_dir / "host-provider"
@@ -287,8 +288,8 @@ class ComponentRunnerTests(unittest.TestCase):
                     output = fixture.args.output / retained["retained_file"]
                     self.assertEqual(output.read_bytes(), directives(view))
 
-    def test_successful_74_and_94_wiring_features_source_profile_and_exclusive_logs(self):
-        for profile, expected in (("acquisition-only", 74), ("combined", 94)):
+    def test_successful_74_and_100_wiring_features_source_profile_and_exclusive_logs(self):
+        for profile, expected in (("acquisition-only", 74), ("combined", 100)):
             with self.subTest(profile=profile):
                 fixture = RunnerFixture(self.root / profile, profile)
                 with fixture.patches():
@@ -358,6 +359,7 @@ class ComponentRunnerTests(unittest.TestCase):
             ("acquisition-only", "00-features-idevice.txt"), ("acquisition-only", "01-idevice-ffi.txt"),
             ("acquisition-only", "05-idevice.txt"), ("acquisition-only", "08-idevice.txt"),
             ("combined", "09-idevice-ffi.txt"), ("combined", "12-idevice.txt"),
+            ("combined", "13-idevice.txt"),
         ]):
             with self.subTest(profile=profile, log=log_name):
                 fixture = RunnerFixture(self.root / str(index), profile)
@@ -450,8 +452,8 @@ class ComponentRunnerTests(unittest.TestCase):
         fixture.mutation = lambda f: (f.args.provider_inputs / "headers/ssl.h").write_bytes(b"changed after all checks\n")
         with fixture.patches(), self.assertRaisesRegex(VerificationError, "audit"):
             runner.execute(fixture.args)
-        self.assertEqual(fixture.check_count, 12)
-        self.assertEqual(len([c for c in fixture.calls if c["argv"][1] == "test"]), 12)
+        self.assertEqual(fixture.check_count, 13)
+        self.assertEqual(len([c for c in fixture.calls if c["argv"][1] == "test"]), 13)
         self.assertFalse(fixture.args.output.exists())
         self.assertFalse(self.assert_audits(fixture)["provider-input-audit.json"]["unchanged"])
         self.assertFalse((fixture.completed / "test-evidence.json").exists())

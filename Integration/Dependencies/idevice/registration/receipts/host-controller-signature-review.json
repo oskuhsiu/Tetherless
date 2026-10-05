@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "review_type": "independent_read_only_source_review_with_final_addendum",
+  "date_utc": "2026-10-05",
+  "outcome": "source_approved_for_separate_native_validation",
+  "blocking_findings": [],
+  "final_reviewed_files": {
+    "idevice/src/remote_pairing/responder.rs": "fb03dbd4b6c727ca2432269d8ad763b93e2cdc51d251b830f827316825c27909",
+    "idevice/src/remote_pairing/host_test_phone.rs": "b5a7a8abb91dc802bd5915d451021ae80e62a5a3550f2f8d4ca6ea981b6fe825",
+    "ffi/src/bounded_pairing_host/host_transcript.rs": "4dafb1139f2776f8a56eac78d0e43a75c1b79628e11c0b6f306e9e942dbee637"
+  },
+  "prior_transcript_sha256": "e6b4ca004f96a595727a853083cfa10195cb5da3ea133c09ce138fa839c97909",
+  "core_review_receipt": "core-source-review.json",
+  "core_review_sha256": "b0140ce87ab5eb8e78fea0f0b5ea982a9e91d085c5e54b9e2a70536822334754",
+  "final_addendum_review": "Approved. Both read branches count consumed bytes, including partial/invalid frames and EOF draining. With exactly three validated responses, equality against received_bytes excludes additional M6 bytes. No snapshot is needed. Responder and phone remain unchanged from initial approval. No new source or compile-level issue found.",
+  "native_compilation_executed": false,
+  "native_tests_executed": 0,
+  "claim_boundary": "Source approval only; actual Rust compilation, six controller unit tests, ten FFI tests, Apple builds and device compatibility remain unrun."
+}

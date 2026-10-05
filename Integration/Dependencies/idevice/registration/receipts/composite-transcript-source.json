@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "authored-uncompiled-unrun-review-pending",
+  "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "fixture_feature": "tetherless-synthetic-peer",
+  "cargo_lock_sha256": "3c1a7710f0cd02f9100e91b97c9f8abc6546f115f7f3255551c990628aea0e16",
+  "base_production_files": {
+    "ffi/src/staged_acquisition.rs": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d",
+    "idevice/src/remote_pairing/mod.rs": "738436e19a5a3e7d422ddf609404aa36d14df62c8a92a169f9bfa74df07a2c3f"
+  },
+  "files": [
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/Cargo.toml",
+      "sha256": "c52071e53645cd9ea9dfaa88fde648c0c932ed8e9fdc54625d69121dfa03ef7d",
+      "size": 4516
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/src/staged_acquisition/composite_transcript.rs",
+      "sha256": "f0f976465a13be68b31e559d1917d353c0a73b21e9c03c6e66370befae4b613d",
+      "size": 11111
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/ffi/src/staged_acquisition.rs",
+      "sha256": "492f50eb732062ba1fa5b004255ef5b65a85a591268cb587d2a20220cc11b3a2",
+      "size": 28592
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/Cargo.toml",
+      "sha256": "7b829f3c80398b605e46797eea286380dc786c733d92c484527d1f49e2d2e62e",
+      "size": 9348
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/mod.rs",
+      "sha256": "21a19a81099bd385a538523dff73ab3f11942aafe8d05761adf2ccb2953aee73",
+      "size": 41924
+    },
+    {
+      "path": "Integration/Dependencies/idevice/overlay/idevice/src/remote_pairing/staged_test_peer.rs",
+      "sha256": "d57d1e044bb86f2493b7dafe3ff0621c796a034ad3fca1c6e481d9fbea3863c3",
+      "size": 25850
+    }
+  ]
+}
