@@ -1,33 +1,40 @@
-# Single-item checkpoint — targeted installation observations
+# Tetherless development status
 
-2026-10-05. Implementation: **89c157dbc6acd3c16eb31a32bdc6d73af6c40f57**. This final checkpoint is documentation only. The implementation changes the existing Simulator failure helper and adds eight focused tests; **product Swift, the independent UIKit control, the full-App workflow and every acceptance assertion are unchanged**. Develop only; main remains unpromoted. No iPhone or credentials requested.
+Updated 2026-10-05. Current remote baseline checked: **3dd8641e84698b97f96d53a6c53ed8c6ca4675bd**. This is continued development, not a release candidate. The complete task inventory is [PLAN_PROGRESS.md](PLAN_PROGRESS.md). Work remains on the document-provider boundary, first-sign/self-update integration, lifecycle/resource controls, and supply-chain/delivery gates. Physical-device acceptance remains a single later phase.
 
-## Next standalone verification
+## Latest verified result
 
-Read full-App run **37247923030**, job **111569414544**, for 89c157d. It started **2026-10-05T00:32:45Z** and was **in_progress**, conclusion null, at the single status check. Do not infer success, cancel it or dispatch another. Keep this long verification separate from additional features.
+**Native simulator launch 37247923030**, attempt 1, job **111569414544**, source **89c157dbc6acd3c16eb31a32bdc6d73af6c40f57**, is completed/failed at **step 11, XCTest document selection**. Compilation, signature checks, boot, installation, launch and the separate public-document source passed. The prior pending entry was a historical checkpoint, not the current result. Do not rerun it merely to recover state.
 
-If installation fails, inspect native-simulator-health/manifest.json and the new install-container-readback.log, install-registration.log and install-product-events.log. Preserve each command's timeout/exit and truncation metadata. A returned container is not complete-install or launch acceptance, and these observations never overwrite smoke flags. If installation succeeds, inspect the original product and failure-only UIKit comparison. Neither logging nor an incidental successful installation proves the previous timeout's cause was fixed.
+The product completed two actual system-picker cancellations. Its subsequent single file activation reached DocumentManager, but bookmark/URL preparation failed with FileProvider -1005 and underlying resolver -1012. The complete retained lifecycle scan has picker creation/type acceptance and no selectionReceived or importStarted. The original ten-second assertion failed. Later wizard/relaunch assertions were not executed.
 
-## Actual latest completed result
+The failure-only independent UIKit control also stayed in the picker without a delivered selection. It removes Tetherless's SwiftUI/import state machine, but shares the fixture/provider/runtime and selects its own container's file; it is not identical to the product's cross-container case. Its raw stdout was not retained. Do not attribute the product's exact error codes to the control.
 
-Run **37242839315**, attempt 1, job **111554802378**, at **8c25ff3** FAILED at step 8: **simctl install timed out at the unchanged 120-second bound**. Build, signature inspection, bootstatus and the home screenshot passed. Product launch, the document source, and all product/control UI were skipped. The independent comparison has no result. Do not call this another observed FileProvider rejection or a comparison failure.
+Original-document verification passed: **241 bytes**, SHA-256 **8adc01ad4d6304deb1daf74335f9acc7891ed5ed442dd85c5a50a7e30b58b96b**. Neither file disappearance nor Simulator boot failure explains this run.
 
-The verified artifact **11318286484** has SHA-256 **dc10213d482dbc643681f7c698bb2ef1ab03fafbe711bc9930a512411fb13048**. Its install log contains one command and TIMEOUT; smoke records simulatorReady=true, installed=false, launched=false, smokePassed=false, failureType=TimeoutExpired. No successful install command result was observed; a partial/late daemon result was not checked in that version.
+## Evidence rechecked during takeover
 
-Generic service output mixed container initialization with installer events. Of 637,606 original bytes, only 262,144 head/tail bytes were retained, omitting 375,462 middle bytes. It did not query lsd directly. The retained log cannot establish a deadlock, memory shortage or product signature defect. Full details are preserved in STATUS.md at 89c157d and docs/simulator-ci/next-run-decision.md.
+- [UI run 37247923030](https://github.com/oskuhsiu/Tetherless/actions/runs/37247923030), artifact **11319844035**, 99,156,455 bytes, SHA-256 **7edc964fe50816aac025f1a4cd6d43a3f2c644339ed35ba4902fab4553165f81**. The complete artifact was downloaded and its digest independently verified; logs, process/service evidence, hierarchy and actual screenshot pixels were inspected.
+- The broad provider-service capture produced 2,067,057 bytes but retained 262,144. Its retained halves omit the product's selection time, and 1,424 of 1,605 retained lines are APS connection noise. The predicate did not include the observed ResolverService or LocalStorageFileProvider executables. This is a diagnostic evidence gap, not a proved product correction.
+- Surviving control-period filecoordinationd logs report provider-preparation failures. Container class-2 misses immediately fall back to class-4 successfully; those misses do not prove corrupt containers.
+- [Core run 37248028123](https://github.com/oskuhsiu/Tetherless/actions/runs/37248028123) passed for baseline 3dd8641. [Native integration run 37247923028](https://github.com/oskuhsiu/Tetherless/actions/runs/37247923028) passed for implementation 89c157d. These do not validate any subsequent edit.
+- All **212 ordinary baseline source files** in the recovered handoff were verified against current GitHub blob SHAs. The standalone handoff matched the archive document. No Git history or submodule checkout was present locally; native/preimage verification remains a separate CI obligation.
+- The current classifier input and report are in [simulator-ci](simulator-ci/): failed / ui, automaticRetryAllowed=false, productAccepted=false. The report classifies the earliest failed boundary; it does not infer the cause.
 
-The actual skill classifier processed live-checked run/job projections and the verified smoke JSON: failed / install_launch, automaticRetryAllowed=false, productAccepted=false. Report SHA-256 **4b10b0db99b2afbf39295b91bb2b5c13bd4fa65169f52dcf8d0b2062bb2fad0e**. Current projections/report remain in docs/simulator-ci.
+## Decision before further Simulator work
 
-## What changed and what did not
+The recovered runtime patch is **not adopted unchanged**. It replaces the normal push-triggered UI runtime with iOS 18.6, does not pin the tested architecture, rebuilds/re-signs across runtime destinations, and accepts host-image drift while calling the toolchain matched. An older-runtime green job would not close iOS 26.2 or establish a pure runtime comparison.
 
-Only after a recorded installation failure, the existing diagnostic step adds three read-only queries before generic logs: exact product app-container lookup, installd/lsd registration events, and exact-product events. Each uses the existing 15-second/256-KiB capture with explicit failure and omission metadata. Inputs must match the current job SHA, owned live device and allowed bundle identifier. Malformed/unbound evidence records a gap without suppressing generic diagnosis. No new query runs for a UI-only failure.
+The next diagnostic is a separately reviewed, same-host, build-once cross-container UIKit experiment using exact iOS 26.2 and 18.6 runtimes and the same SE device type. It must preserve fixture bytes, open-in-place semantics, actual cancellation/selection, the ten-second outcome limit, source-file preservation and complete per-case evidence. Both cases use the same signed artifact hashes. Normal full-product coverage and acceptance assertions remain intact. The implementation and its local tests require independent review before a develop push starts that experiment.
 
-No install/launch/reset/retry is issued by diagnostics. The original failed smoke record remains byte-identical even when all observation commands return success. This is an evidence-gap correction, **not a verified fix for the installation timeout**. The unchanged control still runs only after a frozen product failure and cannot turn it green.
+A diagnostic callback is not pairing parsing, storage, installation or product acceptance. Missing runtimes/toolchain, build failure, missing logs or changed artifact hashes invalidate the intended comparison. No permission changes, selector rotation, timeout extension or blind rerun is justified by current evidence.
 
-## Local evidence
+## Remaining delivery boundary
 
-**8 new diagnostic tests, 23 existing Simulator checks and 16 skill tests passed.** They include real temporary-file/subprocess behavior, scripted simctl responses, binding/input checks and immutable failure-state checks. The actual selector also consumed the downloaded owner/smoke/device records and produced the expected three queries without executing them remotely. No new native/UI pass, full integration count or product-core test run is claimed.
+The original 16 tasks remain authoritative. In particular: complete the actual first-sign/self-update route and interrupted identity/data recovery; close maintenance/callback mutation races and aggregate install resource limits; review Mach-O/entitlements/nested signing; finish dependency/license/provenance and branding obligations; then verify the **same candidate SHA** through core, transformations, native artifacts and full UI.
 
-Current source artifact **11317283922** matched ZIP **35bc701d8e0384aacbc2a96a48b2d1cd1872e7dd2c1bf850a5c9e6a737facecf**, TAR **41a7e1d9fe6b6a1fe453615b66d46a0756bfa3d7ee8541bf587db6e2dde6ab30**, and recorded 8c25ff3. Uploaded Integration subtree **6ae2a46237b58d81a6799e6252948978c25006ef** matched the locally tested tree. git diff --check passed. Initial expected-SHA ref update was rejected by connector argument binding; the unchanged head was re-read before a successful non-force update.
+Only after feasible implementation and non-device gates are satisfied should the owner be asked for the consolidated real-iPhone pass: Apple login/2FA and first-time permissions, pairing, true profile application/readback, next-day locked-screen proactive renewal, expiry crossing and longer observation. No unattended-renewal or permanent iOS-background guarantee is claimed. Clean-phone, computer-free bootstrap remains separate research. Develop only; main and releases are not authorized.
 
-AUTO-02 / PAIR-01 invalid-document acceptance is still open. No new product feature, live Apple login, valid pairing, physical profile install, locked-screen scheduled renewal or expiry-crossing acceptance was completed. Broader task scope remains PLAN_PROGRESS.md. End at this saved checkpoint, not another polling loop.
+## Historical failures retained
+
+Run 37242839315 at 8c25ff3 failed at the unchanged 120-second install bound; product/control UI never ran. The diagnostic improvement at 89c157d did not prove that timeout's cause. Earlier snapshots and decision records remain in Git history; the current UI failure must not be rewritten as the older install failure.

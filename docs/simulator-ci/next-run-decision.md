@@ -1,27 +1,39 @@
-# One-run decision — distinguish uncertain install outcome from lost diagnostics
+# Decision: isolate the shared document-provider boundary
 
-- Current product/test baseline: 8c25ff3b984cd08401b4491aa0876ff0129161e6.
-- Observed run / attempt / job: 37242839315 / 1 / 111554802378.
-- First failure: install_launch, step 8, a 120-second simctl install timeout.
-- Report SHA-256: 4b10b0db99b2afbf39295b91bb2b5c13bd4fa65169f52dcf8d0b2062bb2fad0e.
-- Artifact: 11318286484, SHA-256 dc10213d482dbc643681f7c698bb2ef1ab03fafbe711bc9930a512411fb13048.
+Status: planned diagnostic; implementation and independent review must complete before the next push starts it. No new native result is claimed.
 
-## Evidence and uncertainty
+## Current evidence
 
-The actual job passed build/signature/boot/screenshot. It did not execute either recipient's document picker: those steps were skipped after the install timeout. The retained generic service log omitted 375,462 bytes of its middle and mostly mixed container initialization with installer work. Its absence of a product-specific completion is not conclusive. No supported root-cause finding justifies a product permission change, new tap target, global reset or longer timeout.
+- Source: 89c157dbc6acd3c16eb31a32bdc6d73af6c40f57
+- Run/attempt/job: 37247923030 / 1 / 111569414544
+- Artifact: 11319844035, SHA-256 7edc964fe50816aac025f1a4cd6d43a3f2c644339ed35ba4902fab4553165f81
+- Regenerated report: 9a95633a614f751e308d918ae67bd795266292399a6156ac558535e5f56cc711
+- Failure fingerprint: 78ee90c7035f5d63724529ad2afee4152e02db2a06122986b2dc2bf2829306f3
+- First failed boundary: ui / selection-not-observed. Build/signature/boot/install/launch passed
+- Product DocumentManager reached bookmark resolution but got FileProvider -1005 / Resolver -1012 before the delegate. Complete product trace has no selectionReceived/importStarted
+- UIKit control did not receive a selection; its own-container path differs from product cross-container access, and its stdout was absent
+- Source plist remained 241 bytes with SHA-256 8adc01ad4d6304deb1daf74335f9acc7891ed5ed442dd85c5a50a7e30b58b96b
 
-One question to discriminate: after the client command times out, is the product container registered, or is even a read-only product lookup unavailable? A returned container is only a partial-state observation, not complete-install or launch acceptance. Separately retain installer/LaunchServices events and product-specific events rather than obscuring them inside the generic container log.
+## Hypothesis and discriminating change
 
-## Single change and preserved conditions
+A shared local-file-provider/runtime interaction can explain both recipients failing before callback delivery. It is a hypothesis, not proof of an Apple defect. The previous broad service capture omitted the product selection interval and the relevant ResolverService/LocalStorageFileProvider processes.
 
-In the existing failure-diagnostic helper, add three bounded read-only queries after validating current SHA/owner/device/product. Run them before generic host queries so the three-minute log window is useful. Keep the existing 15-second/256-KiB capture limits and each query's exit/timeout/truncation metadata. Never rewrite smoke results. Invalid bindings record a gap and preserve generic diagnosis.
+Use one new, separately scoped cross-container UIKit diagnostic. Build and sign its producer, separate recipient and test runner once for explicit arm64 on one host. Reuse exactly the same complete artifact hashes across fresh job-owned SE destinations for exact iOS 26.2 and 18.6. Refuse missing runtimes, toolchain mismatch, changed bundle hashes or incomplete evidence; do not download a runtime or silently fall back. Retain partial preflight errors before raising.
 
-The next code commit may trigger one full workflow with these observations. There is no automatic rerun. Existing runner/toolchain selection, concrete device, signing, boot ordering, 120-second installation bound and all product/control UI tests remain byte-identical. The comparison is still failure-only and cannot pass the original product assertion. No new permissions or successful backend fixture.
+Keep the normal complete-app workflow unchanged. The diagnostic lives outside its path filters and uses a distinct concurrency group; one reviewed direct develop commit triggers only the diagnostic and normal core checks. Do not issue another matching-path push while it runs. The source SHA/run/job IDs must be recorded when GitHub creates them.
 
-## Fast verification and stopping rule
+## Unchanged acceptance and useful observations
 
-8 new focused tests, 23 existing Simulator tests and 16 skill tests passed locally. The selector also consumed this actual failed artifact's identities without executing remote commands. simctl itself was not run in the Linux environment. Before publication, check current head and any related active run.
+- Same 241-byte public fixture, actual coordinated creation, distinct recipient, open-in-place .propertyList/.xml policy
+- Two real system Cancel presentations, then one semantic file-cell activation; no warm-up selection, coordinate taps, retry or timeout extension
+- Ten-second selection outcome; exactly one selected-file callback and actual dismissal required
+- Original fixture readback/hash after each runtime, including failed UI
+- Per-case stdout, screenshot/hierarchy, xcresult, ownership and bounded command manifests
+- Focused resolver/local-provider/DocumentManager logs before broad service capture; exclude the demonstrated APS flood from provider query and record truncation
+- productAccepted remains false: this isolates callback delivery, not pairing parsing/storage or a complete product pass
 
-If another timeout occurs, inspect focused logs/readback before any further change; query failure or truncated logs are incomplete evidence, not root cause. If it reaches UI, inspect the original product result and independent control; success does not retroactively explain this timeout. Save the new run ID once, then use a separate verification turn rather than polling or adding another long feature.
+Only 18.6 passing supports a runtime-associated difference under the current shared host/artifacts. Both failing means 26.2 alone is insufficient. Control passing while the product remains failing returns attention to product presentation/lifecycle. Environment/build/evidence failures establish no runtime conclusion. Another full run without a new discriminating observation/change is not authorized by this decision.
 
-Primary reference for separating simctl installation/launch and collecting failure diagnostics: https://developer.apple.com/videos/play/wwdc2019/418/ . The bounded diagnostic policy is project-specific; Apple does not identify this particular timeout's cause there.
+## Follow-through
+
+Read the actual result and preserve both cases. Fix only a demonstrated product or harness boundary. Before closing AUTO-02/PAIR-01, rerun complete-product acceptance for the final implementation and separately prove that selected invalid bytes reach the parser and the original data remains intact. Signing/permissions are not changed merely to make selection green. No physical-device, Apple-login or unattended-renewal conclusion follows from this diagnostic.
