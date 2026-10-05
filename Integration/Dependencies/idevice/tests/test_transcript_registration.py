@@ -75,6 +75,27 @@ class TranscriptSourceTests(unittest.TestCase):
         for name in ("acquisition-stack-repair.json", "acquisition-stack-independent-review.json"):
             self.assertIn("registration/receipts/" + name, profile["registration_receipts"])
 
+    def test_explicit_empty_dictionary_preserves_peer_and_three_assertion_bodies(self):
+        relative = "transcript-overlay/idevice/src/remote_pairing/staged_test_peer.rs"
+        peer = (ROOT / relative).read_bytes()
+        old = b'"Properties":{},'
+        new = b'"Properties":crate::xpc::XPCObject::Dictionary(crate::xpc::Dictionary::new()),'
+        self.assertEqual(peer.count(new), 1)
+        self.assertNotIn(old, peer)
+        self.assertEqual(peer.count(b"crate::xpc!("), 1)
+        self.assertEqual(apply_patch.sha256(peer.replace(new, old, 1)),
+                         "d57d1e044bb86f2493b7dafe3ff0621c796a034ad3fca1c6e481d9fbea3863c3")
+        fixture = ROOT / "transcript-overlay/ffi/src/staged_acquisition/composite_transcript.rs"
+        self.assertEqual(apply_patch.sha256(fixture.read_bytes()),
+                         "f0f976465a13be68b31e559d1917d353c0a73b21e9c03c6e66370befae4b613d")
+        profile = runner.load_transcript_profile()
+        self.assertEqual(profile["native_test_filters"], [runner.SUITE])
+        self.assertEqual(runner.SUITE["expected_passed"], 3)
+        entry = next(e for e in profile["overlays"] if e.get("source_path") == relative)
+        self.assertEqual(entry["sha256"], apply_patch.sha256(peer))
+        receipt = "registration/receipts/transcript-empty-dictionary-fix.json"
+        self.assertEqual(profile["registration_receipts"][receipt], runner.RECEIPTS[receipt])
+
     def test_fixture_overlay_source_is_closed_to_its_declared_path_and_profile(self):
         original = runner.load_transcript_profile()
         for kind in ("wrong-profile", "wrong-path"):

@@ -163,7 +163,7 @@
     {
       "kind": "add",
       "path": "idevice/src/remote_pairing/staged_test_peer.rs",
-      "sha256": "d57d1e044bb86f2493b7dafe3ff0621c796a034ad3fca1c6e481d9fbea3863c3",
+      "sha256": "e8fa9907f811c07d4d1db28f97313abf51a44f5a21029e42f90a83e27a4a382e",
       "source_path": "transcript-overlay/idevice/src/remote_pairing/staged_test_peer.rs"
     }
   ],
@@ -179,7 +179,8 @@
     "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
     "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
     "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
-    "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
+    "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e",
+    "registration/receipts/transcript-empty-dictionary-fix.json": "697fc73a6e1a4f42c4caeeb2ff25df8377912beae2ead1595ffc9155f9ef1f92"
   },
   "required_ffi_symbols": [
     "tetherless_pairing_validation_new",
@@ -191,7 +192,7 @@
   "schema": 1,
   "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8",
   "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",
-  "status": "Reviewed composite peer fixtures rebased on source-reviewed stack repair; separate registration review and all three native transcript tests pending",
+  "status": "Fixture-only explicit empty XPC dictionary correction after real E0277; native three-test transcript rerun pending",
   "upstream": {
     "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
     "repository": "SideStore/idevice",

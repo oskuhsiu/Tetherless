@@ -364,7 +364,7 @@ async fn rsd<S: ReadWrite>(peer: &mut TcpPeer<S>, progress: &Progress, evidence:
     peer.write(&h2_frame(4, 0, 0, &[])).await?;
     peer.write(&h2_frame(4, 1, 0, &[])).await?;
     let object = crate::xpc!({"MessagingProtocolVersion":7u64,
-        "UUID":"00000000-0000-0000-0000-000000000001", "Properties":{},
+        "UUID":"00000000-0000-0000-0000-000000000001", "Properties":crate::xpc::XPCObject::Dictionary(crate::xpc::Dictionary::new()),
         "Services":{"com.apple.mobile.house_arrest.shim.remote":{
             "Entitlement":"", "Port": AFC_PORT.to_string(), "Properties":{"UsesRemoteXPC":false}
         }}});

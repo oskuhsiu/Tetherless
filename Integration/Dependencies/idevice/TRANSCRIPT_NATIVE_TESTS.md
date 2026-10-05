@@ -43,7 +43,7 @@ Run `run_pairing_transcript_tests.py` with the existing required arguments:
 There is no profile selector or filter override. The runner selects idevice-ffi,
 the exact three-test prefix and `openssl,tetherless-synthetic-peer`, preserving
 default features. It uses the frozen/offline lock and the reviewed derived-vendor
-cbindgen adapter. The production 74/94 runner is not modified.
+cbindgen adapter. The production 74/100 runner is not modified.
 
 The provider uses the already-reviewed host static archives. Header checking is
 syntax-only. Commands use the existing bounded supervisor; SDK/compiler inputs,
@@ -60,7 +60,7 @@ The fixture source/profile and provider identities must accompany any native res
 
 ## Current evidence
 
-Twelve controlled Python tests cover source composition, feature isolation, exact
+Thirteen controlled Python tests cover source composition, feature isolation, exact
 test selection, success/failure wiring, timeout/quota rejection, provider output
 selection and post-success mutation. Their successful summaries are deliberately
 synthetic orchestration fixtures. The exact full-suite result for this successor is retained in its source-registration receipt.
@@ -73,9 +73,22 @@ not establish Apple/device compatibility or permit product activation.
 
 This successor composes source-reviewed acquisition SHA256
 `3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89`
-with the unchanged gated composite-test declaration. The peer and three actual
-transcript fixtures are byte-identical to the reviewed original packet. Separate
+with the unchanged gated composite-test declaration. The three actual transcript fixtures are byte-identical to the reviewed original
+packet. The peer has one explicit empty-dictionary expression correction described
+below. Separate
 repair and independent-review receipts preserve the original source and failed
 native observations. This does not claim measured stack use or successful native
 execution; the repaired acquisition and synthetic transcript suites still require
 their own default-stack native results.
+
+## Empty-dictionary compiler correction
+
+The real Rust compiler rejected the synthetic peer's nested `Properties: {}`
+macro expression as unit (`()`), which has no `XpcConvertible` implementation.
+That one field now uses the existing explicit
+`XPCObject::Dictionary(Dictionary::new())` constructor. This preserves an empty
+XPC dictionary and all surrounding protocol fields, with no macro or production
+change. The three native fixture bodies and assertions are unchanged. The exact
+preimage/postimage and compiler observation are retained in
+`registration/receipts/transcript-empty-dictionary-fix.json`. Native compilation
+and all three transcript runtime results remain pending for the corrected source.

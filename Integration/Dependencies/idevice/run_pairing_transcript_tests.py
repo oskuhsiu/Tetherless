@@ -17,11 +17,12 @@ from run_helper_tests import verify_fixture_summary
 from run_pairing_component_tests import load_provider, retain_input_audits, retain_openssl_outputs
 
 PROFILE = "candidate-profiles/transcript-only.json"
-PROFILE_SHA256 = "fb644be9b24726f58d7820bd52d5c551d62feb5a3c490c0afa7cb887cac1f300"
+PROFILE_SHA256 = "dbf445f10ca106d656c15ff5df84ab4bdcc38d4ecfe9d4010b6780e062a241ee"
 TARGET = "aarch64-apple-darwin"
 FEATURES = ["openssl", "tetherless-synthetic-peer"]
 SUITE = {"package": "idevice-ffi", "filter": "staged_acquisition::composite_transcript::", "expected_passed": 3}
 RECEIPTS = {
+    "registration/receipts/transcript-empty-dictionary-fix.json": "697fc73a6e1a4f42c4caeeb2ff25df8377912beae2ead1595ffc9155f9ef1f92",
     'registration/receipts/acquisition-stack-repair.json': '2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554',
     'registration/receipts/acquisition-stack-independent-review.json': 'e36166d16d94e648000e82b3064240f565305cea1b931d81dc477f100c5291cc',
     "registration/receipts/composite-transcript-source.json": "d3d85a874879e29021635ba4753121413b36749951d6cc4450b80cac050a8d04",

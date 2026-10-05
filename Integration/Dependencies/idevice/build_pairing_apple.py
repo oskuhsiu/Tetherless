@@ -27,6 +27,19 @@ TARGETS = [
     {"rust": "aarch64-apple-ios", "sdk": "iphoneos", "clang": "arm64-apple-ios17.0", "deployment": "17.0", "extra_features": ["openssl", "obfuscate"]},
     {"rust": "aarch64-apple-ios-sim", "sdk": "iphonesimulator", "clang": "arm64-apple-ios17.0-simulator", "deployment": "17.0", "extra_features": ["openssl"]},
 ]
+SWIFT_26_3_STDOUT = ("Apple Swift version 6.2.4 (swiftlang-6.2.4.1.4 clang-1700.6.4.2)\n"
+                     "Target: arm64-apple-macosx15.0")
+SWIFT_26_3_MERGED = "swift-driver version: 1.127.15 " + SWIFT_26_3_STDOUT
+
+
+def require_toolchain_observation(value: str, expected: str, label: str) -> None:
+    # The lock observer records stdout. The bounded supervisor retains both
+    # streams. Xcode 26.3's swiftc --version also emits this exact driver identity
+    # on stderr, preceding stdout (observed in producer run 37375339856).
+    # Accept that complete measured pair; do not strip or ignore arbitrary text.
+    if label == "swiftc" and expected == SWIFT_26_3_STDOUT and value == SWIFT_26_3_MERGED:
+        return
+    require_equal(value, expected, label)
 
 
 def load_apple_profile() -> dict:
@@ -48,7 +61,7 @@ def bounded_toolchain(config: dict, work: Path, env: dict, binaries: dict, evide
     observations = {}
     for label, argv in commands.items():
         value = capture_helper_command(argv, source=work, env=env, log=evidence / ("toolchain-" + label + ".txt")).strip()
-        require_equal(value, config["observations"][label], label)
+        require_toolchain_observation(value, config["observations"][label], label)
         observations[label] = value
     if config.get("rust_release") != "1.98.1" or not observations["rustc"].startswith("rustc 1.98.1 ("):
         raise VerificationError("Apple recipe requires Rust 1.98.1")

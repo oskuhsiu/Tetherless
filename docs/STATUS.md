@@ -1,23 +1,19 @@
 # Tetherless development status
 
-Evidence checkpoint: **2026-10-05 20:59 UTC**. At 5a40878, the repaired native
-acquisition profile passes 74 fixtures and the combined profile passes 94,
-including all 20 host fixtures. The earlier stack-overflow failure is retained as
-historical evidence. Whole transcripts, the M5 successor and Apple/app integration
-remain open. The original 16-task plan is not complete; the app is not ready for
-release or the consolidated phone phase.
-
-This candidate adds source-reviewed M5 and whole-transcript work, Apple producer
-recipes and the new proof workflow, plus the prepared historical archive query.
-These additions are unexecuted; exact-commit CI is pending. Completed results
-below remain tied to their recorded revisions, not to this candidate.
+Evidence checkpoint: **2026-10-05 21:35 UTC**. At 3ae371e, host 26 (including six
+M5 tests), acquisition 74, combined 100 and the complete synthetic host transcript
+suite of ten tests pass. Swift composition passes 41 cases in each mode. Acquisition
+transcript compilation and the Apple producer's pre-compilation version check fail;
+two narrow repairs are in progress, with no rerun yet. Historical UI archive
+analysis remains inconclusive. The original 16-task plan is open; the app is not
+ready for release or the consolidated phone phase.
 
 - develop: **3d97ef75a224a76f84ba6741da8d9a6b89f99217**, unchanged
-- Candidate branch: **verify/staged-pairing-native**; this candidate's commit and
-  run identities will be recorded after publication and verification
-- Last completed native verification:
-  **5a40878c56d5a458021c29df9e7b2cb471e5e0dd**; tree
-  e0b7aa426a483a2d891925c75844c7143d62926b, 502 leaves verified
+- Published verification source on **verify/staged-pairing-native**:
+  **3ae371e2b31439a75f1ae2040b717465e0bba57c**; tree
+  cf566809ce0c3ba50b1b4f0f03b57edf15fa358d, 538 leaves verified
+- Next repair candidate: exact commit and CI identities pending; no new execution
+  is inferred from the completed results below
 - Earlier native app verification branch verify/native-gates-c5f5547 remains at
   **1fc8968f1d37b59717cd655b9b8f7fc8ccc7f566**. Its Debug/Core/iOS Core results do
   not validate the later app composition or newer native artifacts
@@ -30,6 +26,10 @@ records exact runs, artifacts, failures and verification limits.
 
 | Source and run | Established result | Limit |
 |---|---|---|
+| 3ae371e, [native proof 37375339856](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339856) | Verified host 26 including six M5 tests, acquisition 74, combined 100 and ten complete synthetic host transcript tests pass; source/provider audits, hashes and command joins verify | Acquisition transcript's three tests stop at Rust E0277 compilation of synthetic peer Properties: {}; Apple producer stops before compilation on a Swift version-stream comparison. No Apple artifact, app or device acceptance |
+| 3ae371e, [Swift composition 37375339728](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339728) | 41 cases pass in each Debug/Release mode; all 24 source hashes and command joins verify | Synthetic C ownership spy; no actual Rust ABI or UIKit compilation |
+| 3ae371e, [host Core 37375339731](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339731) | Raw job log verifies 345 Swift Testing + 25 XCTest cases in each Debug/Release configuration | No new iOS Core run was triggered; its reviewed evidence remains at ad9b33f |
+| 3ae371e analysis of historical 3d97 UI, [37375339797](https://github.com/oskuhsiu/Tetherless/actions/runs/37375339797) | Archive export/query and cleanup succeed; sanitizer records 803 events from 807 nonblank lines | Four unparsed/out-of-scope records leave gaps. Enumeration precedes root activation; warning/timeout mentions establish no actionable cause or product fix |
 | 6bf7b89, [37348967899](https://github.com/oskuhsiu/Tetherless/actions/runs/37348967899) | Actual Rust helper/RSD suites pass 18 + 25 fixtures; retained checksums, vendor audits, README alias identity and process cleanup pass | Host fixtures only; no whole pairing transcript, iOS ABI or app activation |
 | Historical 1366ace, [37362664851](https://github.com/oskuhsiu/Tetherless/actions/runs/37362664851) | Host-only profile passes 20 fixtures. Acquisition and combined profiles compile and pass preceding 18/25 suites | Both then abort in the same composite cancellation fixture with stack overflow/SIGABRT. Keep these failures tied to 1366ace |
 | 5a40878, [37369016726](https://github.com/oskuhsiu/Tetherless/actions/runs/37369016726) | Acquisition passes 74; combined passes 94, including the 20 host fixtures. Source/provider audits, log/status hashes and all command joins verify. The original nine staged-acquisition tests plus two regressions pass | Host component evidence only. M5 successor, whole synthetic transcripts, Apple producer, real IDevice ABI and app activation are not established |
@@ -50,7 +50,7 @@ metadata and README case-alias blockers are **resolved within the verified host
 fixture path**. Actual native execution establishes that progress; these are no
 longer current blockers.
 
-The current repair changes staged-acquisition future placement, not thread stack
+The verified stack repair changes staged-acquisition future placement, not thread stack
 limits, timeouts or original assertions. Its source SHA-256 begins 3057cc16.
 Both repaired profiles now pass, including the previously failing cancellation
 fixture and the new storage regressions. Keep the original stack-overflow artifacts
@@ -59,23 +59,26 @@ and do not expand this result into whole-protocol, Apple-platform or app accepta
 The 21-file gated app composition plus its wrapper/workflow is published at
 ad9b33f. Core and source/spy evidence are scoped above; the product pairing gate
 remains off. Stored/import/reset routes remain available. Successful synthetic
-whole acquisition and host transcripts, Apple rebuilt artifacts and C/Swift probes,
+whole acquisition transcripts, Apple rebuilt artifacts and C/Swift probes,
 the diagnostic iOS consumer and actual UIKit composition still need verification.
 
-A separate remote-pairing M5 controller-signature check is included in this
-candidate with source review but no execution; its host/combined targets are 26/100, not
-passed counts. Three full acquisition and ten host transcript fixtures and the
-Apple producer also remain pending execution. These are the next active pairing
-requirements, separate from paused app-signing work. A same-container challenge is not
-hardware attestation and cannot exclude an active relay or compromised OS.
+The M5 controller-signature tests and complete synthetic host transcript now have
+actual host execution at 3ae371e. The acquisition transcript still needs its narrow
+synthetic-peer typing repair and execution. The Apple producer needs a consistent
+version-output comparison before compilation can begin. These repairs are in
+progress; neither has a new run. They are separate from paused app-signing work.
+A same-container challenge is not hardware attestation and cannot exclude an
+active relay or compromised OS.
 
 Read-only review of the existing 3d97 UI evidence refines the 26.2 failure: Browse
 Locations remains visible with On My iPhone selected; the local root did not open.
 Fixture installation and LaunchServices registration succeeded, document creation
 was observed by XCTest, and the original file is intact. The installer manifest's
-unupdated flag is not proof that creation failed. The authorized bounded read-only
-query of the existing owned archive is prepared in this candidate but unexecuted. No UI rerun or
-resolved root cause is claimed.
+unupdated flag is not proof that creation failed. The bounded query of the existing
+owned archive has run, but gaps remain. Enumeration mentions predate root activation;
+all 19 unlisted-domain messages hash-match an iconServices warning. The late timeout
+mention does not identify an operation. No UI rerun, resolved cause or product fix
+is claimed or justified by these observations alone.
 
 The five-file EMProxy callback-privacy change is now published at 5a40878. Four
 portable checks pass; its real Swift spy remains pending the normal native
@@ -95,7 +98,7 @@ earlier stalls nor a production locking repair.
 
 | Type | Required closure |
 |---|---|
-| Feasible active, non-device | Complete whole synthetic transcripts, the source-reviewed M5 successor, exact Apple producer/build/link evidence, real ABI and UIKit/diagnostic-consumer compilation. Perform the authorized bounded read-only UI archive analysis. Integrate reviewed changes into one candidate and resolve current full-UI failures without weakened assertions |
+| Feasible active, non-device | Complete and verify the acquisition-transcript typing and Apple producer version-stream repairs; then obtain the Apple artifact, real C/Swift ABI and UIKit/diagnostic-consumer evidence. Preserve the inconclusive archive analysis; choose any further UI work from a new evidence-backed decision. Integrate one candidate without weakened assertions |
 | Delivery and external evidence | Complete corresponding/producer source, linked notices, applicable relinking materials and durable delivery. Establish essential ADI authenticity/admission and acquisition/use basis, exact Unicorn combined-license compatibility and retained binary provenance |
 | Paused | Signing-admission, manager-replacement integration and aggregate install RAM/disk budget work remain unpublished and uncredited, including dependent startup/Core Data callback ownership. This pairing work neither reviews nor bypasses that pause |
 | Physical, later | One consolidated authorized phone phase after feasible implementation and non-device gates: login/2FA, permissions, valid pairing/recovery, install/launch, profile application/readback, next-day locked-screen renewal and expiry crossing |
