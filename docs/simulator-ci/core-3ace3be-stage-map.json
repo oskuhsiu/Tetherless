@@ -1,0 +1,20 @@
+{
+  "environment": [
+    "Set up job",
+    "Record toolchain and select an installed iPhone simulator"
+  ],
+  "prepare": [
+    "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+  ],
+  "ui": [
+    "Run package tests on iOS Simulator, not macOS"
+  ],
+  "evidence": [
+    "Summarize simulator result",
+    "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"
+  ],
+  "cleanup": [
+    "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+    "Complete job"
+  ]
+}

@@ -37,6 +37,16 @@ private actor ScopeSignal {
 
 // BEGIN MUTATION_SCOPE_TIMING_DECLARATIONS
 private enum ScopeTimingEvent: String {
+    case admittedCountsAcquiredBefore // ASSERTION_BOUNDARY_TIMING
+    case admittedCountsAcquiredAfter // ASSERTION_BOUNDARY_TIMING
+    case admittedCountsReleasedBefore // ASSERTION_BOUNDARY_TIMING
+    case admittedCountsReleasedAfter // ASSERTION_BOUNDARY_TIMING
+    case admittedBusyExpectBefore // ASSERTION_BOUNDARY_TIMING
+    case admittedBusyExpectAfter // ASSERTION_BOUNDARY_TIMING
+    case admittedBusyBodyBefore // ASSERTION_BOUNDARY_TIMING
+    case admittedBusyBodyAfter // ASSERTION_BOUNDARY_TIMING
+    case lateAwaitBodyBefore // ASSERTION_BOUNDARY_TIMING
+    case lateAwaitBodyAfter // ASSERTION_BOUNDARY_TIMING
     case admittedOuterBefore
     case admittedParentEnter
     case admittedChildEnter
@@ -132,9 +142,19 @@ struct MutationScopeTests {
             return child
         }
         ScopeTimingTrace.emit(.admittedOuterAfter) // MUTATION_SCOPE_TIMING
+        ScopeTimingTrace.emit(.admittedCountsAcquiredBefore) // ASSERTION_BOUNDARY_TIMING
         #expect(lock.counts.0 == 1)
+        ScopeTimingTrace.emit(.admittedCountsAcquiredAfter) // ASSERTION_BOUNDARY_TIMING
+        ScopeTimingTrace.emit(.admittedCountsReleasedBefore) // ASSERTION_BOUNDARY_TIMING
         #expect(lock.counts.1 == 0)
-        #expect(throws: ScopeTestError.busy) { _ = try lock.acquire() }
+        ScopeTimingTrace.emit(.admittedCountsReleasedAfter) // ASSERTION_BOUNDARY_TIMING
+        ScopeTimingTrace.emit(.admittedBusyExpectBefore) // ASSERTION_BOUNDARY_TIMING
+        #expect(throws: ScopeTestError.busy) {
+            ScopeTimingTrace.emit(.admittedBusyBodyBefore) // ASSERTION_BOUNDARY_TIMING
+            defer { ScopeTimingTrace.emit(.admittedBusyBodyAfter) } // ASSERTION_BOUNDARY_TIMING
+            _ = try lock.acquire()
+        }
+        ScopeTimingTrace.emit(.admittedBusyExpectAfter) // ASSERTION_BOUNDARY_TIMING
         ScopeTimingTrace.emit(.admittedParentSignalBefore) // MUTATION_SCOPE_TIMING
         await resume.signal()
         ScopeTimingTrace.emit(.admittedParentSignalAfter) // MUTATION_SCOPE_TIMING
@@ -168,7 +188,11 @@ struct MutationScopeTests {
         await resume.signal()
         ScopeTimingTrace.emit(.lateParentSignalAfter) // MUTATION_SCOPE_TIMING
         ScopeTimingTrace.emit(.lateParentExpectBefore) // MUTATION_SCOPE_TIMING
-        await #expect(throws: ScopeTestError.busy) { try await child.value }
+        await #expect(throws: ScopeTestError.busy) {
+            ScopeTimingTrace.emit(.lateAwaitBodyBefore) // ASSERTION_BOUNDARY_TIMING
+            defer { ScopeTimingTrace.emit(.lateAwaitBodyAfter) } // ASSERTION_BOUNDARY_TIMING
+            try await child.value
+        }
         ScopeTimingTrace.emit(.lateParentExpectAfter) // MUTATION_SCOPE_TIMING
         #expect(lock.counts.0 == 2)
         otherOwnerRelease()

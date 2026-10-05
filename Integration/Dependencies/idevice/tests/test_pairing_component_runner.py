@@ -159,7 +159,8 @@ class RunnerFixture:
             out_dir = self.args.work_dir / "target" / runner.TARGET / "debug/build" / ("openssl-sys-" + log.stem) / "out"
             out_dir.mkdir(parents=True)
             selected_output = out_dir.parent / "output"
-            selected_output.write_bytes(directives(self.args.work_dir / "host-provider"))
+            receipt = json.loads((self.completed / "provider-input-receipt.json").read_bytes())
+            selected_output.write_bytes(directives(Path(receipt["view_root"])))
             event = build_event(out_dir)
             if self.output_fault == "missing":
                 selected_output.unlink()
@@ -260,6 +261,31 @@ class ComponentRunnerTests(unittest.TestCase):
             self.assertTrue((directory / name).is_file(), name)
         return {name: json.loads((directory / name).read_bytes()) for name in AUDIT_FILES}
 
+    def test_alias_parent_uses_receipt_paths_and_strict_checker_rejects_lexical_alias(self):
+        actual = self.root / "actual-parent"
+        actual.mkdir()
+        alias = self.root / "alias-parent"
+        alias.symlink_to(actual.resolve(), target_is_directory=True)
+        for profile, count in (("acquisition-only", 72), ("combined", 92)):
+            with self.subTest(profile=profile):
+                fixture = RunnerFixture(alias / profile, profile)
+                lexical_view = fixture.args.work_dir / "host-provider"
+                with fixture.patches():
+                    result = runner.execute(fixture.args)
+                    receipt = result["provider_receipt"]
+                    view = Path(receipt["view_root"])
+                    self.assertNotEqual(str(view), str(lexical_view))
+                    self.assertTrue(view.samefile(lexical_view))
+                    with self.assertRaisesRegex(provider.InputError, "unexpected OpenSSL library search"):
+                        provider.check_build_script_output(directives(lexical_view), receipt)
+                self.assertEqual(result["passed"], count)
+                self.assertEqual(len(result["tests"]), len(fixture.profile["native_test_filters"]))
+                self.assert_audits(fixture, published=True)
+                for suite in result["tests"]:
+                    retained = suite["openssl_outputs"][0]
+                    output = fixture.args.output / retained["retained_file"]
+                    self.assertEqual(output.read_bytes(), directives(view))
+
     def test_successful_72_and_92_wiring_features_source_profile_and_exclusive_logs(self):
         for profile, expected in (("acquisition-only", 72), ("combined", 92)):
             with self.subTest(profile=profile):
@@ -302,7 +328,7 @@ class ComponentRunnerTests(unittest.TestCase):
                 self.assertIn("-fsyntax-only", header)
                 self.assertIn("-Werror=incompatible-function-pointer-types", header)
                 self.assertEqual(header[-1], str(ROOT / "split-provider/header_probe.c"))
-                self.assertEqual(header[header.index("-I") + 1], str(fixture.args.work_dir / "host-provider/include"))
+                self.assertEqual(header[header.index("-I") + 1], str(Path(result["provider_receipt"]["view_root"]) / "include"))
                 self.assertNotIn("-o", header)
                 self.assertNotIn("-lssl", header)
                 self.assertNotIn("-framework", header)

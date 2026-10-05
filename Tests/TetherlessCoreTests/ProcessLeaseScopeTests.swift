@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import Foundation
+import Dispatch // ASSERTION_BOUNDARY_TIMING
 import Testing
 @testable import TetherlessCore
 
@@ -10,6 +11,18 @@ private actor LeaseSignal {
     func send() { ready = true; let values = waiters; waiters.removeAll(); values.forEach { $0.resume() } }
 }
 
+// BEGIN ASSERTION_BOUNDARY_TIMING_DECLARATIONS
+private enum LeaseAssertionTimingEvent: String {
+    case busyExpectBefore, busyBodyBefore, busyBodyAfter, busyExpectAfter
+}
+private enum LeaseAssertionTimingTrace {
+    static func emit(_ event: LeaseAssertionTimingEvent) {
+        let monotonic = DispatchTime.now().uptimeNanoseconds
+        let utc = Date().timeIntervalSince1970
+        print("process_lease_scope_timing event=\(event.rawValue) monotonic_ns=\(monotonic) utc_unix_s=\(utc)")
+    }
+}
+// END ASSERTION_BOUNDARY_TIMING_DECLARATIONS
 @Suite("Real process lease transfer into nested native mutation ownership", .timeLimit(.minutes(1)))
 struct ProcessLeaseScopeTests {
     private func use(_ body: (URL) async throws -> Void) async throws {
@@ -49,7 +62,13 @@ struct ProcessLeaseScopeTests {
                 await admitted.wait()
                 return task
             }
-            #expect(throws: RenewalFailure.busy) { try ProcessLease.acquire(at: url) }
+            LeaseAssertionTimingTrace.emit(.busyExpectBefore) // ASSERTION_BOUNDARY_TIMING
+            #expect(throws: RenewalFailure.busy) {
+                LeaseAssertionTimingTrace.emit(.busyBodyBefore) // ASSERTION_BOUNDARY_TIMING
+                defer { LeaseAssertionTimingTrace.emit(.busyBodyAfter) } // ASSERTION_BOUNDARY_TIMING
+                return try ProcessLease.acquire(at: url) // ASSERTION_BOUNDARY_RETURN
+            }
+            LeaseAssertionTimingTrace.emit(.busyExpectAfter) // ASSERTION_BOUNDARY_TIMING
             await finish.send(); try await child.value
             let next = try ProcessLease.acquire(at: url); next.release()
         }
