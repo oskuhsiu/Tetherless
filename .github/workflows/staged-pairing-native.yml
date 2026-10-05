@@ -1,0 +1,147 @@
+name: Staged pairing native helper fixtures
+on:
+  push:
+    branches: [verify/staged-pairing-native]
+    paths:
+      - 'Integration/Dependencies/idevice/**'
+      - '.github/workflows/staged-pairing-native.yml'
+      - '.github/workflows/native.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: staged-pairing-helpers-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  helper-fixtures:
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      RUSTUP_AUTO_INSTALL: '0'
+      RUSTUP_DIST_SERVER: https://static.rust-lang.org
+      RUSTUP_UPDATE_ROOT: https://static.rust-lang.org/rustup
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Check portable build tooling and isolated evidence directories
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          test -d "$DEVELOPER_DIR"
+          command -v rustup
+          command -v cmake
+          command -v ninja
+          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+          test ! -e .component
+          mkdir -p .component/evidence .component/acquisition-home .component/acquisition-cargo
+          python3 -m unittest discover -s Integration/Dependencies/idevice/tests -v
+          python3 - <<'PY'
+          import json, os, platform
+          from pathlib import Path
+          Path('.component/evidence/run-context.json').write_text(json.dumps({
+              'scope': 'helper-only host fixtures; not application or device acceptance',
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'runner_arch': platform.machine(),
+              'image_os': os.environ.get('ImageOS'),
+              'image_version': os.environ.get('ImageVersion'),
+              'toolchain_status': 'first-observed candidate, not previously accepted build identity'
+          }, indent=2) + '\n')
+          PY
+      - name: Acquire exact public upstream source without submodules or saved credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: SideStore/idevice
+          ref: 3e55c8486b2057e40c1f74aaaa1155c82341cf76
+          path: .component/pristine
+          persist-credentials: false
+          submodules: false
+      - name: Verify pristine source before any Cargo operation
+        timeout-minutes: 3
+        run: |
+          python3 Integration/Dependencies/idevice/apply_patch.py \
+            --source .component/pristine --verify-only \
+            > .component/evidence/pristine-source-verification.json
+          python3 - <<'PYCODE'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'Integration/Dependencies/idevice')
+          from build_xcframework import reject_ambient_cargo_config
+          reject_ambient_cargo_config(Path('.component/pristine').resolve(strict=True))
+          PYCODE
+      - name: Prepare the exact official Rust candidate with existing rustup
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          rustup --version > .component/evidence/rustup-version.txt
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update \
+            --target aarch64-apple-ios,aarch64-apple-ios-sim \
+            > .component/evidence/rustup-install.txt 2>&1
+          python3 Integration/Dependencies/idevice/record_toolchain.py \
+            --output .component/evidence/toolchain-lock.observed.json \
+            > .component/evidence/toolchain-lock.sha256
+      - name: Acquire only locked registry crates in a fresh isolated Cargo home
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/.component"
+          CARGO="$(rustup which --toolchain 1.98.1 cargo)"
+          RUSTC="$(rustup which --toolchain 1.98.1 rustc)"
+          cd "$ROOT/pristine"
+          env -i PATH="$(dirname "$CARGO"):/usr/bin:/bin:/usr/sbin:/sbin" \
+            HOME="$ROOT/acquisition-home" CARGO_HOME="$ROOT/acquisition-cargo" \
+            RUSTC="$RUSTC" RUSTUP_AUTO_INSTALL=0 DEVELOPER_DIR="$DEVELOPER_DIR" \
+            LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
+            "$CARGO" fetch --locked > "$ROOT/evidence/cargo-fetch.txt" 2>&1
+      - name: Retain bounded authenticated public sources for provider review
+        timeout-minutes: 3
+        run: |
+          python3 - <<'PYCODE'
+          import pathlib, subprocess, sys
+          root = pathlib.Path('.component').resolve(strict=True)
+          caches = list((root / 'acquisition-cargo/registry/cache').glob('*'))
+          if len(caches) != 1 or not caches[0].is_dir() or caches[0].is_symlink():
+              raise SystemExit('expected one isolated registry archive cache')
+          subprocess.run([sys.executable, 'Integration/Dependencies/idevice/retain_review_sources.py',
+              '--lock', 'Integration/Dependencies/idevice/upstream/Cargo.lock',
+              '--cache', str(caches[0]), '--output', str(root / 'review-sources')], check=True)
+          PYCODE
+      - name: Run exact reviewed helper and bounded RSD fixtures offline
+        timeout-minutes: 43
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib, subprocess, sys
+          root = pathlib.Path('.component').resolve(strict=True)
+          caches = list((root / 'acquisition-cargo/registry/cache').glob('*'))
+          if len(caches) != 1 or not caches[0].is_dir() or caches[0].is_symlink():
+              raise SystemExit('expected one isolated registry archive cache')
+          subprocess.run([sys.executable, 'Integration/Dependencies/idevice/run_helper_tests.py',
+              '--source', str(root / 'pristine'), '--crate-cache', str(caches[0]),
+              '--work-dir', str(root / 'helper-work'), '--output', str(root / 'completed'),
+              '--toolchain-lock', str(root / 'evidence/toolchain-lock.observed.json'),
+              '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()], check=True)
+          PY
+      - name: Preserve component evidence and partial failure logs only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 3
+        with:
+          name: staged-pairing-helpers-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            .component/evidence/
+            .component/completed/
+            .component/review-sources/
+            .component/helper-work/completed/*.txt
+            .component/helper-work/completed/*.txt.status.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

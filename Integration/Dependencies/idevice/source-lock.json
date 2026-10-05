@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "upstream": {
+    "repository": "SideStore/idevice",
+    "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+    "tree": "5df506b11db33b97d3b963e3be3f095729a409da",
+    "url": "https://github.com/SideStore/idevice/tree/3e55c8486b2057e40c1f74aaaa1155c82341cf76"
+  },
+  "consumer": {
+    "repository": "SideStore/minimuxer",
+    "commit": "12be70dc2627307a16bfd2dc7a009080d5bec909",
+    "package_swift_blob": "9d2057d5e9130ae4e1a16aeb39670f70619b7db5",
+    "license_blob": "0ad25db4bd1d86c452db3f9602ccdbe172438f52"
+  },
+  "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",
+  "evidence_sha256": {
+    "upstream/.github/workflows/ci.yml": "b5dee0a296b10e0f3b8b7f6993c2cb99c8b6d20ea37da2e20e880687ec278b44",
+    "upstream/.gitmodules": "af90802a99b765d0ce69bdcaa9fec8b24f7d51989e4ebf92d383db17dd44166b",
+    "upstream/Cargo.lock": "3c1a7710f0cd02f9100e91b97c9f8abc6546f115f7f3255551c990628aea0e16",
+    "upstream/Cargo.toml": "c390ce8ae9f2cee08b07d7bf726e928cf6fbcf2fbb9d9d02d9e9c266adcb41bf",
+    "upstream/LICENSE.txt": "131488ce7e302b9f62e3236793e57c86a208d3dfaf03e6d7d03ddc0fc82392ed",
+    "upstream/ffi/Cargo.toml": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075",
+    "upstream/ffi/build.rs": "4ed0afafbed97141a713f0a0ca6d2d2b78d79c7020342de20768856bc2a8310f",
+    "upstream/ffi/plist.h": "f3f055f92a9ff298a873bf6d2a5f6e47d5d405bef3d8b0153797c48c51ceff4c",
+    "upstream/ffi/src/lib.rs": "36111caf4c2bec04713859fb42b6ffd1ccb18850f22333fe224d62d642c411e3",
+    "upstream/idevice/Cargo.toml": "25626cb8dadd573abe483a0b1f5577c15026954a615b3d445e9aa54b451a469c",
+    "upstream/justfile": "78fc2d7fe3e7d25559f29dc7c7dbda8c14fa7a74e261a54431916056c437078b",
+    "upstream/minimuxer-LICENSE": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+    "upstream/swift/Package.swift": "04dbaefcb9183b154399c9fc397efbd602a552327424075ce19ffd4c0f6f74d7",
+    "upstream/swift/include/module.modulemap": "d9f7093c17127841806e2ddffdf540ef1728ed29be75304687952bdb61ae9b82",
+    "upstream/idevice/src/xpc/mod.rs": "e4c86bc271f262ac06fab86316ecb604e744e8df4fb1e4945e5f9a3926a38f69",
+    "upstream/idevice/src/xpc/format.rs": "5a7e23455b0acef0c1b2adeb3878f55b3347d47c1476123655e4d8c4e515d963",
+    "upstream/idevice/src/xpc/http2/mod.rs": "020d77abec682abb17d58068693be3b10df5d8694932bf9ea06c8fd1deb2f6f9",
+    "upstream/idevice/src/xpc/http2/frame.rs": "66401681f71282c6c32f10ae806ff1d09a62e33aba59d49d27dcb9093428fc2a",
+    "upstream/idevice/src/services/rsd.rs": "bdb483a6bbc30b586e4d2d04190d432219059149298c2bca85f9033042bd03f7"
+  },
+  "edits": [
+    {
+      "path": "ffi/src/lib.rs",
+      "old": "#[cfg(feature = \"house_arrest\")]\npub mod house_arrest;\n",
+      "new": "#[cfg(feature = \"house_arrest\")]\npub mod house_arrest;\n#[cfg(feature = \"house_arrest\")]\npub mod staged_pairing;\n#[cfg(all(feature = \"remote_pairing\", feature = \"house_arrest\", feature = \"tcp\", feature = \"rsd\", feature = \"tunnel_tcp_stack\"))]\npub mod staged_acquisition;\n",
+      "before_sha256": "36111caf4c2bec04713859fb42b6ffd1ccb18850f22333fe224d62d642c411e3",
+      "after_sha256": "84f1f5af892a88d3a347e220fb13e3fef6431563c8e435cebda98fc087de1525"
+    },
+    {
+      "path": "ffi/Cargo.toml",
+      "old": "plist = \"1.7.1\"",
+      "new": "plist = { version = \"1.7.1\", features = [\"enable_unstable_features_that_may_break_with_minor_version_bumps\"] }",
+      "before_sha256": "cc9ad07bff84678e78cd48feda51d8e6ce18269ebb8988b67387238e91fe2075",
+      "after_sha256": "3f11aafb4329728937689ef48783b32e696153c836d9fcc17f7d85fb14597000"
+    }
+  ],
+  "overlays": [
+    {
+      "path": "ffi/src/staged_pairing.rs",
+      "sha256": "27cb432e982e8bc5b61eb7849a614385098adb195c33631a38e7576cffcdcdd7",
+      "kind": "add"
+    },
+    {
+      "path": "idevice/src/xpc/mod.rs",
+      "kind": "replace",
+      "before_sha256": "e4c86bc271f262ac06fab86316ecb604e744e8df4fb1e4945e5f9a3926a38f69",
+      "sha256": "133875a825e20ff09dfacd4653d81977c03718fb6802d1d2dffdb365375acb16"
+    },
+    {
+      "path": "idevice/src/xpc/format.rs",
+      "kind": "replace",
+      "before_sha256": "5a7e23455b0acef0c1b2adeb3878f55b3347d47c1476123655e4d8c4e515d963",
+      "sha256": "ffb0cad9b15afbbf0a0d71e57bae73c8506f7d089a12d9508245a046f1ce6d74"
+    },
+    {
+      "path": "idevice/src/xpc/http2/mod.rs",
+      "kind": "replace",
+      "before_sha256": "020d77abec682abb17d58068693be3b10df5d8694932bf9ea06c8fd1deb2f6f9",
+      "sha256": "02f97206bef9a00d4cde14845443c23d9c0aba1d4c190588eced8b43da1100d8"
+    },
+    {
+      "path": "idevice/src/xpc/http2/frame.rs",
+      "kind": "replace",
+      "before_sha256": "66401681f71282c6c32f10ae806ff1d09a62e33aba59d49d27dcb9093428fc2a",
+      "sha256": "2d6c1299f7337c3f6a1e1514eb626b86f27cde50e8efe58367ece08f689ff1be"
+    },
+    {
+      "path": "idevice/src/services/rsd.rs",
+      "kind": "replace",
+      "before_sha256": "bdb483a6bbc30b586e4d2d04190d432219059149298c2bca85f9033042bd03f7",
+      "sha256": "016838732e04cd3cf920c4c0401fd42a8c3fc510470a9d6841de2659d65d51f4"
+    }
+  ],
+  "required_ffi_symbols": [
+    "tetherless_pairing_validation_new",
+    "tetherless_pairing_validation_cancel",
+    "tetherless_pairing_validation_free",
+    "tetherless_pairing_validate_house_arrest",
+    "tetherless_pairing_validate_staged"
+  ],
+  "status": "native overlay and native verification pending",
+  "native_test_filters": [
+    {
+      "package": "idevice-ffi",
+      "filter": "staged_pairing::"
+    },
+    {
+      "package": "idevice-ffi",
+      "filter": "staged_acquisition::"
+    },
+    {
+      "package": "idevice",
+      "filter": "bounded_rsd_tests"
+    }
+  ],
+  "native_test_filters_complete": false,
+  "patch_complete": false,
+  "link_probes_complete": true,
+  "link_probes": {
+    "c": {
+      "path": "probes/pairing_probe.c",
+      "sha256": "f398ec7dff51fa4c3468fbaddfe9ce41961bfd84a5754c0a9c63962fc4dddefd"
+    },
+    "swift": {
+      "path": "probes/pairing_probe.swift",
+      "sha256": "de282eca88cb5899ee6c2d14dbcd2cfc4ef2ec0febafb897342a69aec19ac77c"
+    }
+  },
+  "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8"
+}

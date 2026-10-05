@@ -18,6 +18,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   unsigned-build:
+    # Dedicated helper branch does not build the app; develop and PR acceptance stay unchanged.
+    if: github.ref != 'refs/heads/verify/staged-pairing-native'
     runs-on: macos-15
     timeout-minutes: 35
     strategy:
