@@ -1,6 +1,6 @@
 # Pairing component fixture runner
 
-This opt-in host runner selects either 72 acquisition/helper/RSD fixtures or 92
+This opt-in host runner selects either 74 acquisition/helper/RSD fixtures or 94
 fixtures including the separate bounded host module. It produces component-test
 evidence. It does not build an Apple artifact, enable a product route or change
 upstream default features. The main source lock remains the approved baseline;
@@ -36,7 +36,7 @@ runs with separate work/output roots. The selected counts are:
 
 - Helper `staged_pairing::`: 18
 - RSD `bounded_rsd_tests`: 25
-- Composite `staged_acquisition::`: 9
+- Composite `staged_acquisition::`: 11
 - Contributory guard: 3
 - Remote-pairing socket: 2
 - OpenSSL tunnel tests: 4
@@ -45,7 +45,7 @@ runs with separate work/output roots. The selected counts are:
 - Combined only: host FFI 8, host tests 5, host frame tests 3, OPACK tests 4
 
 Every suite requires one final passing summary with its exact count and zero
-failed, ignored or measured tests. The total must be exactly 72 or 92. Per-suite
+failed, ignored or measured tests. The total must be exactly 74 or 94. Per-suite
 logs/statuses are numbered from `01-idevice-ffi.txt` through the selected eighth
 or twelfth suite; suites sharing a package never share an evidence path.
 
@@ -127,6 +127,13 @@ is moved to the requested output directory with hashes, selected profile,
 toolchain observations, feature graphs, compiler inputs, provider outputs and
 fixture results. Produced native test executables are not published as a product.
 
-No native compiler or Rust fixture has been executed by this worker. The 72/92
+No native compiler or Rust fixture has been executed by this worker. The 74/94
 native outcomes, host provider runtime behavior, Apple final linkage and separate
 product integration acceptance remain pending parent-controlled verification.
+
+The stack-storage successor adds two staged-acquisition regressions while preserving
+the original nine tests. Only that suite receives `-- --nocapture`, so its four
+numeric future-layout diagnostics remain visible in the bounded log. Default
+thread/stack settings, runtime budgets and all other suite commands stay unchanged.
+The historical contributory receipt and both failed 1366ace observations remain
+recorded beside the additive author and independent stack-repair receipts.

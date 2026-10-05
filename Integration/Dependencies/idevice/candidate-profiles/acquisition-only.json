@@ -67,7 +67,7 @@
     "upstream/swift/include/module.modulemap": "d9f7093c17127841806e2ddffdf540ef1728ed29be75304687952bdb61ae9b82"
   },
   "fixture_inventory": {
-    "authored_count": 72,
+    "authored_count": 74,
     "cargo_list_receipt": null,
     "executed": false
   },
@@ -84,7 +84,7 @@
       "package": "idevice"
     },
     {
-      "expected_passed": 9,
+      "expected_passed": 11,
       "filter": "staged_acquisition::",
       "package": "idevice-ffi"
     },
@@ -154,7 +154,7 @@
     {
       "kind": "add",
       "path": "ffi/src/staged_acquisition.rs",
-      "sha256": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d"
+      "sha256": "3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89"
     },
     {
       "before_sha256": "2b00dab16926fb3f9bbd04a0fe4fefdf1a61509ad9fdb6b0048d38757e3feb14",
@@ -196,6 +196,8 @@
   "profile_kind": "registered-acquisition-only-candidate",
   "registered_source_complete": true,
   "registration_receipts": {
+    "registration/receipts/acquisition-stack-independent-review.json": "e36166d16d94e648000e82b3064240f565305cea1b931d81dc477f100c5291cc",
+    "registration/receipts/acquisition-stack-repair.json": "2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554",
     "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
     "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
     "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
@@ -211,7 +213,7 @@
   "schema": 1,
   "source_input_sha256": "261794507526113d5e912ebc0b67e10748862b9a41a9f3712e6ce19baa3309d8",
   "source_tree_sha256": "c38e6280cb3b564ba57682337cf4c536af9460c4f3b5fb5889b1a053e8ce1fa5",
-  "status": "Reviewed component source and host input recipe; native fixtures pending; artifact/product activation disabled",
+  "status": "Independently reviewed stack-storage source successor; repaired native fixtures pending; artifact/product activation disabled",
   "upstream": {
     "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
     "repository": "SideStore/idevice",

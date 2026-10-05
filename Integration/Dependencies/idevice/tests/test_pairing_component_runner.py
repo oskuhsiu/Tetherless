@@ -34,7 +34,7 @@ AUDIT_FILES = ("vendor-input-audit.json", "derived-vendor-input-audit.json",
                "workspace-input-audit.json", "provider-input-audit.json")
 ACQUISITION_SUITES = [
     ("idevice-ffi", "staged_pairing::", 18), ("idevice", "bounded_rsd_tests", 25),
-    ("idevice-ffi", "staged_acquisition::", 9),
+    ("idevice-ffi", "staged_acquisition::", 11),
     ("idevice", "remote_pairing::staged_contributory_tests::", 3),
     ("idevice", "remote_pairing::socket::staged_rp_socket_tests::", 2),
     ("idevice", "remote_pairing::tunnel::staged_openssl::tests::", 4),
@@ -155,7 +155,8 @@ class RunnerFixture:
         elif argv[:2] == ["controlled-cargo-never-executed", "tree"]:
             output = "controlled feature graph for " + argv[argv.index("-p") + 1] + "\n"
         elif argv[:2] == ["controlled-cargo-never-executed", "test"]:
-            selected = next(s for s in self.profile["native_test_filters"] if s["filter"] == argv[-1])
+            selected_filter = argv[argv.index("--message-format=json-render-diagnostics") + 1]
+            selected = next(s for s in self.profile["native_test_filters"] if s["filter"] == selected_filter)
             out_dir = self.args.work_dir / "target" / runner.TARGET / "debug/build" / ("openssl-sys-" + log.stem) / "out"
             out_dir.mkdir(parents=True)
             selected_output = out_dir.parent / "output"
@@ -217,7 +218,7 @@ class ComponentProfileTests(unittest.TestCase):
                 path, profile = runner.load_profile(name)
                 self.assertEqual(path, "candidate-profiles/" + name + ".json")
                 self.assertEqual([(s["package"], s["filter"], s["expected_passed"]) for s in profile["native_test_filters"]], expected)
-                self.assertEqual(sum(s[2] for s in expected), 72 if name == "acquisition-only" else 92)
+                self.assertEqual(sum(s[2] for s in expected), 74 if name == "acquisition-only" else 94)
                 self.assertEqual(profile["build_additional_features"], ["openssl"])
                 self.assertTrue(profile["activation"]["test_only_execution_authorized"])
                 self.assertFalse(profile["activation"]["enabled"])
@@ -266,7 +267,7 @@ class ComponentRunnerTests(unittest.TestCase):
         actual.mkdir()
         alias = self.root / "alias-parent"
         alias.symlink_to(actual.resolve(), target_is_directory=True)
-        for profile, count in (("acquisition-only", 72), ("combined", 92)):
+        for profile, count in (("acquisition-only", 74), ("combined", 94)):
             with self.subTest(profile=profile):
                 fixture = RunnerFixture(alias / profile, profile)
                 lexical_view = fixture.args.work_dir / "host-provider"
@@ -286,8 +287,8 @@ class ComponentRunnerTests(unittest.TestCase):
                     output = fixture.args.output / retained["retained_file"]
                     self.assertEqual(output.read_bytes(), directives(view))
 
-    def test_successful_72_and_92_wiring_features_source_profile_and_exclusive_logs(self):
-        for profile, expected in (("acquisition-only", 72), ("combined", 92)):
+    def test_successful_74_and_94_wiring_features_source_profile_and_exclusive_logs(self):
+        for profile, expected in (("acquisition-only", 74), ("combined", 94)):
             with self.subTest(profile=profile):
                 fixture = RunnerFixture(self.root / profile, profile)
                 with fixture.patches():
@@ -324,6 +325,8 @@ class ComponentRunnerTests(unittest.TestCase):
                         if argv[1] == "test":
                             self.assertIn("--lib", argv)
                             self.assertIn("--message-format=json-render-diagnostics", argv)
+                            selected_filter = argv[argv.index("--message-format=json-render-diagnostics") + 1]
+                            self.assertEqual(argv[-2:] == ["--", "--nocapture"], selected_filter == "staged_acquisition::")
                 header = result["header_probe_command"]
                 self.assertIn("-fsyntax-only", header)
                 self.assertIn("-Werror=incompatible-function-pointer-types", header)

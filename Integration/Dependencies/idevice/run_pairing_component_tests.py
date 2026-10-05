@@ -25,7 +25,7 @@ PROVIDER_RECEIPT_SHA256 = "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f4038
 OPENSSL_PACKAGE_ID = "registry+https://github.com/rust-lang/crates.io-index#openssl-sys@0.9.112"
 FILTERS = [
     ("idevice-ffi", "staged_pairing::", 18), ("idevice", "bounded_rsd_tests", 25),
-    ("idevice-ffi", "staged_acquisition::", 9), ("idevice", "remote_pairing::staged_contributory_tests::", 3),
+    ("idevice-ffi", "staged_acquisition::", 11), ("idevice", "remote_pairing::staged_contributory_tests::", 3),
     ("idevice", "remote_pairing::socket::staged_rp_socket_tests::", 2),
     ("idevice", "remote_pairing::tunnel::staged_openssl::tests::", 4),
     ("idevice", "remote_pairing::tunnel::staged_openssl_fixtures::", 4),
@@ -204,6 +204,8 @@ def execute(args: argparse.Namespace) -> dict:
             argv = [binaries["cargo"], "test", "--frozen", "-p", suite["package"], "--lib", "--target", TARGET,
                     "--features", ",".join(features(suite["package"], defaults)),
                     "--message-format=json-render-diagnostics", suite["filter"]]
+            if suite["filter"] == "staged_acquisition::":
+                argv += ["--", "--nocapture"]
             name = f"{index:02d}-{suite['package']}.txt"
             output = command(argv, name)
             passed = verify_fixture_summary(output, suite)
@@ -220,7 +222,7 @@ def execute(args: argparse.Namespace) -> dict:
         unchanged = all(checks[key]["original_inputs_unchanged"] for key in ("vendor", "derived_vendor", "workspace"))
         if (not unchanged or not checks["provider"]["unchanged"]) and not primary_failure:
             raise VerificationError("component input audit failed; retained original/derived/workspace/provider evidence")
-    expected_count = 72 if args.profile == "acquisition-only" else 92
+    expected_count = 74 if args.profile == "acquisition-only" else 94
     if sum(row["passed"] for row in outcomes) != expected_count or len(outcomes) != len(profile["native_test_filters"]):
         raise VerificationError("component fixture aggregate differs from the reviewed selection")
     evidence = {"schema": 1, "scope": "host pairing component fixtures only", "profile": args.profile,

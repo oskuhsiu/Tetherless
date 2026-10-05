@@ -17,40 +17,63 @@
   },
   "immutable_helper_profile_sha256": "f0198213de5859aa8550fb6de175a49cfda9040c15c29fba8a8a604f79cfd77d",
   "pending": [
-    "Actual host72/combined92 fixture execution and native provider evidence",
+    "Actual repaired acquisition74/combined94 fixture execution under unchanged default stack settings",
     "Apple C/Swift final link receipts and separate product integration approval"
   ],
+  "previous_native_failure": {
+    "observations": [
+      {
+        "artifact_id": "11367742807",
+        "artifact_sha256_supplied_by_parent": "11a0607172253922998ff9346aad0c69027c325f9c8d7744450d9e3033d14601",
+        "profile": "acquisition-only",
+        "result": "compiled then same preserved fixture stack overflow; no full staged runtime pass",
+        "test_log_sha256": "1064a7999d32ca05be7e9f224f81cf4571d8e3d17dbdf7244cc00fa596a4b61c"
+      },
+      {
+        "artifact_id": "11368365572",
+        "artifact_sha256_supplied_by_parent": "c32d6a4224dae976078822644987304ab382443614ab03e5d50239749967ca39",
+        "profile": "combined",
+        "result": "compiled then same preserved fixture stack overflow; no full staged runtime pass",
+        "test_log_sha256": "7e09dd975eb77af58eab67dbef8ad00b3578bb2111b6f340b67a13faafa472a7"
+      }
+    ],
+    "run_id": "37362664851",
+    "source_commit": "1366ace57491dea1b05e9223489d14274d25a386",
+    "stage": "staged_acquisition::ownership_fixtures::composite_acquisition_joins_rp_socket_on_cancel_and_timeout"
+  },
   "profiles": {
     "acquisition-only": {
       "additional_features": [
         "openssl"
       ],
-      "authored_fixtures": 72,
+      "authored_fixtures": 74,
       "enabled": false,
       "overlay_count": 11,
       "path": "candidate-profiles/acquisition-only.json",
-      "sha256": "96d5abf7da2789f1695fc4096dc0deaebb87ae97912c77038d4e5874a206cdf4",
+      "sha256": "954a3700d53010885c060569f5192ecfb0a3a69a119daaf183c00ece51de08aa",
       "test_only_execution_authorized": true
     },
     "combined": {
       "additional_features": [
         "openssl"
       ],
-      "authored_fixtures": 92,
+      "authored_fixtures": 94,
       "enabled": false,
       "overlay_count": 14,
       "path": "candidate-profiles/combined.json",
-      "sha256": "2cf224f48563811cd38f130a1011d3c9c00ae15f24a19c2cb4b13a2ff46a6679",
+      "sha256": "014e8988d815b9a1b0404f463e47edbb3ea1b6523aff7318b157943ac224af9e",
       "test_only_execution_authorized": true
     }
   },
   "registered_source_receipts": {
+    "registration/receipts/acquisition-stack-independent-review.json": "e36166d16d94e648000e82b3064240f565305cea1b931d81dc477f100c5291cc",
+    "registration/receipts/acquisition-stack-repair.json": "2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554",
     "registration/receipts/contributory-acquisition.json": "8eabd1496f2944178ed7897e25f4ef11640b049229b3e20dfe03580df8e93e07",
     "registration/receipts/helper-plist-key-types.json": "0cd5cf4b8f18e96c7fd08b7f4f1e195145d2e690eae749c946d2521ef045a21e",
     "registration/receipts/host-generation.json": "6ea4370a0ec3c9470ff2c6690c576bc93b063cf010be9d14df5928e82949818a",
     "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e"
   },
   "schema": 1,
-  "status": "Explicit opt-in host fixture source registration; artifact/product activation disabled",
+  "status": "Independently reviewed stack-storage source successor; acquisition74/combined94 native rerun pending; artifact/product activation disabled",
   "upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76"
 }

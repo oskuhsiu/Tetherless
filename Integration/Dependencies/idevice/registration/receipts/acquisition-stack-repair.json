@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "Local one-file source repair; independent review and native compiler/runtime proof pending; no publication performed",
+  "upstream_idevice_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "failed_native_evidence": {
+    "implementation_short_sha": "1366ace",
+    "run_id": "37362664851",
+    "job_id": "111940739025",
+    "artifact_id": "11367742807",
+    "artifact_sha256": "11a0607172253922998ff9346aad0c69027c325f9c8d7744450d9e3033d14601",
+    "result": "Rust compiled; staged_acquisition composite cancellation/timeout fixture stack overflow; process SIGABRT; no complete staged runtime result"
+  },
+  "base_overlay_root": "/workspace/scratch/30ad10c9f5dc/tetherless-contributory-acquisition/Integration/Dependencies/idevice/overlay",
+  "changed_source": {
+    "path": "ffi/src/staged_acquisition.rs",
+    "candidate_path": "/workspace/scratch/30ad10c9f5dc/tetherless-acquisition-stack-repair/Integration/Dependencies/idevice/overlay/ffi/src/staged_acquisition.rs",
+    "preimage_sha256": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d",
+    "sha256": "3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89"
+  },
+  "unchanged_required_helper_sha256": "e827e5a464782009f4be7ab5557fecc449fe266836a3851bd1cbc97fa5637933",
+  "native_test_delta": {
+    "new_tests": [
+      "staged_acquisition::ownership_fixtures::composite_future_storage_stays_bounded_without_constructing_it",
+      "staged_acquisition::ownership_fixtures::heap_owned_adapter_drops_transport_synchronously"
+    ],
+    "staged_acquisition_before": 9,
+    "staged_acquisition_after": 11,
+    "aggregate_acquisition_before_supplied_by_parent": 72,
+    "aggregate_acquisition_after": 74,
+    "aggregate_combined_before_supplied_by_parent": 92,
+    "aggregate_combined_after": 94,
+    "existing_tests_and_assertions_preserved": true,
+    "authored_only": true
+  },
+  "portable_checks": {
+    "command": "python3 tetherless-acquisition-stack-repair/test_stack_storage_sources.py",
+    "passed": 19,
+    "retained_contract_checks": 12,
+    "new_storage_source_checks": 7,
+    "log": "/workspace/scratch/30ad10c9f5dc/tetherless-acquisition-stack-repair/portable-source-checks.txt"
+  },
+  "rust_compilation_executed": false,
+  "rust_runtime_executed": false,
+  "layout_bytes_measured": false,
+  "frozen_profiles_apple_transcript_indexes_modified": false,
+  "shared_helper_modified": false,
+  "new_dependencies_threads_tasks_transport_crypto": false,
+  "stack_limits_changed": false,
+  "optional_baseline_diagnostic": {
+    "path": "baseline-layout-only.patch",
+    "purpose": "Type-only future-size guard on exact failed source, one filtered test, no future construction/poll and no network; expected bound failure is diagnostic, not acceptance",
+    "do_not_apply_to_final_candidate": true
+  }
+}

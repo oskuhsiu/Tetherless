@@ -75,5 +75,6 @@ def apply(root: Path):
     subprocess.run([sys.executable, str(Path(__file__).with_name("prepared_contract_inputs.py")), str(root), "oda_metadata_safety"], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("oda_metadata_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("native_logging_safety.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("emproxy_logging_safety.py")), str(root)], check=True)
 
 if __name__ == '__main__': apply(Path(sys.argv[1]))

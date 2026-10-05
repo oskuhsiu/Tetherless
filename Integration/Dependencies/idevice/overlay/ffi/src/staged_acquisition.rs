@@ -151,6 +151,17 @@ async fn acquire_and_validate(
         |address| tokio::net::TcpStream::connect(address)).await
 }
 
+// Adapter contains a 64-KiB receive array. Keep that storage out of every
+// enclosing async state machine, including before the first socket is polled.
+// Its upstream constructor can still use a bounded stack temporary; isolating
+// this synchronous call prevents that temporary from enlarging our poll frame.
+#[inline(never)]
+fn owned_adapter<S: idevice::ReadWrite + 'static>(
+    raw: S, client_ip: std::net::IpAddr, server_ip: std::net::IpAddr,
+) -> Box<Adapter> {
+    Box::new(Adapter::new(Box::new(raw), client_ip, server_ip))
+}
+
 // The production connector is exactly TcpStream::connect above. Injection is
 // private and allows cancellation fixtures without accounts, devices or sockets.
 async fn acquire_with_connector<C, F, S>(
@@ -173,13 +184,16 @@ where
         let stream = connect(address).await.map_err(|_| TetherlessPairingValidationIo)?;
         let stream = LimitedIo::new(stream, wire.clone());
         let mut rpc = RemotePairingClient::new(BoundedRpPairingSocket::new(stream), "Tetherless");
-        rpc.connect_staged(&mut record)
+        // Pin only the larger sequential phase futures, not the already-built
+        // composite. Each box is polled in this task and dropped at its await;
+        // cancellation synchronously drops the active box and all local owners.
+        Box::pin(rpc.connect_staged(&mut record))
             .await.map_err(|_| TetherlessPairingValidationProtocol)?;
         let port = rpc.create_tcp_listener_bounded().await.map_err(|_| TetherlessPairingValidationProtocol)?;
         let mut tunnel_address = address;
         tunnel_address.set_port(port);
         let stream = connect(tunnel_address).await.map_err(|_| TetherlessPairingValidationIo)?;
-        let tunnel = connect_tls_psk_tunnel_openssl_bounded(LimitedIo::new(stream, wire.clone()), rpc.encryption_key())
+        let tunnel = Box::pin(connect_tls_psk_tunnel_openssl_bounded(LimitedIo::new(stream, wire.clone()), rpc.encryption_key()))
             .await.map_err(|_| TetherlessPairingValidationProtocol)?;
         let client_ip = tunnel.info.client_address.parse().map_err(|_| TetherlessPairingValidationProtocol)?;
         let server_ip = tunnel.info.server_address.parse().map_err(|_| TetherlessPairingValidationProtocol)?;
@@ -192,12 +206,12 @@ where
         // when jktcp abandons a temporary ACK/retransmit future after caching data.
         if !(1280..=16000).contains(&mtu) { return Err(TetherlessPairingValidationProtocol); }
         let (raw, mut final_drain) = PacketWriteIo::new(tunnel.into_inner());
-        let mut adapter = Adapter::new(Box::new(raw), client_ip, server_ip);
+        let mut adapter = owned_adapter(raw, client_ip, server_ip);
         adapter.set_mss(mtu - 60).set_send_window(64 * 1024);
         let handshake = {
             let mut stream = AdapterStream::connect(&mut adapter, rsd_port).await
                 .map_err(|_| TetherlessPairingValidationIo)?;
-            let handshake = RsdHandshake::new_bounded(&mut stream).await;
+            let handshake = Box::pin(RsdHandshake::new_bounded(&mut stream)).await;
             let close = stream.close().await;
             // Drop before a second mutable borrow of the same adapter.
             drop(stream);
@@ -211,7 +225,7 @@ where
         // RSD metadata can now be freed before the challenge read.
         drop(handshake);
         let mut stream = AdapterStream::connect(&mut adapter, port).await.map_err(|_| TetherlessPairingValidationIo)?;
-        let validation = staged_pairing::validate_borrowed(&mut stream, bundle, path, expected).await;
+        let validation = Box::pin(staged_pairing::validate_borrowed(&mut stream, bundle, path, expected)).await;
         let close = stream.close().await;
         drop(stream);
         validation?;
@@ -381,6 +395,46 @@ mod ownership_fixtures {
         }
         fn poll_flush(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<std::io::Result<()>> { Poll::Ready(Ok(())) }
         fn poll_shutdown(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<std::io::Result<()>> { Poll::Ready(Ok(())) }
+    }
+
+    #[test]
+    fn composite_future_storage_stays_bounded_without_constructing_it() {
+        // Infer the concrete future from an uncalled factory: even a regression
+        // must report its size without first putting that future on the stack.
+        fn future_bytes<A, F: std::future::Future>(_: impl FnOnce(A) -> F) -> usize {
+            std::mem::size_of::<F>()
+        }
+        fn connector(_: SocketAddr) -> std::future::Ready<std::io::Result<PendingIo>> {
+            panic!("the layout-only connector must never run")
+        }
+        let production = future_bytes(|()| acquire_and_validate(&[], &[], &[], &[], &[]));
+        let injected = future_bytes(|()| acquire_with_connector(&[], &[], &[], &[], &[], connector));
+        let controlled = future_bytes(|control| staged_pairing::run_controlled(
+            acquire_with_connector(&[], &[], &[], &[], &[], connector), control, 1000,
+        ));
+        let joined = future_bytes(|control| async move {
+            let job = acquire_with_connector(&[], &[], &[], &[], &[], connector);
+            tokio::join!(staged_pairing::run_controlled(job, control, 1000), std::future::pending::<()>())
+        });
+        // This guards by-value state storage, not a platform's whole call stack.
+        // The real cancel/timeout fixture below must still run on default stacks.
+        for (name, bytes) in [("production", production), ("injected", injected),
+            ("controlled", controlled), ("joined", joined)]
+        {
+            eprintln!("staged acquisition future layout: {name}={bytes} bytes");
+            assert!(bytes <= 16 * 1024, "{name} future embeds {bytes} bytes of state");
+        }
+    }
+
+    #[test]
+    fn heap_owned_adapter_drops_transport_synchronously() {
+        let drops = Arc::new(AtomicUsize::new(0));
+        let reading = Arc::new(Notify::new());
+        let adapter = owned_adapter(PendingIo { drops: drops.clone(), reading },
+            "192.0.2.1".parse().unwrap(), "192.0.2.2".parse().unwrap());
+        assert_eq!(drops.load(Ordering::SeqCst), 0);
+        drop(adapter);
+        assert_eq!(drops.load(Ordering::SeqCst), 1);
     }
 
     async fn two_sockets_stalled_in_real_tls(cancel: bool) {
