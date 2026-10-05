@@ -17,11 +17,11 @@ The original complete-product selected-file assertion is still open. The separat
 |---|---|
 | BASE-01 | Pinned source/preparation/native build baseline exists. Reverify preparation, tests, build and artifact consistency for the final same candidate SHA |
 | BASE-02 | Dependency inventory and binary/license review identified concrete remaining provenance and distribution gates, especially essential ADI/Unicorn inputs. Matching publisher hashes do not close them |
-| AUTH-01 | Account/key/session persistence and authentication error boundaries exist; this increment closes the identified app-local and PIN log sinks. Other library/binary output, persisted error payloads and real login/2FA/expiry repair remain |
+| AUTH-01 | Account/key/session persistence and authentication error boundaries exist; this increment closes the identified app-local and PIN log sinks. The next reviewed increment restricts identified history/source-error persistence and display to fixed metadata; its native evidence, historic on-disk payloads, other library/binary output and real login/2FA/expiry repair remain |
 | LEASE-01 | Ordinary profile-only renewal and necessary full signing/install are separated. Their real device effects remain unverified |
 | LEASE-02 | Bound profile readback, earliest expiry and journal/database reconciliation are wired. Real application, forward expiry and launch evidence remain device acceptance |
 | AUTO-01 | Headless intent and background entrypoints are wired. Actual locked-screen, no-manager/no-computer scheduled execution remains unverified |
-| AUTO-02 | Setup/resumption/cancellation baselines exist; selected-file delivery is unresolved. Genuine authorized non-foreground self-check and all permission/error paths remain |
+| AUTO-02 | Setup/resumption/cancellation baselines exist; latest native evidence identifies a product dismissal-before-result race after delivery on both runtimes. Its repair and genuine authorized non-foreground self-check and all permission/error paths remain |
 | AUTO-03 | Core serialization/cancellation/backoff exists; this increment fixes the identified cache-maintenance race and accessor lifetime. Broader startup/local mutators and complete resource budgets remain |
 | SAFE-01 | Manager profile gets renewal priority without ordinary reinstallation. Continued operation across original expiry remains physical evidence |
 | SAFE-02 | Durable write-ahead/partial-success/readback recovery exists. Remaining native interruption and persistence-failure integration must be closed without discarding pending evidence |

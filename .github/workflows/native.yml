@@ -48,20 +48,14 @@ jobs:
         run: python3 -m unittest discover -s Integration/tests -v
       - name: Verify pins and prepare native sources
         run: python3 Integration/prepare.py
-      - name: Preserve prepared review sources (no binaries or Git credentials)
+      - name: Execute prepared source contracts (no skipped tests)
+        run: python3 Integration/run_prepared_contract_tests.py
+      - name: Preserve bounded prepared review inputs (all file extensions)
         run: |
-          python3 - <<'PYCODE'
-          from pathlib import Path
-          import tarfile
-          root = Path('.generated/SideStore')
-          suffixes = {'.swift', '.h', '.m', '.c', '.cpp', '.rs', '.json', '.resolved', '.plist', '.pbxproj', '.xcconfig', '.entitlements', '.xcscheme', '.md'}
-          with tarfile.open('native-review-source.tar.gz', 'w:gz') as archive:
-              for path in sorted(root.rglob('*')):
-                  if any(p in {'.git', '.swiftpm', 'xcuserdata'} or p.endswith('.xcframework') for p in path.parts):
-                      continue
-                  if path.is_file() and not path.is_symlink() and (path.suffix in suffixes or path.name == 'LICENSE'):
-                      archive.add(path, arcname=str(path.relative_to(root)), recursive=False)
-          PYCODE
+          python3 Integration/delivery_candidate.py \
+            --prepared .generated/SideStore \
+            --output native-review-source.tar.gz \
+            --commit "${{ github.sha }}"
       - name: Compile unsigned iOS app (not device validation)
         env:
           CONFIGURATION: ${{ matrix.configuration }}
@@ -102,7 +96,7 @@ jobs:
           python3 Integration/inspect_pairing_api.py \
             --artifacts-root .generated/DerivedData/SourcePackages/artifacts \
             --output "artifacts/pairing-api-${{ matrix.configuration }}.json"
-      - name: Package unsigned build with provenance
+      - name: Package unsigned candidate with byte inventory (release gates stay open)
         env:
           CONFIGURATION: ${{ matrix.configuration }}
           SOURCE_COMMIT: ${{ github.sha }}
@@ -110,7 +104,9 @@ jobs:
           python3 Integration/package_unsigned.py \
             --app ".generated/DerivedData/Build/Products/$CONFIGURATION-iphoneos/SideStore.app" \
             --output "artifacts/$CONFIGURATION" \
-            --commit "$SOURCE_COMMIT" --configuration "$CONFIGURATION"
+            --commit "$SOURCE_COMMIT" --configuration "$CONFIGURATION" \
+            --repository . --prepared .generated/SideStore \
+            --source-packages .generated/DerivedData/SourcePackages
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -119,6 +115,8 @@ jobs:
             artifacts/
             native-build.log
             native-review-source.tar.gz
+            native-review-source.tar.gz.json
+            .generated/PreparedContractInputs/
             .generated/SideStore/TETHERLESS_PREPARATION.json
           include-hidden-files: true
           if-no-files-found: error

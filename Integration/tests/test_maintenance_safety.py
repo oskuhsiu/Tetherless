@@ -152,6 +152,13 @@ class MaintenanceTransformTests(unittest.TestCase):
                                     capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_harness_bridges_blocking_signal_off_the_swift_executor(self):
+        self.assertNotIn('await Task.detached', LEASE_HARNESS)
+        self.assertIn('DispatchQueue.global().async { [self] in', LEASE_HARNESS)
+        self.assertIn('scheduled.wait(timeout: .now() + 5)', LEASE_HARNESS)
+        self.assertIn('continuation.resume(throwing: ProbeFailure.schedulingTimedOut)', LEASE_HARNESS)
+        self.assertEqual(LEASE_HARNESS.count('coordinator.waitUntilScheduled()'), 2)
+
     @unittest.skipUnless(HAS_PREIMAGES and SWIFTC, 'Swift compiler or pinned native sources unavailable')
     def test_real_lease_lifetime_busy_interruption_failure_and_success(self):
         # Execute the generated override with the exact production native gate,
@@ -195,7 +202,7 @@ import Darwin
 import Glibc
 #endif
 public enum RenewalFailure: Error { case lockUnavailable, busy }
-enum ProbeFailure: Error { case deliberate }
+enum ProbeFailure: Error { case deliberate, schedulingTimedOut }
 LEASE_HERE
 enum NativeRenewalStorage {
     static func root() throws -> URL { URL(fileURLWithPath: CommandLine.arguments[1]) }
@@ -207,6 +214,19 @@ final class TestFileAccessIntent: @unchecked Sendable {
 }
 final class TestFileCoordinator: @unchecked Sendable {
     let scheduled = DispatchSemaphore(value: 0), resume = DispatchSemaphore(value: 0)
+    // Never block Swift's cooperative executor. The synchronous semaphore
+    // belongs to this test double; bridge its signal on a GCD worker instead.
+    func waitUntilScheduled() async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            DispatchQueue.global().async { [self] in
+                if scheduled.wait(timeout: .now() + 5) == .success {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: ProbeFailure.schedulingTimedOut)
+                }
+            }
+        }
+    }
     private let lock = NSLock()
     private var active = false
     let fail: Bool
@@ -279,7 +299,7 @@ WRAPPER_HERE
         owner.release()
         let cancelled = Probe(victim: victim)
         let task = Task { try await cancelled.execute(parentProgress: nil) }
-        await Task.detached { cancelled.coordinator.scheduled.wait() }.value
+        try await cancelled.coordinator.waitUntilScheduled()
         busy(path)
         task.cancel()
         busy(path)
@@ -290,7 +310,7 @@ WRAPPER_HERE
         try ProcessLease.acquire(at: path).release()
         let operationCancelled = Probe(victim: victim)
         let operationTask = Task { try await operationCancelled.execute(parentProgress: nil) }
-        await Task.detached { operationCancelled.coordinator.scheduled.wait() }.value
+        try await operationCancelled.coordinator.waitUntilScheduled()
         operationCancelled.cancel()
         busy(path)
         operationCancelled.coordinator.resume.signal()

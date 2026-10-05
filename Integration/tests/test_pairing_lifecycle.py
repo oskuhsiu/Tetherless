@@ -78,10 +78,16 @@ class PairingLifecycleTests(unittest.TestCase):
     def test_events_cover_real_delegate_resolution_dismissal_and_import(self):
         picker = (ROOT/'Native/PairingDocumentPicker.swift').read_text()
         selection = picker.split('didPickDocumentsAt urls:')[1].split('func documentPickerWasCancelled')[0]
-        self.assertLess(selection.index('selectionReceived.record()'), selection.index('finish(.selected(url))'))
+        self.assertLess(selection.index('selectionReceived.record()'), selection.index('finish(outcome)'))
         finish = picker.split('private func finish(')[1]
-        self.assertLess(finish.index('onResolve = nil'), finish.index('callback?(request, outcome)'))
+        self.assertIn('relay.resolve(outcome)', finish)
         self.assertIn('lateCallbackIgnored', finish)
+        core = (ROOT.parent/'Sources/TetherlessCore/PairingImportFlow.swift').read_text()
+        relay = core.split('public final class PairingImportResultRelay')[1]
+        delivery = relay.split('public func resolve(')[1].split('public func invalidate(')[0]
+        self.assertLess(delivery.index('onResolve = nil; onAbandon = nil'), delivery.index('callback(request, outcome)'))
+        delivered = picker.split('relay = PairingImportResultRelay(')[1].split('onAbandon: onAbandon')[0]
+        self.assertLess(delivered.index('resultDelivered.record()'), delivered.index('onResolve(request, outcome)'))
         self.assertIn('coordinatorInvalidated.record()', picker)
         view = (ROOT/'Overrides/OnboardingView.swift').read_text()
         selected = view.split('case .selected(let url):')[1].split('@ViewBuilder')[0]

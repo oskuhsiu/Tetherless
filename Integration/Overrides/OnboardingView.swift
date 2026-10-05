@@ -13,6 +13,9 @@ struct OnboardingView: View {
     private var step: SetupStep { .resuming(savedStep) }
     @State private var working = false
     @State private var pairingRequest: PairingImportRequest?
+    // Physical cover ownership outlives logical abandonment. Do not bind an
+    // old cover's onDismiss to whichever request the flow later happens to own.
+    @State private var pairingPresentation: PairingImportRequest?
     @State private var pairingImport = PairingImportFlow()
     // A closed, value-free category from the actual import catch. It never
     // contains an error description, document URL, pairing data or identifier.
@@ -29,8 +32,10 @@ struct OnboardingView: View {
     @State private var observationGeneration = UUID()
     @AppStorage("tetherless.autorenew.enabled") private var renewalPermitted = false
 
+    private var pairingBusy: Bool { pairingImport.isBusy || pairingPresentation != nil }
+
     var body: some View {
-        let dismissalRequest = pairingImport.request
+        let dismissalRequest = pairingPresentation
         return SwiftUI.NavigationStack {
             SwiftUI.Form {
                 SwiftUI.Section {
@@ -53,7 +58,7 @@ struct OnboardingView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     if step != .welcome {
                         SwiftUI.Button("Back") { move(-1) }
-                            .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.back")
+                            .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.back")
                     }
                 }
             }
@@ -61,23 +66,23 @@ struct OnboardingView: View {
                 VStack(spacing: 10) {
                     if step == .review {
                         SwiftUI.Button("Open Tetherless") { finish() }
-                            .buttonStyle(.borderedProminent).disabled(working || pairingImport.isBusy)
+                            .buttonStyle(.borderedProminent).disabled(working || pairingBusy)
                             .accessibilityIdentifier("onboarding.finish")
                     } else {
                         SwiftUI.Button(step == .welcome ? "Get started" : "Continue") { move(1) }
                             .buttonStyle(.borderedProminent)
-                            .disabled(working || pairingImport.isBusy || (step == .pairing && !readiness.pairingStored) ||
+                            .disabled(working || pairingBusy || (step == .pairing && !readiness.pairingStored) ||
                                       (step == .account && !readiness.accountStored))
                             .accessibilityIdentifier("onboarding.next")
                         if step == .pairing || step == .connection || step == .account {
                             SwiftUI.Button("Set up later") { move(1) }
-                                .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.later")
+                                .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.later")
                         }
                     }
                 }
                 .frame(maxWidth: .infinity).padding().background(.regularMaterial)
             }
-            .interactiveDismissDisabled(working || pairingImport.isBusy)
+            .interactiveDismissDisabled(working || pairingBusy)
             .task(id: step) { await reload() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 Task { @MainActor in await reload() }
@@ -85,8 +90,11 @@ struct OnboardingView: View {
         }
         .fullScreenCover(item: $pairingRequest, onDismiss: {
             PairingImportDiagnostic.coverDismissed.record()
-            if let dismissalRequest { finishPairingSelection(dismissalRequest) }
-            else { PairingImportDiagnostic.dismissalUnbound.record() }
+            guard let dismissalRequest, pairingPresentation == dismissalRequest else {
+                PairingImportDiagnostic.dismissalUnbound.record(); return
+            }
+            pairingPresentation = nil
+            finishPairingSelection(dismissalRequest)
         }) { request in
             PairingDocumentPicker(request: request, contentTypes: PairingFileManager.supportedContentTypes) { resolved, outcome in
                 guard pairingImport.resolve(outcome, request: resolved) else {
@@ -94,21 +102,38 @@ struct OnboardingView: View {
                 }
                 PairingImportDiagnostic.resolutionAccepted.record()
                 pairingRequest = nil
+                // UIKit may report selection after the cover already dismissed.
+                finishPairingSelection(resolved, afterDismissal: false)
+            } onAbandon: { abandoned in
+                // Owner teardown is explicit abandonment, never a selection or
+                // an inference from onDismiss. A delivered result is retained.
+                guard pairingImport.abandon(abandoned) else { return }
+                pairingRequest = nil
+                status = "Import cancelled. Existing pairing was retained."
             }
         }
     }
 
     @MainActor private func choosePairingFile() {
-        guard !working, let request = pairingImport.begin() else { return }
+        guard !working, pairingPresentation == nil, let request = pairingImport.begin() else { return }
+        pairingPresentation = request
         PairingImportDiagnostic.requestBegan.record()
         status = nil; pairingImportFailure = nil
         pairingRequest = request
     }
 
-    @MainActor private func finishPairingSelection(_ request: PairingImportRequest) {
-        PairingImportDiagnostic.dismissalObserved.record()
-        guard let outcome = pairingImport.dismissed(request) else {
-            PairingImportDiagnostic.dismissalIgnored.record(); return
+    @MainActor private func finishPairingSelection(_ request: PairingImportRequest,
+                                                  afterDismissal: Bool = true) {
+        let ready: PairingImportFlow.Outcome?
+        if afterDismissal {
+            PairingImportDiagnostic.dismissalObserved.record()
+            ready = pairingImport.dismissed(request)
+        } else {
+            ready = pairingImport.consume(request)
+        }
+        guard let outcome = ready else {
+            if afterDismissal { PairingImportDiagnostic.dismissalIgnored.record() }
+            return
         }
         switch outcome {
         case .cancelled:
@@ -151,7 +176,7 @@ struct OnboardingView: View {
                 Text("Import the device's pairing record from your authorized first-install process. A saved record is not proof of a live connection.")
                 observedRow("Protected pairing record", present: readiness.pairingStored, component: .pairing)
                 SwiftUI.Button("Choose pairing file") { choosePairingFile() }
-                    .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.importPairing")
+                    .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.importPairing")
                 Text("Keep pairing files private. Tetherless stores its copy locally and does not upload it. A computer may be needed once for bootstrap on your supported setup.")
             }
         case .connection:
@@ -169,7 +194,7 @@ struct OnboardingView: View {
                     perform {
                         try await NativeMutationGate.withLease { UserDefaults.standard.useOnDeviceAnisette = true }
                     }
-                }.disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.localAnisette")
+                }.disabled(working || pairingBusy).accessibilityIdentifier("onboarding.localAnisette")
             }
         case .account:
             SwiftUI.Section {
@@ -184,13 +209,13 @@ struct OnboardingView: View {
                             skipResign: false, skipHowTos: true)
                         status = "Sign-in flow finished. Review the actual local prerequisites below."
                     }
-                }.disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.signIn")
+                }.disabled(working || pairingBusy).accessibilityIdentifier("onboarding.signIn")
                 Text("The first setup may ask to replace the bootstrap-signed manager once. Daily profile renewal does not reinstall Tetherless. New logins retain the session token, not your Apple password.")
             }
         case .automation:
             SwiftUI.Section {
                 SwiftUI.Toggle("Allow unattended profile renewal", isOn: $renewalPermitted)
-                    .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.allowUnattended")
+                    .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.allowUnattended")
                     .onChange(of: renewalPermitted) { _, active in
                         if active { NativeRenewalBackground.schedule() }
                         else {
@@ -221,7 +246,7 @@ struct OnboardingView: View {
                 observedRow("Unattended renewal permitted", present: renewalPermitted)
                 Text("Next: use Auto Renewal to run an explicit check, then verify your authorized Shortcut while the screen is locked. A manual check does not count as an unattended run.")
                 SwiftUI.Button("Recheck local setup") { Task { @MainActor in await reload() } }
-                    .disabled(working || pairingImport.isBusy).accessibilityIdentifier("onboarding.recheck")
+                    .disabled(working || pairingBusy).accessibilityIdentifier("onboarding.recheck")
             }
         }
     }
@@ -277,7 +302,7 @@ struct OnboardingView: View {
         }
     }
     private func move(_ delta: Int) {
-        guard !working, !pairingImport.isBusy, let next = step.moved(by: delta) else { return }
+        guard !working, !pairingBusy, let next = step.moved(by: delta) else { return }
         status = nil; pairingImportFailure = nil; savedStep = next.rawValue
     }
     private func finish() {

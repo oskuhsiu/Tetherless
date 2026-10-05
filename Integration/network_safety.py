@@ -54,6 +54,7 @@ def apply(root: Path):
         if actual != expected:
             raise ValueError('Unreviewed prepared network source: ' + path)
         file.write_text(patch_download(raw.decode()))
+    subprocess.run([sys.executable, str(Path(__file__).with_name("prepared_contract_inputs.py")), str(root), "ipa_input_safety"], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("ipa_input_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("auth_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("manager_update.py")), str(root)], check=True)
@@ -63,11 +64,15 @@ def apply(root: Path):
     subprocess.run([sys.executable, str(Path(__file__).with_name("launch_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("catalog_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("maintenance_safety.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("error_privacy_safety.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("backup_lifetime_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("pairing_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("authentication_privacy.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("anisette_package_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("anisette_identity_safety.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("prepared_contract_inputs.py")), str(root), "anisette_cache_safety"], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("anisette_cache_safety.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("prepared_contract_inputs.py")), str(root), "oda_metadata_safety"], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("oda_metadata_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("native_logging_safety.py")), str(root)], check=True)
 

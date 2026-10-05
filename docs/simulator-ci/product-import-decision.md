@@ -1,6 +1,6 @@
-# Decision: verify the real product import boundary
+# Product import verification decisions
 
-Reviewed 2026-10-05 before the next develop push. This decision authorizes one changed-source full-product verification, alongside native Debug/Release regression checks for the reviewed privacy/cache increment. The commit carrying this decision is the implementation candidate; each workflow records its exact GitHub source SHA and job-owned evidence. Run/attempt/job IDs must be recorded when GitHub creates them. No native result is claimed here.
+Historical first decision, reviewed 2026-10-05 before 0dfceb5: This decision authorizes one changed-source full-product verification, alongside native Debug/Release regression checks for the reviewed privacy/cache increment. The commit carrying this decision is the implementation candidate; each workflow records its exact GitHub source SHA and job-owned evidence. Run/attempt/job IDs must be recorded when GitHub creates them. No native result is claimed here.
 
 ## Current evidence
 
@@ -29,3 +29,15 @@ A missing/mismatched runtime, architecture or toolchain fails preflight before a
 A pass on 18.6 establishes only its actual tested full-product path. It does not resolve the 26.2 pre-delegate failure, prove retention of an existing valid pairing, prove successful valid-pairing import, or establish live Apple/device/unattended renewal acceptance. The fresh-store observation establishes readable absence, not general storage acceptance.
 
 Stop after the single planned exact-source verification and inspect any new earliest failure. Do not repeat the known 26.2 full-run loop without new discriminating evidence. Preserve failed evidence and collector gaps.
+
+## Next changed-source decision: fix actual dismissal/result ordering
+
+The completed 0dfceb5 run [37277414175](https://github.com/oskuhsiu/Tetherless/actions/runs/37277414175), attempt 1, supplies a new discriminator on both runtimes. Both received exactly one selected-file callback **after** the product had already finalized cover dismissal as cancellation. Full event scans are complete; both original files remain intact. The exact artifacts, assertions and unexecuted later checks are in [the checkpoint](../checkpoints/2026-10-05-0dfceb5.md). This newer failure is not the earlier absent-delegate/provider boundary.
+
+The reviewed correction keeps explicit delegate outcome and completed dismissal as independent, generation-bound events. Import consumes a selected URL once only after both. A minimal stable UIKit presenter owns one actual system picker until result/teardown; it does not re-present, copy the file, change allowed content types or rotate targets. A physical cover token prevents a logically abandoned request from admitting a new cover before the old one finishes. Teardown cannot initiate import or cancel an already delivered result. If the native picker returns without any result, an explicit “Return to setup” recovery action abandons only that unresolved generation; it is never used as the system Cancel in acceptance tests.
+
+Core/adapter tests add both event orders, duplicate/late/wrong-generation events, explicit cancellation, invalid URL/multiple selection, teardown/recovery and reentrant callbacks. Independent static review passed. Local Swift execution is unavailable; the next exact-source core and native jobs must actually compile and exercise them. The existing full-product UI test, exact-runtime workflow, ten-second selected-result deadline, real two-cancel sequence, fixture bytes, protected-store observations, relaunch and later navigation assertions remain byte-identical to 0dfceb5.
+
+Authorize one changed-source verification on both existing product lanes, alongside native Debug/Release checks for the reviewed independent privacy/backup/delivery increment. Preserve each result independently. Expected observation: real selection is accepted, actual import starts only after matching dismissal, the real parser rejects invalid content, source bytes remain intact, and the remaining untouched UI flow executes. Any earlier compile/environment failure or later UI failure stays failed and must be classified from its own evidence before another run. A pass does not establish valid pairing import, preexisting-record retention, Apple authorization, installation or unattended physical renewal.
+
+The same next native workflow also repairs the demonstrated maintenance-test wait bridge, requires all six formerly skipped transient-preimage contracts to execute after verified preparation, and produces explicitly incomplete candidate byte/source/notice inventories. These are separate evidence levels and do not turn this into a release.

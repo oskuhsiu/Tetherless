@@ -1,14 +1,24 @@
 # Tetherless development status
 
-Updated 2026-10-05. Takeover baseline: **3dd8641e84698b97f96d53a6c53ed8c6ca4675bd**. Latest inspected diagnostic source: **9a49417dc6f6b707b94786882722ca907870fa9c**. This is continued development, not a release candidate. The complete task inventory is [PLAN_PROGRESS.md](PLAN_PROGRESS.md). Work remains on the document-provider boundary, first-sign/self-update integration, lifecycle/resource controls, and supply-chain/delivery gates. Physical-device acceptance remains a single later phase.
+Updated 2026-10-05. Takeover baseline: **3dd8641e84698b97f96d53a6c53ed8c6ca4675bd**. Latest inspected product source: **0dfceb58710543b2272d6d4613fa0205db9ec62e**. This is continued development, not a release candidate. The complete task inventory is [PLAN_PROGRESS.md](PLAN_PROGRESS.md). Work remains on the document-provider boundary, first-sign/self-update integration, lifecycle/resource controls, and supply-chain/delivery gates. Physical-device acceptance remains a single later phase.
 
 ## Independent privacy and cache-maintenance increment
 
-This development increment adds reviewed cache-maintenance lease/coordination fixes, source-compatible app-local logging suppression and removal of identified lower-layer PIN logs. Wireless generation is explicitly gated before unsafe native work; imported pairing and normal renewal remain available. PAIR-01 remains incomplete. These changes have portable/static evidence only until their own exact native CI is inspected. Broader signing/resource/manager-recovery changes are not included in this increment and must not be inferred from local work-in-progress. See [the original 16-task inventory](PLAN_PROGRESS.md).
+This development increment adds reviewed cache-maintenance lease/coordination fixes, source-compatible app-local logging suppression and removal of identified lower-layer PIN logs. Wireless generation is explicitly gated before unsafe native work; imported pairing and normal renewal remain available. PAIR-01 remains incomplete. The initial cache/log/PIN increment compiled in full-product Debug at 0dfceb5; its unsigned native workflow was blocked by the separate test harness. The next reviewed persisted-error, backup-lifetime and delivery increments still require their own exact-SHA native evidence. Broader signing/resource/manager-recovery changes are not included in this increment and must not be inferred from local work-in-progress. See [the original 16-task inventory](PLAN_PROGRESS.md).
 
-## Next full-product verification
+## Next reviewed correction
 
-A separately reviewed [product-import decision](simulator-ci/product-import-decision.md) adds supplemental exact-iOS-18.6 full-product coverage while retaining required 26.2 coverage. The actual import catch now exposes only a fixed accessibility failure category and rethrows the original error. UI acceptance requires the real invalid-content rejection, source preservation and readable fresh-store absence before/after rejection and relaunch; generic file-access failure no longer satisfies it. Both native UI outcomes remain pending for this implementation. This is not successful valid-record import, prior-record retention or live pairing acceptance.
+The specific product event-ordering repair is now staged: explicit delegate result and completed dismissal rendezvous in either order, with stable UIKit/physical-cover ownership and exactly-once consumption. Existing UI acceptance and both runtime lanes are unchanged. The [next decision](simulator-ci/product-import-decision.md#next-changed-source-decision-fix-actual-dismissalresult-ordering) records the expected observation and failure rules. Actual new Swift/UIKit execution remains pending. Closed persisted-error metadata, coordinated backup deletion and incomplete source/notice/IPA inventories are separately documented in [privacy](ERROR_HISTORY_PRIVACY.md), [backup lifetimes](BACKUP_LIFETIMES.md) and [delivery](DELIVERY_CANDIDATE.md).
+
+## Latest product and native evidence at 0dfceb5
+
+[Full-product run 37277414175](https://github.com/oskuhsiu/Tetherless/actions/runs/37277414175), attempt 1, failed at the actual UI assertion on **both** exact-runtime lanes. Compilation, signature inspection, Simulator boot, install/launch, external document creation and original-file preservation passed. The selected file callback arrived once on both runtimes, but the product had already treated cover dismissal as cancellation. Complete fixed-event scans show `coverDismissed → dismissalObserved → cancelFinished → selectionReceived → resultDelivered → resolutionIgnored`; no `importStarted` followed. This is a demonstrated product event-ordering bug. The earlier 26.2 pre-delegate provider failure remains historical evidence, not the explanation for this newer run.
+
+The actual status was “Import cancelled. Existing pairing was retained.” The typed invalid-content assertion, post-rejection store checks, relaunch and later navigation were **not reached**. Screenshots show the picker dismissed, fresh pairing missing and Continue disabled; hierarchy and XCTest establish the cancellation text. [Exact checkpoint and artifact identities](checkpoints/2026-10-05-0dfceb5.md). No product acceptance is claimed.
+
+[Native run 37277414343](https://github.com/oskuhsiu/Tetherless/actions/runs/37277414343) stopped before preparation/build in the Swift-backed maintenance test harness: blocking semaphore waits inside async detached tasks do not compile with Swift 6.2.4. Both configurations collected 273 tests: 266 passed, one failed, six prepared-input checks skipped. The actual logger, PIN-gate and typed parser/classifier tests passed. Package API observations correctly report unavailable input, not present or absent exports. A narrowly reviewed test-only GCD continuation bridge retains every lease/cancellation assertion; corrected native execution remains pending. The next CI gate also captures verified transient preimages so the six older prepared-source contracts must execute without skips.
+
+[Core run 37277414263](https://github.com/oskuhsiu/Tetherless/actions/runs/37277414263) passed Debug and Release for this exact source. Full-product Debug compilation is separate evidence from the blocked unsigned Debug/Release workflow and from physical acceptance.
 
 ## Standalone diagnostic checkpoint
 
@@ -18,7 +28,7 @@ The overall diagnostic remains **failed**: 26.2 UI failed, and both cases retain
 
 The earlier experiment at **985832fa741275b27236349fdb91f631a9e80d39**, [run 37271883947](https://github.com/oskuhsiu/Tetherless/actions/runs/37271883947), failed before device allocation/build because broad simulator inventory exceeded bounded capture. The separately reviewed focused-query repair retained the original capture bound and assertions; all 21 portable diagnostic tests passed. Its history remains in [next-run decision](simulator-ci/next-run-decision.md).
 
-## Latest verified full-product result
+## Earlier full-product result at 89c157d
 
 **Native simulator launch 37247923030**, attempt 1, job **111569414544**, source **89c157dbc6acd3c16eb31a32bdc6d73af6c40f57**, is completed/failed at **step 11, XCTest document selection**. Compilation, signature checks, boot, installation, launch and the separate public-document source passed. The prior pending entry was a historical checkpoint, not the current result. Do not rerun it merely to recover state.
 

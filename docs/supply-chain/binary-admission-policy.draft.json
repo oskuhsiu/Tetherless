@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "status": "DRAFT_NOT_INSTALLED",
+  "baseline": "3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+  "releaseAdmission": "BLOCKED_PENDING_EVIDENCE",
+  "warning": "This is not runtime configuration. Do not deploy an empty allowlist and call login complete. Product-path closure requires an authenticated usable library set and a surfaced delivery decision.",
+  "trustRoot": "Reviewed manifest compiled into an exact app source revision; update only through normal reviewed release process",
+  "requiredBinaryEvidence": [
+    "exact publisher/repository and immutable source revision",
+    "archive and per-slice SHA-256 and byte size",
+    "signed build attestation or independently controlled rebuild evidence",
+    "toolchain and complete resolved dependency graph",
+    "license texts and distribution/relinking conclusions"
+  ],
+  "adiAcquisitionCandidates": [
+    {
+      "route": "direct-official-APK",
+      "url": "https://apps.mzstatic.com/content/android-apple-music-apk/applemusic.apk",
+      "availability": "candidate from primary upstream README; bytes not retrieved",
+      "trustAnchor": "UNESTABLISHED",
+      "rights": "UNRESOLVED",
+      "bundleRedistribution": false
+    },
+    {
+      "route": "user-selected-official-APK",
+      "availability": "requires new user flow, same cryptographic verification; no chat upload",
+      "trustAnchor": "UNESTABLISHED",
+      "rights": "UNRESOLVED",
+      "bundleRedistribution": false
+    }
+  ],
+  "adiRequiredEvidence": [
+    "official source URL and acquisition timestamp",
+    "whole APK size/hash and Android package/version",
+    "verified v2/v3 signature plus independently anchored signer fingerprint/rotation lineage",
+    "exact arm64-v8a library paths, sizes and SHA-256 values",
+    "bounded archive extraction and ELF/architecture admission",
+    "documented basis for user acquisition/extraction/iOS execution separate from redistribution",
+    "manifest identifier and version retained in cache receipt"
+  ],
+  "enforcement": [
+    "Reject before provider construction if admission entry missing, expired/revoked, or evidence mismatch",
+    "Runtime server lists/ODA metadata cannot introduce new authorized libraries or trust anchors",
+    "Revalidate allowlisted per-file hashes before cache activation and every provider load",
+    "A same-origin digest, cached receipt, signing-certificate subject string or user click is not publisher authentication",
+    "No silent remote-Anisette fallback and no deletion of the previous valid generation on failed admission"
+  ],
+  "tests": [
+    "matching archive hash with malicious unapproved file hashes rejects",
+    "mutated metadata hash/payload cannot authorize itself",
+    "invalid APK signature or unknown signer rejects before extraction/use",
+    "extra files, duplicate paths, wrong ELF arch, oversized or link-bearing archives reject",
+    "cache receipt with unknown manifest ID rejects",
+    "cancel/failure preserves last approved generation",
+    "absence of eligible package produces explicit setup/release blocker rather than fake readiness"
+  ]
+}

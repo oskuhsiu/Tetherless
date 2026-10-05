@@ -1,0 +1,585 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "Tetherless 3dd8641e84698b97f96d53a6c53ed8c6ca4675bd candidate source and binary inventory",
+  "documentNamespace": "https://tetherless.invalid/sbom/582d69cd-9f67-5bc6-8cfa-09401c8d6438",
+  "creationInfo": {
+    "creators": [
+      "Tool: Tetherless read-only dependency review"
+    ],
+    "created": "2026-10-05T05:58:00Z",
+    "comment": "Candidate only. Cargo.lock entries in separate inventory are not claimed as linked. LicenseConcluded deliberately NOASSERTION."
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-tetherless",
+      "name": "Tetherless",
+      "versionInfo": "3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+      "downloadLocation": "https://github.com/oskuhsiu/Tetherless/tree/3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "AGPL-3.0-only",
+      "copyrightText": "NOASSERTION",
+      "comment": "application-source; product; Original code declared AGPL-3.0-only. No standalone root LICENSE in baseline; upstream license retained only after submodule initialization.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-sidestore",
+      "name": "SideStore",
+      "versionInfo": "0dd743f75afc358b0ba4a002feb5f19474492371",
+      "downloadLocation": "https://github.com/SideStore/SideStore/tree/0dd743f75afc358b0ba4a002feb5f19474492371",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "gitlink-source; product; AGPLv3; Modified by deterministic Tetherless transformations; original notices must remain. SideBackup is built from this source and packaged by its build phase.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-sidesign",
+      "name": "SideSign",
+      "versionInfo": "6b68651697f99791ef85404b7aea1891a26a285d",
+      "downloadLocation": "https://github.com/SideStore/SideSign/tree/6b68651697f99791ef85404b7aea1891a26a285d",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "gitlink-source; product; GPLv3 in README; no LICENSE in complete pinned tree; Primary signing/authentication library. Missing full license file is a notice-packaging gap; README grant is not MIT and is not absence of any license statement.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-minimuxer",
+      "name": "Minimuxer",
+      "versionInfo": "12be70dc2627307a16bfd2dc7a009080d5bec909",
+      "downloadLocation": "https://github.com/SideStore/minimuxer/tree/12be70dc2627307a16bfd2dc7a009080d5bec909",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "gitlink-source; product; AGPLv3; Contains local Common and DeviceGateway packages; both IDevice and libimobiledevice gateways are unconditionally declared dependencies.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-anisettekit",
+      "name": "AnisetteKit",
+      "versionInfo": "db8b41022697b6c19be8a5f01a1ce834145a2a26",
+      "downloadLocation": "https://github.com/mahee96/AnisetteKit/tree/db8b41022697b6c19be8a5f01a1ce834145a2a26",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; AGPLv3; LICENSE application notice says version 3 or later; README adds App Store prohibition and distribution commentary; Retain LICENSE and README terms. Do not silently reduce to MIT or assert that all README restrictions are standard AGPL terms.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-codesignkit",
+      "name": "CodeSignKit",
+      "versionInfo": "d0c67710fda9a2646b9e829cb2cf443892728371",
+      "downloadLocation": "https://github.com/mahee96/CodeSignKit/tree/d0c67710fda9a2646b9e829cb2cf443892728371",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; AGPLv3; LICENSE application notice says version 3 or later; README adds App Store prohibition and distribution commentary; Retain LICENSE and README terms. Do not silently reduce to MIT or assert that all README restrictions are standard AGPL terms.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-gsacryptokit",
+      "name": "GSACryptoKit",
+      "versionInfo": "eae2590eaf17fe98ce9c76b3ec2bd42b780eb123",
+      "downloadLocation": "https://github.com/mahee96/GSACryptoKit/tree/eae2590eaf17fe98ce9c76b3ec2bd42b780eb123",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; AGPLv3; LICENSE application notice says version 3 or later; README adds App Store prohibition and distribution commentary; Retain LICENSE and README terms. Do not silently reduce to MIT or assert that all README restrictions are standard AGPL terms.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-keychainaccess",
+      "name": "KeychainAccess",
+      "versionInfo": "e0c7eebc5a4465a3c4680764f26b7a61f567cdaf",
+      "downloadLocation": "https://github.com/kishikawakatsumi/KeychainAccess/tree/e0c7eebc5a4465a3c4680764f26b7a61f567cdaf",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-libdeflate",
+      "name": "libdeflate",
+      "versionInfo": "da6c7dae03b78dc71af973664575e4209786fbfe",
+      "downloadLocation": "https://github.com/SideStore/libdeflate/tree/da6c7dae03b78dc71af973664575e4209786fbfe",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-markdownkit",
+      "name": "MarkdownKit",
+      "versionInfo": "39ea7a3fc7e65bcafe55152592b834859be574a5",
+      "downloadLocation": "https://github.com/bmoliveira/MarkdownKit/tree/39ea7a3fc7e65bcafe55152592b834859be574a5",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-nuke",
+      "name": "Nuke",
+      "versionInfo": "30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+      "downloadLocation": "https://github.com/kean/Nuke/tree/30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-remotepairingkit",
+      "name": "RemotePairingKit",
+      "versionInfo": "e3f70d16c0c551540a533a39d540e78e5b0a60a8",
+      "downloadLocation": "https://github.com/mahee96/RemotePairingKit/tree/e3f70d16c0c551540a533a39d540e78e5b0a60a8",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; AGPLv3; named LICENSE application notice says version 3 or later; Required by alternative LibimobiledeviceGateway, not default IDevice gateway; remove only with graph and route changes.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-semanticversion",
+      "name": "SemanticVersion",
+      "versionInfo": "ea8eea9d89842a29af1b8e6c7677f1c86e72fa42",
+      "downloadLocation": "https://github.com/SwiftPackageIndex/SemanticVersion/tree/ea8eea9d89842a29af1b8e6c7677f1c86e72fa42",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-starscream",
+      "name": "Starscream",
+      "versionInfo": "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+      "downloadLocation": "https://github.com/daltoniam/Starscream/tree/c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; swift-nio-zlib-support is Linux-conditional and not in the locked native iOS graph.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-swift-asn1",
+      "name": "swift-asn1",
+      "versionInfo": "9f542610331815e29cc3821d3b6f488db8715517",
+      "downloadLocation": "https://github.com/apple/swift-asn1/tree/9f542610331815e29cc3821d3b6f488db8715517",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-swift-crypto",
+      "name": "swift-crypto",
+      "versionInfo": "bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+      "downloadLocation": "https://github.com/apple/swift-crypto/tree/bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; CryptoExtras pulls in vendored BoringSSL on Apple platforms; Crypto alone using system CryptoKit does not remove that dependency. CXKCP and test vectors exist in source but final iOS reachability needs actual build graph.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-zipfoundation",
+      "name": "ZIPFoundation",
+      "versionInfo": "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+      "downloadLocation": "https://github.com/weichsel/ZIPFoundation/tree/22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "comment": "swift-package-source; product; Compression is used where available on Apple platforms; CZLib is conditional for other platforms.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-emproxy",
+      "name": "EMProxy",
+      "versionInfo": "v0.9.3",
+      "downloadLocation": "https://github.com/SideStore/em_proxy/releases/download/v0.9.3/EMProxy.xcframework.zip",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "prebuilt-xcframework; conditional runtime route, unconditional linked package target; AGPLv3; Candidate inventory; no final IPA scan; checksum from manifest/release metadata, not locally downloaded bytes",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3998789c38d09b55e488d46e31897affc7bbcb9c244d7a9d5b2d5cf6afd916c3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-idevice-binary",
+      "name": "IDevice",
+      "versionInfo": "v0.1.68-ss-3e55c84",
+      "downloadLocation": "https://github.com/SideStore/idevice/releases/download/v0.1.68-ss-3e55c84/idevice-xcframework-v0.1.68-ss-3e55c84.zip",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "prebuilt-xcframework; default profile/readback/install/pairing gateway; MIT plus Rust/native dependencies; Candidate inventory; no final IPA scan; checksum from manifest/release metadata, not locally downloaded bytes",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "445702d53942597deb4cdec2c4122d16a3f4ac124ce26cd75b68dab3dad92416"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-libimobiledevice-binary",
+      "name": "libimobiledevice XCFramework",
+      "versionInfo": "1.4.0-ss-0f88f7b",
+      "downloadLocation": "https://github.com/SideStore/libimobiledevice-xcframework/releases/download/1.4.0-ss-0f88f7b/libimobiledevice.xcframework.zip",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "prebuilt-xcframework; alternative profile/readback/install gateway, currently reachable through persisted settings; LGPL-2.1 library family plus component notices; Candidate inventory; no final IPA scan; checksum from manifest/release metadata, not locally downloaded bytes",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7ccbdd56b074807461fc43d2e32ba92f20df2501a6c14cf9f64a917e7f3fe6e7"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-unicorn-binary",
+      "name": "Unicorn",
+      "versionInfo": "2.1.4-xcf-a53ddc9",
+      "downloadLocation": "https://github.com/mahee96/unicorn/releases/download/2.1.4-xcf-a53ddc9/Unicorn.xcframework.zip",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "prebuilt-xcframework; essential iOS on-device Anisette execution; GPLv2 declaration; GPL/LGPL/BSD/MIT file grants; exact v3 combination permission unresolved; Candidate inventory; no final IPA scan; checksum from manifest/release metadata, not locally downloaded bytes",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "52e4ac9e2d704c4941adc2c381df8706aabf673dc843611a90b33ad349d562db"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-openssl-binary",
+      "name": "OpenSSL Apple XCFramework",
+      "versionInfo": "3.6.2000",
+      "downloadLocation": "https://github.com/krzyzanowskim/OpenSSL/releases/download/3.6.2000/OpenSSL.xcframework.zip",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "prebuilt-xcframework; RemotePairingKit runtime and libimobiledevice static aggregation; CodeSignKit/GSACryptoKit references are test-only; Apache-2.0 for OpenSSL 3.6.2; preserve additional bundled notices; Candidate inventory; no final IPA scan; checksum from manifest/release metadata, not locally downloaded bytes",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "37846a8bd302cb2443eff47f1045ab844d0cd40bf82cc6159cfad9aa5c3eff9e"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-libplist",
+      "name": "libplist",
+      "versionInfo": "32428abacb909988e8e960a8845a6430b17b6a60",
+      "downloadLocation": "https://github.com/libimobiledevice/libplist/tree/32428abacb909988e8e960a8845a6430b17b6a60",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "binary-source-gitlink; libimobiledevice static build; LGPL-2.1 library declaration; preserve per-file notices and applicable relinking/source obligations; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-libusbmuxd",
+      "name": "libusbmuxd",
+      "versionInfo": "93eb168bf6b07472d17781328c21df0c60300524",
+      "downloadLocation": "https://github.com/libimobiledevice/libusbmuxd/tree/93eb168bf6b07472d17781328c21df0c60300524",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "binary-source-gitlink; libimobiledevice static build; LGPL-2.1 library declaration; preserve per-file notices and applicable relinking/source obligations; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-libimobiledevice-glue",
+      "name": "libimobiledevice-glue",
+      "versionInfo": "da770a7687f35fbb981db4d7b47b1b032cd5c2c7",
+      "downloadLocation": "https://github.com/libimobiledevice/libimobiledevice-glue/tree/da770a7687f35fbb981db4d7b47b1b032cd5c2c7",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "binary-source-gitlink; libimobiledevice static build; LGPL-2.1 library declaration; preserve per-file notices and applicable relinking/source obligations; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-boringssl",
+      "name": "BoringSSL vendored by swift-crypto",
+      "versionInfo": "0226f30467f540a3f62ef48d453f93927da199b6",
+      "downloadLocation": "https://github.com/google/boringssl/tree/0226f30467f540a3f62ef48d453f93927da199b6",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "vendored-source; CryptoExtras runtime; Apache-2.0 plus LICENSE section Other licenses; Source attribution hash is recorded in swift-crypto Package.swift and Sources/CCryptoBoringSSL/hash.txt. Preserve complete original LICENSE and per-file notices; exact compiled subset not yet scanned.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-openssl-source",
+      "name": "OpenSSL 3.6.2",
+      "versionInfo": "fe686e15d84334b284f883118ed92f64b409b3aa",
+      "downloadLocation": "https://github.com/openssl/openssl/tree/fe686e15d84334b284f883118ed92f64b409b3aa",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "binary-source-candidate; OpenSSL framework; Release tag openssl-3.6.2 resolves through annotated tag f800a53185a76d633d469607937c3c55383f0fff; GitHub reports unknown_key for its signature. This does not authenticate prebuilt framework source-to-binary correspondence.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-ed25519-vendored",
+      "name": "ed25519 subset",
+      "versionInfo": "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4",
+      "downloadLocation": "https://github.com/orlp/ed25519/tree/7fa6712ef5d581a6981ec2b08ee623314cd1d1c4",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "vendored-source-attribution; libimobiledevice; zlib-style notice collected from pinned vendor path; Original revision attributed in pinned 3rd_party/README.md; modified compiled input is inside pinned libimobiledevice tree.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-srp6a-vendored",
+      "name": "libsrp6a-sha512 subset",
+      "versionInfo": "587900d32777348f98477cb25123d5761fbe3725",
+      "downloadLocation": "https://github.com/secure-remote-password/stanford-srp/tree/587900d32777348f98477cb25123d5761fbe3725",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "vendored-source-attribution; libimobiledevice; Stanford SRP BSD-style full notice collected; Adapted SHA512 client subset; preserve complete notice and attribution; not flattened into MIT.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-plist-ffi-gitlink",
+      "name": "plist_ffi C++ example gitlink",
+      "versionInfo": "66e6e6362b58bc361725c3e1b0a34af498aa2b3a",
+      "downloadLocation": "https://github.com/jkcoxson/plist_ffi/tree/66e6e6362b58bc361725c3e1b0a34af498aa2b3a",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "comment": "binary-producer-example-gitlink; not proven linked; IDevice Cargo.lock separately pins registry plist_ffi 0.1.6. This C++ example gitlink is not evidence that the registry package contains identical source.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-adi-core",
+      "name": "libCoreADI.so",
+      "versionInfo": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "runtime-executable-input; essential on-device Anisette; Apple-proprietary provenance/rights unresolved. Not bundled in Tetherless source; acquired at runtime. No package digest or per-file digest independently verified.; Candidate inventory; no final IPA scan"
+    },
+    {
+      "SPDXID": "SPDXRef-adi-storeservices",
+      "name": "libstoreservicescore.so",
+      "versionInfo": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "runtime-executable-input; essential on-device Anisette; Apple-proprietary provenance/rights unresolved. Third-party ODA hash and locally sealed receipt do not authenticate publisher.; Candidate inventory; no final IPA scan"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-tetherless"
+    },
+    {
+      "spdxElementId": "SPDXRef-tetherless",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-sidestore"
+    },
+    {
+      "spdxElementId": "SPDXRef-tetherless",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-zipfoundation"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-sidesign"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-minimuxer"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-keychainaccess"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-markdownkit"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-nuke"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-semanticversion"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-starscream"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidestore",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-codesignkit"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidesign",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-anisettekit"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidesign",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-codesignkit"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidesign",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-gsacryptokit"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidesign",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-libdeflate"
+    },
+    {
+      "spdxElementId": "SPDXRef-sidesign",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-swift-crypto"
+    },
+    {
+      "spdxElementId": "SPDXRef-minimuxer",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-emproxy"
+    },
+    {
+      "spdxElementId": "SPDXRef-minimuxer",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-idevice-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-minimuxer",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-libimobiledevice-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-minimuxer",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-remotepairingkit"
+    },
+    {
+      "spdxElementId": "SPDXRef-minimuxer",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-zipfoundation"
+    },
+    {
+      "spdxElementId": "SPDXRef-anisettekit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-unicorn-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-anisettekit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-adi-core"
+    },
+    {
+      "spdxElementId": "SPDXRef-anisettekit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-adi-storeservices"
+    },
+    {
+      "spdxElementId": "SPDXRef-codesignkit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-swift-crypto"
+    },
+    {
+      "spdxElementId": "SPDXRef-codesignkit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-swift-asn1"
+    },
+    {
+      "spdxElementId": "SPDXRef-gsacryptokit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-swift-crypto"
+    },
+    {
+      "spdxElementId": "SPDXRef-remotepairingkit",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-openssl-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-swift-crypto",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-swift-asn1"
+    },
+    {
+      "spdxElementId": "SPDXRef-swift-crypto",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-boringssl"
+    },
+    {
+      "spdxElementId": "SPDXRef-libimobiledevice-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-libplist"
+    },
+    {
+      "spdxElementId": "SPDXRef-libimobiledevice-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-libusbmuxd"
+    },
+    {
+      "spdxElementId": "SPDXRef-libimobiledevice-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-libimobiledevice-glue"
+    },
+    {
+      "spdxElementId": "SPDXRef-libimobiledevice-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-ed25519-vendored"
+    },
+    {
+      "spdxElementId": "SPDXRef-libimobiledevice-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-srp6a-vendored"
+    },
+    {
+      "spdxElementId": "SPDXRef-libimobiledevice-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-openssl-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-openssl-binary",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-openssl-source"
+    }
+  ]
+}

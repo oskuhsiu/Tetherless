@@ -10,21 +10,25 @@ class PairingPickerIntegrationTests(unittest.TestCase):
         self.assertIn('UIDocumentPickerViewController(forOpeningContentTypes: contentTypes, asCopy: false)', text)
         self.assertIn('picker.delegate = context.coordinator', text)
         self.assertIn('coordinator.invalidate()', text)
-        self.assertIn('picker.delegate = nil', text)
+        self.assertIn('picker?.delegate = nil', text)
         update = text.split('func updateUIViewController(')[1].split('static func dismantleUIViewController')[0]
         self.assertNotIn('present(', update)
         self.assertNotIn('UIDocumentPickerViewController(', update)
-        finish = text.split('private func finish(')[1]
-        self.assertLess(finish.index('onResolve = nil'), finish.index('callback?('))
-        self.assertIn('urls.count == 1', text)
-        self.assertIn('url.isFileURL', text)
+        core = (ROOT.parent/'Sources/TetherlessCore/PairingImportFlow.swift').read_text()
+        relay = core.split('public final class PairingImportResultRelay')[1]
+        finish = relay.split('public func resolve(')[1].split('public func invalidate(')[0]
+        self.assertLess(finish.index('onResolve = nil'), finish.index('callback(request, outcome)'))
+        self.assertIn('PairingImportResultRelay(request: request', text)
+        self.assertIn('PairingImportFlow.Outcome.pickedDocuments(urls)', text)
+        self.assertIn('urls.count == 1', core)
+        self.assertIn('url.isFileURL', core)
         self.assertNotIn('print(', text)
 
     def test_import_occurs_only_after_matching_dismissal(self):
         text = (ROOT / 'Overrides/OnboardingView.swift').read_text()
         self.assertNotIn('.fileImporter(', text)
         self.assertIn('.fullScreenCover(item: $pairingRequest', text)
-        self.assertIn('let dismissalRequest = pairingImport.request', text)
+        self.assertIn('let dismissalRequest = pairingPresentation', text)
         self.assertIn('pairingImport.resolve(outcome, request: resolved)', text)
         selection = text.split('private func finishPairingSelection(')[1].split('@ViewBuilder')[0]
         self.assertLess(selection.index('pairingImport.dismissed(request)'), selection.index('importPairingFile(from: url)'))
