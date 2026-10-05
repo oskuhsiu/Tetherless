@@ -1,6 +1,6 @@
 # Decision: isolate the shared document-provider boundary
 
-Status: planned diagnostic; implementation and independent review must complete before the next push starts it. No new native result is claimed.
+Status: one reviewed preflight correction is ready for the next controlled diagnostic. The first diagnostic did not allocate a device, build, or test either runtime. No product acceptance is claimed.
 
 ## Current evidence
 
@@ -37,3 +37,11 @@ Only 18.6 passing supports a runtime-associated difference under the current sha
 ## Follow-through
 
 Read the actual result and preserve both cases. Fix only a demonstrated product or harness boundary. Before closing AUTO-02/PAIR-01, rerun complete-product acceptance for the final implementation and separately prove that selected invalid bytes reach the parser and the original data remains intact. Signing/permissions are not changed merely to make selection green. No physical-device, Apple-login or unattended-renewal conclusion follows from this diagnostic.
+
+## First execution and narrowly corrected preflight
+
+The first standalone run **37271883947**, attempt 1, job **111640440934**, source **985832fa741275b27236349fdb91f631a9e80d39**, completed with an environment/preflight failure. Artifact **11327933785** was independently verified as SHA-256 **31c1d22af3a1bc26071c27e2b1d79dc5ffef68842668bb056f5daa8a7ee798c7**. The exact broad `simctl list --json` command exited zero but produced **265,506 bytes**; the unchanged **262,144-byte** capture omitted **3,362 bytes**. The fail-closed collector therefore refused incomplete inventory. `cases=[]`; neither runtime availability validation, allocation, native build nor UI ran. Compiler 26.3/17C529, SDK 26.2, arm64 and project plist lint were observed successfully; those facts are not app compilation.
+
+The next run changes only inventory query scope: separate complete runtime and device-type JSON collections, omitting unrelated devices/pairs. Both results retain the same bound, deadline/failure refusal and exact-selection policy. A regression uses real bounded capture with oversized unrelated-device output; the old broad query still refuses it, while the focused collections validate. Independent review and all **21 portable diagnostic tests** passed. Signing, permissions, device identity, artifact equality, two cancellations, the single selection and ten-second outcome assertions are unchanged. The expected new observation is complete input to runtime validation, then the originally planned experiment; any later failed stage must be classified from its own manifest rather than relabeled as this preflight issue.
+
+Core run **37271883774** passed Debug and Release for exact source 985832f. The lightweight classifier check also passed. All three runs terminated before this corrected commit; no active run is cancelled and no identical rerun is dispatched. A single scoped develop push starts the corrected diagnostic (plus normal core/lightweight checks). The corrected experiment has no result until its own job and artifacts are inspected.

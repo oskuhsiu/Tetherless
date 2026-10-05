@@ -119,6 +119,19 @@ def select_runtimes(payload: dict) -> dict:
     return selected
 
 
+def selection_inventory(values: dict) -> dict:
+    # Do not request unrelated devices/pairs: the original broad response was
+    # 265,506 bytes and exceeded bounded capture before either runtime was tested.
+    payload = {}
+    for query, key in (('runtimeInventory', 'runtimes'), ('deviceTypeInventory', 'devicetypes')):
+        document = json.loads(values[query])
+        if (not isinstance(document, dict) or set(document) != {key} or
+                not isinstance(document[key], list) or not all(isinstance(item, dict) for item in document[key])):
+            raise ValueError('Unexpected complete Simulator inventory collection: ' + query)
+        payload[key] = document[key]
+    return payload
+
+
 def validate_toolchain(values: dict, image: dict) -> None:
     expected = {'architecture': 'arm64', 'developer': DEVELOPER,
                 'xcode': 'Xcode 26.3\nBuild version 17C529', 'sdkVersion': '26.2'}
@@ -147,7 +160,8 @@ def preflight() -> dict:
               'sdkPath': ['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-path'],
               'sdkInventory': ['xcodebuild', '-showsdks'],
               'projectSyntax': ['plutil', '-lint', str(HERE / 'RuntimePicker.xcodeproj/project.pbxproj')],
-              'simulatorInventory': ['xcrun', 'simctl', 'list', '--json'],
+              'runtimeInventory': ['xcrun', 'simctl', 'list', 'runtimes', '--json'],
+              'deviceTypeInventory': ['xcrun', 'simctl', 'list', 'devicetypes', '--json'],
               'python': [sys.executable, '--version'],
               'xcodebuildHelp': ['xcodebuild', '-help'],
               'simctlHelp': ['xcrun', 'simctl', 'help'],
@@ -157,7 +171,7 @@ def preflight() -> dict:
         # Do not short circuit a failed probe before its command/error manifest
         # (and the independent host identity probes) are retained.
         for key, args in probes.items():
-            record['commands'][key] = command(args, directory, key, 90 if key == 'simulatorInventory' else 30,
+            record['commands'][key] = command(args, directory, key, 90 if key == 'runtimeInventory' else 30,
                                                bounded=True)
             save(directory / 'manifest.json', record)
         for key, result in record['commands'].items():
@@ -166,7 +180,7 @@ def preflight() -> dict:
         if not re.fullmatch('[0-9a-f]{40}', record['sourceCommit'] or ''):
             raise ValueError('Missing exact CI source commit')
         validate_toolchain(record['values'], record['image'])
-        record['runtimes'] = select_runtimes(json.loads(record['values']['simulatorInventory']))
+        record['runtimes'] = select_runtimes(selection_inventory(record['values']))
         record['status'] = 'accepted'
         return record
     except Exception as error:

@@ -68,6 +68,58 @@ class RuntimeComparisonTests(unittest.TestCase):
             with self.subTest(item=item), self.assertRaises(ValueError):
                 diag.select_runtimes(item)
 
+    def test_focused_inventory_ignores_oversized_unrelated_device_enumeration(self):
+        full = inventory()
+        full['devices'] = {'unrelated-runtime': [{'unused': 'x' * (diag.environment.MAX_OUTPUT + 1)}]}
+        full['pairs'] = {}
+        self.assertGreater(len(json.dumps(full).encode()), diag.environment.MAX_OUTPUT)
+        calls = []
+        answers = {
+            ('uname', '-m'): 'arm64',
+            ('sw_vers',): 'ProductName: macOS\nProductVersion: 15.7.9\nBuildVersion: 24G830',
+            ('xcode-select', '-p'): diag.DEVELOPER,
+            ('xcodebuild', '-version'): 'Xcode 26.3\nBuild version 17C529',
+            ('xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version'): '26.2',
+            ('xcrun', '--sdk', 'iphonesimulator', '--show-sdk-path'): diag.DEVELOPER + '/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk',
+            ('xcrun', 'simctl', 'list', '--json'): json.dumps(full),
+            ('xcrun', 'simctl', 'list', 'runtimes', '--json'): json.dumps({'runtimes': full['runtimes']}),
+            ('xcrun', 'simctl', 'list', 'devicetypes', '--json'): json.dumps({'devicetypes': full['devicetypes']}),
+        }
+        def scripted_tool(args, *, stdout, **kwargs):
+            calls.append(tuple(args))
+            stdout.write(answers.get(tuple(args), 'scripted informational output').encode())
+            return subprocess.CompletedProcess(args, 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch.object(diag, 'EVIDENCE', root), patch.object(diag.subprocess, 'run', scripted_tool), \
+                    patch.dict(os.environ, {'DEVELOPER_DIR': diag.DEVELOPER, 'GITHUB_SHA': 'a' * 40,
+                                           'ImageOS': 'macos15', 'ImageVersion': '20260907.0337.1', 'RUNNER_ARCH': 'ARM64'}):
+                result = diag.preflight()
+                self.assertEqual(result['status'], 'accepted')
+                self.assertEqual(tuple(result['runtimes']), diag.RUNTIMES)
+                self.assertNotIn(('xcrun', 'simctl', 'list', '--json'), calls)
+                for query in ('runtimeInventory', 'deviceTypeInventory'):
+                    self.assertEqual(result['commands'][query]['exitCode'], 0)
+                    self.assertFalse(result['commands'][query]['truncated'])
+                # Exercise the unchanged real capture bound against the same
+                # oversized scripted broad response, preserving the old refusal.
+                broad = diag.command(['xcrun', 'simctl', 'list', '--json'], root, 'old-broad-inventory', 90, bounded=True)
+                self.assertTrue(broad['truncated'])
+                self.assertEqual(broad['retainedBytes'], diag.environment.MAX_OUTPUT)
+                with self.assertRaises(RuntimeError): diag.require(broad)
+
+    def test_focused_inventory_requires_both_complete_collection_schemas(self):
+        good = {'runtimeInventory': json.dumps({'runtimes': inventory()['runtimes']}),
+                'deviceTypeInventory': json.dumps({'devicetypes': inventory()['devicetypes']})}
+        self.assertEqual(diag.selection_inventory(good), inventory())
+        for key in good:
+            for invalid in ('{', 'null', '[]', '{}', json.dumps({'devices': []}),
+                            json.dumps({'runtimes': {}, 'devicetypes': []})):
+                with self.subTest(key=key, invalid=invalid), self.assertRaises((ValueError, TypeError)):
+                    diag.selection_inventory(dict(good, **{key: invalid}))
+            missing = dict(good); missing.pop(key)
+            with self.assertRaises(KeyError): diag.selection_inventory(missing)
+
     def test_toolchain_pins_and_explicit_host_identity(self):
         values = {'architecture': 'arm64', 'developer': diag.DEVELOPER,
                   'xcode': 'Xcode 26.3\nBuild version 17C529', 'sdkVersion': '26.2',

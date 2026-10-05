@@ -2,7 +2,11 @@
 
 Updated 2026-10-05. Current remote baseline checked: **3dd8641e84698b97f96d53a6c53ed8c6ca4675bd**. This is continued development, not a release candidate. The complete task inventory is [PLAN_PROGRESS.md](PLAN_PROGRESS.md). Work remains on the document-provider boundary, first-sign/self-update integration, lifecycle/resource controls, and supply-chain/delivery gates. Physical-device acceptance remains a single later phase.
 
-## Latest verified result
+## Standalone diagnostic checkpoint
+
+The reviewed experiment was published at **985832fa741275b27236349fdb91f631a9e80d39**. [Run 37271883947](https://github.com/oskuhsiu/Tetherless/actions/runs/37271883947) failed before device allocation/build: complete simulator inventory exceeded bounded capture, so preflight refused truncated JSON. Neither iOS 26.2 nor iOS 18.6 was tested. The verified artifact and the independently reviewed narrow query-scope correction are recorded in [next-run decision](simulator-ci/next-run-decision.md). Twenty-one portable diagnostic tests passed; native execution remains pending. Core Debug/Release passed on 985832f. Normal full-product code and acceptance assertions are unchanged by the diagnostic commits.
+
+## Latest verified full-product result
 
 **Native simulator launch 37247923030**, attempt 1, job **111569414544**, source **89c157dbc6acd3c16eb31a32bdc6d73af6c40f57**, is completed/failed at **step 11, XCTest document selection**. Compilation, signature checks, boot, installation, launch and the separate public-document source passed. The prior pending entry was a historical checkpoint, not the current result. Do not rerun it merely to recover state.
 
