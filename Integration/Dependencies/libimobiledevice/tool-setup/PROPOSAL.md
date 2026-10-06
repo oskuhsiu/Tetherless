@@ -1,3 +1,10 @@
+> Historical proposal, preserved below as originally reviewed. On 2026-10-06
+> at 15:40 UTC, the owner approved installing Autoconf, Automake, GNU Libtool
+> and GNU m4 through Homebrew on the disposable GitHub CI runner. The approved
+> `dec9d9b40fe956a974bbb806a7aba8b8908f1ade` setup attempt, run `37490322437`,
+> failed at offline Homebrew cache initialization before any installation.
+> [STARTUP_REPAIR.md](STARTUP_REPAIR.md) records the current correction and next-run decision.
+
 # UNAPPROVED proposal: four build tools on the disposable CI runner
 
 No owner approval has been received. No Homebrew command, tool installation, executable-tool download, native build, publication or dispatch has been performed for this proposal. Independent source review is not permission to execute it. The parent must obtain and preserve the owner's explicit four-package approval before publishing any dependent workflow source.

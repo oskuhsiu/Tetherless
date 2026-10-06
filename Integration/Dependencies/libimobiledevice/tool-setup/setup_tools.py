@@ -203,12 +203,20 @@ def setup(args):
                 raise ValueError('existing target version would require an upgrade/replacement: '+name)
         # No network and no Homebrew/runtime writes: missing runtime gems cannot
         # silently bootstrap before the approved formula operations.
-        report['brew_config']=run([BREW,'config'],'brew-config',offline=True)
+        # Homebrew 6.0.22 initializes its API cache even for config. Disable API
+        # lookup only for this offline diagnostic, never for formula operations.
+        report['brew_config']=run(['/usr/bin/env','HOMEBREW_NO_INSTALL_FROM_API=1',
+                                   BREW,'config'],'brew-config',offline=True)
         version=run(['/usr/bin/sw_vers','-productVersion'],'macos-version',offline=True)
         if version!='15.7.9':raise ValueError('setup runner version changed')
         build=run(['/usr/bin/sw_vers','-buildVersion'],'macos-build',offline=True)
         if build!='24G830':raise ValueError('setup runner build changed')
-        metadata_text=run([BREW,'info','--json=v2','--formula',*NAMES],'selected-metadata')
+        # The first supported metadata read populates the fresh cache and can
+        # print download progress to stderr. Retain that merged output in full;
+        # only the subsequent offline read is parsed and accepted as metadata.
+        run([BREW,'info','--json=v2','--formula',*NAMES],'acquire-selected-metadata')
+        metadata_text=run([BREW,'info','--json=v2','--formula',*NAMES],
+                          'selected-metadata',offline=True)
         metadata=json.loads(metadata_text)  # Never discard warnings or arbitrary prefixes.
         validate_metadata(metadata,lock);write(work/'selected-metadata.json',metadata)
         bottles={}

@@ -130,6 +130,88 @@ class RuntimeAndBottleTests(unittest.TestCase):
         with self.assertRaises(ValueError):setup.verify_existing_tools({'existing_tools':{'make':{'path':str(p),'sha256':'a'*64,'version':'1'}}})
 
 
+class StartupCacheTests(unittest.TestCase):
+    def exercise(self,fail_label=None,offline_json_prefix=''):
+        temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
+        root=Path(temporary.name).resolve(strict=True);work=root/'setup';brewroot=root/'homebrew';brewroot.mkdir()
+        runtime=brewroot/'runtime';runtime.write_text('existing-runtime')
+        metadata=selected_metadata(setup.load_lock());before={'pkgconf':{'3.0.7':'unchanged-receipt'}}
+        commands=[];cache_ready=False
+        primary=ValueError('synthetic failure at '+str(fail_label))
+        stop=ValueError('stop before first bottle acquisition')
+        def capture(command,**kwargs):
+            nonlocal cache_ready
+            argv=[str(x) for x in command];log=kwargs['log'];label=log.stem.split('-',1)[1]
+            commands.append({'argv':argv,'env':dict(kwargs['env']),'label':label})
+            offline='(deny network*)' in argv[2]
+            value='controlled fixture output\n'
+            if label=='brew-config':
+                # Actual 6.0.22 startup behavior with a fresh owned cache:
+                # API initialization precedes config unless disabled for it.
+                if 'HOMEBREW_NO_INSTALL_FROM_API=1' not in argv:
+                    raise ValueError('curl: (6) Could not resolve host: formulae.brew.sh; HTTP status: 000')
+                self.assertTrue(offline)
+            elif label=='macos-version':value='15.7.9\n'
+            elif label=='macos-build':value='24G830\n'
+            elif label=='acquire-selected-metadata':
+                self.assertFalse(offline);cache_ready=True
+                value='==> Downloading Homebrew API data\nJSON API packages.arm64_sequoia.jws.json\n'+json.dumps(metadata)+'\n'
+            elif label=='selected-metadata':
+                self.assertTrue(offline);self.assertTrue(cache_ready)
+                value=offline_json_prefix+json.dumps(metadata)+'\n'
+            log.write_text(value)
+            log.with_name(log.name+'.status.json').write_text(json.dumps({'synthetic_fixture':True})+'\n')
+            if label==fail_label:raise primary
+            if label.startswith('fetch-'):raise stop
+        env={'GITHUB_SHA':'a'*40,'GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1',
+             'DEVELOPER_DIR':'/Applications/Xcode_26.3.app/Contents/Developer'}
+        with patch.dict(os.environ,env,clear=True),patch.object(setup,'require_approved_ci'), \
+             patch.object(setup,'runtime_guard',return_value=(brewroot,{str(runtime):setup.digest(runtime)})), \
+             patch.object(setup,'cellar_inventory',return_value=before), \
+             patch.object(setup,'verify_existing_tools',return_value={'fixture':'unchanged'}), \
+             patch.object(setup,'capture_helper_command',side_effect=capture):
+            with self.assertRaises(ValueError) as caught:
+                setup.setup(SimpleNamespace(execute_approved=True,output=work))
+        return work,commands,json.loads((work/'setup-receipt.json').read_bytes()),caught.exception,primary,stop
+
+    def test_fresh_cache_diagnostic_then_acquisition_then_strict_offline_metadata(self):
+        work,commands,report,error,_,stop=self.exercise()
+        self.assertIs(error,stop)
+        self.assertEqual([row['label'] for row in commands],['brew-config','macos-version','macos-build',
+                          'acquire-selected-metadata','selected-metadata','fetch-m4'])
+        self.assertEqual(commands[0]['argv'][3:],['/usr/bin/env','HOMEBREW_NO_INSTALL_FROM_API=1',str(setup.BREW),'config'])
+        for row in commands:
+            self.assertNotIn('HOMEBREW_NO_INSTALL_FROM_API',row['env'])
+            if row['label']!='brew-config':self.assertNotIn('HOMEBREW_NO_INSTALL_FROM_API=1',row['argv'])
+            self.assertEqual(row['env']['HOMEBREW_NO_AUTO_UPDATE'],'1')
+            self.assertIn('/Library',row['argv'][2])
+        for row in commands[3:5]:
+            self.assertEqual(row['argv'][3:],[str(setup.BREW),'info','--json=v2','--formula',*setup.NAMES])
+        self.assertIn('Downloading Homebrew API data',(work/'04-acquire-selected-metadata.txt').read_text())
+        self.assertEqual(json.loads((work/'selected-metadata.json').read_bytes()),selected_metadata(setup.load_lock()))
+        self.assertTrue(all(report['final_audit'].values()))
+
+    def test_config_failure_stops_before_any_network_command(self):
+        _,commands,report,error,primary,_=self.exercise(fail_label='brew-config')
+        self.assertIs(error,primary);self.assertEqual(len(commands),1)
+        self.assertTrue(all(row['offline'] for row in report['commands']))
+        self.assertTrue(all(report['final_audit'].values()))
+
+    def test_metadata_acquisition_failure_stops_before_offline_validation_and_bottles(self):
+        work,commands,report,error,primary,_=self.exercise(fail_label='acquire-selected-metadata')
+        self.assertIs(error,primary)
+        self.assertEqual(commands[-1]['label'],'acquire-selected-metadata')
+        self.assertFalse((work/'selected-metadata.json').exists())
+        self.assertTrue(all(report['final_audit'].values()))
+
+    def test_offline_metadata_prefix_is_rejected_without_stripping_or_bottle_fetch(self):
+        work,commands,report,error,_,_=self.exercise(offline_json_prefix='unexpected warning\n')
+        self.assertIsInstance(error,json.JSONDecodeError)
+        self.assertEqual(commands[-1]['label'],'selected-metadata')
+        self.assertFalse((work/'selected-metadata.json').exists())
+        self.assertTrue(all(report['final_audit'].values()))
+
+
 class PartialFailureEvidenceTests(unittest.TestCase):
     def test_partial_install_retains_after_state_and_primary_error(self):
         with tempfile.TemporaryDirectory() as temporary:
