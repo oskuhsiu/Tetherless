@@ -369,7 +369,7 @@ jobs:
           if proof == 'apple-producer':
               command += ['--retained-c-provider', str(root / 'retained-c-provider'),
                           '--retained-c-handoff-sha256', os.environ['RETAINED_C_HANDOFF_SHA256']]
-              command += ['--recipe-lock-sha256', '9a45a43f8cca50deac61c6e6dbf030204978c6ad88613f3ae18a8d05b0bc506b']
+              command += ['--recipe-lock-sha256', '42e60f7379fb1b336cde7281d95937b9a75e599f0f6578d2dbc2fb9fea56498a']
           (root / 'evidence/invocation.json').write_text(json.dumps({'proof': proof, 'argv': command}, indent=2) + '\n')
           # Each native command is supervised by the unchanged reviewed runner.
           # Retain entry-point errors as well, including failures before work/completed exists.
@@ -401,6 +401,7 @@ jobs:
             .proof/apple-producer-work/aarch64-apple-ios/completed/*.h
             .proof/apple-producer-work/aarch64-apple-ios/completed/*.map
             .proof/apple-producer-work/aarch64-apple-ios/completed/generated-headers/
+            .proof/apple-producer-work/aarch64-apple-ios/linkage-observation/
             .proof/apple-producer-work/aarch64-apple-ios/vendor-config-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios/vendor-derivation-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios/derived-vendor-input-audit.json
@@ -409,6 +410,7 @@ jobs:
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.h
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.map
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/generated-headers/
+            .proof/apple-producer-work/aarch64-apple-ios-sim/linkage-observation/
             .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-config-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-derivation-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/derived-vendor-input-audit.json

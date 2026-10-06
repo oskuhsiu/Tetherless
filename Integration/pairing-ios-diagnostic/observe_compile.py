@@ -298,7 +298,7 @@ class _Files:
         except OSError as error:
             raise ObservationError("required evidence file is unavailable: " + str(path)) from error
 
-    def text(self, path: Path, limit: int = MAX_TEXT) -> str:
+    def recorded_bytes(self, path: Path, limit: int) -> bytes:
         data = self.read(path, limit, compiler_text=True)
         previous = self.references.get(str(path))
         # Persist bytes before any decoding or parsing so a failing input can
@@ -308,6 +308,10 @@ class _Files:
         _require(previous is None or previous == digest, "compiler text changed between reads: " + str(path))
         self.references[str(path)] = digest
         _require(len(self.references) <= MAX_REFERENCES, "filelist/response reference bound exceeded")
+        return data
+
+    def text(self, path: Path, limit: int = MAX_TEXT) -> str:
+        data = self.recorded_bytes(path, limit)
         try:
             text = data.decode("utf-8")
         except UnicodeDecodeError as error:
@@ -578,29 +582,22 @@ def _c_module_evidence(command: dict, files: _Files, expected: dict, sdk: str) -
             "c_provider_header_inventory": actual}
 
 
-def _live_map_ownership(text: str, c_archive: Path, c_symbols: list[str], rust_archive: Path,
+def _live_map_ownership(raw: bytes, c_archive: Path, c_symbols: list[str], rust_archive: Path,
                         rust_symbols: list[str]) -> dict:
     """Check actual live known exports; dead-stripped rows never satisfy roots."""
     _require(isinstance(c_symbols, list) and c_symbols == sorted(set(c_symbols))
              and isinstance(rust_symbols, list) and rust_symbols == sorted(set(rust_symbols))
              and not set(c_symbols) & set(rust_symbols), "full Rust/C export identities differ")
-    live, section = set(), None
-    for line in text.splitlines():
-        if line == "# Symbols:":
-            section = "live"
-        elif line == "# Dead Stripped Symbols:":
-            section = None
-        elif line.startswith("#"):
-            continue
-        elif section == "live" and line.strip():
-            match = re.fullmatch(r"0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+\[\s*\d+\]\s+(.+)", line)
-            _require(match is not None, "unparsed live App map row")
-            live.add(match[1])
+    try:
+        _objects, rows = retained_c_provider.parse_link_map(raw)
+    except ValueError as error:
+        raise ObservationError("App live map ownership differs: " + str(error)) from error
+    live = {name for _owner, name in rows}
     c_live, rust_live = live & set(c_symbols), live & set(rust_symbols)
     _require(APP_C_ROOTS <= c_live and APP_RUST_ROOTS <= rust_live,
              "required diagnostic C/Rust roots are absent from live App map")
     try:
-        proof = retained_c_provider.link_ownership(text, c_archive, c_live, rust_archive, rust_live)
+        proof = retained_c_provider.link_ownership(raw, c_archive, c_live, rust_archive, rust_live)
     except ValueError as error:
         raise ObservationError("App live map ownership differs: " + str(error)) from error
     return dict(proof, c_live_symbols=sorted(c_live), rust_live_symbols=sorted(rust_live),
@@ -683,7 +680,7 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
              "final Ld lacks diagnostic C/Rust live roots")
     map_path = files.path(_one(args, "-map"), cwd)
     _require(map_path.is_relative_to(files.roots[1]), "App linker map must be inside owned DerivedData")
-    ownership = _live_map_ownership(files.text(map_path, MAX_MAP), c_archive, c_provider["symbols"], processed, rust_symbols)
+    ownership = _live_map_ownership(files.recorded_bytes(map_path, MAX_MAP), c_archive, c_provider["symbols"], processed, rust_symbols)
     _require("OpenSSL" in _option(args, "-framework"), "final Ld lacks selected OpenSSL framework")
     _require("OpenSSL" not in _option(args, "-weak_framework"), "weak OpenSSL provider is unsupported")
     providers = set()

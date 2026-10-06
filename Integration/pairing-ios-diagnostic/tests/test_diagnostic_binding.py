@@ -242,7 +242,7 @@ class DiagnosticFixture:
                         synthetic_map(row["mixed_provider"]["library"], c_symbols.splitlines(),
                                       row["library"], rust_symbols.splitlines()).encode())
                     probe["ownership"] = binding.retained_c_provider.link_ownership(
-                        (evidence / ("05-link-mixed_provider-" + probe["language"] + ".map")).read_text(),
+                        (evidence / ("05-link-mixed_provider-" + probe["language"] + ".map")).read_bytes(),
                         row["mixed_provider"]["library"], mixed["symbols"], row["library"],
                         {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
                     put_json(evidence / ("05-link-mixed_provider-" + probe["language"] + "-ownership.json"), probe["ownership"])

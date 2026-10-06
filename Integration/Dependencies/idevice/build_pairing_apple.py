@@ -14,6 +14,7 @@ import tomllib
 
 import rust_symbol_reader
 import retained_c_provider
+from linkage_observation import LinkageObservation
 
 from apply_patch import HERE, VerificationError, canonical_json, load_lock, safe_path, sha256, stage
 from build_xcframework import (file_hash, inventory, native_environment, require_equal, toolchain_commands,
@@ -330,13 +331,19 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
             raise VerificationError("Rust static archive is missing")
         if str(library) not in features["ffi_artifact"]["filenames"]:
             raise VerificationError("selected Rust archive lacks its compiler-artifact identity")
+        linkage = LinkageObservation(work / "linkage-observation", target=target["rust"],
+            rust_archive=library, c_archive=Path(mixed["library"]), c_sha256=mixed["library_sha256"], reader=reader)
+        linkage.scans(lambda command, log: capture_helper_command(command, source=source, env=env, log=log))
+        def linkage_run(command, name, maps=()):
+            return linkage.run(command, log=evidence / name, maps=maps,
+                invoke=lambda: run(command, name))
         rust_symbol_reader.audit_local(reader)
-        run(rust_symbol_reader.scan_command(reader, str(library)), "04-rust-export-symbols.txt")
+        linkage_run(rust_symbol_reader.scan_command(reader, str(library)), "04-rust-export-symbols.txt")
         # The supervisor returns only a bounded summary tail. Acceptance uses
         # the complete retained log after the zero-exit/full-output/join gate.
         rust_symbols = read_bounded_log(evidence / "04-rust-export-symbols.txt").decode("utf-8")
         rust_symbol_reader.audit_local(reader)
-        run(rust_symbol_reader.scan_command(reader, mixed["library"]), "04-c-export-symbols.txt")
+        linkage_run(rust_symbol_reader.scan_command(reader, mixed["library"]), "04-c-export-symbols.txt")
         c_symbols = read_bounded_log(evidence / "04-c-export-symbols.txt").decode("utf-8")
         rust_symbol_reader.audit_local(reader)
         export_namespace = check_symbols(rust_symbols, namespace, target["rust"])
@@ -357,7 +364,8 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
                 if group == "mixed_provider":
                     link_map = evidence / ("05-link-mixed_provider-" + language + ".map")
                     command += mixed_link_arguments(mixed, link_map)
-                run(command, "05-link-" + group + "-" + language + ".txt")
+                linkage_run(command, "05-link-" + group + "-" + language + ".txt",
+                    maps=(link_map,) if group == "mixed_provider" else ())
                 if binary.is_symlink() or not binary.is_file() or not binary.stat().st_size:
                     raise VerificationError("ordinary native link did not create its output")
                 entry = {"group": group, "language": language, "command": command,
@@ -365,9 +373,10 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
                 if group == "mixed_provider":
                     if link_map.is_symlink() or not link_map.is_file() or not 0 < link_map.stat().st_size <= MAX_LOG_BYTES:
                         raise VerificationError("bounded mixed-provider linker map was not retained")
-                    entry["link_map_sha256"] = file_hash(link_map)
+                    map_bytes = read_bounded_log(link_map)
+                    entry["link_map_sha256"] = sha256(map_bytes)
                     entry["ownership"] = retained_c_provider.link_ownership(
-                        read_bounded_log(link_map).decode("utf-8"), Path(mixed["library"]), set(mixed["symbols"]),
+                        map_bytes, Path(mixed["library"]), set(mixed["symbols"]),
                         rust_archive=library,
                         rust_symbols={"_" + name for name in namespace["expected_target_exports"][target["rust"]]["after"]})
                     (evidence / ("05-link-mixed_provider-" + language + "-ownership.json")).write_bytes(

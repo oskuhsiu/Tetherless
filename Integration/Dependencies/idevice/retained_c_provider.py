@@ -315,16 +315,33 @@ def historical_c_symbol_receipt(old_raw, new_raw):
                 old_nm_sha256=digest(old_text.encode()))
 
 
-def link_ownership(text, c_archive, c_symbols, rust_archive=None, rust_symbols=()):
-    require(isinstance(text, str) and len(text.encode()) <= MAX_TEXT, 'mixed-provider map exceeds bound')
-    c_required, rust_required = set(c_symbols), set(rust_symbols)
-    require(c_required and not c_required & rust_required, 'ambiguous mixed-provider ownership contract')
-    required = c_required | rust_required
-    objects, owners, section, seen = {}, {}, None, set()
-    headings = {'# Object files:': 'objects', '# Sections:': 'sections',
-                '# Symbols:': 'symbols', '# Dead Stripped Symbols:': 'dead'}
-    for line in text.splitlines():
-        heading = line.rstrip()
+def _link_map_path(raw):
+    # Local build roots can contain Unicode (including our portable fixtures).
+    # Preserve strict UTF-8 paths exactly; do not normalize or replace bytes.
+    try:
+        path = raw.decode('utf-8')
+    except UnicodeDecodeError as error:
+        raise VerificationError('invalid UTF-8 in map object path') from error
+    require(bool(path) and path.isprintable(), 'control byte or character in map object path')
+    return path
+
+
+def parse_link_map(raw):
+    """Parse LF-delimited ld bytes; return object paths and ASCII live names.
+
+    ld writes literal-string payloads verbatim, including invalid UTF-8 and
+    non-LF control bytes. Only that payload is opaque. Its address, size and
+    owner still use the same strict ASCII grammar as ordinary symbol rows.
+    Literal strings cannot satisfy an exported symbol. Keep duplicate named
+    rows so the ownership verifier can reject every ambiguous required name.
+    """
+    require(isinstance(raw, bytes), 'mixed-provider map requires raw bytes')
+    require(len(raw) <= MAX_TEXT, 'mixed-provider map exceeds bound')
+    objects, live, section, seen = {}, [], None, set()
+    headings = {b'# Object files:': 'objects', b'# Sections:': 'sections',
+                b'# Symbols:': 'symbols', b'# Dead Stripped Symbols:': 'dead'}
+    for line in raw.split(b'\n'):
+        heading = line.rstrip(b' \t')
         if heading in headings:
             section = headings[heading]
             require(section not in seen and (section == 'objects' or 'objects' in seen)
@@ -332,43 +349,59 @@ def link_ownership(text, c_archive, c_symbols, rust_archive=None, rust_symbols=(
                     and (section not in ('objects', 'sections') or 'symbols' not in seen),
                     'duplicate or out-of-order map section')
             seen.add(section)
-        elif line.startswith('#'):
-            columns = ((section == 'sections' and re.fullmatch(r'#\s+Address\s+Size\s+Segment\s+Section\s*', line))
-                or (section == 'symbols' and re.fullmatch(r'#\s+Address\s+Size\s+File\s+Name\s*', line))
-                or (section == 'dead' and re.fullmatch(r'#\s+(?:Address\s+)?Size\s+File\s+Name\s*', line)))
-            preamble = section is None and re.fullmatch(r'# (?:Path|Arch): \S.*', line)
+        elif line.startswith(b'#'):
+            columns = ((section == 'sections' and re.fullmatch(rb'#[ \t]+Address[ \t]+Size[ \t]+Segment[ \t]+Section[ \t]*', line))
+                or (section == 'symbols' and re.fullmatch(rb'#[ \t]+Address[ \t]+Size[ \t]+File[ \t]+Name[ \t]*', line))
+                or (section == 'dead' and re.fullmatch(rb'#[ \t]+(?:Address[ \t]+)?Size[ \t]+File[ \t]+Name[ \t]*', line)))
+            preamble = section is None and re.fullmatch(rb'# Arch: [!-~][ -~]*', line)
+            if section is None and line.startswith(b'# Path: '):
+                path = _link_map_path(line[len(b'# Path: '):])
+                preamble = not path[0].isspace()
             require(columns or preamble, 'unknown link-map section or comment')
             continue
-        elif section == 'objects' and line.strip():
-            m = re.fullmatch(r'\[\s*(\d+)\]\s+(.+)', line)
-            require(m and m[1] == str(int(m[1])) and m[1] not in objects, 'malformed, noncanonical or duplicate map object')
-            objects[m[1]] = m[2]
-        elif section == 'sections' and line.strip():
-            require(re.fullmatch(r'0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+[A-Za-z_.$][A-Za-z0-9_.$]*\s+[A-Za-z_.$][A-Za-z0-9_.$]*', line),
+        elif section == 'objects' and line.strip(b' \t'):
+            m = re.fullmatch(rb'\[[ \t]*(0|[1-9][0-9]*)\][ \t]+(.+)', line)
+            require(m and m[1].decode('ascii') not in objects, 'malformed, noncanonical or duplicate map object')
+            objects[m[1].decode('ascii')] = _link_map_path(m[2])
+        elif section == 'sections' and line.strip(b' \t'):
+            require(re.fullmatch(rb'0x[0-9A-Fa-f]+[ \t]+0x[0-9A-Fa-f]+[ \t]+[A-Za-z_.$][A-Za-z0-9_.$]*[ \t]+[A-Za-z_.$][A-Za-z0-9_.$]*', line),
                     'malformed link-map section row')
-        elif section == 'symbols' and line.strip():
-            m = re.fullmatch(r'0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+\[\s*(\d+)\]\s+(.+)', line)
-            require(m is not None and m[1] == str(int(m[1])) and m[1] in objects, 'unparsed live map row or unknown/noncanonical owner')
-            if m[2] in required:
-                require(m[2] not in owners, 'ambiguous required live map symbol')
-                owners[m[2]] = m[1]
-        elif section == 'dead' and line.strip():
-            m = re.fullmatch(r'<<dead>>\s+0x[0-9A-Fa-f]+\s+\[\s*(\d+)\]\s+(.+)', line)
-            require(m is not None and m[1] == str(int(m[1])) and m[1] in objects,
-                    'malformed dead-stripped map row or unknown/noncanonical owner')
-        elif line.strip():
+        elif section in ('symbols', 'dead') and line.strip(b' \t'):
+            prefix = rb'0x[0-9A-Fa-f]+[ \t]+' if section == 'symbols' else rb'<<dead>>[ \t]+'
+            m = re.fullmatch(prefix + rb'0x[0-9A-Fa-f]+[ \t]+\[[ \t]*(0|[1-9][0-9]*)\][ \t]+(.+)', line)
+            message = ('unparsed live map row or unknown/noncanonical owner' if section == 'symbols'
+                       else 'malformed dead-stripped map row or unknown/noncanonical owner')
+            require(m is not None and m[1].decode('ascii') in objects, message)
+            if not m[2].startswith(b'literal string: '):
+                require(re.fullmatch(rb'[ -~]+', m[2]), 'non-ASCII or control byte in map symbol name')
+                if section == 'symbols':
+                    live.append((m[1].decode('ascii'), m[2].decode('ascii')))
+        elif line.strip(b' \t'):
             raise VerificationError('unparsed link-map content outside a known section')
-    require({'objects', 'symbols'} <= seen and set(owners) == required, 'required symbol missing from live map')
+    require({'objects', 'symbols'} <= seen, 'required symbol missing from live map')
+    return objects, live
+
+
+def link_ownership(raw, c_archive, c_symbols, rust_archive=None, rust_symbols=()):
+    c_required, rust_required = set(c_symbols), set(rust_symbols)
+    require(c_required and not c_required & rust_required, 'ambiguous mixed-provider ownership contract')
+    required, owners = c_required | rust_required, {}
+    objects, live = parse_link_map(raw)
+    for owner, name in live:
+        if name in required:
+            require(name not in owners, 'ambiguous required live map symbol')
+            owners[name] = owner
+    require(set(owners) == required, 'required symbol missing from live map')
     for name, owner in owners.items():
         archive = str(c_archive if name in c_required else rust_archive)
-        require(Path(archive).is_absolute() and re.fullmatch(re.escape(archive) + r'(?:\[\d+\])?\([^()]+\)', objects.get(owner, '')),
+        require(Path(archive).is_absolute() and re.fullmatch(re.escape(archive) + r'(?:\[[0-9]+\])?\([^()]+\)', objects.get(owner, '')),
                 'required symbol belongs to wrong archive: ' + name)
     if ED | GLUE <= c_required:
         ed, glue = {owners[n] for n in ED}, {owners[n] for n in GLUE}
         require(len(ed) == len(glue) == 1 and not ed & glue, 'C SHA512 families do not have distinct real members')
     return {'schema': 1, 'c_required_live_symbols': len(c_required), 'rust_required_live_symbols': len(rust_required),
             'owners': owners, 'archive_members': {k: objects[k] for k in sorted(set(owners.values()))},
-            'map_sha256': digest(text.encode())}
+            'map_sha256': digest(raw)}
 
 
 def success(status):
@@ -560,8 +593,8 @@ def validate_product(outer, selection, commit, tree):
                 '-Xlinker', '-map', '-Xlinker', str(map_path), '-framework', 'CoreFoundation',
                 '-framework', 'SystemConfiguration', *framework_flags, '-o', str(output_path)]
             require(command == expected_command, 'C complete link argv differs from tested source/archive/provider contract')
-            map_text = _data(outer, 'work/evidence/' + sdk + '-' + language + '.map').decode()
-            proof = link_ownership(map_text, row['library'], new_symbols)
+            map_bytes = _data(outer, 'work/evidence/' + sdk + '-' + language + '.map')
+            proof = link_ownership(map_bytes, row['library'], new_symbols)
             prior = link.get('ownership', {})
             # Preserve and recompute the original producer's exact ownership receipt.
             expected_prior = {'schema': 1, 'required_live_symbols': len(new_symbols), 'owners': proof['owners'],

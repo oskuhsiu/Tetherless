@@ -1,5 +1,32 @@
 # Tetherless development status
 
+Evidence checkpoint — 2026-10-06 23:22 UTC: current reviewed source is `cfafe7635b74ed509511796ccc7ecef0bbf557f3`. [Docker run 37518746038](https://github.com/oskuhsiu/Tetherless/actions/runs/37518746038) passes 26 packaging, 29 Rust and 91 frontend tests, plus actual isolated production-entrypoint smoke, healthcheck, graceful exit and cleanup. All eight build receipts are verified. Image SHA-256: `bfc63bec1c91676c0aacb52886e5028ab3d38a24d86694be3dfda590ab23a1b7`. Core on the same source passes 345 Swift Testing + 40 XCTest cases per Debug/Release configuration.
+
+The full web subtree is unchanged from `f4d208ce8d991e84b5836c5c5d9bc1573f7d2bdc`, whose [browser run 37517431324](https://github.com/oskuhsiu/Tetherless/actions/runs/37517431324) passes all 32 Chromium cases with no failures, skips or retries. The original 30 cases remain, and the genuine 14,853-byte owned UIKit test IPA passes the visible custom-IPA/consent/device flow and real WASM output/resource-envelope checks at both mount paths. Generated synthetic outputs were checked inside CI and deleted; retained evidence contains hashes, sizes and assertions. The original `f4d208ce` Docker failure (89 frontend passes, two missing-fixture errors) is preserved; only the exact public fixture was subsequently allowed into the builder. Runtime fixture exclusion is supported by the exact-copy contract and unchanged build graph, without a separate final-filesystem scan.
+
+No hosted login URL, deployment, live Apple authentication/provisioning, Safari, installation or native launch is established by these results. The official full Tetherless Release asset remains unbound. The owned fixture proves only its custom-IPA path, and the 150 MiB cap is not yet measured against a full Tetherless IPA. Earlier dated checkpoints below retain their historical evidence.
+
+Native evidence repair checkpoint — 2026-10-06 23:17 UTC: the current combined
+diagnostic candidate is based on `cfafe7635b74ed509511796ccc7ecef0bbf557f3`.
+The latest retained-C Rust producer, source `da12c068bb069c2e1c8fb27ea19a041f902474f4`,
+[run 37515373680](https://github.com/oskuhsiu/Tetherless/actions/runs/37515373680),
+failed after device compilation, the existing export checks and three of sixteen
+probe links. The first mixed link succeeded; its evidence reader then rejected
+invalid UTF-8 in a raw linker-map literal. Simulator compilation and packaging
+never started. The isolated C provider below remains accepted and selected;
+the historical App runtime producer remains unchanged.
+
+The [combined diagnostic decision](../Integration/Dependencies/idevice/LINKAGE_OBSERVATION_DECISION.md)
+preserves exact map bytes, captures two member-qualified visibility scans per
+reached target and retains bounded Rust/C archive copies with hashes across
+every scan/link. All original ownership/export/audit gates remain active. The
+genuine old map now reaches, and still fails, the duplicate-required-owner gate
+on 29 names also present in Rust `bcm.o` rows. This is diagnostic progress, not
+accepted native ownership or a successful Rust producer. Inspect new byte-bound
+visibility evidence before proposing any ownership-policy change. No unchanged
+native rerun, byte-reader-only publication, release or device action follows
+from this checkpoint. Earlier dated status entries below are historical.
+
 Current checkpoint — 2026-10-06 18:40 UTC: the isolated C producer at [`9bc57ac1ada919b15e0dee3b46cf70d8cae7cb89`](https://github.com/oskuhsiu/Tetherless/commit/9bc57ac1ada919b15e0dee3b46cf70d8cae7cb89), [run 37511975945](https://github.com/oskuhsiu/Tetherless/actions/runs/37511975945), attempt 1, job `112435152933`, is now verified successful. Both arm64 iOS and Simulator slices retain the exact 56-file public-header/module inventory, 829 unique C globals, and both C/Swift forced-link ownership maps. The packaged archives, 908-member matching-source TAR and all eight final input audits reconcile with the successful API identities. No iOS payload was executed.
 
 The complete outer artifact is `11434159465`, 11,550,030 bytes, SHA-256 `08a805e7fb0638442015b3652e82b86f4761637f032a055e687e385b5bb2196d`. This is accepted isolated C evidence. The subsequent retained-C Rust handoff must still pass its own genuine acquisition, both-platform mixed-provider links and packaging; the full App still needs the resulting exact producer plus unsigned Debug/Release/package validation. The historical App runtime selection remains unchanged until that proof exists. No real pairing, Apple login, installation or renewal acceptance is implied.

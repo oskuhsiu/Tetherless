@@ -182,6 +182,7 @@ class AppleFixture:
         # provider identity, full symbol and live-map validators still run.
         selected = self.contract["targets"][target["rust"]]
         return {"target": target["rust"], "library": str(root / "product" / target["sdk"] / "libimobiledevice.a"),
+                "library_sha256": sha256((root / "product" / target["sdk"] / "libimobiledevice.a").read_bytes()),
                 "headers": str(root / "product" / target["sdk"] / "Headers"), "binary_format_inspected": False,
                 "fixture_sha256": sha256((root / "actions-artifact.zip").read_bytes()),
                 "handoff_sha256": expected_handoff_sha256, "source_commit": "c" * 40,
@@ -258,6 +259,9 @@ class AppleFixture:
                 output = "\n".join("_" + n for n in namespace["expected_target_exports"][target_name]["after"]) + "\n"
             else:
                 output = "\n".join(n for n in self.c_export_names() if not n.startswith("_synthetic_c_padding_")) + "\n"
+            if "--format=darwin" in argv:
+                output = "".join(str(argv[-1]) + "(controlled.o): 0000000000000000 (__TEXT,__text) external "
+                                 + name + "\n" for name in output.splitlines())
         elif "-fsyntax-only" in argv:
             output = "controlled syntax-only header check\n"
         elif argv[:2] == [self.binaries["cargo"], "tree"]:
@@ -310,6 +314,8 @@ class AppleFixture:
                 output = "_early_provider_collision\n" + output
         code = "import sys,time; sys.stdout.write(" + repr(output) + "); sys.stdout.flush()"
         options = dict(timeout_seconds=2, max_log_bytes=32768, tail_bytes=32768, term_grace_seconds=.2, kill_join_seconds=.2)
+        if log.name in ("rust-defined-members.txt", "c-defined-members.txt"):
+            options["max_log_bytes"] = 1024 * 1024
         if self.large_symbol_output and log.name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
             if log.name.startswith("04-rust"):
                 code += "; sys.stdout.write('_synthetic_rust_padding\\n' * 12000); sys.stdout.flush()"

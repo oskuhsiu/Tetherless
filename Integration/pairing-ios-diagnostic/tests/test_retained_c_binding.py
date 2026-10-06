@@ -17,6 +17,14 @@ import test_compile_observer as observer_fixtures
 observer = observer_fixtures.observer
 
 
+def genuine_literal_rows():
+    """Unchanged owner-2 literal rows from the separately proven raw-map excerpt."""
+    path = (Path(__file__).resolve().parents[2] / "Dependencies/idevice/tests/fixtures/"
+            "mixed-provider-raw-byte-excerpt.map")
+    return b"\n".join(row for row in path.read_bytes().split(b"\n")
+                      if b"[  2] literal string: " in row) + b"\n"
+
+
 class RetainedCBindingBoundaryTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix="retained-app-C-")
@@ -98,6 +106,41 @@ class RetainedCBindingBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "wrong archive"):
             f.artifact_inputs()
 
+    def test_both_producer_maps_read_and_hash_genuine_literal_bytes(self):
+        f = self.fixture
+        namespace = binding.ffi_namespace.load_contract(expected_sha256=f.contract["ffi_namespace_sha256"])
+        for index, row in enumerate(f.receipt["targets"]):
+            target = row["target"]["rust"]
+            for language in ("c", "swift"):
+                path = f.evidence("05-link-mixed_provider-" + language + ".map", index)
+                raw = path.read_bytes() + genuine_literal_rows()
+                path.write_bytes(raw)
+                probe = next(p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == language)
+                probe["link_map_sha256"] = sha(raw)
+                probe["ownership"] = binding.retained_c_provider.link_ownership(raw,
+                    row["mixed_provider"]["library"], f.c_targets[target]["symbols"], row["library"],
+                    {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
+                put_json(f.evidence("05-link-mixed_provider-" + language + "-ownership.json", index), probe["ownership"])
+        f.refresh(inventory=True)
+        result = f.artifact_inputs()
+        self.assertEqual(len(result["targets"]), 2)
+        path = f.evidence("05-link-mixed_provider-c.map")
+        path.write_bytes(path.read_bytes().replace(b"\xc0", b"\xc1", 1))
+        # Even opaque payload changes still invalidate the authenticated bytes.
+        with self.assertRaisesRegex(ValueError, "inventory"):
+            f.artifact_inputs()
+
+    def test_producer_map_literal_bytes_do_not_hide_duplicate_required_rows(self):
+        f = self.fixture
+        row = f.receipt["targets"][0]
+        path = f.evidence("05-link-mixed_provider-c.map")
+        raw = path.read_bytes() + genuine_literal_rows() + b"0x1000 0x10 [ 4] _plist_free\n"
+        path.write_bytes(raw)
+        next(p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == "c")["link_map_sha256"] = sha(raw)
+        f.refresh(inventory=True)
+        with self.assertRaisesRegex(ValueError, "ambiguous required live map symbol"):
+            f.artifact_inputs()
+
     def test_owned_copy_binds_every_c_byte_and_preserves_unmodified_c_gateway(self):
         from test_native_handoff import NativeHandoffFixture
         fixture = NativeHandoffFixture(self.fixture.root / "copy-boundary")
@@ -152,6 +195,37 @@ class RetainedCObserverBoundaryTests(unittest.TestCase):
         self.assertNotIn("_synthetic_c_dead", result["c_live_symbols"])
         self.assertNotIn("_synthetic_rust_dead", result["rust_live_symbols"])
         self.assertFalse(result["dead_stripped_symbols_used"])
+
+    def test_live_app_map_preserves_genuine_literal_bytes_in_hash_and_capture(self):
+        raw = self.map_text.encode().replace(b"# Dead Stripped Symbols:",
+            genuine_literal_rows() + b"# Dead Stripped Symbols:")
+        self.map_path.write_bytes(raw)
+        proof = self.observe()["link"]["live_map_ownership"]
+        self.assertEqual(proof["map_sha256"], sha(raw))
+        entry = next(row for row in self.inventory() if row.get("source_path") == str(self.map_path))
+        self.assertEqual(entry["sha256"], sha(raw))
+        self.assertEqual((self.evidence / entry["retained_path"]).read_bytes(), raw)
+        self.assertEqual(self.inventory()[-1]["event"], "complete")
+
+    def test_bad_owner_after_raw_literals_is_rejected_and_original_bytes_retained(self):
+        for bad in (b"0x1000 0x10 [ 9999] literal string: \xff\v\n",
+                    b"0x1000 0x10 [ 4] _plist_free\n",
+                    b"0x1000 0x10 [ 4] _unrelated\xff\n"):
+            raw = self.map_text.encode().replace(b"# Dead Stripped Symbols:",
+                genuine_literal_rows() + bad + b"# Dead Stripped Symbols:")
+            self.map_path.write_bytes(raw)
+            with self.subTest(bad=bad), self.assertRaises(observer.ObservationError):
+                self.observe()
+            entry = next(row for row in self.inventory() if row.get("source_path") == str(self.map_path))
+            self.assertEqual((self.evidence / entry["retained_path"]).read_bytes(), raw)
+            self.assertEqual(self.inventory()[-1]["event"], "failed")
+
+    def test_opaque_literal_required_name_does_not_satisfy_app_root(self):
+        raw = self.map_text.encode().replace(b"0x1000 0x10 [ 3] _plist_free\n",
+            b"0x1000 0x10 [ 3] literal string: _plist_free\n")
+        self.map_path.write_bytes(raw)
+        with self.assertRaisesRegex(observer.ObservationError, "roots are absent"):
+            self.observe()
 
     def test_unrelated_c_public_header_mutation_and_extra_c_header_fail(self):
         path = self.headers / "libimobiledevice/afc.h"

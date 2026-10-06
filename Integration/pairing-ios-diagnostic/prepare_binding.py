@@ -208,12 +208,15 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
         "function_signatures_preserved": True, "parser_behavior_changed": False, "old_symbol_aliases_emitted": False}
     if retained_json("ffi-header-namespace.json") != expected_header_receipt or row.get("header_namespace") != expected_header_receipt:
         raise ValueError("native header namespace evidence differs")
-    def retained_text(name):
+    def retained_bytes(name, limit=MAX_RECEIPT):
         relative = prefix + name
-        data = safe_file(root, relative).read_bytes()
-        if len(data) > MAX_RECEIPT or receipt["files"].get(relative) != digest(data):
+        with safe_file(root, relative).open("rb") as stream:
+            data = stream.read(limit + 1)
+        if len(data) > limit or receipt["files"].get(relative) != digest(data):
             raise ValueError("native export/link evidence differs from authenticated inventory")
-        return data.decode("utf-8")
+        return data
+    def retained_text(name):
+        return retained_bytes(name).decode("utf-8")
     rust = retained_text("04-rust-export-symbols.txt")
     c_provider = retained_text("04-c-export-symbols.txt")
     retained_c_provider.exported(rust, unique=False)
@@ -251,9 +254,9 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
             raise ValueError("full archive symbol scan used a different reader, flags or archive")
     for language in ("c", "swift"):
         _success(retained_json("05-link-mixed_provider-" + language + ".txt.status.json"))
-        link_map = retained_text("05-link-mixed_provider-" + language + ".map")
+        link_map = retained_bytes("05-link-mixed_provider-" + language + ".map", retained_c_provider.MAX_TEXT)
         probes = [p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == language]
-        if len(probes) != 1 or not link_map or probes[0].get("link_map_sha256") != digest(link_map.encode()):
+        if len(probes) != 1 or not link_map or probes[0].get("link_map_sha256") != digest(link_map):
             raise ValueError("native mixed-provider link map evidence differs")
         ownership = retained_c_provider.link_ownership(link_map, row["mixed_provider"]["library"], mixed["symbols"],
             row["library"], {"_" + name for name in namespace["expected_target_exports"][target]["after"]})

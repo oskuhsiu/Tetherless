@@ -146,7 +146,7 @@ def make_fixture():
         command(sdk+'-swiftc',['/usr/bin/xcrun','--find','swiftc'],b'/fixture/swiftc\n')
         links=[]
         for language in ('c','swift'):
-            text=map_text(library,symbols);proof=c.link_ownership(text,library,symbols)
+            text=map_text(library,symbols);proof=c.link_ownership(text.encode(),library,symbols)
             prior={'schema':1,'required_live_symbols':len(symbols),'owners':proof['owners'],
                 'ed25519_sha512_member':library+'(ed.o)','glue_sha512_member':library+'(glue.o)','map_sha256':proof['map_sha256']}
             links.append({'language':language,'output_sha256':'e'*64,'executed':False,'ownership':prior})
