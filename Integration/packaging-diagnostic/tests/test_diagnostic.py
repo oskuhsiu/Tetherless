@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import plistlib
 from pathlib import Path
 import tempfile
 import threading
@@ -113,6 +114,36 @@ class DiagnosticTests(unittest.TestCase):
         self.assertNotIn('COMMAND_MODE', environment)
         self.assertNotIn('GITHUB_TOKEN', environment)
         with self.assertRaises(subject.DiagnosticError): subject.packaging_environment(Path('/owned'), None)
+
+    def test_tiny_package_requires_both_exact_copied_archives_and_headers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); package = root / 'Fixture.xcframework'; package.mkdir()
+            libraries, headers, entries = [], [], []
+            for index, identifier in enumerate(['ios-arm64', 'ios-arm64-simulator']):
+                original = root / str(index); original.mkdir()
+                library = original / 'libfixture.a'; library.write_bytes(b'toy archive ' + bytes([index]))
+                header = original / 'headers'; header.mkdir(); (header / 'fixture.h').write_bytes(b'toy header')
+                libraries.append(library); headers.append(header)
+                target = package / identifier; target.mkdir(); (target / 'Headers').mkdir()
+                (target / 'libfixture.a').write_bytes(library.read_bytes())
+                (target / 'Headers/fixture.h').write_bytes((header / 'fixture.h').read_bytes())
+                entry = {'LibraryIdentifier': identifier, 'LibraryPath': 'libfixture.a',
+                         'HeadersPath': 'Headers', 'SupportedPlatform': 'ios',
+                         'SupportedArchitectures': ['arm64']}
+                if index: entry['SupportedPlatformVariant'] = 'simulator'
+                entries.append(entry)
+            info = package / 'Info.plist'
+            def write(entries): info.write_bytes(plistlib.dumps({'AvailableLibraries': entries}))
+            write(entries)
+            self.assertTrue(subject.verify_tiny_package(package, libraries, headers)['copied_archives_and_headers_match'])
+            for invalid in [entries[:1], [entries[0], entries[0]],
+                            [dict(entries[0], LibraryIdentifier='../escape'), entries[1]],
+                            [dict(entries[0], SupportedArchitectures=['x86_64']), entries[1]]]:
+                write(invalid)
+                with self.assertRaises(subject.DiagnosticError): subject.verify_tiny_package(package, libraries, headers)
+            write(entries)
+            (package / 'ios-arm64/libfixture.a').write_bytes(b'different')
+            with self.assertRaises(subject.DiagnosticError): subject.verify_tiny_package(package, libraries, headers)
 
 
 if __name__ == '__main__':

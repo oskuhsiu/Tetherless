@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import plistlib
 import sys
 import threading
 import time
@@ -54,6 +55,37 @@ def packaging_environment(work: Path, developer_dir: str):
     return {'PATH': '/usr/bin:/bin:/usr/sbin:/sbin', 'DEVELOPER_DIR': developer_dir,
             'HOME': str(work / 'aarch64-apple-ios/home'),
             'TMPDIR': str(work / 'aarch64-apple-ios/tmp')}
+
+
+def verify_tiny_package(output: Path, libraries, header_paths):
+    """Check only the toy package layout and copied bytes, never binary formats."""
+    info_path = output / 'Info.plist'
+    if info_path.is_symlink() or info_path.stat().st_size > 64 * 1024:
+        raise DiagnosticError('invalid toy package metadata')
+    info = plistlib.loads(info_path.read_bytes())
+    entries = info.get('AvailableLibraries')
+    if not isinstance(entries, list) or len(entries) != 2:
+        raise DiagnosticError('toy package must contain both requested archives')
+    expected = {'ios-arm64': (0, None), 'ios-arm64-simulator': (1, 'simulator')}
+    seen = set()
+    for entry in entries:
+        identifier = entry.get('LibraryIdentifier')
+        if identifier not in expected or identifier in seen:
+            raise DiagnosticError('unexpected or repeated toy package platform')
+        seen.add(identifier)
+        index, variant = expected[identifier]
+        if (entry.get('LibraryPath') != 'libfixture.a' or entry.get('HeadersPath') != 'Headers'
+                or entry.get('SupportedArchitectures') != ['arm64']
+                or entry.get('SupportedPlatform') != 'ios'
+                or entry.get('SupportedPlatformVariant') != variant):
+            raise DiagnosticError('unexpected toy package layout')
+        for packaged, original in [(output / identifier / 'libfixture.a', libraries[index]),
+                                   (output / identifier / 'Headers/fixture.h', header_paths[index] / 'fixture.h')]:
+            if (packaged.is_symlink() or packaged.stat().st_size > 1024 * 1024
+                    or original.stat().st_size > 1024 * 1024
+                    or packaged.read_bytes() != original.read_bytes()):
+                raise DiagnosticError('toy package bytes differ from the requested input')
+    return {'identifiers': sorted(seen), 'copied_archives_and_headers_match': True}
 
 
 def read_status(path: Path):
@@ -198,7 +230,7 @@ def run(root: Path, work: Path, output: Path):
                'supervisor_pins': HELPER_PINS, 'scope': 'One toy archive packaging attempt with owned-group metadata',
                'accepted_idevice_artifact': False,
                'source_hashes': {name: hashlib.sha256((own / name).read_bytes()).hexdigest()
-                                 for name in ['run_diagnostic.py', 'fixture.c', 'fixture.h']}}
+                                 for name in ['run_diagnostic.py', 'xcframework_operation.py', 'fixture.c', 'fixture.h']}}
     (output / 'context.json').write_text(json.dumps(context, indent=2) + '\n')
     libraries, header_paths = [], []
     for sdk, target in [('iphoneos', 'arm64-apple-ios17.0'),
@@ -218,10 +250,10 @@ def run(root: Path, work: Path, output: Path):
         libraries.append(library)
         header_paths.append(headers)
     package_log = output / 'create-xcframework.txt'
-    command = ['/usr/bin/xcodebuild', '-create-xcframework',
-               '-library', str(libraries[0]), '-headers', str(header_paths[0]),
-               '-library', str(libraries[1]), '-headers', str(header_paths[1]),
-               '-output', str(work / 'Fixture.xcframework')]
+    package = work / 'Fixture.xcframework'
+    command = [sys.executable, '-I', str(own / 'xcframework_operation.py'),
+               str(libraries[0]), str(header_paths[0]),
+               str(libraries[1]), str(header_paths[1]), str(package)]
     stop = threading.Event()
     observations, observer_errors = [], []
     observer = threading.Thread(target=sample_group, kwargs={
@@ -262,6 +294,20 @@ def run(root: Path, work: Path, output: Path):
         raise primary_error
     if not joined or observer_errors:
         raise DiagnosticError('owned process observation was inconclusive')
+    # capture() returning already requires success, reaping and killpg ESRCH.
+    # Explicitly retain those assertions with the real toy output check.
+    status = read_status(status_for(package_log)) or {}
+    cleanup = status.get('cleanup') or {}
+    if (status.get('outcome') != 'success' or status.get('returncode') != 0
+            or cleanup.get('direct_child_reaped') is not True
+            or cleanup.get('group_empty') is not True
+            or cleanup.get('empty_evidence') != 'killpg_ESRCH'
+            or cleanup.get('signals') != []):
+        raise DiagnosticError('toy packaging did not drain naturally under the original supervisor')
+    verification = verify_tiny_package(package, libraries, header_paths)
+    (output / 'tiny-package-verification.json').write_text(json.dumps(
+        dict(verification, schema=1, supervisor_outcome='success',
+             natural_group_drain=True, accepted_idevice_artifact=False), indent=2) + '\n')
 
 
 def main():
