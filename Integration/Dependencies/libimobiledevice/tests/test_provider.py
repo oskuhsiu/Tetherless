@@ -14,6 +14,7 @@ sys.path.insert(0,str(HERE))
 import namespace as ns
 import symbols
 import source_inputs
+import build_provider
 
 class NamespaceTests(unittest.TestCase):
     def test_pinned_retained_bytes(self):
@@ -216,8 +217,27 @@ class BuildContractTests(unittest.TestCase):
         for value in ['17C529','23C57','24G830','clang-1700.6.4.2','arm64-apple-ios13.0-simulator']:
             self.assertIn(value,b)
     def test_module_map_is_original(self):
-        j=(HERE/'upstream/root/justfile').read_text();m=j.split("export MODULEMAP := '''\n",1)[1].split("\n'''",1)[0]
-        self.assertTrue(m.startswith('module libimobiledevice [system]'))
-        self.assertIn('header "../plist/plist.h"',m)
+        expected=(HERE/'tests/fixtures/original-c-module.modulemap').read_bytes()
+        self.assertEqual(len(expected),927)
+        self.assertEqual(ns.sha256(expected),'1c39555aa48cea5eba2067701be79640b7a134809d8abf59970b0abaf88fd66c')
+        self.assertEqual(build_provider.module_map_bytes(),expected)
+
+    def test_module_map_reproduces_literal_and_upstream_printf(self):
+        recipe=(HERE/'upstream/root/justfile').read_bytes()
+        literal=recipe.split(b"export MODULEMAP := '''\n",1)[1].split(b"'''",1)[0]
+        output=subprocess.run(['/usr/bin/printf','%s\n',literal.decode('utf-8')],
+                              stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,timeout=5).stdout
+        self.assertEqual(build_provider.module_map_bytes(),output)
+        self.assertTrue(output.endswith(b'}\n\n'))
+
+    def test_missing_final_linefeed_still_fails_exact_header_inventory(self):
+        expected=(HERE/'tests/fixtures/original-c-module.modulemap').read_bytes()
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary).resolve(strict=True);old=root/'old';new=root/'new';old.mkdir();new.mkdir()
+            (old/'module.modulemap').write_bytes(expected)
+            (new/'module.modulemap').write_bytes(build_provider.module_map_bytes())
+            self.assertEqual(build_provider.inventory(new),build_provider.inventory(old))
+            (new/'module.modulemap').write_bytes(expected[:-1])
+            self.assertNotEqual(build_provider.inventory(new),build_provider.inventory(old))
 
 if __name__=='__main__':unittest.main()

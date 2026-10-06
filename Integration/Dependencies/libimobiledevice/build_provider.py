@@ -43,6 +43,13 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
 
 
+def module_map_bytes():
+    # Preserve the literal's final LF, then reproduce upstream printf '%s\n'.
+    recipe=(HERE/'upstream/root/justfile').read_bytes()
+    literal=recipe.split(b"export MODULEMAP := '''\n",1)[1].split(b"'''",1)[0]
+    return literal+b'\n'
+
+
 def inventory(root):
     rows = {}
     for p in sorted(root.rglob('*')):
@@ -405,8 +412,7 @@ def build(args):
         r.run(['/usr/bin/xcrun','libtool','-static','-o',library,*components],sdk+'-merge')
         # Keep exact upstream public/module header bytes, never provider-private Ed headers.
         headers=prefix/'include'
-        module=(HERE/'upstream/root/justfile').read_text().split("export MODULEMAP := '''\n",1)[1].split("\n'''",1)[0]+'\n'
-        (headers/'libimobiledevice/module.modulemap').write_text(module)
+        (headers/'libimobiledevice/module.modulemap').write_bytes(module_map_bytes())
         old=verify_old(old_root,{'sdk':sdk,'rust':target})
         old_header_inventory=inventory(Path(old['headers']))
         current_headers=inventory(headers)
