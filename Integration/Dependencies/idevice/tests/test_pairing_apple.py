@@ -34,6 +34,10 @@ provider = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(provider)
 AUDITS = ("vendor-input-audit.json", "derived-vendor-input-audit.json", "workspace-input-audit.json", "provider-input-audit.json")
 SYSTEM_FLAGS = ["-lSystem", "-lc++", "-lobjc", "-lz", "-liconv", "-framework", "Security", "-framework", "Foundation"]
+PACKAGING_RECIPE_FILES = ("xcframework_operation.py", "tests/test_xcframework_operation.py",
+                          "registration/receipts/xcframework-operation-tiny-proof.json")
+PACKAGING_OPERATION_SHA256 = "98df3ef86806a707fb898dd9e59ff0a3612b330a91522d4995b793360ed0f044"
+PACKAGING_PROOF_SHA256 = "a9f80c54d43cc8a84aedc81cb09cab6df48242af54e2e8052c8454b54942f7f6"
 
 
 def artifact(source, target, defaults):
@@ -59,6 +63,7 @@ class AppleFixture:
         self.profile = json.loads((ROOT / apple.PROFILE).read_bytes())
         names = [apple.PROFILE, "split-provider/header_probe.c", "overlay/ffi/pairing_result_abi.h"]
         names += [p["path"] for group in self.profile["probe_sets"].values() for p in group.values()]
+        names += list(PACKAGING_RECIPE_FILES)
         for name in names:
             path = self.recipe / name
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -156,15 +161,17 @@ class AppleFixture:
             output = self.observations[matching[0]] + "\n"
         elif argv == [self.binaries["rustc"], "--print", "sysroot"]:
             output = str(self.sysroot) + "\n"
-        elif argv[:2] == ["/usr/bin/xcodebuild", "-create-xcframework"]:
-            destination = Path(argv[argv.index("-output") + 1])
+        elif argv[:3] == [sys.executable, "-I", str(self.recipe / "xcframework_operation.py")]:
+            if len(argv) != 8:
+                raise AssertionError("unexpected packaging operation arguments")
+            destination = Path(argv[7])
             destination.mkdir()
             metadata = slice_plist()
             if self.bad_slices:
                 metadata["AvailableLibraries"][1]["SupportedArchitectures"] = ["x86_64"]
             (destination / "Info.plist").write_bytes(plistlib.dumps(metadata))
-            libraries = [Path(argv[i + 1]) for i, value in enumerate(argv) if value == "-library"]
-            header_roots = [Path(argv[i + 1]) for i, value in enumerate(argv) if value == "-headers"]
+            libraries = [Path(argv[3]), Path(argv[5])]
+            header_roots = [Path(argv[4]), Path(argv[6])]
             for number, row in enumerate(metadata["AvailableLibraries"]):
                 path = destination / row["LibraryIdentifier"] / row["LibraryPath"]
                 path.parent.mkdir()
@@ -249,6 +256,14 @@ class AppleFixture:
 
 
 class ApplePolicyTests(unittest.TestCase):
+    def test_packaging_operation_source_tests_and_proof_are_exact_and_recipe_indexed(self):
+        recipe_files = json.loads((ROOT / "apple-recipe-files.json").read_bytes())
+        for name in PACKAGING_RECIPE_FILES:
+            with self.subTest(recipe_input=name):
+                self.assertEqual(recipe_files[name], sha256((ROOT / name).read_bytes()))
+        self.assertEqual(recipe_files[PACKAGING_RECIPE_FILES[0]], PACKAGING_OPERATION_SHA256)
+        self.assertEqual(recipe_files[PACKAGING_RECIPE_FILES[2]], PACKAGING_PROOF_SHA256)
+
     def test_registered_apple_profile_stays_production_only_and_disabled(self):
         profile = apple.load_apple_profile()
         self.assertEqual([t["rust"] for t in profile["apple_targets"]], ["aarch64-apple-ios", "aarch64-apple-ios-sim"])
@@ -443,11 +458,33 @@ class AppleRunnerTests(unittest.TestCase):
             self.assertTrue((fixture.args.output / "provenance" / target / "target-evidence.json").is_file())
         self.assertEqual(result["xcframework_command"][:2], ["/usr/bin/xcodebuild", "-create-xcframework"])
         self.assertEqual(result["xcframework_command"].count("-library"), 2)
+        package_output = str(fixture.args.work_dir / "package/IDevice.xcframework")
+        device, simulator = result["targets"]
+        self.assertEqual(result["xcframework_command"], ["/usr/bin/xcodebuild", "-create-xcframework",
+            "-library", device["library"], "-headers", device["headers"],
+            "-library", simulator["library"], "-headers", simulator["headers"], "-output", package_output])
+        operation_command = [sys.executable, "-I", str(fixture.recipe / "xcframework_operation.py"),
+            device["library"], device["headers"], simulator["library"], simulator["headers"], package_output]
+        self.assertEqual(result["xcframework_operation_command"], operation_command)
+        self.assertEqual(result["xcframework_operation_sha256"], PACKAGING_OPERATION_SHA256)
+        package_calls = [call for call in fixture.calls if call["log"].name == "create-xcframework.txt"]
+        self.assertEqual(len(package_calls), 1)
+        self.assertEqual(package_calls[0]["argv"], operation_command)
+        self.assertEqual(package_calls[0]["source"], fixture.args.work_dir)
+        self.assertEqual(package_calls[0]["env"], {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+            "DEVELOPER_DIR": fixture.config["developer_dir"],
+            "HOME": str(fixture.args.work_dir / "aarch64-apple-ios/home"),
+            "TMPDIR": str(fixture.args.work_dir / "aarch64-apple-ios/tmp")})
         self.assertTrue((fixture.args.output / "LICENSE-idevice.txt").is_file())
         self.assertTrue((fixture.args.output / "LICENSE-OpenSSL.txt").is_file())
         self.assertTrue((fixture.args.output / "SHA256SUMS").is_file())
         with zipfile.ZipFile(fixture.args.output / "corresponding-source.zip") as archive:
             self.assertIn("crate-archives/fixture-1.0.0.crate", archive.namelist())
+            metadata = json.loads(archive.read("source-provenance.json"))
+            self.assertEqual(metadata["recipe_files"], fixture.recipe_files)
+            for name in PACKAGING_RECIPE_FILES:
+                self.assertEqual(archive.read("recipe/" + name), (ROOT / name).read_bytes())
+                self.assertEqual(sha256(archive.read("recipe/" + name)), fixture.recipe_files[name])
             self.assertFalse(any("opaque Rust archive" in archive.read(name).decode(errors="ignore") for name in archive.namelist()))
             self.assertFalse(any("opaque framework fixture" in archive.read(name).decode(errors="ignore") for name in archive.namelist()))
 
@@ -568,6 +605,32 @@ class AppleRunnerTests(unittest.TestCase):
         status = json.loads((fixture.args.work_dir / "create-xcframework.txt.status.json").read_bytes())
         self.assertEqual(status["outcome"], "nonzero_exit")
         self.assertEqual(status["returncode"], 7)
+
+    def test_packaging_operation_timeout_retains_both_targets_audits_and_diagnostics(self):
+        fixture = AppleFixture(self.root / "package-timeout")
+        fixture.fail = ("work", "create-xcframework.txt")
+        fixture.failure_kind = "timeout"
+        with fixture.patches(), self.assertRaisesRegex(VerificationError, "timeout"):
+            apple.build(fixture.args)
+        self.assertFalse(fixture.args.output.exists())
+        for target in apple.TARGETS:
+            self.assert_audits(fixture, target["rust"])
+            self.assertTrue((fixture.args.work_dir / target["rust"] / "completed/target-evidence.json").is_file())
+        log = fixture.args.work_dir / "create-xcframework.txt"
+        self.assertIn("controlled XCFramework creation", log.read_text())
+        status = json.loads(log.with_name(log.name + ".status.json").read_bytes())
+        self.assertEqual(status["outcome"], "timeout")
+        self.assertTrue(status["cleanup"]["direct_child_reaped"])
+        self.assertTrue(status["cleanup"]["group_empty"])
+
+    def test_packaging_operation_mutation_fails_before_native_commands(self):
+        fixture = AppleFixture(self.root / "package-module-mutation")
+        (fixture.recipe / "xcframework_operation.py").write_bytes(b"controlled operation module mutation\n")
+        with fixture.patches(), self.assertRaisesRegex(VerificationError, "Apple recipe input"):
+            apple.build(fixture.args)
+        self.assertFalse(fixture.args.output.exists())
+        self.assertFalse(fixture.args.work_dir.exists())
+        self.assertEqual(fixture.calls, [])
 
     def test_provider_mutation_after_both_targets_success_blocks_final_publication(self):
         fixture = AppleFixture(self.root / "late-provider")

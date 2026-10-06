@@ -93,18 +93,41 @@ outputs in the existing audit receipts. Any failed audit blocks final publicatio
 
 ## XCFramework and matching source
 
-After both targets and all four language/probe links per target pass, the runner
+After both targets and all six language/probe links per target pass, the runner
 uses normal `xcodebuild -create-xcframework` with the two Rust archives and their
 matching generated headers. It checks only generated Info.plist slice metadata
 and opaque file hashes: exactly iOS arm64 and iOS Simulator arm64, and packaged
 library/header/module bytes matching the checked compiler inputs. OpenSSL remains
 outside IDevice.xcframework as the already selected consumer framework.
 
+The unchanged bounded supervisor launches the exact indexed
+`xcframework_operation.py` using the current Python executable and `-I`. That
+operation starts only the fixed xcodebuild command, reaps that direct child and
+stays alive until Darwin's bounded process-group enumeration contains only the
+operation itself. It passes the original four-key PATH/DEVELOPER_DIR/HOME/TMPDIR
+environment to xcodebuild. Timeout, interruption, output limits and group cleanup
+remain the outer supervisor's responsibility. Child failure or uncertain group
+enumeration cannot produce a successful operation.
+
+The byte-identical operation passed the separate tiny-archive macOS proof at
+source `7476bde6280c8fec042cf7d12c7fcf4bca68fc31`, run `37399037692`, job
+`112061790073`. It observed a live helper tail, then drained naturally in 4.043
+seconds under the existing 30-second diagnostic limit, with no cleanup signals.
+The retained receipt is `registration/receipts/xcframework-operation-tiny-proof.json`.
+That toy result does not establish a complete IDevice artifact. This production
+recipe retains its existing command deadline and still requires its own full run.
+
 The output retains per-target command logs/statuses, exact source/provider/input
 receipts, feature/build output, compiler/SDK/toolchain identities, link arguments,
 opaque output hashes and notices. Successful packaging is followed by another
 all-target input audit before the artifact directory is moved to its final path.
 Failure evidence remains in the owned work roots.
+
+`create-xcframework.txt` retains bounded `tetherless-packaging-operation` lifecycle
+lines; its existing `.status.json` remains the outer supervisor's authoritative
+result. Both files already have success-artifact and failure-upload paths. The
+Apple build receipt records the underlying xcodebuild command, actual operation
+argv and operation source hash separately.
 
 `corresponding-source.zip` reuses the reviewed deterministic ZIP helper and includes:
 
@@ -114,6 +137,10 @@ Failure evidence remains in the owned work roots.
 - Every original checksum-authenticated registry `.crate` archive, preserving
   logical archive keys even where filesystem filename spellings alias
 - The explicit reviewed recipe/patch/source/provider metadata files and notices
+
+The recipe inventory includes the exact operation module, its controlled tests
+and the tiny-proof receipt, so the existing recipe copy loop places all three in
+the corresponding-source bundle. No additional source archive helper is used.
 
 Copies are selected by exact inventories, not arbitrary recursive build output.
 Unregistered target, probe, provider or other generated binaries cannot enter the

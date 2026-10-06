@@ -328,6 +328,9 @@ def build(args) -> dict:
     recipe_files = json.loads(recipe_bytes)
     for name, digest in recipe_files.items():
         require_equal(file_hash(safe_path(HERE, name)), digest, "Apple recipe input")
+    operation = safe_path(HERE, "xcframework_operation.py")
+    operation_sha256 = recipe_files["xcframework_operation.py"]
+    require_equal(file_hash(operation), operation_sha256, "XCFramework operation source")
     if args.work_dir.exists() or args.work_dir.is_symlink() or args.output.exists() or args.output.is_symlink():
         raise VerificationError("Apple work/output roots must be fresh")
     args.work_dir.mkdir(parents=True)
@@ -350,7 +353,13 @@ def build(args) -> dict:
         command += ["-output", str(package / "IDevice.xcframework")]
         package_env = {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "DEVELOPER_DIR": config["developer_dir"],
                        "HOME": str(args.work_dir / TARGETS[0]["rust"] / "home"), "TMPDIR": str(args.work_dir / TARGETS[0]["rust"] / "tmp")}
-        capture_helper_command(command, source=args.work_dir, env=package_env, log=args.work_dir / "create-xcframework.txt")
+        # Keep the supervised leader alive until its fixed xcodebuild child and
+        # that child's natural helper tail have left the owned process group.
+        operation_command = [sys.executable, "-I", str(operation)]
+        for target in targets:
+            operation_command += [target["library"], target["headers"]]
+        operation_command += [str(package / "IDevice.xcframework")]
+        capture_helper_command(operation_command, source=args.work_dir, env=package_env, log=args.work_dir / "create-xcframework.txt")
         slice_receipt = verify_slice_metadata(package / "IDevice.xcframework/Info.plist", targets)
         shutil.copyfile(HERE / PROFILE, provenance / "apple-verification.json")
         (provenance / "toolchain-lock.json").write_bytes(toolchain_bytes)
@@ -376,6 +385,7 @@ def build(args) -> dict:
     shutil.copyfile(args.work_dir / "create-xcframework.txt", package / "provenance/create-xcframework.txt")
     shutil.copyfile(args.work_dir / "create-xcframework.txt.status.json", package / "provenance/create-xcframework.txt.status.json")
     receipt = {"schema": 1, "profile_sha256": PROFILE_SHA256, "targets": targets, "xcframework_command": command,
+               "xcframework_operation_command": operation_command, "xcframework_operation_sha256": operation_sha256,
                "xcframework_slice_receipt": slice_receipt,
                "toolchain_lock_sha256": sha256(toolchain_bytes), "recipe_lock_sha256": sha256(recipe_bytes),
                "source_bundle": source_receipt, "framework_provider_bundled": False, "ios_binaries_executed": False,

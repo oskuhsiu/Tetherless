@@ -1,5 +1,5 @@
 {
-  "APPLE_DEPENDENCY_VERIFICATION.md": "39fc14e50031be968b05aaa95e3cc405f28cf317fd5d6c60e4c5971af879134a",
+  "APPLE_DEPENDENCY_VERIFICATION.md": "1206c7f3b4ea24c27460120a417c80caadcb7c09beb70a5305d6a60615811bc3",
   "COMPONENT_CI.md": "4c1f96a1fa6143a53c1d7142f869fc70f24b4326f0883148f26bf7f5966021c5",
   "DARWIN_CAPTURE_REPAIR.md": "3d9ef14ecc1df298908de083fbb2f857f847eaf4f6f1ecd96c0cc1e844e7b39c",
   "DERIVED_METADATA_REPAIR.md": "95cff8660c02b43a28e3df3c3a69c0bacc1740abf402e4799ea4f5e3bdefd74b",
@@ -18,7 +18,7 @@
   "apple_source_bundle.py": "b1e9a1d5ead9a65a3ff217d663c61235b80b975f10a53dc95ec9e3fdd06e99fa",
   "apply_patch.py": "a41e75b1903265c650c198bca05a2afc08ff053a01bcf0a56682cf95ce19c80a",
   "bounded_process.py": "7724f6c3eb7d624f49a2651b30f1d6e6bb2c47d356449cd495fad28b2dd144e4",
-  "build_pairing_apple.py": "cff5f16b5b0830d6831247db01dc19ecee4a5e1b896c88bcf4209f63ea214218",
+  "build_pairing_apple.py": "ca856b92903cb169a3102e5cf4779a5c08180c7f5c18b8d5b3801f2caee22255",
   "build_xcframework.py": "30a39e36caf8e96a9eaa46c6c5407246d76a59dd2ce1fc505c8d697fa1aa6e24",
   "candidate-profiles/acquisition-only.json": "954a3700d53010885c060569f5192ecfb0a3a69a119daaf183c00ece51de08aa",
   "candidate-profiles/apple-verification.json": "315f7b321804b46b94c24f89fa5f354f205a0ce1128a8ae8b518f68b6ff82cad",
@@ -86,6 +86,7 @@
   "registration/receipts/pairing-result-header.json": "b90a4c85e9618a093569f59fee64f7968d6f3bb9cb44106d23e81abbd18ea625",
   "registration/receipts/provider-contract.json": "2f4e49207716cc79c8561d517011fdc7d5bf775cfe55d612f40380de2e36302e",
   "registration/receipts/transcript-empty-dictionary-fix.json": "697fc73a6e1a4f42c4caeeb2ff25df8377912beae2ead1595ffc9155f9ef1f92",
+  "registration/receipts/xcframework-operation-tiny-proof.json": "a9f80c54d43cc8a84aedc81cb09cab6df48242af54e2e8052c8454b54942f7f6",
   "registration/registration.json": "49e6e52b037ba8b2f50ec2cb8605976ec37b9128b9319ef4842de1f2f3c17686",
   "retain_openssl_inputs.py": "389f0436269d25b92d1079fdd11738b4b1ac83cde5b7e48ea6632b33d4642502",
   "retain_review_sources.py": "860917bfdde3d3a5b6ba95557b798d25838421504c3c34f3d8094f6b6dc86ee8",
@@ -120,7 +121,7 @@
   "tests/test_offline_vendor.py": "5ab0f253f27d2e0f88a57e82151b7627f0b7a4d05a7a0752ea2298bb4f724caf",
   "tests/test_openssl_capture.py": "58e30548e10c3c38f64ba14f1491485754f681b1d60c9446178774d5f855f8a2",
   "tests/test_packaged_cargo_config.py": "43fea36b032a395fb2936743443ac25440acd33339a3bc04f467a8928939e8ca",
-  "tests/test_pairing_apple.py": "bb83e534da5af402c1b98102938d6eb0aa4cc2a44abe5cad4a6a66fa6ef0c8e2",
+  "tests/test_pairing_apple.py": "65d5e561c8374cd2d93d22af16730a7cc69e38aeb892b4e770bfd2101e46f739",
   "tests/test_pairing_component_runner.py": "7113d0c671c192d7a90058a89ed2799340cc7e0937ac552f834bc199022e82e9",
   "tests/test_pairing_result_header.py": "926b3188e941d980af0a6fcfafd8d250b68496f971cd33087131a3090bc375dd",
   "tests/test_readme_case_alias.py": "51889bead0cee821eda9bfa0392ad3330fa5a6194a7b4d84e1c45d38f0364365",
@@ -128,6 +129,7 @@
   "tests/test_stack_registration.py": "59a332cdc79ad54bea6650ab5eec252f4608509d687603dc2f3b15c79b8baa5a",
   "tests/test_transcript_registration.py": "f5656955d76a511dbb1f9544707457103ead4ead5a1b5c42b7f73edc447e9c95",
   "tests/test_vendor_inventory_diagnostics.py": "eff2b8c1ed9f08c9e072bdaddc6f6245cdaad5c55785fd2657713abe4ddc56df",
+  "tests/test_xcframework_operation.py": "4dc7915ffae9d34b3128a4407025050ad2a4cb7522bb85a2fbd1c0b52b08d2ab",
   "toolchain-lock.template.json": "c13c7d06dc4c2d9b91b86189811d80ad63101bd8c01f5e463aa820744b33bdb8",
   "transcript-overlay/ffi/src/staged_acquisition.rs": "753e5f13a54c47824e5c4b78814309066095d19dd6e23c3309ac8231bb4417f5",
   "transcript-overlay/ffi/src/staged_acquisition/composite_transcript.rs": "f0f976465a13be68b31e559d1917d353c0a73b21e9c03c6e66370befae4b613d",
@@ -184,5 +186,6 @@
   "upstream/swift/Package.swift": "04dbaefcb9183b154399c9fc397efbd602a552327424075ce19ffd4c0f6f74d7",
   "upstream/swift/include/module.modulemap": "d9f7093c17127841806e2ddffdf540ef1728ed29be75304687952bdb61ae9b82",
   "verify_artifact.py": "b8a0590bf67dfc3897f93b8daaa3de73bc04bef1619d658be674bdbe3f6b85c2",
-  "verify_registration.py": "abeaddbd8a3fbe0761985a2c4d89a639b2e9a0b1e08ab40c891d5186b27de9af"
+  "verify_registration.py": "abeaddbd8a3fbe0761985a2c4d89a639b2e9a0b1e08ab40c891d5186b27de9af",
+  "xcframework_operation.py": "98df3ef86806a707fb898dd9e59ff0a3612b330a91522d4995b793360ed0f044"
 }

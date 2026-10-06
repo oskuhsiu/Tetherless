@@ -1,0 +1,103 @@
+name: Retained pairing iOS diagnostic
+on:
+  push:
+    branches: [verify/staged-pairing-native]
+    paths: ['Integration/pairing-ios-diagnostic/runtime-producer.json']
+permissions: {}
+concurrency:
+  group: pairing-ios-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  diagnostic-consumer:
+    # A separate retained-producer workflow has no synthetic same-run needs.
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      actions: read
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 8
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          submodules: recursive
+      - name: Create isolated evidence directory
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          test ! -e .pairing-consumer
+          mkdir -p .pairing-consumer/evidence
+          test -d "$DEVELOPER_DIR"
+          test "$(uname -m)" = arm64
+      - name: Read explicit retained producer context
+        timeout-minutes: 1
+        run: python3 Integration/pairing-ios-diagnostic/read_runtime_producer.py
+      - name: Authenticate and retain exact producer artifacts
+        id: handoff
+        timeout-minutes: 12
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 Integration/pairing-ios-diagnostic/fetch_retained_handoff.py --output .pairing-consumer/handoff
+      - name: Run normal portable and Integration tests including callback spy
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          swift test 2>&1 | tee .pairing-consumer/evidence/core-debug.log
+          swift test -c release 2>&1 | tee .pairing-consumer/evidence/core-release.log
+          python3 -m unittest discover -s Integration/tests -v 2>&1 | tee .pairing-consumer/evidence/integration-tests.log
+          python3 -m unittest discover -s Integration/pairing-ios-diagnostic/tests -v 2>&1 | tee .pairing-consumer/evidence/diagnostic-tests.log
+      - name: Prepare normal app using reviewed preparation
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 Integration/prepare.py 2>&1 | tee .pairing-consumer/evidence/preparation.log
+          python3 Integration/run_prepared_contract_tests.py 2>&1 | tee .pairing-consumer/evidence/prepared-contract-tests.log
+      - name: Bind verified composition to a separate owned app copy
+        id: bind
+        timeout-minutes: 5
+        env:
+          HANDOFF_SHA256: ${{ steps.handoff.outputs.handoff_sha256 }}
+          APPLE_RECEIPT_SHA256: ${{ steps.handoff.outputs.apple_receipt_sha256 }}
+          COMPONENT_FIXTURES_RESULT: ${{ steps.handoff.outputs.component_fixtures_result }}
+          NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
+        run: python3 Integration/pairing-ios-diagnostic/call_retained_diagnostic.py bind
+      - name: Compile unsigned Debug diagnostic
+        timeout-minutes: 45
+        env:
+          HANDOFF_SHA256: ${{ steps.handoff.outputs.handoff_sha256 }}
+          APPLE_RECEIPT_SHA256: ${{ steps.handoff.outputs.apple_receipt_sha256 }}
+          COMPONENT_FIXTURES_RESULT: ${{ steps.handoff.outputs.component_fixtures_result }}
+          NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
+          BINDING_RECEIPT_SHA256: ${{ steps.bind.outputs.binding_receipt_sha256 }}
+        run: python3 Integration/pairing-ios-diagnostic/call_retained_diagnostic.py Debug
+      - name: Compile unsigned Release diagnostic
+        if: ${{ !cancelled() && steps.bind.outcome == 'success' }}
+        timeout-minutes: 45
+        env:
+          HANDOFF_SHA256: ${{ steps.handoff.outputs.handoff_sha256 }}
+          APPLE_RECEIPT_SHA256: ${{ steps.handoff.outputs.apple_receipt_sha256 }}
+          COMPONENT_FIXTURES_RESULT: ${{ steps.handoff.outputs.component_fixtures_result }}
+          NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
+          BINDING_RECEIPT_SHA256: ${{ steps.bind.outputs.binding_receipt_sha256 }}
+        run: python3 Integration/pairing-ios-diagnostic/call_retained_diagnostic.py Release
+      - name: Retain authenticated handoff and bounded diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 5
+        with:
+          name: pairing-ios-diagnostic-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            .pairing-consumer/evidence/
+            .pairing-consumer/handoff/api/
+            .pairing-consumer/handoff/*.zip
+            .pairing-consumer/handoff/handoff.json
+            .pairing-consumer/diagnostic/TETHERLESS_PAIRING_DIAGNOSTIC_BINDING.json
+            .pairing-consumer/compile-debug/evidence/
+            .pairing-consumer/compile-release/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

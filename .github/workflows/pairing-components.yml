@@ -342,7 +342,7 @@ jobs:
               '--toolchain-lock', str(root / 'evidence/toolchain-lock.observed.json'),
               '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()]
           if proof == 'apple-producer':
-              command += ['--recipe-lock-sha256', '9bc04f19024f7b974d2846d8b82e1fcde6a76f0ea22f367cd5d132242a989733']
+              command += ['--recipe-lock-sha256', '9971662d8f74774b7c6e23f2a42ff311baf8991f0302e1d0810882f52b0211ac']
           (root / 'evidence/invocation.json').write_text(json.dumps({'proof': proof, 'argv': command}, indent=2) + '\n')
           # Each native command is supervised by the unchanged reviewed runner.
           # Retain entry-point errors as well, including failures before work/completed exists.

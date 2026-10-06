@@ -1,0 +1,300 @@
+{
+  "apple_manifest_sha256": "bd8715881c47d4f554747f66b449dbfeddf0e2a5e426154ccc8f4c0c32e81332",
+  "apple_profile_sha256": "315f7b321804b46b94c24f89fa5f354f205a0ce1128a8ae8b518f68b6ff82cad",
+  "apple_recipe_index_sha256": "9971662d8f74774b7c6e23f2a42ff311baf8991f0302e1d0810882f52b0211ac",
+  "composition_manifest_sha256": "e63484590a8bdff3235fd58aa7d99ddca33bea69003cc474c7f6dfc271890312",
+  "configurations": [
+    "Debug",
+    "Release"
+  ],
+  "consumer_or_product_activation": false,
+  "gateway": {
+    "commit": "12be70dc2627307a16bfd2dc7a009080d5bec909",
+    "git_blob": "e71fb03ee32be8a92320b2c7cc7550bd5d4c6f57",
+    "local_binary_path": "TetherlessDiagnosticArtifacts/IDevice.xcframework",
+    "prepared_path": "Dependencies/minimuxer/DeviceGateway/Package.swift",
+    "repository": "SideStore/minimuxer",
+    "sha256": "574aa20bd89e739a07483c704ffdb845147715f0066d8c4c524b520ff904c85f",
+    "upstream_path": "DeviceGateway/Package.swift"
+  },
+  "host_boundaries_manifest_sha256": "a488ded5d8f166d8060e9afbda9987195563ba75222131fb7fd63c32d655b5a9",
+  "mode": "diagnostic-only",
+  "native_execution_pending": true,
+  "native_prerequisite_cleared": false,
+  "native_prerequisite_mode": "validated-same-run-handoff",
+  "native_upstream_commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "pending_source_repair": "No static preclearance: explicit runtime producer context, authenticated successful native/source evidence and current source matching are required before binding or compilation.",
+  "preparation_gate": {
+    "path": "pairing_safety.py",
+    "sha256": "9ddf28114d14bd99353ef4219e3043e85a2f22ea9429c85d1f887674bceebd68"
+  },
+  "prepared_composition_sources": {
+    "SideStore/TetherlessCore/NativeCallLifetime.swift": {
+      "sha256": "cda4970d622eaf7615a103b257b45b8a02bf37a5a89243ee3a20a90e3d0342d3",
+      "source_path": "Sources/TetherlessCore/NativeCallLifetime.swift"
+    },
+    "SideStore/TetherlessCore/PairingCancellationController.swift": {
+      "sha256": "c433d65c385d23ed808b41ee7657a9ef3dc99982bab6a7cd2d129b7a24a147ff",
+      "source_path": "Sources/TetherlessCore/PairingCancellationController.swift"
+    },
+    "SideStore/TetherlessCore/PairingNumericEndpoint.swift": {
+      "sha256": "503892ba0572f72a3ea8ae7d73ed35d65ed48b873b7a3e0ff9628b2295786582",
+      "source_path": "Sources/TetherlessCore/PairingNumericEndpoint.swift"
+    },
+    "SideStore/TetherlessCore/PairingPromotion.swift": {
+      "sha256": "26a86c9bca1f8147c1d04db8d8f79a5045681672041fed96745b1592e842d6b4",
+      "source_path": "Sources/TetherlessCore/PairingPromotion.swift"
+    },
+    "SideStore/TetherlessCore/PairingValidationBudget.swift": {
+      "sha256": "44d5cfe461bb197d990225a442531548be5f3245d5a92563a3987c9a9c6b7850",
+      "source_path": "Sources/TetherlessCore/PairingValidationBudget.swift"
+    },
+    "SideStore/TetherlessCore/PairingValidationChallenge.swift": {
+      "sha256": "0e281edb8b97a816b3c37d9f44343346724eb24120ba8553e420923b38312f90",
+      "source_path": "Sources/TetherlessCore/PairingValidationChallenge.swift"
+    },
+    "SideStore/TetherlessNative/BoundedPairingHostBridge.swift": {
+      "sha256": "c3629e172506ebf5b7aa75348688ac1a39d790a14494b3eb329826ca7ef27819",
+      "source_path": "Integration/Native/BoundedPairingHostBridge.swift"
+    },
+    "SideStore/TetherlessNative/NativeStagedPairingValidator.swift": {
+      "sha256": "9e5c102da665ae051886397152546d77ce1d4a06fd9aa835884a22f1782a0f7b",
+      "source_path": "Integration/Native/NativeStagedPairingValidator.swift"
+    },
+    "SideStore/TetherlessNative/PairingBonjourListener.swift": {
+      "sha256": "7ff0ef8f3c4ae4f5c9381e26cad2a1dccb36c36b8d2c58812f02d416376873d4",
+      "source_path": "Integration/Native/PairingBonjourListener.swift"
+    },
+    "SideStore/TetherlessNative/PairingEndpointResolver.swift": {
+      "sha256": "886acd711bae92aac01de54bf6ff23e94fdf1a70af6fdf3ed292915220a56b42",
+      "source_path": "Integration/Native/PairingEndpointResolver.swift"
+    },
+    "SideStore/TetherlessNative/PairingSetupModel.swift": {
+      "sha256": "ae88af1207dbd69512a150f2f66798d357c18de16e1b44db15c1f29f91b1aa74",
+      "source_path": "Integration/Native/PairingSetupModel.swift"
+    },
+    "SideStore/TetherlessNative/PairingSetupView.swift": {
+      "sha256": "127590a4dd7292ad3558395a0723b76ef2cb8104abe0787c06a7a21f4c9d9612",
+      "source_path": "Integration/Native/PairingSetupView.swift"
+    },
+    "SideStore/Views/Onboarding/OnboardingView.swift": {
+      "sha256": "c0b0e4a6eb68bb6883792b407c3fc8902f54221eb37061768e6a51a9e63a9a54",
+      "source_path": "Integration/Overrides/OnboardingView.swift"
+    },
+    "SideStore/Views/Settings/Advanced/PairingFile/WirelessPair/WirelessPairView.swift": {
+      "sha256": "bc666ee4d9c28c48b35202dfd970ea6a3447d46894f4f7b3c48e3085d0c0b19c",
+      "source_path": "Integration/Overrides/WirelessPairView.swift"
+    }
+  },
+  "prepared_support_sources": {
+    "SideStore/Core/Pairing/PairingFileManager.swift": {
+      "sha256": "1bfb0032a9cc58f47741c68cc95c093390fd834f3ed5a9ec5fc48abf58c64767",
+      "source_path": "Integration/Overrides/PairingFileManager.swift"
+    }
+  },
+  "recovery_boundary": {
+    "exact_recovered_files": 14,
+    "prior_review_not_inherited_for_new_source": true,
+    "unavailable_prior_files": 7
+  },
+  "required_conditions": [
+    "TETHERLESS_BOUNDED_PAIRING_HOST",
+    "TETHERLESS_STAGED_PAIRING_VALIDATION",
+    "TETHERLESS_PAIRING_COMPOSITION_COMPILE_CHECK"
+  ],
+  "result_header_contract": {
+    "declarations_sha256": "d9067c1343c078fc208221330f65f13afdbaeeb50aff7dc3e14ad64d284f6450",
+    "per_file_byte_limit": 2097152,
+    "probe_groups": [
+      "host",
+      "pairing",
+      "result_constants"
+    ]
+  },
+  "retained_producer": {
+    "mode": "explicit-runtime-inputs",
+    "workflow_path": ".github/workflows/pairing-components.yml",
+    "workflow_sha256": "9db16e465bffec95b15ec1f2f7ec5783e31aeaa59f3e240c56897846768a5b5c"
+  },
+  "reviewed_promotion_support": {
+    "review_sha256": "66f1779d8c2ff071c7f94efc65133c19ab23c30b57f9a7f83153dc2ae197acdf",
+    "source_map_sha256": "47a84351fa7a6037f9bc9a2bf135cc1f3d3f0ff5879fa19cc267c52ff1e14f22"
+  },
+  "reviewed_ui_sources": {
+    "manifest_sha256": "7d23833e74d91eed2cf486ba1b7c4a0c78ce456b112aaa2402d93943c5db752c",
+    "review_sha256": "a8e913eee40cd46cbf3ba985c644f5bd251028807e881dd8a4d74e84bfc5676e"
+  },
+  "same_run_requirements": {
+    "acquisition-transcript": {
+      "artifact_prefix": "pairing-native-proof-",
+      "expected_count": 3,
+      "features": [
+        "openssl",
+        "tetherless-synthetic-peer"
+      ],
+      "job_id": "native-proofs",
+      "job_name": "native-proofs (acquisition-transcript)",
+      "output_directory": "acquisition-transcript-output",
+      "profile_sha256": "dbf445f10ca106d656c15ff5df84ab4bdcc38d4ecfe9d4010b6780e062a241ee",
+      "receipt_kind": "transcript",
+      "suites": [
+        {
+          "expected_passed": 3,
+          "filter": "staged_acquisition::composite_transcript::",
+          "package": "idevice-ffi"
+        }
+      ]
+    },
+    "apple-producer": {
+      "artifact_prefix": "pairing-native-proof-",
+      "job_id": "native-proofs",
+      "job_name": "native-proofs (apple-producer)",
+      "output_directory": "apple-producer-output",
+      "profile_sha256": "315f7b321804b46b94c24f89fa5f354f205a0ce1128a8ae8b518f68b6ff82cad",
+      "receipt_kind": "apple"
+    },
+    "combined": {
+      "artifact_prefix": "pairing-components-",
+      "expected_count": 100,
+      "job_id": "component-fixtures",
+      "job_name": "component-fixtures (combined)",
+      "output_directory": "completed",
+      "profile_sha256": "2a161b8fc948b2f66403d9a01bb3c0a9bdcad5cbe153b80e69a0f821294e8bb0",
+      "receipt_kind": "component",
+      "suites": [
+        {
+          "expected_passed": 18,
+          "filter": "staged_pairing::",
+          "package": "idevice-ffi"
+        },
+        {
+          "expected_passed": 25,
+          "filter": "bounded_rsd_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 11,
+          "filter": "staged_acquisition::",
+          "package": "idevice-ffi"
+        },
+        {
+          "expected_passed": 3,
+          "filter": "remote_pairing::staged_contributory_tests::",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 2,
+          "filter": "remote_pairing::socket::staged_rp_socket_tests::",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 4,
+          "filter": "remote_pairing::tunnel::staged_openssl::tests::",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 4,
+          "filter": "remote_pairing::tunnel::staged_openssl_fixtures::",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 7,
+          "filter": "remote_pairing::tunnel::staged_packet_io::",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 8,
+          "filter": "bounded_pairing_host::",
+          "package": "idevice-ffi"
+        },
+        {
+          "expected_passed": 5,
+          "filter": "bounded_host_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 3,
+          "filter": "bounded_host_frame_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 4,
+          "filter": "bounded_opack_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 6,
+          "filter": "remote_pairing::responder::bounded_controller_signature_tests::",
+          "package": "idevice"
+        }
+      ]
+    },
+    "host-only": {
+      "artifact_prefix": "pairing-components-",
+      "expected_count": 26,
+      "job_id": "component-fixtures",
+      "job_name": "component-fixtures (host-only)",
+      "output_directory": "completed",
+      "profile_sha256": "3a1b1422f37466022a49db1865140c7ee7c022ca7f67b2232d67eb3aed0f3eb8",
+      "receipt_kind": "host",
+      "suites": [
+        {
+          "expected_passed": 8,
+          "filter": "bounded_pairing_host::",
+          "package": "idevice-ffi"
+        },
+        {
+          "expected_passed": 5,
+          "filter": "bounded_host_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 3,
+          "filter": "bounded_host_frame_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 4,
+          "filter": "bounded_opack_tests",
+          "package": "idevice"
+        },
+        {
+          "expected_passed": 6,
+          "filter": "remote_pairing::responder::bounded_controller_signature_tests::",
+          "package": "idevice"
+        }
+      ]
+    },
+    "host-transcript": {
+      "artifact_prefix": "pairing-native-proof-",
+      "expected_count": 10,
+      "features": [
+        "openssl",
+        "remote_pairing",
+        "tetherless-synthetic-peer"
+      ],
+      "job_id": "native-proofs",
+      "job_name": "native-proofs (host-transcript)",
+      "output_directory": "host-transcript-output",
+      "profile_sha256": "e0566635b5123b7e4dd5e80324b79adfbc0a33a0bfab88f393b31468e65d7f26",
+      "receipt_kind": "transcript",
+      "suites": [
+        {
+          "expected_passed": 10,
+          "filter": "bounded_pairing_host::host_transcript::",
+          "package": "idevice-ffi"
+        }
+      ]
+    }
+  },
+  "schema": 1,
+  "sentinel": {
+    "prepared_path": "SideStore/Views/Onboarding/OnboardingView.swift",
+    "sha256": "5fd9d03a1247021255a67c7e8bc251268560537e0c43d64771ba655560995677"
+  },
+  "source_identity_boundary": {
+    "consumer": "Fourteen reviewed mandatory compiler sources, one opaque reviewed manager support source, and reviewed preparation gate; authenticated independently to consumer commit",
+    "producer": "Complete native recipe/profile/provider/ABI probes and reviewed producer workflow"
+  },
+  "toolchain_observation_source": "authenticated Apple device-target retained observations"
+}
