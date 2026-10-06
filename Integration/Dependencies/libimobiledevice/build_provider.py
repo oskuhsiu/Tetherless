@@ -20,6 +20,7 @@ SIBLING = HERE.parent / 'idevice'
 REPOSITORY = HERE.parents[2]
 sys.path.insert(0, str(SIBLING))
 from bounded_process import capture_helper_command
+from build_pairing_apple import SWIFT_26_3_STDOUT, require_toolchain_observation
 from mixed_provider import prepare as prepare_old, verify as verify_old
 from namespace import apply_to_directory, sha256, git_blob, code_references, load_contract, verify_retained_sources
 from source_inputs import retain_sources, verify_retained, source_inventory, safe_file, SOURCES
@@ -28,11 +29,13 @@ from symbols import compare, exported, link_ownership
 APPLE = {'xcode': 'Xcode 26.3\nBuild version 17C529', 'macos_version': '15.7.9',
          'macos_build': '24G830', 'sdk_version': '26.2', 'sdk_build': '23C57',
          'clang': 'Apple clang version 17.0.0 (clang-1700.6.4.2)',
-         'swift': 'Apple Swift version 6.2.4 (swiftlang-6.2.4.1.4 clang-1700.6.4.2)'}
+         'swift': SWIFT_26_3_STDOUT}
 DEVELOPER = '/Applications/Xcode_26.3.app/Contents/Developer'
 TARGETS = [('iphoneos', 'arm64-apple-ios13.0', 'aarch64-apple-ios'),
            ('iphonesimulator', 'arm64-apple-ios13.0-simulator', 'aarch64-apple-ios-sim')]
 FRAMEWORKS = ['-framework', 'CoreFoundation', '-framework', 'SystemConfiguration']
+XCFRAMEWORK_OPERATION = SIBLING/'xcframework_operation.py'
+XCFRAMEWORK_OPERATION_SHA256 = '98df3ef86806a707fb898dd9e59ff0a3612b330a91522d4995b793360ed0f044'
 
 
 def write(path, value):
@@ -173,37 +176,76 @@ def resolve_preinstalled_tool(name,command,path):
 def fingerprint(r):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise ValueError('requires existing arm64 macOS runner')
-    observations = {}
+    observations, paths, tools, closures, errors = {}, {}, {}, {}, []
+    preflight = {'schema': 1, 'scope': 'read-only identity observations; no compilation',
+                 'observations': observations, 'raw_observations': {}, 'tools': tools,
+                 'tool_installation_closures': closures, 'identity_errors': errors,
+                 'complete': False, 'all_identity_checks_passed': False,
+                 'runner_image_os': os.environ.get('ImageOS'),
+                 'runner_image_version': os.environ.get('ImageVersion')}
+    def retain():
+        write(r.evidence/'toolchain-preflight.json', preflight)
+    def observe(key, command, label):
+        try:
+            value = r.run(command, label, seconds=60)
+        except Exception as error:
+            # Command/cleanup failures are fatal: never launch another command
+            # while an earlier owned process may be unsettled. Prior logs survive.
+            preflight['collection_error'] = {'observation':key, 'type':type(error).__name__, 'error':str(error)}
+            retain()
+            raise
+        raw = r.evidence / ('%03d-%s.txt' % (r.serial, label))
+        data = raw.read_bytes()
+        observations[key] = value
+        preflight['raw_observations'][key] = {'log':raw.name, 'status':raw.name+'.status.json',
+                                            'bytes':len(data), 'sha256':sha256(data)}
+        retain()
+        return value
+    def mismatch(key, detail):
+        errors.append({'check':key, 'detail':detail})
+        retain()
+    retain()
     for key, cmd in [('xcode',['/usr/bin/xcodebuild','-version']),
             ('macos_version',['/usr/bin/sw_vers','-productVersion']),
             ('macos_build',['/usr/bin/sw_vers','-buildVersion']),
             ('clang',['/usr/bin/xcrun','clang','--version']),
             ('swift',['/usr/bin/xcrun','swiftc','--version'])]:
-        observations[key] = r.run(cmd, 'toolchain-'+key, seconds=60)
-        if (observations[key] if key not in ('clang','swift') else observations[key].splitlines()[0]) != APPLE[key]:
-            raise ValueError('Apple toolchain drift: '+key)
+        value = observe(key, cmd, 'toolchain-'+key)
+        if key == 'swift':
+            try:
+                # Reuse the reviewed complete Xcode 26.3 stdout/merged pair gate.
+                # Never discard stderr prefixes, targets or unexplained output.
+                require_toolchain_observation(value, APPLE['swift'], 'swiftc')
+            except ValueError as error:
+                mismatch(key, str(error))
+        elif (value if key != 'clang' else (value.splitlines()[0] if value else '')) != APPLE[key]:
+            mismatch(key, 'Apple toolchain drift: '+key)
     for sdk, _, _ in TARGETS:
         for key, flag in [('sdk_version','--show-sdk-version'), ('sdk_build','--show-sdk-build-version')]:
-            value = r.run(['/usr/bin/xcrun','--sdk',sdk,flag], sdk+'-'+key, seconds=60)
-            observations[sdk+'_'+key] = value
+            name = sdk+'_'+key
+            value = observe(name, ['/usr/bin/xcrun','--sdk',sdk,flag], sdk+'-'+key)
             if value != APPLE[key]:
-                raise ValueError('SDK drift: '+sdk+' '+key)
+                mismatch(name, 'SDK drift: '+sdk+' '+key)
     for flag,expected in [('--show-sdk-version','26.2'),('--show-sdk-build-version','25C58')]:
-        value=r.run(['/usr/bin/xcrun','--sdk','macosx',flag],'host-'+flag[2:],seconds=60)
-        observations['host_'+flag[2:]]=value
-        if value!=expected: raise ValueError('host SDK drift')
-    paths, tools, closures = {}, {}, {}
+        key = 'host_'+flag[2:]
+        value = observe(key, ['/usr/bin/xcrun','--sdk','macosx',flag], 'host-'+flag[2:])
+        if value != expected:
+            mismatch(key, 'host SDK drift')
     commands = {'autoconf':'autoconf','autoheader':'autoheader','automake':'automake',
                 'aclocal':'aclocal','glibtoolize':'glibtoolize','pkg-config':'pkg-config',
                 'm4':'m4','make':'make'}
     for name, command in commands.items():
-        path = resolve_preinstalled_tool(name,command,r.env['PATH'])
+        try:
+            path = resolve_preinstalled_tool(name,command,r.env['PATH'])
+        except ValueError as error:
+            mismatch(name, str(error))
+            continue
         paths[name] = str(path)
-        version = r.run([path,'--version'], 'tool-'+name, seconds=60)
+        version = observe('tool_'+name, [path,'--version'], 'tool-'+name)
         if name=='m4':
             match=re.search(r'^m4 \(GNU M4\) ([0-9]+)\.([0-9]+)\.([0-9]+)',version)
             if not match or tuple(map(int,match.groups())) < (1,4,16):
-                raise ValueError('GNU m4 is absent or older than the accepted generator minimum')
+                mismatch(name, 'GNU m4 is absent or older than the accepted generator minimum')
         tools[name] = {'path':str(path),'sha256':sha256(path.read_bytes()),'version':version}
         if str(path).startswith('/opt/homebrew/Cellar/'):
             parts = path.parts
@@ -211,9 +253,20 @@ def fingerprint(r):
             # Freeze the selected tool's scripts/macros, not ambient Homebrew state.
             if str(prefix) not in closures:
                 closures[str(prefix)] = closure_inventory(prefix)
-    pkg = Path(paths['pkg-config']).parent.parent / 'share/aclocal/pkg.m4'
-    if not pkg.is_file():
-        raise ValueError('authenticated pkg-config macro not found in selected installation')
+        retain()
+    pkg = None
+    if 'pkg-config' in paths:
+        pkg = Path(paths['pkg-config']).parent.parent / 'share/aclocal/pkg.m4'
+        if not pkg.is_file():
+            mismatch('pkg_m4', 'authenticated pkg-config macro not found in selected installation')
+        else:
+            preflight['pkg_m4_sha256'] = sha256(pkg.read_bytes())
+    preflight['complete'] = True
+    preflight['all_identity_checks_passed'] = not errors
+    retain()
+    if errors:
+        raise ValueError('toolchain preflight rejected: '+', '.join(row['check'] for row in errors))
+    # Only a fully accepted preflight may create the build input view/lock.
     macros = r.work/'tool-macros'; macros.mkdir()
     shutil.copyfile(pkg,macros/'pkg.m4')
     paths['macro_dir'] = str(macros)
@@ -247,6 +300,42 @@ def autotools(r, source, prefix, tools, env, options, stages):
            '--enable-static','--disable-shared',*options],source.name+'-configure',source,env)
     for directory, action in stages:
         r.run([tools['make'],'-C',directory,'-j3',action],source.name+'-'+directory+'-'+action,source,env,1200)
+
+
+def package_xcframework(r, records, output):
+    """Reuse the already reviewed single-operation leader/drain implementation."""
+    if (len(records) != 2 or [row['sdk'] for row in records] != ['iphoneos','iphonesimulator']
+            or not output.is_absolute()):
+        raise ValueError('exact device/simulator packaging inputs required')
+    operation = XCFRAMEWORK_OPERATION
+    if operation.is_symlink() or sha256(operation.read_bytes()) != XCFRAMEWORK_OPERATION_SHA256:
+        raise ValueError('reviewed XCFramework operation source changed')
+    command = ['/usr/bin/xcodebuild','-create-xcframework']
+    arguments = []
+    for row in records:
+        if any(not Path(row[key]).is_absolute() for key in ('library','headers')):
+            raise ValueError('packaging inputs must be absolute')
+        command += ['-library',row['library'],'-headers',row['headers']]
+        arguments += [row['library'],row['headers']]
+    command += ['-output',str(output)]
+    operation_command = [sys.executable,'-I',str(operation),*arguments,str(output)]
+    environment = {'PATH':'/usr/bin:/bin:/usr/sbin:/sbin',
+                   'DEVELOPER_DIR':r.env['DEVELOPER_DIR'],
+                   'HOME':r.env['HOME'],'TMPDIR':r.env['TMPDIR']}
+    # Same 900-second C-operation limit and same general supervisor. The wrapper
+    # retains the leader through the xcodebuild child's natural helper tail.
+    r.run(operation_command,'create-xcframework',env=environment)
+    if sha256(operation.read_bytes()) != XCFRAMEWORK_OPERATION_SHA256:
+        raise ValueError('XCFramework operation source changed while executing')
+    def command_hash(argv):
+        return sha256(json.dumps(argv,separators=(',',':'),ensure_ascii=False).encode())
+    receipt = {'schema':1,'operation_source':'Integration/Dependencies/idevice/xcframework_operation.py',
+               'operation_sha256':XCFRAMEWORK_OPERATION_SHA256,
+               'operation_command':operation_command,'operation_command_sha256':command_hash(operation_command),
+               'xcodebuild_command':command,'xcodebuild_command_sha256':command_hash(command),
+               'environment':environment,'timeout_seconds':900,'ios_payloads_executed':False}
+    write(r.evidence/'xcframework-operation.json',receipt)
+    return receipt
 
 
 def build(args):
@@ -352,12 +441,8 @@ def build(args):
     if exported_sets[0] != exported_sets[1]:
         raise ValueError('C complete exports differ across slices')
     product=work/'product'; product.mkdir()
-    command=['/usr/bin/xcodebuild','-create-xcframework']
-    for record in records:
-        command+=['-library',record['library'],'-headers',record['headers']]
     xc=product/'libimobiledevice.xcframework'
-    command+=['-output',str(xc)]
-    r.run(command,'create-xcframework')
+    packaging_receipt=package_xcframework(r,records,xc)
     import plistlib
     info=plistlib.loads((xc/'Info.plist').read_bytes())
     rows=info['AvailableLibraries']
@@ -388,7 +473,7 @@ def build(args):
              'namespace_contract_sha256':sha256((HERE/'namespace-contract.json').read_bytes()),
              'source_receipt_sha256':sha256((pristine/'source-receipt.json').read_bytes()),
              'matching_source_sha256':sha256((product/'matching-source.tar').read_bytes()),
-             'xcframework_files':inventory(xc),'all_c_globals_unique':True,'all_public_headers_unchanged':True,
+             'xcframework_files':inventory(xc),'xcframework_operation':packaging_receipt,'all_c_globals_unique':True,'all_public_headers_unchanged':True,
              'consumer_admitted':False,'rust_mixed_provider_verified':False,'ios_binaries_executed':False,
              'openssl_bundled':False,'system_frameworks':['CoreFoundation','SystemConfiguration']}
     verify_retained(pristine)
