@@ -66,6 +66,7 @@ jobs:
           NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
         run: python3 Integration/pairing-ios-diagnostic/call_retained_diagnostic.py bind
       - name: Compile unsigned Debug diagnostic
+        id: compile_debug
         timeout-minutes: 45
         env:
           HANDOFF_SHA256: ${{ steps.handoff.outputs.handoff_sha256 }}
@@ -74,7 +75,29 @@ jobs:
           NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
           BINDING_RECEIPT_SHA256: ${{ steps.bind.outputs.binding_receipt_sha256 }}
         run: python3 Integration/pairing-ios-diagnostic/call_retained_diagnostic.py Debug
+      - name: Package bound unsigned Debug App
+        id: package_debug
+        if: ${{ !cancelled() && steps.compile_debug.outcome == 'success' }}
+        timeout-minutes: 15
+        env:
+          HANDOFF_SHA256: ${{ steps.handoff.outputs.handoff_sha256 }}
+          APPLE_RECEIPT_SHA256: ${{ steps.handoff.outputs.apple_receipt_sha256 }}
+          COMPONENT_FIXTURES_RESULT: ${{ steps.handoff.outputs.component_fixtures_result }}
+          NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
+          BINDING_RECEIPT_SHA256: ${{ steps.bind.outputs.binding_receipt_sha256 }}
+        run: python3 Integration/pairing-ios-diagnostic/package_bound_app.py --configuration Debug
+      - name: Retain bound unsigned Debug App package
+        if: ${{ always() && steps.package_debug.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 10
+        with:
+          name: pairing-ios-unsigned-debug-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .pairing-consumer/packages/Debug/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Compile unsigned Release diagnostic
+        id: compile_release
         if: ${{ !cancelled() && steps.bind.outcome == 'success' }}
         timeout-minutes: 45
         env:
@@ -84,6 +107,27 @@ jobs:
           NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
           BINDING_RECEIPT_SHA256: ${{ steps.bind.outputs.binding_receipt_sha256 }}
         run: python3 Integration/pairing-ios-diagnostic/call_retained_diagnostic.py Release
+      - name: Package bound unsigned Release App
+        id: package_release
+        if: ${{ !cancelled() && steps.compile_release.outcome == 'success' }}
+        timeout-minutes: 15
+        env:
+          HANDOFF_SHA256: ${{ steps.handoff.outputs.handoff_sha256 }}
+          APPLE_RECEIPT_SHA256: ${{ steps.handoff.outputs.apple_receipt_sha256 }}
+          COMPONENT_FIXTURES_RESULT: ${{ steps.handoff.outputs.component_fixtures_result }}
+          NATIVE_PROOFS_RESULT: ${{ steps.handoff.outputs.native_proofs_result }}
+          BINDING_RECEIPT_SHA256: ${{ steps.bind.outputs.binding_receipt_sha256 }}
+        run: python3 Integration/pairing-ios-diagnostic/package_bound_app.py --configuration Release
+      - name: Retain bound unsigned Release App package
+        if: ${{ always() && steps.package_release.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 10
+        with:
+          name: pairing-ios-unsigned-release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .pairing-consumer/packages/Release/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Retain authenticated handoff and bounded diagnostic evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

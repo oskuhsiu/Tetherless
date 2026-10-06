@@ -67,3 +67,57 @@ Historical command-shape checks use authenticated native-build.log from run
 37303840335/source1fc8968f. They established the optional architecture word in
 Ld headings and the actual system-include flag forms. The historical log contains
 no retained response bodies and does not validate the current app composition.
+
+## Bound unsigned App retention
+
+After each successful configuration, `package_bound_app.py --configuration Debug`
+(or `Release`) packages that configuration's complete
+`.pairing-consumer/compile-{debug,release}/DerivedData/Build/Products/{Debug,Release}-iphoneos/SideStore.app`.
+It calls the unchanged `Integration/package_unsigned.py` using the bound
+`.pairing-consumer/diagnostic` prepared tree and that configuration's
+`DerivedData/SourcePackages`. Only the outer bundle directory is renamed to
+`Payload/Tetherless.app`; the executable name, extensions, frameworks, resources,
+symlinks and nested IPAs retain their bytes and paths.
+
+The wrapper requires independently supplied caller environment identities
+(`GITHUB_REPOSITORY`, repository ID, SHA, run ID and attempt, plus the explicit
+`PRODUCER_*` selection) and the existing handoff, Apple receipt and binding hash
+outputs. It accepts only matching diagnostic compile/binding/native-handoff
+receipts, all three successful input audits, the exact link-map hash and the
+observed final executable path, size and hash. It revalidates the native handoff
+and bound inputs, compares every compiled App file/symlink and regular-file executable bits against
+the IPA, then
+rechecks inputs before publishing. There is no executable-only fallback.
+
+Each complete package is admitted exclusively and atomically at
+`.pairing-consumer/packages/{Debug,Release}`. An existing output or any failed
+check leaves no new final package. Publication uses macOS `renamex_np` with
+`RENAME_EXCL` (Linux `renameat2` with `RENAME_NOREPLACE` in portable tests), and
+fails closed if exclusive atomic publication is unavailable. Hidden staging
+directories are never selected for artifact upload.
+
+The source/attempt-bound `pairing-ios-unsigned-{debug,release}-SHA-RUN-ATTEMPT`
+artifacts retain the IPA, existing available-source/notices bundles, inventories,
+open release gates and checksums. `package-binding.json` joins the consumer and
+producer contexts, native artifact/source hashes, binding/handoff/compile/audit/
+link-map/input-contract identities, complete App inventory and final IPA hash.
+It also records a canonical bundle list using only direct bundle-root
+`Info.plist` files; storyboard metadata remains in the generic byte inventory.
+Retained entitlement templates are source/build-input declarations with hashes,
+never claims about effective signing rights. This list covers only declarations
+already retained in `inputs.json:files`; generated DerivedData `.xcent` files are
+not searched or collected, and the receipt explicitly records that gap. `unsigned=true`,
+`deviceValidated=false` and `releaseReady=false` remain explicit.
+
+Packaging runs only when its own compile step succeeds and the job is not
+cancelled. Release compilation still runs after Debug failure when binding
+succeeded. Evidence retention still runs after failures, and a successful single
+configuration may be retained for diagnosis, but acceptance requires both Debug
+and Release. The trigger remains a branch-only change to `runtime-producer.json`;
+changing packaging code alone cannot launch an old-source App run. Retention is
+14 days, not durable release hosting. No IPA is signed, installed or executed.
+
+Portable tests use synthetic App and native receipts plus a controlled ZIP writer
+in place of macOS `ditto`. They establish identity, completeness, rejection and
+publication behavior only. Actual Xcode/ditto validation remains a separate
+macOS acceptance step for the exact source and authenticated producer.
