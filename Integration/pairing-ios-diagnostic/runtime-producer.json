@@ -1,6 +1,6 @@
 {
-  "schema": 1,
+  "producer_run_attempt": 1,
   "producer_run_id": 37400684000,
   "producer_source_commit": "9ee2ccc9bd3519053781087acde54d4b4ee43236",
-  "producer_run_attempt": 1
+  "schema": 1
 }

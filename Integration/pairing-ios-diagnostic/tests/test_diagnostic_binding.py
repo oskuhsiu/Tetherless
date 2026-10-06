@@ -342,7 +342,9 @@ class OwnedBindingCopyTests(unittest.TestCase):
         from test_native_handoff import NativeHandoffFixture
         temporary = tempfile.TemporaryDirectory(prefix="new-binding-copy-")
         self.addCleanup(temporary.cleanup)
-        self.fixture = NativeHandoffFixture(Path(temporary.name))
+        # The binding passes canonical owned paths to copytree. Keep this fresh
+        # fixture's mutation hooks on the same paths when its parent is aliased.
+        self.fixture = NativeHandoffFixture(Path(temporary.name).resolve(strict=True))
 
     def test_handoff_success_allows_only_owned_diagnostic_postimages(self):
         f = self.fixture.fixture
@@ -470,10 +472,36 @@ class ReservedBindingOutputsTests(unittest.TestCase):
 
 
 class ClosedRuntimeTemplateTests(unittest.TestCase):
-    def test_checked_in_runtime_template_is_closed(self):
+    def check_context_files(self, here):
         with self.assertRaises(ValueError):
-            runtime.read_context(HERE / "runtime-producer.template.json")
-        self.assertFalse((HERE / "runtime-producer.json").exists())
+            runtime.read_context(here / "runtime-producer.template.json")
+        selection = here / "runtime-producer.json"
+        if selection.exists() or selection.is_symlink():
+            # A separately authorized runtime selection may be checked in.
+            # Schema validity is distinct from the caller's API authentication.
+            values = runtime.read_context(selection)
+            self.assertEqual(set(values), set(runtime.FIELDS.values()))
+
+    def test_checked_in_runtime_template_is_closed(self):
+        self.check_context_files(HERE)
+
+    def test_context_directory_accepts_absent_or_schema_valid_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            put(root / "runtime-producer.template.json", (HERE / "runtime-producer.template.json").read_bytes())
+            self.check_context_files(root)
+            put_json(root / "runtime-producer.json", {"schema": 1, "producer_run_id": 456,
+                     "producer_source_commit": "a" * 40, "producer_run_attempt": 1})
+            self.check_context_files(root)
+
+    def test_context_directory_rejects_malformed_present_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            put(root / "runtime-producer.template.json", (HERE / "runtime-producer.template.json").read_bytes())
+            put_json(root / "runtime-producer.json", {"schema": 1, "producer_run_id": 456,
+                     "producer_source_commit": "a" * 40, "producer_run_attempt": True})
+            with self.assertRaisesRegex(ValueError, "positive integers"):
+                self.check_context_files(root)
 
     def test_invalid_runtime_context_emits_no_partial_environment(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -485,6 +513,35 @@ class ClosedRuntimeTemplateTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 runtime.emit_context(context, output)
             self.assertEqual(output.read_bytes(), b"UNCHANGED=1\n")
+
+
+class TemporaryBindingFixtureRootTests(unittest.TestCase):
+    def test_owned_temporary_parent_alias_preserves_copy_mutation_checks(self):
+        methods = (
+            "test_handoff_success_allows_only_owned_diagnostic_postimages",
+            "test_current_recipe_change_during_copy_is_rejected",
+            "test_gate_change_during_copy_is_rejected",
+            "test_handoff_change_during_copy_is_rejected",
+            "test_native_provider_change_during_copy_is_rejected",
+            "test_prepared_support_change_during_copy_is_rejected",
+        )
+        with tempfile.TemporaryDirectory(prefix="binding alias regression ") as directory:
+            root = Path(directory).resolve(strict=True)
+            physical = root / "physical"
+            physical.mkdir()
+            alias = root / "alias"
+            alias.symlink_to(physical, target_is_directory=True)
+            self.assertTrue(alias.is_symlink())
+            self.assertTrue(alias.samefile(physical))
+            with patch.object(tempfile, "tempdir", str(alias)):
+                for method in methods:
+                    with self.subTest(method=method):
+                        result = unittest.TestResult()
+                        OwnedBindingCopyTests(method).run(result)
+                        self.assertEqual(result.testsRun, 1)
+                        self.assertEqual(result.skipped, [])
+                        self.assertEqual(result.errors, [])
+                        self.assertEqual(result.failures, [])
 
 
 if __name__ == "__main__":

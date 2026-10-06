@@ -7,6 +7,7 @@ import re
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('pairing_cold_read', ROOT / 'Integration/verify_pairing_cold_read.py')
@@ -48,7 +49,7 @@ class PairingColdReadTests(unittest.TestCase):
 
     def test_unsupported_platform_is_unrun(self):
         with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / 'evidence'
+            output = Path(directory).resolve(strict=True) / 'evidence'
             report = cold.verify(ROOT, output, platform='linux')
             self.assertEqual(report['status'], 'unsupported_platform')
             self.assertFalse(report['native_execution'])
@@ -73,7 +74,7 @@ class PairingColdReadTests(unittest.TestCase):
     def test_launcher_joins_writer_before_distinct_reader_in_both_configurations(self):
         calls = []
         with tempfile.TemporaryDirectory() as directory:
-            report = cold.verify(ROOT, Path(directory) / 'evidence', platform='darwin', runner=self.runner(calls))
+            report = cold.verify(ROOT, Path(directory).resolve(strict=True) / 'evidence', platform='darwin', runner=self.runner(calls))
             self.assertEqual(report['status'], 'injected_runner_passed')
             self.assertFalse(report['native_execution'])
             self.assertTrue(report['scratch_removed_after_join'])
@@ -97,7 +98,7 @@ class PairingColdReadTests(unittest.TestCase):
     def test_zero_exit_with_skip_cannot_pass_or_continue(self):
         calls = []
         with tempfile.TemporaryDirectory() as directory:
-            report = cold.verify(ROOT, Path(directory) / 'evidence', platform='darwin', runner=self.runner(calls, bad_reader=True))
+            report = cold.verify(ROOT, Path(directory).resolve(strict=True) / 'evidence', platform='darwin', runner=self.runner(calls, bad_reader=True))
             self.assertEqual(report['status'], 'fixture_or_input_failure')
             self.assertFalse(report['native_execution'])
             self.assertEqual(len(calls), 4)
@@ -106,7 +107,7 @@ class PairingColdReadTests(unittest.TestCase):
     def test_unjoined_process_retains_scratch_and_blocks_next_phase(self):
         calls = []
         with tempfile.TemporaryDirectory() as directory:
-            report = cold.verify(ROOT, Path(directory) / 'evidence', platform='darwin', runner=self.runner(calls, unjoined=True))
+            report = cold.verify(ROOT, Path(directory).resolve(strict=True) / 'evidence', platform='darwin', runner=self.runner(calls, unjoined=True))
             self.assertEqual(report['status'], 'cleanup_incomplete')
             self.assertFalse(report['scratch_removed_after_join'])
             self.assertEqual(len(calls), 1)
@@ -123,12 +124,58 @@ class PairingColdReadTests(unittest.TestCase):
             with self.assertRaises(ValueError): cold.verify(ROOT, parent, platform='linux')
             with self.assertRaises(ValueError): cold.verify(ROOT, alias / 'evidence', platform='linux')
 
+    def test_owned_temporary_roots_under_alias_parent_are_normalized(self):
+        # Reproduce an OS temp parent alias (such as /var -> /private/var)
+        # without requiring that alias on the host running this regression.
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory).resolve(strict=True)
+            backing = parent / 'real-temp'; backing.mkdir()
+            alias = parent / 'temp-alias'; alias.symlink_to(backing, target_is_directory=True)
+            with tempfile.TemporaryDirectory(dir=alias) as owned_directory:
+                unresolved = Path(owned_directory)
+                self.assertEqual(unresolved.parent, alias)
+                # The API must continue rejecting caller-supplied aliases.
+                with self.assertRaises(ValueError):
+                    cold.verify(ROOT, unresolved / 'rejected', platform='linux')
+                self.assertFalse((unresolved / 'rejected').exists())
+                output = unresolved.resolve(strict=True) / 'evidence'
+                calls, scratch_paths = [], []
+                original_mkdtemp = tempfile.mkdtemp
+
+                def aliased_mkdtemp(**kwargs):
+                    path = original_mkdtemp(dir=alias, **kwargs)
+                    scratch_paths.append(Path(path))
+                    return path
+
+                # The launcher's own fresh scratch directory is independently
+                # normalized before staged source checks and subprocess use.
+                with mock.patch.object(cold.tempfile, 'mkdtemp', side_effect=aliased_mkdtemp):
+                    report = cold.verify(ROOT, output, platform='darwin', runner=self.runner(calls))
+                self.assertEqual(report['status'], 'injected_runner_passed')
+                self.assertFalse(report['native_execution'])
+                self.assertTrue(report['scratch_removed_after_join'])
+                self.assertEqual(len(scratch_paths), 1)
+                self.assertEqual(scratch_paths[0].parent, alias)
+                self.assertFalse(scratch_paths[0].exists())
+                self.assertTrue(calls)
+                for _, environment in calls:
+                    self.assertTrue(Path(environment['HOME']).is_relative_to(backing))
+                self.assertEqual(json.loads((output / 'report.json').read_text()), report)
+            # Exercise each portable call site with an aliased default temp
+            # parent, so reverting its owned-root normalization fails here.
+            with mock.patch.object(tempfile, 'tempdir', str(alias)):
+                for method in [self.test_unsupported_platform_is_unrun,
+                               self.test_launcher_joins_writer_before_distinct_reader_in_both_configurations,
+                               self.test_zero_exit_with_skip_cannot_pass_or_continue,
+                               self.test_unjoined_process_retains_scratch_and_blocks_next_phase]:
+                    with self.subTest(aliased_temp_call=method.__name__): method()
+
     @unittest.skipUnless(sys.platform == 'darwin', 'UNRUN: actual manager/parser fixtures require Apple Foundation/UniformTypeIdentifiers')
     def test_actual_cold_reader_debug_and_optimized(self):
         # The explicit standalone launcher retains fixed logs and source hashes.
         # Ordinary test discovery uses a private temporary evidence directory.
         with tempfile.TemporaryDirectory() as directory:
-            report = cold.verify(ROOT, Path(directory) / 'evidence')
+            report = cold.verify(ROOT, Path(directory).resolve(strict=True) / 'evidence')
             self.assertEqual(report['status'], 'passed')
             self.assertTrue(report['native_execution'])
 

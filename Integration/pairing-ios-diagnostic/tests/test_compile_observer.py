@@ -50,7 +50,9 @@ class CompileObserverTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="diagnostic observer ")
         self.addCleanup(self.temp.cleanup)
-        self.base = Path(self.temp.name)
+        # Align fixture expectations and mutation hooks with the owned canonical
+        # paths returned by the observer, including macOS /var parent aliases.
+        self.base = Path(self.temp.name).resolve(strict=True)
         self.app = self.base / "owned app"
         self.derived = self.base / "DerivedData"
         self.app.mkdir()
@@ -739,6 +741,36 @@ class CompileObserverTests(unittest.TestCase):
             self.assertIn(symbol, source)
         self.assertIn("#error", source)
         self.assertNotIn("@main", source)
+
+
+class TemporaryObserverFixtureRootTests(unittest.TestCase):
+    def test_owned_temporary_parent_alias_preserves_evidence_and_mutation_checks(self):
+        methods = (
+            "test_honest_swiftdriver_and_final_link_with_different_deployments",
+            "test_changed_repeated_text_read_retains_both_versions_and_fails",
+            "test_final_app_output_mutation_during_hashing_fails",
+            "test_response_cycle_is_rejected",
+            "test_malformed_raw_inputs_remain_after_parse_failure",
+            "test_owned_root_alias_does_not_allow_descendant_symlink_escape",
+            "test_symlink_parent_traversal_cannot_forge_source_membership",
+        )
+        with tempfile.TemporaryDirectory(prefix="observer alias regression ") as directory:
+            root = Path(directory).resolve(strict=True)
+            physical = root / "physical"
+            physical.mkdir()
+            alias = root / "alias"
+            alias.symlink_to(physical, target_is_directory=True)
+            self.assertTrue(alias.is_symlink())
+            self.assertTrue(alias.samefile(physical))
+            with mock.patch.object(tempfile, "tempdir", str(alias)):
+                for method in methods:
+                    with self.subTest(method=method):
+                        result = unittest.TestResult()
+                        CompileObserverTests(method).run(result)
+                        self.assertEqual(result.testsRun, 1)
+                        self.assertEqual(result.skipped, [])
+                        self.assertEqual(result.errors, [])
+                        self.assertEqual(result.failures, [])
 
 
 if __name__ == "__main__":
