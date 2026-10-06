@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "status": "unapproved proposal; not executed",
+  "selected_on": "2026-10-06",
+  "tap": "homebrew/core",
+  "tap_git_head": "b297eb47435775b292f454304434ee59c6916c04",
+  "bottle_tag": "arm64_sequoia",
+  "install_order": [
+    "m4",
+    "autoconf",
+    "automake",
+    "libtool"
+  ],
+  "formulas": {
+    "autoconf": {
+      "version": "2.73",
+      "dependencies": [
+        "m4"
+      ],
+      "uses_from_macos": [
+        "perl"
+      ],
+      "source_url": "https://ftpmirror.gnu.org/autoconf/autoconf-2.73.tar.gz",
+      "source_sha256": "259ddfa3bddc799cfb81489cc0f17dfdf1bd6d1505dda53c0f45ff60d6a4f9a7",
+      "ruby_source_path": "Formula/a/autoconf.rb",
+      "ruby_source_sha256": "cab75402095f9a65be6a5d3fc11a2f7a6a7fdf04189abee37bfc1c6e5adff499",
+      "bottle_sha256": "bc785e044f4bec3efa3e9875f154905dad8a249e6e57d2a3ab0250eebdc866e8",
+      "cellar": ":any_skip_relocation",
+      "keg_only": false,
+      "bottle_url": "https://ghcr.io/v2/homebrew/core/autoconf/blobs/sha256:bc785e044f4bec3efa3e9875f154905dad8a249e6e57d2a3ab0250eebdc866e8",
+      "api_url": "https://formulae.brew.sh/api/formula/autoconf.json",
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": 1,
+      "bottle_rebuild": 0
+    },
+    "automake": {
+      "version": "1.19",
+      "dependencies": [
+        "autoconf"
+      ],
+      "uses_from_macos": [],
+      "source_url": "https://ftpmirror.gnu.org/automake/automake-1.19.tar.xz",
+      "source_sha256": "e3e2c2e3abf37898138db5b6c1d1dc35c9160c5978be7947d2c741705251d445",
+      "ruby_source_path": "Formula/a/automake.rb",
+      "ruby_source_sha256": "706ee509ee3d3a4bc05999b0695f0998cddedeb7d534699bf721ebb0ee4ec487",
+      "bottle_sha256": "23c091faee8dac047b0670d8c10da030bf104610fc064b904407de1a1ff8f437",
+      "cellar": ":any_skip_relocation",
+      "keg_only": false,
+      "bottle_url": "https://ghcr.io/v2/homebrew/core/automake/blobs/sha256:23c091faee8dac047b0670d8c10da030bf104610fc064b904407de1a1ff8f437",
+      "api_url": "https://formulae.brew.sh/api/formula/automake.json",
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": 1,
+      "bottle_rebuild": 0
+    },
+    "libtool": {
+      "version": "2.6.2",
+      "dependencies": [
+        "m4"
+      ],
+      "uses_from_macos": [],
+      "source_url": "https://ftpmirror.gnu.org/libtool/libtool-2.6.2.tar.xz",
+      "source_sha256": "2ef1067c16c97db930fd740cc9bc3d3ba9a583804ae5ac42cc3e8719e49e191e",
+      "ruby_source_path": "Formula/lib/libtool.rb",
+      "ruby_source_sha256": "5513e09178e3dccafd9cbb3e24c1af5c4aee5d40769256a3963ef8b234c35a39",
+      "bottle_sha256": "86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410",
+      "cellar": ":any",
+      "keg_only": false,
+      "bottle_url": "https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410",
+      "api_url": "https://formulae.brew.sh/api/formula/libtool.json",
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": 1,
+      "bottle_rebuild": 0
+    },
+    "m4": {
+      "version": "1.4.21",
+      "dependencies": [],
+      "uses_from_macos": [],
+      "source_url": "https://ftpmirror.gnu.org/m4/m4-1.4.21.tar.xz",
+      "source_sha256": "f25c6ab51548a73a75558742fb031e0625d6485fe5f9155949d6486a2408ab66",
+      "ruby_source_path": "Formula/m/m4.rb",
+      "ruby_source_sha256": "4f77735ee9b10e73b569387e86f8c456c3d50d253d70325543dba1d6aba24675",
+      "bottle_sha256": "80f871ba39104ef553d5a15e2c70639c69dd4fb76568842f5dc1ef451918c6a8",
+      "cellar": ":any_skip_relocation",
+      "keg_only": true,
+      "bottle_url": "https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:80f871ba39104ef553d5a15e2c70639c69dd4fb76568842f5dc1ef451918c6a8",
+      "api_url": "https://formulae.brew.sh/api/formula/m4.json",
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": 1,
+      "bottle_rebuild": 0
+    }
+  },
+  "allowed_new_formulas": [
+    "autoconf",
+    "automake",
+    "libtool",
+    "m4"
+  ],
+  "allowed_existing_os_dependency": "/usr/bin/perl",
+  "homebrew_runtime": "must already exist; no runtime bootstrap/upgrade",
+  "existing_tools": {
+    "make": {
+      "path": "/usr/bin/make",
+      "sha256": "7f30f076d0e9c38f772a76449fca9da8cf97f6a3d43b94c90a00e4f9ce7ad39e",
+      "version": "3.81"
+    },
+    "pkg-config": {
+      "path": "/opt/homebrew/Cellar/pkgconf/3.0.7/bin/pkgconf",
+      "sha256": "028a502cde07f2177f446661543da71eccd6054ab27d4ab87dbec4116299b516",
+      "version": "3.0.7"
+    }
+  }
+}
