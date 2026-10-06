@@ -105,3 +105,64 @@ test('CLI rejects invalid invocation with no payload or raw diagnostic details',
     assert.equal(result.stderr, 'Build-info export failed validation or reading.\n');
   }
 });
+
+test('Docker context permits only the pinned public owned IPA after blanket artifact exclusions', async () => {
+  const owned = 'WebBootstrap/tests/fixtures/owned-signing-test/Signing-test-app-not-Tetherless.ipa';
+  const contents = await readFile(new URL('../Dockerfile.dockerignore', import.meta.url), 'utf8');
+  const rules = contents.split(/\r?\n/).map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+  // Closed contract for the current ordered rules, not a general dockerignore
+  // emulator. Docker's last matching rule wins. Broad inclusions precede the
+  // blanket artifact denials; only these two exact public paths follow them.
+  const baseline = [
+    '**', '!LICENSE', '!WebBootstrap/', '!WebBootstrap/**', '!Tools/',
+    '!Tools/WebBootstrapService/', '!Tools/WebBootstrapService/README.md',
+    '!Tools/WebBootstrapService/Cargo.toml', '!Tools/WebBootstrapService/Cargo.lock',
+    '!Tools/WebBootstrapService/src/', '!Tools/WebBootstrapService/src/**',
+    '!Tools/WebBootstrapService/tests/', '!Tools/WebBootstrapService/tests/**',
+    '!Tools/WebBootstrapService/deployment/', '!Tools/WebBootstrapService/deployment/**',
+    '**/node_modules', '**/dist', '**/target', '**/.toolchain', '**/.env*',
+    '**/.git', '**/*secret*', '**/*.pem', '**/*.p8', '**/*.mobileprovision',
+    '**/.npmrc', '**/.netrc', '**/.git-credentials', '**/*.key', '**/*.p12',
+    '**/*.pfx', '**/*.ipa', '**/test-results', '**/playwright-report', '**/qa-evidence',
+    '!Tools/WebBootstrapService/tests/fixtures/request.pem',
+  ];
+  assert.deepEqual(rules, [...baseline, `!${owned}`]);
+  const postIpaExceptions = rules.slice(rules.indexOf('**/*.ipa') + 1).filter(rule => rule.startsWith('!'));
+  assert.deepEqual(postIpaExceptions, ['!Tools/WebBootstrapService/tests/fixtures/request.pem', `!${owned}`]);
+  for (const unrelated of [
+    'private.ipa', 'WebBootstrap/private.ipa',
+    owned.replace('Signing-test-app-not-Tetherless.ipa', 'another.ipa'),
+    owned.replace('.ipa', '-signed.ipa'),
+    owned.replace('owned-signing-test/', 'other/'),
+    'WebBootstrap/public/Signing-test-app-not-Tetherless.ipa',
+    'Tools/WebBootstrapService/tests/fixtures/Signing-test-app-not-Tetherless.ipa',
+  ]) assert.equal(postIpaExceptions.includes(`!${unrelated}`), false, unrelated);
+  const bytes = await readFile(new URL('../../../../' + owned, import.meta.url));
+  assert.equal(bytes.length, 14853);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), 'fda8c913af9d6f39f8a4351bd94d7953bb99b2b25506e67a3e7d943dafaf8111');
+});
+
+test('Docker uses the owned fixture in the frontend test builder without copying test inputs into runtime', async () => {
+  const dockerfile = await readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const stages = dockerfile.split(/^FROM /m).slice(1);
+  const frontend = stages.find(stage => stage.split('\n')[0].endsWith(' AS frontend'));
+  const runtime = stages.find(stage => stage.split('\n')[0].endsWith(' AS runtime'));
+  assert(frontend && runtime);
+  const copies = stage => stage.split('\n').filter(line => line.startsWith('COPY '));
+  assert.deepEqual(copies(frontend), [
+    'COPY WebBootstrap/package.json WebBootstrap/package-lock.json ./',
+    'COPY WebBootstrap/ ./',
+  ]);
+  assert(frontend.indexOf('COPY WebBootstrap/ ./') < frontend.indexOf('RUN npm test && npm run build'));
+  assert.match(frontend, /^RUN npm test && npm run build \\/m);
+  assert.deepEqual(copies(runtime), [
+    'COPY --from=backend /src/Tools/WebBootstrapService/target/release/tetherless-web-bootstrap-service /app/',
+    'COPY --from=frontend /src/WebBootstrap/dist /app/frontend',
+    'COPY --from=frontend /build-info /app/build-info',
+    'COPY --from=backend /build-info /app/build-info',
+    'COPY LICENSE /app/licenses/AGPL-3.0.txt',
+    'COPY Tools/WebBootstrapService/README.md /app/licenses/account-service-notices.md',
+    'COPY Tools/WebBootstrapService/deployment/*.mjs /app/deployment/',
+  ]);
+  assert.doesNotMatch(runtime, /^ADD /m);
+});

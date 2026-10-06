@@ -38,3 +38,6 @@
 
 # Public synthetic CSR required by backend tests (not a private key).
 !Tools/WebBootstrapService/tests/fixtures/request.pem
+
+# Exact public unsigned UIKit fixture for frontend tests; all other IPAs stay excluded.
+!WebBootstrap/tests/fixtures/owned-signing-test/Signing-test-app-not-Tetherless.ipa
