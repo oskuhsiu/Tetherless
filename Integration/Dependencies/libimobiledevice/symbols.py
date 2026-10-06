@@ -46,6 +46,10 @@ def link_ownership(text: str, library: Path, required: set[str]) -> dict:
     for line in text.splitlines():
         if line.startswith('# Object files:'):
             section = 'objects'
+        elif line == '# Sections:':
+            if section != 'objects':
+                raise ValueError('unexpected link-map sections transition')
+            section = 'sections'
         elif line.startswith('# Symbols:'):
             section = 'symbols'
         elif line.startswith('# Dead Stripped Symbols:'):
@@ -57,6 +61,9 @@ def link_ownership(text: str, library: Path, required: set[str]) -> dict:
             if not m or m[1] in objects:
                 raise ValueError('malformed or duplicate map object')
             objects[m[1]] = m[2]
+        elif section == 'sections' and line.strip():
+            if not re.fullmatch(r'0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+[_A-Za-z.$][_A-Za-z0-9.$]*\s+[_A-Za-z.$][_A-Za-z0-9.$]*', line):
+                raise ValueError('unparsed link-map section row')
         elif section == 'symbols' and line.strip():
             m = re.fullmatch(r'0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+\[\s*(\d+)\]\s+(.+)', line)
             if not m:

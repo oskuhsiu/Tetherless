@@ -2,6 +2,7 @@ import copy
 import importlib.util
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 import shutil
@@ -164,6 +165,77 @@ class SymbolTests(unittest.TestCase):
     def test_collapsed_context_owner_rejected(self):
         lib,text=self.map_fixture();text=text.replace('0x1000 0x40 [ 2]','0x1000 0x40 [ 1]')
         with self.assertRaises(ValueError):symbols.link_ownership(text,lib,symbols.REQUIRED|symbols.GLUE|symbols.ED)
+
+class RealMapSectionTests(unittest.TestCase):
+    def setUp(self):
+        raw=(HERE/'tests/fixtures/iphoneos-c-run37507597771.map').read_bytes()
+        self.assertEqual(len(raw),214129)
+        self.assertEqual(ns.sha256(raw),'53ea72932edfcb53555b9fe5affa5d477af2f2cb277b62b229760177d7b289d0')
+        names=(HERE/'tests/fixtures/iphoneos-symbols-run37507597771.json').read_bytes()
+        self.assertEqual(ns.sha256(names),'965c2b62539bdb90b3cc412e8bb48f615ca2324e2adde51eecbb10a6d3607d64')
+        self.required=set(json.loads(names)['symbols']);self.assertEqual(len(self.required),829)
+        temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
+        self.library=Path(temporary.name).resolve(strict=True)/'libimobiledevice.a'
+        self.library.write_bytes(b'owned path fixture only; no native archive execution')
+        original='/Users/runner/work/Tetherless/Tetherless/.c-provider/work/iphoneos/libimobiledevice.a'
+        self.assertEqual(raw.decode().count(original),81)
+        # Rebase only the 81 exact archive paths for the local canonical file.
+        # The retained native fixture itself and all map rows remain unchanged.
+        self.text=raw.decode().replace(original,str(self.library))
+
+    def check(self,text):return symbols.link_ownership(text,self.library,self.required)
+
+    def test_actual_map_sections_and_all_829_owners_pass(self):
+        result=self.check(self.text)
+        self.assertEqual(result['required_live_symbols'],829)
+        self.assertEqual({result['owners'][name] for name in symbols.ED},{'41'})
+        self.assertEqual({result['owners'][name] for name in symbols.GLUE},{'81'})
+
+    def test_layout_table_rejects_malformed_or_live_symbol_rows(self):
+        row='0x100004000\t0x000480E4\t__TEXT\t__text'
+        self.assertTrue(row in self.text,'native section row missing from fixture')
+        for bad in ('malformed section','0x1 0x2 __TEXT __text extra','0x1 0x2 [ 41] _sha512'):
+            with self.subTest(row=bad),self.assertRaisesRegex(ValueError,'unparsed link-map section row'):
+                self.check(self.text.replace(row,bad,1))
+
+    def test_unknown_section_marker_does_not_disable_object_checks(self):
+        with self.assertRaisesRegex(ValueError,'malformed or duplicate map object'):
+            self.check(self.text.replace('# Sections:','# Sections: unexpected',1))
+
+    def test_sections_cannot_restart_after_live_symbols(self):
+        with self.assertRaisesRegex(ValueError,'unexpected link-map sections transition'):
+            self.check(self.text.replace('# Symbols:\n','# Symbols:\n# Sections:\n',1))
+
+    def test_malformed_or_duplicate_objects_still_fail(self):
+        for row in ('malformed object','[  2] '+str(self.library)+'(duplicate.o)'):
+            with self.subTest(row=row),self.assertRaisesRegex(ValueError,'malformed or duplicate map object'):
+                self.check(self.text.replace('# Sections:\n',row+'\n# Sections:\n',1))
+
+    def test_missing_required_global_still_fails(self):
+        changed,count=re.subn(r'(?m)([ \t])_afc_client_free$',r'\1_omitted_afc_client_free',self.text)
+        self.assertEqual(count,1)
+        with self.assertRaisesRegex(ValueError,'required global missing'):
+            self.check(changed)
+
+    def test_duplicate_required_live_global_still_fails(self):
+        with self.assertRaisesRegex(ValueError,'ambiguous required map symbol'):
+            self.check(self.text+'0x1000 0x40 [ 8] _afc_client_free\n')
+
+    def test_wrong_archive_owner_still_fails(self):
+        owner=str(self.library)+'(idevice.o)';self.assertTrue(owner in self.text,'native archive owner missing from fixture')
+        with self.assertRaisesRegex(ValueError,'wrong archive owner'):
+            self.check(self.text.replace(owner,str(self.library)+'wrong(idevice.o)',1))
+
+    def test_sha_family_owner_collapse_still_fails(self):
+        lines=[];changed=0
+        for line in self.text.splitlines():
+            if line.split() and line.split()[-1] in symbols.GLUE:
+                line,count=re.subn(r'\[\s*81\]','[ 41]',line);changed+=count
+            lines.append(line)
+        self.assertEqual(changed,4)
+        with self.assertRaisesRegex(ValueError,'two distinct real members'):
+            self.check('\n'.join(lines)+'\n')
+
 
 class BuildContractTests(unittest.TestCase):
     def test_only_new_workflow_trigger(self):
