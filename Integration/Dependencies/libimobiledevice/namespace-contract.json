@@ -1,0 +1,66 @@
+{
+  "files": {
+    "3rd_party/ed25519/add_scalar.c": {
+      "after_bytes": 2254,
+      "after_git_blob": "430d7226fa019e613ec28aa99ebd3b7a222fc79a",
+      "after_sha256": "fe1382d6b964058288086c3b87f68c72f7f443850f38006fbdb214c9253eb61f",
+      "before_bytes": 2170,
+      "before_git_blob": "7528a7a4a219139671f6d9074ca738fe3afc033c",
+      "before_sha256": "73aec76dd3842276a62b104e6bedf1ec4b4da2470baf32ecd921afa953f02979",
+      "tokens": 4
+    },
+    "3rd_party/ed25519/keypair.c": {
+      "after_bytes": 401,
+      "after_git_blob": "a51255e959fac15224db3bf8db25953ffab37c06",
+      "after_sha256": "2a9b8ac753051dcac60bf3708c8682f97351a6d20506c715c4b879e726ac59d3",
+      "before_bytes": 380,
+      "before_git_blob": "dc1b8eccc28db4254c59774eefbc8d164e22bbf2",
+      "before_sha256": "a9fd88cc4558f52d5fabf03b1b54c1c38a105a03753dd7ca4e0249687be0ebcc",
+      "tokens": 1
+    },
+    "3rd_party/ed25519/sha512.c": {
+      "after_bytes": 11235,
+      "after_git_blob": "d2f6c8983d227fa88cb735cacd0799753b02b4d9",
+      "after_sha256": "9a3ff2d779c5d05ebc5e1cd53f070c98c76cc4b2885c4109e92f55fd8b61a666",
+      "before_bytes": 11088,
+      "before_git_blob": "cb8ae7175392733ff677448b1f1adf729fa5ebd5",
+      "before_sha256": "b34128b950036777c299943d624bd830a234a65932c394fdf455e4948258fb6d",
+      "tokens": 7
+    },
+    "3rd_party/ed25519/sha512.h": {
+      "after_bytes": 573,
+      "after_git_blob": "f84f8dc88a29befb20d2aa5431635f0404868237",
+      "after_sha256": "29084a9e90771abba400724eb110c708447f8c3529f169387e130b8a98fd2e65",
+      "before_bytes": 489,
+      "before_git_blob": "a34dd5e429e8210f31f5a05f8ec7baaf46909748",
+      "before_sha256": "647ed5784d4dcd682b9c42add2e39107582efb4df9e1362c8e5120613eb9a0ce",
+      "tokens": 4
+    },
+    "3rd_party/ed25519/sign.c": {
+      "after_bytes": 1016,
+      "after_git_blob": "83d8d3eb8648057bdb2d542ff6ad1fd3967bdee6",
+      "after_sha256": "0b98dc3df2cd3a13b3e7740372d020272d6f5bb369b901149c90a974aa6e9af8",
+      "before_bytes": 827,
+      "before_git_blob": "199a8393b2b87edc75f3f54b1ea9e9415d921969",
+      "before_sha256": "af693a4a59430cc06d4b07f82e30bf266897ecc9c75265c7fa49cfa4159cf5ec",
+      "tokens": 9
+    },
+    "3rd_party/ed25519/verify.c": {
+      "after_bytes": 1472,
+      "after_git_blob": "34507d3c3d0341e3980bf3498d1628bb09fbd5ad",
+      "after_sha256": "4ab1079a0b890c2c8a403a609acf29678448865b892b8be22050cc7a529ee5b8",
+      "before_bytes": 1367,
+      "before_git_blob": "32f988edc8b2d81e1fafe6c952a62f09e5cf667c",
+      "before_sha256": "a2ca7197c5f6d193c9f526d432429dfb44a65853a7ec18e10a5761334bdcf48c",
+      "tokens": 5
+    }
+  },
+  "identifiers": {
+    "sha512": "tetherless_c_ed25519_sha512",
+    "sha512_final": "tetherless_c_ed25519_sha512_final",
+    "sha512_init": "tetherless_c_ed25519_sha512_init",
+    "sha512_update": "tetherless_c_ed25519_sha512_update"
+  },
+  "root_commit": "0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a",
+  "schema": 1
+}

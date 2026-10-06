@@ -1,0 +1,123 @@
+name: Isolated namespaced C provider
+on:
+  push:
+    branches: [verify/staged-pairing-native]
+    paths:
+      - 'Integration/Dependencies/libimobiledevice/**'
+      - '.github/workflows/c-provider-native.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: c-provider-native-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  c-provider:
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 65
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Portable contract checks
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          test ! -e .c-provider
+          mkdir .c-provider
+          python3 -m unittest discover -s Integration/Dependencies/libimobiledevice/tests -v
+          python3 -m unittest discover -s Integration/Dependencies/libimobiledevice/probes/host -p 'test_*.py' -v
+      - name: Acquire pinned main C sources
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: SideStore/libimobiledevice-xcframework
+          ref: 0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a
+          path: .c-provider/acquisition/root
+          persist-credentials: false
+          submodules: false
+      - name: Acquire pinned libplist sources
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: libimobiledevice/libplist
+          ref: 32428abacb909988e8e960a8845a6430b17b6a60
+          path: .c-provider/acquisition/plist
+          persist-credentials: false
+          submodules: false
+      - name: Acquire pinned glue sources
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: libimobiledevice/libimobiledevice-glue
+          ref: da770a7687f35fbb981db4d7b47b1b032cd5c2c7
+          path: .c-provider/acquisition/glue
+          persist-credentials: false
+          submodules: false
+      - name: Acquire pinned usbmuxd sources
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: libimobiledevice/libusbmuxd
+          ref: 93eb168bf6b07472d17781328c21df0c60300524
+          path: .c-provider/acquisition/usbmuxd
+          persist-credentials: false
+          submodules: false
+      - name: Acquire the existing reviewed OpenSSL provider
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 5
+        with:
+          repository: krzyzanowskim/OpenSSL
+          ref: fdc9231384f37f053dffe058fd6dfc6c5072dae5
+          path: .c-provider/acquisition/openssl
+          persist-credentials: false
+          submodules: false
+          sparse-checkout: |
+            Frameworks/OpenSSL.xcframework/ios-arm64
+            Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-simulator
+            macosx/include/OpenSSL
+            macosx/lib
+      - name: Authenticate and retain all inputs before the offline boundary
+        timeout-minutes: 5
+        env:
+          GH_READ_TOKEN: ${{ github.token }}
+        run: |
+          python3 Integration/Dependencies/libimobiledevice/acquire.py \
+            --acquisition .c-provider/acquisition --output .c-provider/inputs
+      - name: Offline host tests and two-slice C source rebuild
+        timeout-minutes: 43
+        run: |
+          set -euo pipefail
+          # Applies only to this owned process tree. No OS/network settings change.
+          /usr/bin/sandbox-exec -p '(version 1) (allow default) (deny network*)' \
+            python3 Integration/Dependencies/libimobiledevice/build_provider.py \
+              --source .c-provider/inputs/pristine \
+              --openssl .c-provider/inputs/openssl \
+              --old-provider .c-provider/inputs/old-provider \
+              --work .c-provider/work
+      - name: Preserve exact candidate and partial failure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 5
+        with:
+          name: c-provider-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            .c-provider/inputs/action-identity.json
+            .c-provider/inputs/closed-inputs.json
+            .c-provider/inputs/pristine/
+            .c-provider/inputs/openssl-verified.json
+            .c-provider/inputs/original-c-acquisition.txt*
+            .c-provider/inputs/original-c-provider.zip
+            .c-provider/inputs/old-provider/mixed-provider-inputs.json
+            .c-provider/work/evidence/
+            .c-provider/work/host-tests/
+            .c-provider/work/libimobiledevice-derived-candidate.zip
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

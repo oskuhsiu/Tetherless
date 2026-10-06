@@ -1,0 +1,1978 @@
+{
+  "sha": "0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a",
+  "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a",
+  "tree": [
+    {
+      "path": ".gitattributes",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "176a458f94e0ea5272ce67c36bf30b6be9caf623",
+      "size": 12,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/176a458f94e0ea5272ce67c36bf30b6be9caf623"
+    },
+    {
+      "path": ".github",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "00e655c7554e6ae769be516e4f3706d9ed0a6082",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/00e655c7554e6ae769be516e4f3706d9ed0a6082"
+    },
+    {
+      "path": ".github/workflows",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "e35e41416e4cbc8993a7ae78453b1296662779c7",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/e35e41416e4cbc8993a7ae78453b1296662779c7"
+    },
+    {
+      "path": ".github/workflows/build.yml.bak",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fbbf10a7ea448b91258530624f9f02651fb997f0",
+      "size": 9506,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/fbbf10a7ea448b91258530624f9f02651fb997f0"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a4db37f2723f1a40a537aa1453f12bc854a0bb6b",
+      "size": 3349,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a4db37f2723f1a40a537aa1453f12bc854a0bb6b"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bc4ed07bc5ab1f023966dd718f91c5f05ae7ac14",
+      "size": 651,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/bc4ed07bc5ab1f023966dd718f91c5f05ae7ac14"
+    },
+    {
+      "path": ".gitmodules",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "75829a88f74bef71b0fdec911cde99c12a46deb3",
+      "size": 399,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/75829a88f74bef71b0fdec911cde99c12a46deb3"
+    },
+    {
+      "path": "3rd_party",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "2ef005fdff9eb70d9e283fcac08948a24729a1e8",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/2ef005fdff9eb70d9e283fcac08948a24729a1e8"
+    },
+    {
+      "path": "3rd_party/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a196ea30408e099a3596f2b5867042ee045c57af",
+      "size": 127,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a196ea30408e099a3596f2b5867042ee045c57af"
+    },
+    {
+      "path": "3rd_party/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0bec640b80a5b3da3cb83013685e4621475e3226",
+      "size": 1406,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0bec640b80a5b3da3cb83013685e4621475e3226"
+    },
+    {
+      "path": "3rd_party/ed25519",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "29d61eee6cc331020fdeb019297deed06fdc73cb",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/29d61eee6cc331020fdeb019297deed06fdc73cb"
+    },
+    {
+      "path": "3rd_party/ed25519/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c1503f912112217bc5a9c727e7e5889bd5aea998",
+      "size": 874,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c1503f912112217bc5a9c727e7e5889bd5aea998"
+    },
+    {
+      "path": "3rd_party/ed25519/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "438cb53bc5f6fc2984c439544612405b12dc85fe",
+      "size": 511,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/438cb53bc5f6fc2984c439544612405b12dc85fe"
+    },
+    {
+      "path": "3rd_party/ed25519/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2c431c2f3821834dea19885bfdae90f2d86d1c53",
+      "size": 5816,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2c431c2f3821834dea19885bfdae90f2d86d1c53"
+    },
+    {
+      "path": "3rd_party/ed25519/add_scalar.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7528a7a4a219139671f6d9074ca738fe3afc033c",
+      "size": 2170,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7528a7a4a219139671f6d9074ca738fe3afc033c"
+    },
+    {
+      "path": "3rd_party/ed25519/ed25519.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8924659fa394e8d30d44f815ffd73b5a093ad700",
+      "size": 1251,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/8924659fa394e8d30d44f815ffd73b5a093ad700"
+    },
+    {
+      "path": "3rd_party/ed25519/fe.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2105eb7b2c57d3819241b93640f6a5afb5358fcc",
+      "size": 38843,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2105eb7b2c57d3819241b93640f6a5afb5358fcc"
+    },
+    {
+      "path": "3rd_party/ed25519/fe.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b4b62d28284d4a1e16a325a2fd1eac5c51bd4342",
+      "size": 980,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b4b62d28284d4a1e16a325a2fd1eac5c51bd4342"
+    },
+    {
+      "path": "3rd_party/ed25519/fixedint.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1a8745b1ea4fe1e9602d0251763965714483bd00",
+      "size": 2518,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/1a8745b1ea4fe1e9602d0251763965714483bd00"
+    },
+    {
+      "path": "3rd_party/ed25519/ge.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "87c691bff55d66e591c1fb3c2bdf87a4efee200d",
+      "size": 10373,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/87c691bff55d66e591c1fb3c2bdf87a4efee200d"
+    },
+    {
+      "path": "3rd_party/ed25519/ge.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17fde2df1ff38a4a8558169163b27f2935474519",
+      "size": 1683,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/17fde2df1ff38a4a8558169163b27f2935474519"
+    },
+    {
+      "path": "3rd_party/ed25519/key_exchange.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "abd75da2c2152b12d312af1d32ee49d5eadbb816",
+      "size": 1817,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/abd75da2c2152b12d312af1d32ee49d5eadbb816"
+    },
+    {
+      "path": "3rd_party/ed25519/keypair.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dc1b8eccc28db4254c59774eefbc8d164e22bbf2",
+      "size": 380,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/dc1b8eccc28db4254c59774eefbc8d164e22bbf2"
+    },
+    {
+      "path": "3rd_party/ed25519/precomp_data.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ff23986c3980237ddbd2556710a0b7ab7f7ee8ec",
+      "size": 97800,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ff23986c3980237ddbd2556710a0b7ab7f7ee8ec"
+    },
+    {
+      "path": "3rd_party/ed25519/sc.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ca5bad2ca04f39eac3dacb1638b4da3958e4a60e",
+      "size": 22867,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ca5bad2ca04f39eac3dacb1638b4da3958e4a60e"
+    },
+    {
+      "path": "3rd_party/ed25519/sc.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e29e7fa5af2fec309668104c18fe8ab619928580",
+      "size": 267,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e29e7fa5af2fec309668104c18fe8ab619928580"
+    },
+    {
+      "path": "3rd_party/ed25519/seed.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cf252b83d6d59faa8a1fb25a069a6e1be511e4ed",
+      "size": 649,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/cf252b83d6d59faa8a1fb25a069a6e1be511e4ed"
+    },
+    {
+      "path": "3rd_party/ed25519/sha512.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cb8ae7175392733ff677448b1f1adf729fa5ebd5",
+      "size": 11088,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/cb8ae7175392733ff677448b1f1adf729fa5ebd5"
+    },
+    {
+      "path": "3rd_party/ed25519/sha512.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a34dd5e429e8210f31f5a05f8ec7baaf46909748",
+      "size": 489,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a34dd5e429e8210f31f5a05f8ec7baaf46909748"
+    },
+    {
+      "path": "3rd_party/ed25519/sign.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "199a8393b2b87edc75f3f54b1ea9e9415d921969",
+      "size": 827,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/199a8393b2b87edc75f3f54b1ea9e9415d921969"
+    },
+    {
+      "path": "3rd_party/ed25519/verify.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "32f988edc8b2d81e1fafe6c952a62f09e5cf667c",
+      "size": 1367,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/32f988edc8b2d81e1fafe6c952a62f09e5cf667c"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "3dfa78c5861fbedfcee8ef0101ad87ca432d6357",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/3dfa78c5861fbedfcee8ef0101ad87ca432d6357"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7f706408e0cb1f10013d21453ff6b1a216ca1d72",
+      "size": 2802,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7f706408e0cb1f10013d21453ff6b1a216ca1d72"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bdacb5fcf6a920b727908d57e105e9f1b31bee1e",
+      "size": 687,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/bdacb5fcf6a920b727908d57e105e9f1b31bee1e"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4affe4a1884855c0b8bbd5419dc5fcf7ac6372b9",
+      "size": 1178,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/4affe4a1884855c0b8bbd5419dc5fcf7ac6372b9"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/cstr.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "58a563810f5ac92fb845d018cbb434a6521fe249",
+      "size": 3084,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/58a563810f5ac92fb845d018cbb434a6521fe249"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/cstr.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "29afea7913dc497f684b42339563bd3c327adcb2",
+      "size": 2081,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/29afea7913dc497f684b42339563bd3c327adcb2"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/srp.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "74e1f981979247cfb893f041119c702d1a7e4b46",
+      "size": 6725,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/74e1f981979247cfb893f041119c702d1a7e4b46"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/srp.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b1d46af5f39a3413215f1306750ec01f46d635ba",
+      "size": 13098,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b1d46af5f39a3413215f1306750ec01f46d635ba"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/srp6a_sha512_client.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "db59fe8a6183f9a6524a01e4fda3df4adebeb584",
+      "size": 11369,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/db59fe8a6183f9a6524a01e4fda3df4adebeb584"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/srp_aux.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5088f08369f92b97b47ede4c534def184bd738ff",
+      "size": 5978,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5088f08369f92b97b47ede4c534def184bd738ff"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_conv.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "76d4e5800e3c5a709c7608445ed7ec84f4d80be8",
+      "size": 5423,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/76d4e5800e3c5a709c7608445ed7ec84f4d80be8"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_defines.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a2a5fe58fcfa1c149dd30489bb7d012ede6d1f24",
+      "size": 3630,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a2a5fe58fcfa1c149dd30489bb7d012ede6d1f24"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_math.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dac19ecd9a1dd2699b59b916117028e16c65f896",
+      "size": 22996,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/dac19ecd9a1dd2699b59b916117028e16c65f896"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_misc.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "34b9509cec07062ea1675e7cb73c181e174890be",
+      "size": 12042,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/34b9509cec07062ea1675e7cb73c181e174890be"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_pwd.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a90a3648ee35a3f6d8b3f10fb742785d1a152795",
+      "size": 9071,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a90a3648ee35a3f6d8b3f10fb742785d1a152795"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_sha.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8e54cb6947156b270ac10f10984fb97755179f8b",
+      "size": 8996,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/8e54cb6947156b270ac10f10984fb97755179f8b"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_sha.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2e3806757b7be13bbdbdb3495a438eae00f1929a",
+      "size": 3903,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2e3806757b7be13bbdbdb3495a438eae00f1929a"
+    },
+    {
+      "path": "3rd_party/libsrp6a-sha512/t_truerand.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cd27d0d5d33cf84a557f0cbede0430de443a3764",
+      "size": 5255,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/cd27d0d5d33cf84a557f0cbede0430de443a3764"
+    },
+    {
+      "path": "AUTHORS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7c2b0e20c291da929e19aaa1fd5272dfaa6c0ba7",
+      "size": 294,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7c2b0e20c291da929e19aaa1fd5272dfaa6c0ba7"
+    },
+    {
+      "path": "COPYING",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "08ddefd0401d1d29e6c07b629344ce1675e6b095",
+      "size": 17988,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/08ddefd0401d1d29e6c07b629344ce1675e6b095"
+    },
+    {
+      "path": "COPYING.LESSER",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "732811e4f1faf71870b7350f211b26e00d7bfbe9",
+      "size": 26434,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/732811e4f1faf71870b7350f211b26e00d7bfbe9"
+    },
+    {
+      "path": "Dependencies",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "182174b52240c43dd7c4855b7b3a791b461bf808",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/182174b52240c43dd7c4855b7b3a791b461bf808"
+    },
+    {
+      "path": "Dependencies/libimobiledevice-glue",
+      "mode": "160000",
+      "type": "commit",
+      "sha": "da770a7687f35fbb981db4d7b47b1b032cd5c2c7"
+    },
+    {
+      "path": "Dependencies/libplist",
+      "mode": "160000",
+      "type": "commit",
+      "sha": "32428abacb909988e8e960a8845a6430b17b6a60"
+    },
+    {
+      "path": "Dependencies/libusbmuxd",
+      "mode": "160000",
+      "type": "commit",
+      "sha": "93eb168bf6b07472d17781328c21df0c60300524"
+    },
+    {
+      "path": "Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f429f2f99bc0228219344d6a5472fa2cbab7e63d",
+      "size": 560,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f429f2f99bc0228219344d6a5472fa2cbab7e63d"
+    },
+    {
+      "path": "NEWS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4e075ce6cf4ac49a694e631ba90afabe426ffb4f",
+      "size": 25073,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/4e075ce6cf4ac49a694e631ba90afabe426ffb4f"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "32e1570988cf4f72384e305be27418f03fae5445",
+      "size": 8269,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/32e1570988cf4f72384e305be27418f03fae5445"
+    },
+    {
+      "path": "autogen.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "5a0ec43ae56118ef5e47a27c35d001515917d75b",
+      "size": 365,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5a0ec43ae56118ef5e47a27c35d001515917d75b"
+    },
+    {
+      "path": "common",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "4d1f62ec28d55c9b4318ea854548025a89a2af6a",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/4d1f62ec28d55c9b4318ea854548025a89a2af6a"
+    },
+    {
+      "path": "common/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ba7ed9c0fc42bcff66e2013809d4d24012855d7c",
+      "size": 590,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ba7ed9c0fc42bcff66e2013809d4d24012855d7c"
+    },
+    {
+      "path": "common/debug.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7a593fcd138a6772991aa4d30877a3fe36332aac",
+      "size": 4089,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7a593fcd138a6772991aa4d30877a3fe36332aac"
+    },
+    {
+      "path": "common/debug.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "882072db2e16fe74fba1eba3e3669c213cc110e6",
+      "size": 1963,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/882072db2e16fe74fba1eba3e3669c213cc110e6"
+    },
+    {
+      "path": "common/userpref.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "76945e18ce7fc388a856c08c14dc68bd4b7eb386",
+      "size": 37286,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/76945e18ce7fc388a856c08c14dc68bd4b7eb386"
+    },
+    {
+      "path": "common/userpref.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9a1832c49d948931c66e441c8bb16db5798b49f5",
+      "size": 3598,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9a1832c49d948931c66e441c8bb16db5798b49f5"
+    },
+    {
+      "path": "configure.ac",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "055fe0470e7110119df457e62ffe66e2061bed78",
+      "size": 12373,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/055fe0470e7110119df457e62ffe66e2061bed78"
+    },
+    {
+      "path": "cython",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "1f73df64633d4104d9a2502d1b303eed48a196b1",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/1f73df64633d4104d9a2502d1b303eed48a196b1"
+    },
+    {
+      "path": "cython/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "93ea6ed26e8959feb976fbb59831b62f751cafac",
+      "size": 1591,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/93ea6ed26e8959feb976fbb59831b62f751cafac"
+    },
+    {
+      "path": "cython/afc.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bd81824da370d5279f2b523a7dbecdbb9a148bf",
+      "size": 12276,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6bd81824da370d5279f2b523a7dbecdbb9a148bf"
+    },
+    {
+      "path": "cython/debugserver.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fb963203eeebad5b38db28c5cc2c65c7b7924258",
+      "size": 8895,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/fb963203eeebad5b38db28c5cc2c65c7b7924258"
+    },
+    {
+      "path": "cython/diagnostics_relay.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0e6bd2049d5cbb2b53fe7ec22d6c4c0420f988ad",
+      "size": 5854,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0e6bd2049d5cbb2b53fe7ec22d6c4c0420f988ad"
+    },
+    {
+      "path": "cython/file_relay.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5e9cbbe0d17da4e0436441eaa18f5093e4a9f222",
+      "size": 2820,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5e9cbbe0d17da4e0436441eaa18f5093e4a9f222"
+    },
+    {
+      "path": "cython/heartbeat.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f5890936ccf5151817e6a5ab7090ed744da4091",
+      "size": 2627,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2f5890936ccf5151817e6a5ab7090ed744da4091"
+    },
+    {
+      "path": "cython/house_arrest.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "54eebc1a9682c8cdf6fddb34d17f56fa02c2335d",
+      "size": 3517,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/54eebc1a9682c8cdf6fddb34d17f56fa02c2335d"
+    },
+    {
+      "path": "cython/imobiledevice.pxd",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "238df6859d5c3c3462617fbf1829836df2017705",
+      "size": 3601,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/238df6859d5c3c3462617fbf1829836df2017705"
+    },
+    {
+      "path": "cython/imobiledevice.pyx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8da229626151ff0d33f67322d2b2eb8ca4b60d22",
+      "size": 9900,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/8da229626151ff0d33f67322d2b2eb8ca4b60d22"
+    },
+    {
+      "path": "cython/installation_proxy.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1d3e3234d2b8e7b7cdd832c046b6f29798f0d433",
+      "size": 12290,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/1d3e3234d2b8e7b7cdd832c046b6f29798f0d433"
+    },
+    {
+      "path": "cython/lockdown.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "25edb4c26157b8ba3dc76b4c3be3d316ff586bfa",
+      "size": 14931,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/25edb4c26157b8ba3dc76b4c3be3d316ff586bfa"
+    },
+    {
+      "path": "cython/misagent.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1fee4b9f476b3976d0565e37b65b37694cec46f8",
+      "size": 2874,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/1fee4b9f476b3976d0565e37b65b37694cec46f8"
+    },
+    {
+      "path": "cython/mobile_image_mounter.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d9d40d55f9cbf6ef519c6439f2c44a5713c5f9db",
+      "size": 5369,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/d9d40d55f9cbf6ef519c6439f2c44a5713c5f9db"
+    },
+    {
+      "path": "cython/mobilebackup.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f2d58d414f63c665d516766273d8cb37e35df859",
+      "size": 5306,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f2d58d414f63c665d516766273d8cb37e35df859"
+    },
+    {
+      "path": "cython/mobilebackup2.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4b47e5b6fff13c582b1df2f804531514486abfd6",
+      "size": 5760,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/4b47e5b6fff13c582b1df2f804531514486abfd6"
+    },
+    {
+      "path": "cython/mobilesync.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "23f0005bce977f3fe9ad9af5834905a235917c7d",
+      "size": 7521,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/23f0005bce977f3fe9ad9af5834905a235917c7d"
+    },
+    {
+      "path": "cython/notification_proxy.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "261200ef00399011a70a74e25c6e64077af026e9",
+      "size": 5193,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/261200ef00399011a70a74e25c6e64077af026e9"
+    },
+    {
+      "path": "cython/restore.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9d0393582d8c5569a26d27e0333cd3b642693b5e",
+      "size": 4796,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9d0393582d8c5569a26d27e0333cd3b642693b5e"
+    },
+    {
+      "path": "cython/sbservices.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8ff2595933d2fcde17b12d0be7e34eaac9741a4e",
+      "size": 3355,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/8ff2595933d2fcde17b12d0be7e34eaac9741a4e"
+    },
+    {
+      "path": "cython/screenshotr.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a1e82e28b711785bf19108a43773b8356f0c9b2c",
+      "size": 2600,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a1e82e28b711785bf19108a43773b8356f0c9b2c"
+    },
+    {
+      "path": "cython/webinspector.pxi",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f77547d86e4f786724dfb208813bcb8ae387efdd",
+      "size": 2786,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f77547d86e4f786724dfb208813bcb8ae387efdd"
+    },
+    {
+      "path": "docs",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "05bc8caa4eda9fe149751bdc46f3928ee6bfa133",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/05bc8caa4eda9fe149751bdc46f3928ee6bfa133"
+    },
+    {
+      "path": "docs/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c9b742f316750d871f15e276bb4c77dbc6816edf",
+      "size": 524,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c9b742f316750d871f15e276bb4c77dbc6816edf"
+    },
+    {
+      "path": "docs/afcclient.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a4eeacbe7ff97e1382872eb40ffc60353db3003a",
+      "size": 1862,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a4eeacbe7ff97e1382872eb40ffc60353db3003a"
+    },
+    {
+      "path": "docs/doxygen",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "a61f6b75d27c0ab8e347aa8646207ccef8077e30",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/a61f6b75d27c0ab8e347aa8646207ccef8077e30"
+    },
+    {
+      "path": "docs/doxygen/custom.css",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e9f1ea831bdc0e9c8a7c7153d7eab369fc3370e9",
+      "size": 27775,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e9f1ea831bdc0e9c8a7c7153d7eab369fc3370e9"
+    },
+    {
+      "path": "docs/doxygen/favicon.ico",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b542c5bc52602f599ca3b16c54beff4ca80b9144",
+      "size": 1150,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b542c5bc52602f599ca3b16c54beff4ca80b9144"
+    },
+    {
+      "path": "docs/doxygen/folder-open.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b67403d9fe8cc15d91acf2eaa7dba47e815dd5ae",
+      "size": 625,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b67403d9fe8cc15d91acf2eaa7dba47e815dd5ae"
+    },
+    {
+      "path": "docs/doxygen/folder.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "901edc9624a23d92a9fcbc0c9c450bf37409da18",
+      "size": 498,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/901edc9624a23d92a9fcbc0c9c450bf37409da18"
+    },
+    {
+      "path": "docs/doxygen/footer.html",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9eef78d04aa6950eb19beaf9496959d75e42a386",
+      "size": 525,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9eef78d04aa6950eb19beaf9496959d75e42a386"
+    },
+    {
+      "path": "docs/doxygen/header.html",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bc41a1137e3463b30189b753cb8f1bc923e9b096",
+      "size": 2547,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/bc41a1137e3463b30189b753cb8f1bc923e9b096"
+    },
+    {
+      "path": "docs/doxygen/layout.xml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46f068d8b4c8b8206e4ef98fe22a063945d29115",
+      "size": 7487,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/46f068d8b4c8b8206e4ef98fe22a063945d29115"
+    },
+    {
+      "path": "docs/doxygen/logo-vector-clean.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a953115f5b6b976030a77f847c1f954655c9f33d",
+      "size": 1945,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a953115f5b6b976030a77f847c1f954655c9f33d"
+    },
+    {
+      "path": "docs/doxygen/text-x-generic.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2d7f2d6017d823bf9f1209d9933faf612dffe9f8",
+      "size": 333,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2d7f2d6017d823bf9f1209d9933faf612dffe9f8"
+    },
+    {
+      "path": "docs/idevice_id.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "caded75eba13b15c668e4ee969741d08073bec2c",
+      "size": 957,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/caded75eba13b15c668e4ee969741d08073bec2c"
+    },
+    {
+      "path": "docs/idevicebackup.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6f2a8f902ca909a480a7315295ef8f4fba2d82a7",
+      "size": 934,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6f2a8f902ca909a480a7315295ef8f4fba2d82a7"
+    },
+    {
+      "path": "docs/idevicebackup2.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "79b6dc4d8528bc849ed8628614033e1d69416b76",
+      "size": 2711,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/79b6dc4d8528bc849ed8628614033e1d69416b76"
+    },
+    {
+      "path": "docs/idevicebtlogger.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "98a723f941dccb4710b3432a3c19924f16951765",
+      "size": 1507,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/98a723f941dccb4710b3432a3c19924f16951765"
+    },
+    {
+      "path": "docs/idevicecrashreport.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f117c8790a240f6ca5322d799576588c1b66ca73",
+      "size": 1198,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f117c8790a240f6ca5322d799576588c1b66ca73"
+    },
+    {
+      "path": "docs/idevicedate.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dcdc57e5f0c138b690df821e23c4b4c7f6467ff2",
+      "size": 726,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/dcdc57e5f0c138b690df821e23c4b4c7f6467ff2"
+    },
+    {
+      "path": "docs/idevicedebug.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7314baacdb73b459b4336a169a48cd8b4934eb3d",
+      "size": 907,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7314baacdb73b459b4336a169a48cd8b4934eb3d"
+    },
+    {
+      "path": "docs/idevicedebugserverproxy.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "69200ee7db42d537df0cb644d0fab71b2009289b",
+      "size": 1158,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/69200ee7db42d537df0cb644d0fab71b2009289b"
+    },
+    {
+      "path": "docs/idevicedevmodectl.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5edaa806e07478e727ea05fdd2245404ebd3757b",
+      "size": 1466,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5edaa806e07478e727ea05fdd2245404ebd3757b"
+    },
+    {
+      "path": "docs/idevicediagnostics.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2f28b8da1ff8039cbd889abf87f48ecb6d7dac6f",
+      "size": 1518,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2f28b8da1ff8039cbd889abf87f48ecb6d7dac6f"
+    },
+    {
+      "path": "docs/ideviceenterrecovery.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d4558267ad7d1047865b1c8cfd6048b6a9e9d20c",
+      "size": 594,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/d4558267ad7d1047865b1c8cfd6048b6a9e9d20c"
+    },
+    {
+      "path": "docs/ideviceimagemounter.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1fe7e45c679b345dc4737374ac44ea55c4a8ac35",
+      "size": 1315,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/1fe7e45c679b345dc4737374ac44ea55c4a8ac35"
+    },
+    {
+      "path": "docs/ideviceinfo.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "39446125be10218fd68496ecef66c44382851b5e",
+      "size": 981,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/39446125be10218fd68496ecef66c44382851b5e"
+    },
+    {
+      "path": "docs/idevicename.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "34ce490bdf99e775ddfe1ba8bafaa0040ed43c9c",
+      "size": 760,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/34ce490bdf99e775ddfe1ba8bafaa0040ed43c9c"
+    },
+    {
+      "path": "docs/idevicenotificationproxy.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "627ee5d1a1df61d735b9715eaf98494a6f697c49",
+      "size": 953,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/627ee5d1a1df61d735b9715eaf98494a6f697c49"
+    },
+    {
+      "path": "docs/idevicepair.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eb6e7d4cb92f6c92f18f984642018355fb20ec2e",
+      "size": 1685,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/eb6e7d4cb92f6c92f18f984642018355fb20ec2e"
+    },
+    {
+      "path": "docs/ideviceprovision.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3597d6ef5f4ebfa8b06bea7f3332e16a9cfaa200",
+      "size": 1229,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3597d6ef5f4ebfa8b06bea7f3332e16a9cfaa200"
+    },
+    {
+      "path": "docs/idevicescreenshot.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4da78af44303696db276783efed9154392be4823",
+      "size": 953,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/4da78af44303696db276783efed9154392be4823"
+    },
+    {
+      "path": "docs/idevicesetlocation.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "941a6e5eae1382572279a7dba348c18f6e2d7e38",
+      "size": 672,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/941a6e5eae1382572279a7dba348c18f6e2d7e38"
+    },
+    {
+      "path": "docs/idevicesyslog.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5a677b60ed0db5a9227ee04ee80bd90679d90443",
+      "size": 5538,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5a677b60ed0db5a9227ee04ee80bd90679d90443"
+    },
+    {
+      "path": "doxygen.cfg.in",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7bc1160570193af17f8227b20629923109fa5e74",
+      "size": 126564,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7bc1160570193af17f8227b20629923109fa5e74"
+    },
+    {
+      "path": "git-version-gen",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "d8689526543d7000a1873e68a7d098f34d3d96ae",
+      "size": 579,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/d8689526543d7000a1873e68a7d098f34d3d96ae"
+    },
+    {
+      "path": "include",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b281aa6969e4d6434b8cce757585cae7d3a6652d",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/b281aa6969e4d6434b8cce757585cae7d3a6652d"
+    },
+    {
+      "path": "include/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a41f53df789ad1e6487689403d482bbefbf49c9b",
+      "size": 1053,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a41f53df789ad1e6487689403d482bbefbf49c9b"
+    },
+    {
+      "path": "include/asprintf.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3ed35bea9a1352759f1c61a8e427c40d68e4e5b7",
+      "size": 631,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3ed35bea9a1352759f1c61a8e427c40d68e4e5b7"
+    },
+    {
+      "path": "include/endianness.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "972e51b1a27d73393768ae6d3761cf9bc2add6b7",
+      "size": 2680,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/972e51b1a27d73393768ae6d3761cf9bc2add6b7"
+    },
+    {
+      "path": "include/libimobiledevice",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "552127a71a81410ca406b471deda532150e4c3d4",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/552127a71a81410ca406b471deda532150e4c3d4"
+    },
+    {
+      "path": "include/libimobiledevice/afc.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6e404c37a47381a98dbfbba799d7f060153c7f58",
+      "size": 15585,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6e404c37a47381a98dbfbba799d7f060153c7f58"
+    },
+    {
+      "path": "include/libimobiledevice/bt_packet_logger.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "590e5c145746889100c71046cf5fd661d1b82143",
+      "size": 6228,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/590e5c145746889100c71046cf5fd661d1b82143"
+    },
+    {
+      "path": "include/libimobiledevice/companion_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "544322aa31a99bef47bd70db47ce0f95360eef98",
+      "size": 8663,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/544322aa31a99bef47bd70db47ce0f95360eef98"
+    },
+    {
+      "path": "include/libimobiledevice/debugserver.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "809b97f7f0e8372939ea15734cd23b666bc29337",
+      "size": 11042,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/809b97f7f0e8372939ea15734cd23b666bc29337"
+    },
+    {
+      "path": "include/libimobiledevice/diagnostics_relay.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6ab47a943fb63404c80072f0b6a6f40c7119bbce",
+      "size": 9947,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6ab47a943fb63404c80072f0b6a6f40c7119bbce"
+    },
+    {
+      "path": "include/libimobiledevice/file_relay.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "00773b87d545e3b6d6f51f2d90225dc5bc3859aa",
+      "size": 6801,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/00773b87d545e3b6d6f51f2d90225dc5bc3859aa"
+    },
+    {
+      "path": "include/libimobiledevice/heartbeat.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4074b8b9fbba1cfc5deb3bafcb9c4e9591a85567",
+      "size": 5117,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/4074b8b9fbba1cfc5deb3bafcb9c4e9591a85567"
+    },
+    {
+      "path": "include/libimobiledevice/house_arrest.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f9ba68aa92df5e03db714c00c1d78fbcbf378480",
+      "size": 7662,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f9ba68aa92df5e03db714c00c1d78fbcbf378480"
+    },
+    {
+      "path": "include/libimobiledevice/installation_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "44331aa7cd77a62ea40d77d7281eabbf6fd24d45",
+      "size": 24847,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/44331aa7cd77a62ea40d77d7281eabbf6fd24d45"
+    },
+    {
+      "path": "include/libimobiledevice/libimobiledevice.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bc577786f8860affe2371073ed15b787674238d0",
+      "size": 16590,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/bc577786f8860affe2371073ed15b787674238d0"
+    },
+    {
+      "path": "include/libimobiledevice/lockdown.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "21669efde9c365d7b3bb4fc7782294f269fa4d99",
+      "size": 26253,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/21669efde9c365d7b3bb4fc7782294f269fa4d99"
+    },
+    {
+      "path": "include/libimobiledevice/misagent.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7981a8bbcec1f997ff71a2dbde934d2627b85915",
+      "size": 6272,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7981a8bbcec1f997ff71a2dbde934d2627b85915"
+    },
+    {
+      "path": "include/libimobiledevice/mobile_image_mounter.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "76bb61a38082be115780b99af028d9ee909d9f4d",
+      "size": 12636,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/76bb61a38082be115780b99af028d9ee909d9f4d"
+    },
+    {
+      "path": "include/libimobiledevice/mobileactivation.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8e036a8d7580d17bb47080be68802aca0f60db80",
+      "size": 8064,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/8e036a8d7580d17bb47080be68802aca0f60db80"
+    },
+    {
+      "path": "include/libimobiledevice/mobilebackup.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2ecb60c1262474216f4cdb17664ba1848e589f71",
+      "size": 10501,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2ecb60c1262474216f4cdb17664ba1848e589f71"
+    },
+    {
+      "path": "include/libimobiledevice/mobilebackup2.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2e9222dbb7d2c1c74b249dacff0f63b51cddb143",
+      "size": 9329,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2e9222dbb7d2c1c74b249dacff0f63b51cddb143"
+    },
+    {
+      "path": "include/libimobiledevice/mobilesync.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c3bc53d918afb20f88f9c9f54f50ab4c03ae179a",
+      "size": 14289,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c3bc53d918afb20f88f9c9f54f50ab4c03ae179a"
+    },
+    {
+      "path": "include/libimobiledevice/notification_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f4f090b977e295c1976c19b9571e6f0505b6fdbd",
+      "size": 8381,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f4f090b977e295c1976c19b9571e6f0505b6fdbd"
+    },
+    {
+      "path": "include/libimobiledevice/ostrace.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f083ba719b689134244cd54353609b121bc33834",
+      "size": 7447,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f083ba719b689134244cd54353609b121bc33834"
+    },
+    {
+      "path": "include/libimobiledevice/preboard.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d89eb4f4f2c1c9bcfcc6315bb412a3de7cb4d39",
+      "size": 7392,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0d89eb4f4f2c1c9bcfcc6315bb412a3de7cb4d39"
+    },
+    {
+      "path": "include/libimobiledevice/property_list_service.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e6b26a3ee28097c973a9268123f22609d482aad2",
+      "size": 7958,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e6b26a3ee28097c973a9268123f22609d482aad2"
+    },
+    {
+      "path": "include/libimobiledevice/restore.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "859dc98d730f5ce54fe855c8b719748c9e5b244a",
+      "size": 6252,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/859dc98d730f5ce54fe855c8b719748c9e5b244a"
+    },
+    {
+      "path": "include/libimobiledevice/reverse_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5e2f54b9d0b79a0e7f3641d2f42260a8969a23c4",
+      "size": 8934,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5e2f54b9d0b79a0e7f3641d2f42260a8969a23c4"
+    },
+    {
+      "path": "include/libimobiledevice/sbservices.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7435947ebbf9cada597a1e2ea05a16fa77743d59",
+      "size": 7265,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7435947ebbf9cada597a1e2ea05a16fa77743d59"
+    },
+    {
+      "path": "include/libimobiledevice/screenshotr.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "db3c969f938498caf1a3c8fddf11d7936bc659d9",
+      "size": 4508,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/db3c969f938498caf1a3c8fddf11d7936bc659d9"
+    },
+    {
+      "path": "include/libimobiledevice/service.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f31ada45f622bbccf14814405748fb713f53b1cc",
+      "size": 7925,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f31ada45f622bbccf14814405748fb713f53b1cc"
+    },
+    {
+      "path": "include/libimobiledevice/syslog_relay.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0f6487a3c1724c3178f453cba9813d444b3b8935",
+      "size": 7446,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0f6487a3c1724c3178f453cba9813d444b3b8935"
+    },
+    {
+      "path": "include/libimobiledevice/webinspector.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "16d2ca2de1f239e58a1ad53796fca9db633eb057",
+      "size": 5219,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/16d2ca2de1f239e58a1ad53796fca9db633eb057"
+    },
+    {
+      "path": "justfile",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8436adcb698f251b23cd627e6202ff6bff7e1426",
+      "size": 9293,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/8436adcb698f251b23cd627e6202ff6bff7e1426"
+    },
+    {
+      "path": "m4",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "688335d1de2b7139090345bef6964264e299d837",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/688335d1de2b7139090345bef6964264e299d837"
+    },
+    {
+      "path": "m4/ac_pkg_cython.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e0af96a6d227cde850584b3d10fddd874ec19ef9",
+      "size": 3827,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e0af96a6d227cde850584b3d10fddd874ec19ef9"
+    },
+    {
+      "path": "m4/as-compiler-flag.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "baab5d97bc2a1e195572f1279036a5bdfb3e794c",
+      "size": 1543,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/baab5d97bc2a1e195572f1279036a5bdfb3e794c"
+    },
+    {
+      "path": "m4/ax_pthread.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9f35d139149f8d9bda17cddb730cd13bcf775465",
+      "size": 22556,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9f35d139149f8d9bda17cddb730cd13bcf775465"
+    },
+    {
+      "path": "m4/ax_python_devel.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "935056cc4c0a6708b6283db439ad6f51ed1243ec",
+      "size": 16032,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/935056cc4c0a6708b6283db439ad6f51ed1243ec"
+    },
+    {
+      "path": "m4/cython_python.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5b4a04126170fe277f33a74bac3df624b5beb8a7",
+      "size": 286,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5b4a04126170fe277f33a74bac3df624b5beb8a7"
+    },
+    {
+      "path": "src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0220c7ab5f529de6f9b4885a3c450fc94acb7fbe",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/0220c7ab5f529de6f9b4885a3c450fc94acb7fbe"
+    },
+    {
+      "path": "src/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1ee9be8f8b8a2b83dccd668d589f4f2967226ab3",
+      "size": 2157,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/1ee9be8f8b8a2b83dccd668d589f4f2967226ab3"
+    },
+    {
+      "path": "src/afc.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e2e5ba12e1a2ca99ce3b4f4e98648857f591e366",
+      "size": 35730,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e2e5ba12e1a2ca99ce3b4f4e98648857f591e366"
+    },
+    {
+      "path": "src/afc.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bfdf561ad82ca668fd6502a6693c51c62de1710",
+      "size": 4968,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6bfdf561ad82ca668fd6502a6693c51c62de1710"
+    },
+    {
+      "path": "src/bt_packet_logger.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "937747cdecb22b4d47c230c1311729129d0f10d5",
+      "size": 7222,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/937747cdecb22b4d47c230c1311729129d0f10d5"
+    },
+    {
+      "path": "src/bt_packet_logger.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "620555e07fc06588c1d3edda485a3b400b318b57",
+      "size": 1223,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/620555e07fc06588c1d3edda485a3b400b318b57"
+    },
+    {
+      "path": "src/companion_proxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "421fa9a0053bff79a9fefcd5bb0697fa5c9558d3",
+      "size": 11837,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/421fa9a0053bff79a9fefcd5bb0697fa5c9558d3"
+    },
+    {
+      "path": "src/companion_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e36932a010897ca8a206919b9a98a92e904420de",
+      "size": 1206,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e36932a010897ca8a206919b9a98a92e904420de"
+    },
+    {
+      "path": "src/debugserver.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "74ade8ad2d12ec870db4533157d08baa1e25a635",
+      "size": 18779,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/74ade8ad2d12ec870db4533157d08baa1e25a635"
+    },
+    {
+      "path": "src/debugserver.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ce9c2551c03156cccb0ee38ae3fb8ac58e0e77c9",
+      "size": 1277,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ce9c2551c03156cccb0ee38ae3fb8ac58e0e77c9"
+    },
+    {
+      "path": "src/device_link_service.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "66c2461cee651508bd518a117ee056daf3f5eb4b",
+      "size": 16307,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/66c2461cee651508bd518a117ee056daf3f5eb4b"
+    },
+    {
+      "path": "src/device_link_service.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0255b215d9f4e4fca69f316fada60d2ba41860f3",
+      "size": 2873,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0255b215d9f4e4fca69f316fada60d2ba41860f3"
+    },
+    {
+      "path": "src/diagnostics_relay.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6ee3150f0d7c6bb7f73aabfa08655870b4376dc9",
+      "size": 13663,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6ee3150f0d7c6bb7f73aabfa08655870b4376dc9"
+    },
+    {
+      "path": "src/diagnostics_relay.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3bb543a8abf065e302cf3c16e1e6998e1522dff8",
+      "size": 1156,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3bb543a8abf065e302cf3c16e1e6998e1522dff8"
+    },
+    {
+      "path": "src/file_relay.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fbe7cbfc1f3e803e1543c73ae3892d7644bad4f5",
+      "size": 5168,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/fbe7cbfc1f3e803e1543c73ae3892d7644bad4f5"
+    },
+    {
+      "path": "src/file_relay.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "65bf460147096b3f70accb383b6dfcf3acf971c0",
+      "size": 1112,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/65bf460147096b3f70accb383b6dfcf3acf971c0"
+    },
+    {
+      "path": "src/heartbeat.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3945d7389f83c301d8e36b8e3ae85e7b284ffa74",
+      "size": 4580,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3945d7389f83c301d8e36b8e3ae85e7b284ffa74"
+    },
+    {
+      "path": "src/heartbeat.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "379ecc111868d2e240d2c62013064a68064c8ff5",
+      "size": 1107,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/379ecc111868d2e240d2c62013064a68064c8ff5"
+    },
+    {
+      "path": "src/house_arrest.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "06068c63360d103d8dd409cd2f43fe4588e07dfb",
+      "size": 5401,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/06068c63360d103d8dd409cd2f43fe4588e07dfb"
+    },
+    {
+      "path": "src/house_arrest.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5612a29ee3cfaa8880b15603c3b0ef42e7784996",
+      "size": 1266,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5612a29ee3cfaa8880b15603c3b0ef42e7784996"
+    },
+    {
+      "path": "src/idevice.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0af27fd62a9c7f5e2d4168375aae531c0faab776",
+      "size": 46442,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0af27fd62a9c7f5e2d4168375aae531c0faab776"
+    },
+    {
+      "path": "src/idevice.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e05338e59d9ab296dc1a639a16f71f59726be78e",
+      "size": 2718,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e05338e59d9ab296dc1a639a16f71f59726be78e"
+    },
+    {
+      "path": "src/installation_proxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bb6ef01a81067dcba93fdcb9d89e1318093e29ae",
+      "size": 33997,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/bb6ef01a81067dcba93fdcb9d89e1318093e29ae"
+    },
+    {
+      "path": "src/installation_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5bdbb717fdfe7944354881b795954523dbb221c8",
+      "size": 1311,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5bdbb717fdfe7944354881b795954523dbb221c8"
+    },
+    {
+      "path": "src/libimobiledevice-1.0.pc.in",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f00c392ab8783db1a235e7f86b033ba62d9527af",
+      "size": 441,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f00c392ab8783db1a235e7f86b033ba62d9527af"
+    },
+    {
+      "path": "src/lockdown-cu.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c457cb28717554afb807ca90a8a0f7f00ed9ac78",
+      "size": 40158,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c457cb28717554afb807ca90a8a0f7f00ed9ac78"
+    },
+    {
+      "path": "src/lockdown.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "32389c9ba6b0be99635de8570f6183233724ddb4",
+      "size": 45926,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/32389c9ba6b0be99635de8570f6183233724ddb4"
+    },
+    {
+      "path": "src/lockdown.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ba291ec409f4cdd2042c90c1101fb9789d1e4582",
+      "size": 1396,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ba291ec409f4cdd2042c90c1101fb9789d1e4582"
+    },
+    {
+      "path": "src/misagent.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3fdca4db251f6f5fd8db4717ac49b2f3e7ffcc31",
+      "size": 8551,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3fdca4db251f6f5fd8db4717ac49b2f3e7ffcc31"
+    },
+    {
+      "path": "src/misagent.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e394087466c46e39fc8f880131069ad63ecd1295",
+      "size": 1110,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e394087466c46e39fc8f880131069ad63ecd1295"
+    },
+    {
+      "path": "src/mobile_image_mounter.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "66778823ed567c727fd99e618db08d809a9b142d",
+      "size": 20538,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/66778823ed567c727fd99e618db08d809a9b142d"
+    },
+    {
+      "path": "src/mobile_image_mounter.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9a8fcdde82e8264f852ae67799b0ae8fb88b7ded",
+      "size": 1230,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9a8fcdde82e8264f852ae67799b0ae8fb88b7ded"
+    },
+    {
+      "path": "src/mobileactivation.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fce5f16dfd53a353e0505f31e75bfd421cbc077b",
+      "size": 10013,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/fce5f16dfd53a353e0505f31e75bfd421cbc077b"
+    },
+    {
+      "path": "src/mobileactivation.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a8dff5d4143d12319b850b090a3121ba2c04d190",
+      "size": 1142,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a8dff5d4143d12319b850b090a3121ba2c04d190"
+    },
+    {
+      "path": "src/mobilebackup.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "36986a42bef44ad306aa61a6afa45274a0321036",
+      "size": 14824,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/36986a42bef44ad306aa61a6afa45274a0321036"
+    },
+    {
+      "path": "src/mobilebackup.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "04ec47922b77e8779324894c30e2076e67706291",
+      "size": 1174,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/04ec47922b77e8779324894c30e2076e67706291"
+    },
+    {
+      "path": "src/mobilebackup2.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a8d673fefd2ddfba3ab42ea06c10db0a361e9adb",
+      "size": 12062,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/a8d673fefd2ddfba3ab42ea06c10db0a361e9adb"
+    },
+    {
+      "path": "src/mobilebackup2.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e232b97facb8657dae400fff2ce805427cb55ae5",
+      "size": 1129,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/e232b97facb8657dae400fff2ce805427cb55ae5"
+    },
+    {
+      "path": "src/mobilesync.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9b81a49e79bedfd9cab49a9ce88e55a526f1fddf",
+      "size": 20617,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9b81a49e79bedfd9cab49a9ce88e55a526f1fddf"
+    },
+    {
+      "path": "src/mobilesync.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3b5ece9016577ddce2ea1b165cc84ba7f052338b",
+      "size": 1348,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3b5ece9016577ddce2ea1b165cc84ba7f052338b"
+    },
+    {
+      "path": "src/notification_proxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c7e4660d9db879e45e073856a85ee301381acea8",
+      "size": 9897,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c7e4660d9db879e45e073856a85ee301381acea8"
+    },
+    {
+      "path": "src/notification_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "595cb015cfbbc804d6ce7c090d917ade88eb899f",
+      "size": 1253,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/595cb015cfbbc804d6ce7c090d917ade88eb899f"
+    },
+    {
+      "path": "src/ostrace.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c73ee7fc2f1827ff8e278cee05ea90217b532274",
+      "size": 11499,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c73ee7fc2f1827ff8e278cee05ea90217b532274"
+    },
+    {
+      "path": "src/ostrace.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dcc3e8d34e0fa4bb90f6e9fed69212d60c98b242",
+      "size": 1163,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/dcc3e8d34e0fa4bb90f6e9fed69212d60c98b242"
+    },
+    {
+      "path": "src/preboard.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c3eff02b4aa1d81ed0c22394114af78fb47afc56",
+      "size": 7782,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c3eff02b4aa1d81ed0c22394114af78fb47afc56"
+    },
+    {
+      "path": "src/preboard.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f8164eb184a515e6a6331e5ef7d7abbb8a2a3ddf",
+      "size": 1171,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f8164eb184a515e6a6331e5ef7d7abbb8a2a3ddf"
+    },
+    {
+      "path": "src/property_list_service.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2fca4e7433a92cf10790c7299c947714eb7133fb",
+      "size": 9959,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2fca4e7433a92cf10790c7299c947714eb7133fb"
+    },
+    {
+      "path": "src/property_list_service.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0e9e94864d02e31cbdf0c030fb9d18c0adbb4709",
+      "size": 1131,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/0e9e94864d02e31cbdf0c030fb9d18c0adbb4709"
+    },
+    {
+      "path": "src/restore.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d13a28af119d13ce6d9faf921d9a6aea6a9583bf",
+      "size": 10652,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/d13a28af119d13ce6d9faf921d9a6aea6a9583bf"
+    },
+    {
+      "path": "src/restore.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ec6fa04d226eeea9196b2bb85605dd788c91c387",
+      "size": 1159,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ec6fa04d226eeea9196b2bb85605dd788c91c387"
+    },
+    {
+      "path": "src/reverse_proxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2fcfdd156c5564cfc714c0f184ff83b95209e279",
+      "size": 24239,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/2fcfdd156c5564cfc714c0f184ff83b95209e279"
+    },
+    {
+      "path": "src/reverse_proxy.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7f441bdff1694d8033db77059b7ecdbd5a731b49",
+      "size": 2097,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/7f441bdff1694d8033db77059b7ecdbd5a731b49"
+    },
+    {
+      "path": "src/sbservices.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5df51228c6c63fb64f50bee2cdfb87e46ccd6f84",
+      "size": 8680,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/5df51228c6c63fb64f50bee2cdfb87e46ccd6f84"
+    },
+    {
+      "path": "src/sbservices.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b67281e2d7b9ee7221304a02a17fdb8d36b8eca7",
+      "size": 1172,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b67281e2d7b9ee7221304a02a17fdb8d36b8eca7"
+    },
+    {
+      "path": "src/screenshotr.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c3cc9ba6605e6add7e0152f1c65674023282f3d9",
+      "size": 5291,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c3cc9ba6605e6add7e0152f1c65674023282f3d9"
+    },
+    {
+      "path": "src/screenshotr.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1319ec08a18e1dee741fe0bfc8759d89c3fa750b",
+      "size": 1113,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/1319ec08a18e1dee741fe0bfc8759d89c3fa750b"
+    },
+    {
+      "path": "src/service.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "94740219b77a3c340813c33cfd956bc3c99f4db5",
+      "size": 6244,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/94740219b77a3c340813c33cfd956bc3c99f4db5"
+    },
+    {
+      "path": "src/service.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "071fe3f5a12fdc86a518878f5284572938f4a3ff",
+      "size": 1092,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/071fe3f5a12fdc86a518878f5284572938f4a3ff"
+    },
+    {
+      "path": "src/syslog_relay.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9f4296e1bfb93f5a16e5cd65d5a659168f755dc7",
+      "size": 7275,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/9f4296e1bfb93f5a16e5cd65d5a659168f755dc7"
+    },
+    {
+      "path": "src/syslog_relay.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d5263e223ddbefc7ff40f9acaa51ff4fc1955b82",
+      "size": 1187,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/d5263e223ddbefc7ff40f9acaa51ff4fc1955b82"
+    },
+    {
+      "path": "src/webinspector.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f960fcc8c45c7dc02a0d0d30a12360674093a6f5",
+      "size": 7675,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f960fcc8c45c7dc02a0d0d30a12360674093a6f5"
+    },
+    {
+      "path": "src/webinspector.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d249c58fa9c47a925e1172c1d19e7a1d45a855b4",
+      "size": 1170,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/d249c58fa9c47a925e1172c1d19e7a1d45a855b4"
+    },
+    {
+      "path": "tools",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d2fcf43352da1e14e9004b644eb01fb8091eb6e5",
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/trees/d2fcf43352da1e14e9004b644eb01fb8091eb6e5"
+    },
+    {
+      "path": "tools/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "24cfc66cf2dcd3e8b21ca4db2783d164c84cd5a4",
+      "size": 5447,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/24cfc66cf2dcd3e8b21ca4db2783d164c84cd5a4"
+    },
+    {
+      "path": "tools/afcclient.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c2e2ce393316dcb1bfdb80253e95062cad6ab549",
+      "size": 42753,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/c2e2ce393316dcb1bfdb80253e95062cad6ab549"
+    },
+    {
+      "path": "tools/idevice_id.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "540a6f27f997c68aa8ce8f175391501ac5a35e35",
+      "size": 4711,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/540a6f27f997c68aa8ce8f175391501ac5a35e35"
+    },
+    {
+      "path": "tools/idevicebackup.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "363abad61879562ba7f2572c056b2cbad5d8c3fa",
+      "size": 46056,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/363abad61879562ba7f2572c056b2cbad5d8c3fa"
+    },
+    {
+      "path": "tools/idevicebackup2.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f5eb1e47f4a4c8eb302ac3449c413577ed10892e",
+      "size": 83583,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/f5eb1e47f4a4c8eb302ac3449c413577ed10892e"
+    },
+    {
+      "path": "tools/idevicebtlogger.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ca68b59f39d0da3bac0e738fd1d890adf289596e",
+      "size": 11834,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/ca68b59f39d0da3bac0e738fd1d890adf289596e"
+    },
+    {
+      "path": "tools/idevicecrashreport.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b9869ae3b12330418c653f093c3ce134118eff75",
+      "size": 15625,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b9869ae3b12330418c653f093c3ce134118eff75"
+    },
+    {
+      "path": "tools/idevicedate.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "31b0cf7cb079e5dec7ec0ccd30cc037601584bfa",
+      "size": 6693,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/31b0cf7cb079e5dec7ec0ccd30cc037601584bfa"
+    },
+    {
+      "path": "tools/idevicedebug.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3f2e289c088347f460cc127c3c3161ccd3b1a64c",
+      "size": 18353,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/3f2e289c088347f460cc127c3c3161ccd3b1a64c"
+    },
+    {
+      "path": "tools/idevicedebugserverproxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fb082b3c4442bd257f8550937ecc53f776553a21",
+      "size": 9643,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/fb082b3c4442bd257f8550937ecc53f776553a21"
+    },
+    {
+      "path": "tools/idevicedevmodectl.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6bf1a1c43dfcb6a492c75e83e47ad46d759f43f0",
+      "size": 13319,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/6bf1a1c43dfcb6a492c75e83e47ad46d759f43f0"
+    },
+    {
+      "path": "tools/idevicediagnostics.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "365c0a41f39a86411d5e26376ad82061310a36f7",
+      "size": 10121,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/365c0a41f39a86411d5e26376ad82061310a36f7"
+    },
+    {
+      "path": "tools/ideviceenterrecovery.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "65eb882d7dc02a7a5c3ae91ebc1a06a51482ccf3",
+      "size": 3955,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/65eb882d7dc02a7a5c3ae91ebc1a06a51482ccf3"
+    },
+    {
+      "path": "tools/ideviceimagemounter.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b319d059647f61332d43c36f37678157971131a2",
+      "size": 23146,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/b319d059647f61332d43c36f37678157971131a2"
+    },
+    {
+      "path": "tools/ideviceinfo.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20cc91647c1a303597265cdd55fd7d0e5461502b",
+      "size": 7205,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/20cc91647c1a303597265cdd55fd7d0e5461502b"
+    },
+    {
+      "path": "tools/idevicename.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "248bda34163c48e728a04603a91bc1a04c9e1043",
+      "size": 4282,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/248bda34163c48e728a04603a91bc1a04c9e1043"
+    },
+    {
+      "path": "tools/idevicenotificationproxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "192192a0e004aaca764bd2a92ce2db44b601f1da",
+      "size": 7473,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/192192a0e004aaca764bd2a92ce2db44b601f1da"
+    },
+    {
+      "path": "tools/idevicepair.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "884c690c94e1d6c3f67b1bc8e3489a3cd70cedcf",
+      "size": 12533,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/884c690c94e1d6c3f67b1bc8e3489a3cd70cedcf"
+    },
+    {
+      "path": "tools/ideviceprovision.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "94f4ec55d615dab3a535506cded53e882c11e84d",
+      "size": 17885,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/94f4ec55d615dab3a535506cded53e882c11e84d"
+    },
+    {
+      "path": "tools/idevicescreenshot.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bfaa059bcd8506be67d0fb88632a1c039ddad218",
+      "size": 7170,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/bfaa059bcd8506be67d0fb88632a1c039ddad218"
+    },
+    {
+      "path": "tools/idevicesetlocation.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dca8830ea5e58c20f36baa36e9649fe4be37eee0",
+      "size": 5493,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/dca8830ea5e58c20f36baa36e9649fe4be37eee0"
+    },
+    {
+      "path": "tools/idevicesyslog.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "88af4c166f3eee145028161940e48cb2daa9f313",
+      "size": 35068,
+      "url": "https://api.github.com/repos/SideStore/libimobiledevice-xcframework/git/blobs/88af4c166f3eee145028161940e48cb2daa9f313"
+    }
+  ],
+  "truncated": false
+}

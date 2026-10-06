@@ -1,0 +1,264 @@
+{
+  "sha": "93eb168bf6b07472d17781328c21df0c60300524",
+  "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/93eb168bf6b07472d17781328c21df0c60300524",
+  "tree": [
+    {
+      "path": ".gitattributes",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "176a458f94e0ea5272ce67c36bf30b6be9caf623",
+      "size": 12,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/176a458f94e0ea5272ce67c36bf30b6be9caf623"
+    },
+    {
+      "path": ".github",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "79d6a9dca2772666fac82794c3f63e7a8eceeb32",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/79d6a9dca2772666fac82794c3f63e7a8eceeb32"
+    },
+    {
+      "path": ".github/FUNDING.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e995b30c741b272d41b7719a0f3406b08c239a80",
+      "size": 78,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/e995b30c741b272d41b7719a0f3406b08c239a80"
+    },
+    {
+      "path": ".github/workflows",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "897238ac281d154ffacda18b3fd7e1fc1214e127",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/897238ac281d154ffacda18b3fd7e1fc1214e127"
+    },
+    {
+      "path": ".github/workflows/build.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "199d0f86b36da2f6eac41aad1c359bd2eaed722a",
+      "size": 5757,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/199d0f86b36da2f6eac41aad1c359bd2eaed722a"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "271f2c44b998caca4adf8dff39bc7b916b926948",
+      "size": 566,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/271f2c44b998caca4adf8dff39bc7b916b926948"
+    },
+    {
+      "path": "AUTHORS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "459a8254ed7ebd8c9bd70ccbce19ba5e514fcb38",
+      "size": 140,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/459a8254ed7ebd8c9bd70ccbce19ba5e514fcb38"
+    },
+    {
+      "path": "COPYING",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "732811e4f1faf71870b7350f211b26e00d7bfbe9",
+      "size": 26434,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/732811e4f1faf71870b7350f211b26e00d7bfbe9"
+    },
+    {
+      "path": "Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "559d84c0f306311a4451e6963d4027e896982784",
+      "size": 281,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/559d84c0f306311a4451e6963d4027e896982784"
+    },
+    {
+      "path": "NEWS",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f4fea01488927dd61ee20a799ada4020b928f555",
+      "size": 3471,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/f4fea01488927dd61ee20a799ada4020b928f555"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cc52f51e043936ccd990f4cc021b413246e838cb",
+      "size": 9771,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/cc52f51e043936ccd990f4cc021b413246e838cb"
+    },
+    {
+      "path": "autogen.sh",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "5a0ec43ae56118ef5e47a27c35d001515917d75b",
+      "size": 365,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/5a0ec43ae56118ef5e47a27c35d001515917d75b"
+    },
+    {
+      "path": "configure.ac",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6a78d08cf864cf8dda723691393bb0f5a8503b69",
+      "size": 5270,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/6a78d08cf864cf8dda723691393bb0f5a8503b69"
+    },
+    {
+      "path": "docs",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d996a7a7c5c38eade5511ee9f077f16dc2a64658",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/d996a7a7c5c38eade5511ee9f077f16dc2a64658"
+    },
+    {
+      "path": "docs/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3e8ba039a3549b5fe50ff4752cc77dcbb842bff8",
+      "size": 56,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/3e8ba039a3549b5fe50ff4752cc77dcbb842bff8"
+    },
+    {
+      "path": "docs/inetcat.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "297b19c6dd8b7ca306bc7c36e29e927f5114350f",
+      "size": 1621,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/297b19c6dd8b7ca306bc7c36e29e927f5114350f"
+    },
+    {
+      "path": "docs/iproxy.1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8ac03e703adf01e5a99fd50ca43d5e424652aa1b",
+      "size": 2398,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/8ac03e703adf01e5a99fd50ca43d5e424652aa1b"
+    },
+    {
+      "path": "git-version-gen",
+      "mode": "100755",
+      "type": "blob",
+      "sha": "d8689526543d7000a1873e68a7d098f34d3d96ae",
+      "size": 579,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/d8689526543d7000a1873e68a7d098f34d3d96ae"
+    },
+    {
+      "path": "include",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "bef4103dec1a92859c165a1c18fcb899a1cc965e",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/bef4103dec1a92859c165a1c18fcb899a1cc965e"
+    },
+    {
+      "path": "include/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6bc922c2142f3cd7670e2e47502f335d67a4898",
+      "size": 71,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/f6bc922c2142f3cd7670e2e47502f335d67a4898"
+    },
+    {
+      "path": "include/usbmuxd-proto.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d0042321a0713c2ca9b58ab65f89ba8c0bd983eb",
+      "size": 2414,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/d0042321a0713c2ca9b58ab65f89ba8c0bd983eb"
+    },
+    {
+      "path": "include/usbmuxd.h",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "859fccd02272466200057513f5fc60633bc49c90",
+      "size": 12303,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/859fccd02272466200057513f5fc60633bc49c90"
+    },
+    {
+      "path": "m4",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "882e654d5dfd9083fce5c0028a7ea4c0c5ef2b31",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/882e654d5dfd9083fce5c0028a7ea4c0c5ef2b31"
+    },
+    {
+      "path": "m4/as-compiler-flag.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "baab5d97bc2a1e195572f1279036a5bdfb3e794c",
+      "size": 1543,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/baab5d97bc2a1e195572f1279036a5bdfb3e794c"
+    },
+    {
+      "path": "m4/ax_pthread.m4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9f35d139149f8d9bda17cddb730cd13bcf775465",
+      "size": 22556,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/9f35d139149f8d9bda17cddb730cd13bcf775465"
+    },
+    {
+      "path": "src",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "bc3fe1ddcf411a4e96db3f9551078eccf8b58909",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/bc3fe1ddcf411a4e96db3f9551078eccf8b58909"
+    },
+    {
+      "path": "src/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9c1695212310b3debfa3d5c3be952a16033073b9",
+      "size": 564,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/9c1695212310b3debfa3d5c3be952a16033073b9"
+    },
+    {
+      "path": "src/libusbmuxd-2.0.pc.in",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d4944166b4eda07bc59f82be3de74a0969899d1",
+      "size": 350,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/0d4944166b4eda07bc59f82be3de74a0969899d1"
+    },
+    {
+      "path": "src/libusbmuxd.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6b7d22021cd41283bbf405bdafed39adc820e440",
+      "size": 44957,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/6b7d22021cd41283bbf405bdafed39adc820e440"
+    },
+    {
+      "path": "tools",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "745761be2a1d0583b40d43ae9af768db9353e028",
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/trees/745761be2a1d0583b40d43ae9af768db9353e028"
+    },
+    {
+      "path": "tools/Makefile.am",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bab9ba856560a802e2708c5b5e47a774c2423e7c",
+      "size": 460,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/bab9ba856560a802e2708c5b5e47a774c2423e7c"
+    },
+    {
+      "path": "tools/inetcat.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "220a8a7f6b0f48cbc6189bf0144e6c22980c3691",
+      "size": 8842,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/220a8a7f6b0f48cbc6189bf0144e6c22980c3691"
+    },
+    {
+      "path": "tools/iproxy.c",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d4c7d0675f0523eb2530142f205d9292e114c176",
+      "size": 13248,
+      "url": "https://api.github.com/repos/libimobiledevice/libusbmuxd/git/blobs/d4c7d0675f0523eb2530142f205d9292e114c176"
+    }
+  ],
+  "truncated": false
+}

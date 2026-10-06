@@ -1,0 +1,216 @@
+export MODULEMAP := '''
+module libimobiledevice [system] {
+    header "afc.h"
+    header "bt_packet_logger.h"
+    header "companion_proxy.h"
+    header "debugserver.h"
+    header "diagnostics_relay.h"
+    header "file_relay.h"
+    header "heartbeat.h"
+    header "house_arrest.h"
+    header "installation_proxy.h"
+    header "libimobiledevice.h"
+    header "lockdown.h"
+    header "misagent.h"
+    header "mobile_image_mounter.h"
+    header "mobileactivation.h"
+    header "mobilebackup.h"
+    header "mobilebackup2.h"
+    header "mobilesync.h"
+    header "notification_proxy.h"
+    header "ostrace.h"
+    header "preboard.h"
+    header "property_list_service.h"
+    header "restore.h"
+    header "reverse_proxy.h"
+    header "sbservices.h"
+    header "screenshotr.h"
+    header "service.h"
+    header "syslog_relay.h"
+    header "webinspector.h"
+    header "../plist/plist.h"
+    header "../usbmuxd.h"
+    header "../usbmuxd-proto.h"
+    export *
+}
+'''
+
+default: xcframework
+
+clean:
+    rm -rf build libs
+
+xcframework: build-all
+    rm -rf libs/include libs/libimobiledevice.xcframework
+    mkdir -p libs/include/libimobiledevice
+    cp -R build/macosx-arm64/install/include/libimobiledevice/* libs/include/libimobiledevice/
+    cp -R build/macosx-arm64/install/include/libimobiledevice-glue libs/include/
+    cp -R build/macosx-arm64/install/include/plist libs/include/
+    cp build/macosx-arm64/install/include/usbmuxd*.h libs/include/
+    printf '%s\n' "$MODULEMAP" > libs/include/libimobiledevice/module.modulemap
+    xcodebuild -create-xcframework \
+        -library libs/iphoneos/libimobiledevice.a -headers libs/include \
+        -library libs/iphonesimulator/libimobiledevice.a -headers libs/include \
+        -library libs/appletvos/libimobiledevice.a -headers libs/include \
+        -library libs/appletvsimulator/libimobiledevice.a -headers libs/include \
+        -library libs/macosx/libimobiledevice.a -headers libs/include \
+        -output libs/libimobiledevice.xcframework
+
+build-all: build-iphoneos-arm64 build-iphonesimulator-arm64 build-iphonesimulator-x86_64 build-appletvos-arm64 build-appletvsimulator-arm64 build-appletvsimulator-x86_64 build-macosx-arm64 build-macosx-x86_64
+    mkdir -p libs/iphoneos libs/iphonesimulator libs/appletvos libs/appletvsimulator libs/macosx
+    cp build/iphoneos-arm64/libimobiledevice_all.a libs/iphoneos/libimobiledevice.a
+    lipo -create build/iphonesimulator-arm64/libimobiledevice_all.a build/iphonesimulator-x86_64/libimobiledevice_all.a -output libs/iphonesimulator/libimobiledevice.a
+    cp build/appletvos-arm64/libimobiledevice_all.a libs/appletvos/libimobiledevice.a
+    lipo -create build/appletvsimulator-arm64/libimobiledevice_all.a build/appletvsimulator-x86_64/libimobiledevice_all.a -output libs/appletvsimulator/libimobiledevice.a
+    lipo -create build/macosx-arm64/libimobiledevice_all.a build/macosx-x86_64/libimobiledevice_all.a -output libs/macosx/libimobiledevice.a
+
+build-iphoneos-arm64:
+    just build-slice iphoneos arm64 "-miphoneos-version-min=13.0" arm-apple-darwin ios-arm64
+
+build-iphonesimulator-arm64:
+    just build-slice iphonesimulator arm64 "-mios-simulator-version-min=13.0" aarch64-apple-darwin ios-arm64_x86_64-simulator
+
+build-iphonesimulator-x86_64:
+    just build-slice iphonesimulator x86_64 "-mios-simulator-version-min=13.0" x86_64-apple-darwin ios-arm64_x86_64-simulator
+
+build-appletvos-arm64:
+    just build-slice appletvos arm64 "-mtvos-version-min=14.0" arm-apple-darwin tvos-arm64
+
+build-appletvsimulator-arm64:
+    just build-slice appletvsimulator arm64 "-mtvos-simulator-version-min=14.0" aarch64-apple-darwin tvos-arm64_x86_64-simulator
+
+build-appletvsimulator-x86_64:
+    just build-slice appletvsimulator x86_64 "-mtvos-simulator-version-min=14.0" x86_64-apple-darwin tvos-arm64_x86_64-simulator
+
+build-macosx-arm64:
+    just build-slice macosx arm64 "-mmacosx-version-min=11.0" aarch64-apple-darwin macos-arm64_x86_64
+
+build-macosx-x86_64:
+    just build-slice macosx x86_64 "-mmacosx-version-min=11.0" x86_64-apple-darwin macos-arm64_x86_64
+
+build-slice sdk arch min_flag host_triplet openssl_slice:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ROOT_DIR="$(pwd)"
+    SLICE_DIR="${ROOT_DIR}/build/{{sdk}}-{{arch}}"
+    PREFIX="${SLICE_DIR}/install"
+    SDK_PATH="$(xcrun --sdk {{sdk}} --show-sdk-path)"
+
+    mkdir -p "${PREFIX}/lib" "${PREFIX}/include" "${PREFIX}/lib/pkgconfig"
+
+    export CC="$(xcrun -find clang)"
+    export CXX="$(xcrun -find clang++)"
+    export CFLAGS="-arch {{arch}} -isysroot ${SDK_PATH} {{min_flag}} -O3 -fPIC -DHAVE_STPNCPY=1"
+    export CXXFLAGS="${CFLAGS}"
+    export LDFLAGS="-arch {{arch}} -isysroot ${SDK_PATH} -L${PREFIX}/lib"
+    export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
+    export PATH="${PREFIX}/bin:${PATH}"
+
+    # 1. Fetch precompiled OpenSSL.xcframework & extract single architecture
+    OPENSSL_URL="https://github.com/krzyzanowskim/OpenSSL/releases/download/3.6.2000/OpenSSL.xcframework.zip"
+    if [ ! -d "${ROOT_DIR}/build/deps/OpenSSL.xcframework" ]; then
+        mkdir -p "${ROOT_DIR}/build/deps"
+        curl -Ls "${OPENSSL_URL}" -o "${ROOT_DIR}/build/deps/OpenSSL.xcframework.zip"
+        unzip -q -o "${ROOT_DIR}/build/deps/OpenSSL.xcframework.zip" -d "${ROOT_DIR}/build/deps"
+    fi
+
+    OPENSSL_SLICE_DIR="${ROOT_DIR}/build/deps/OpenSSL.xcframework/{{openssl_slice}}"
+    mkdir -p "${PREFIX}/include/openssl"
+    if [ -f "${OPENSSL_SLICE_DIR}/OpenSSL.framework/OpenSSL" ]; then
+        cp -R "${OPENSSL_SLICE_DIR}/OpenSSL.framework/Headers/"* "${PREFIX}/include/openssl/"
+        lipo -thin {{arch}} "${OPENSSL_SLICE_DIR}/OpenSSL.framework/OpenSSL" -output "${PREFIX}/lib/libssl.a" 2>/dev/null || cp "${OPENSSL_SLICE_DIR}/OpenSSL.framework/OpenSSL" "${PREFIX}/lib/libssl.a"
+        cp "${PREFIX}/lib/libssl.a" "${PREFIX}/lib/libcrypto.a"
+    elif [ -d "${OPENSSL_SLICE_DIR}/Headers" ]; then
+        cp -R "${OPENSSL_SLICE_DIR}/Headers/"* "${PREFIX}/include/openssl/"
+        cp "${OPENSSL_SLICE_DIR}/"*.a "${PREFIX}/lib/" || true
+    fi
+
+    # 2. Build libplist
+    if [ ! -f "${PREFIX}/lib/libplist-2.0.a" ]; then
+        (
+            cd "${ROOT_DIR}/Dependencies/libplist"
+            make clean 2>/dev/null || true
+            ./autogen.sh \
+                --prefix="${PREFIX}" \
+                --host="{{host_triplet}}" \
+                --enable-static \
+                --disable-shared \
+                --without-cython \
+                --without-tools \
+                --without-tests \
+                PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" \
+                CFLAGS="${CFLAGS}" \
+                LDFLAGS="${LDFLAGS}"
+            make -j$(sysctl -n hw.logicalcpu) install
+        )
+    fi
+
+    # 3. Build libimobiledevice-glue
+    if [ ! -f "${PREFIX}/lib/libimobiledevice-glue-1.0.a" ]; then
+        (
+            cd "${ROOT_DIR}/Dependencies/libimobiledevice-glue"
+            make clean 2>/dev/null || true
+            ./autogen.sh \
+                --prefix="${PREFIX}" \
+                --host="{{host_triplet}}" \
+                --enable-static \
+                --disable-shared \
+                PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" \
+                CFLAGS="${CFLAGS}" \
+                LDFLAGS="${LDFLAGS}"
+            make -j$(sysctl -n hw.logicalcpu) install
+        )
+    fi
+
+    # 4. Build libusbmuxd
+    if [ ! -f "${PREFIX}/lib/libusbmuxd-2.0.a" ]; then
+        (
+            cd "${ROOT_DIR}/Dependencies/libusbmuxd"
+            make clean 2>/dev/null || true
+            ./autogen.sh \
+                --prefix="${PREFIX}" \
+                --host="{{host_triplet}}" \
+                --enable-static \
+                --disable-shared \
+                --without-tools \
+                PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" \
+                CFLAGS="${CFLAGS}" \
+                LDFLAGS="${LDFLAGS}"
+            make -j$(sysctl -n hw.logicalcpu) install
+        )
+    fi
+
+    # 5. Build libimobiledevice (only library & headers, skipping tools)
+    if [ ! -f "${PREFIX}/lib/libimobiledevice-1.0.a" ]; then
+        (
+            cd "${ROOT_DIR}"
+            make clean 2>/dev/null || true
+            ./autogen.sh \
+                --prefix="${PREFIX}" \
+                --host="{{host_triplet}}" \
+                --enable-static \
+                --disable-shared \
+                --without-cython \
+                --enable-debug \
+                PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig" \
+                CFLAGS="${CFLAGS}" \
+                LDFLAGS="${LDFLAGS}" \
+                libtatsu_CFLAGS=" " \
+                libtatsu_LIBS=" " \
+                openssl_CFLAGS="-I${PREFIX}/include" \
+                openssl_LIBS="-L${PREFIX}/lib -lssl -lcrypto"
+            make -C 3rd_party -j$(sysctl -n hw.logicalcpu)
+            make -C common -j$(sysctl -n hw.logicalcpu)
+            make -C src -j$(sysctl -n hw.logicalcpu)
+            make -C include -j$(sysctl -n hw.logicalcpu)
+            make -C src install
+            make -C include install
+        )
+    fi
+
+    # 6. Merge static archives for this slice
+    libtool -static -o "${SLICE_DIR}/libimobiledevice_all.a" \
+        "${PREFIX}/lib/libimobiledevice-1.0.a" \
+        "${PREFIX}/lib/libplist-2.0.a" \
+        "${PREFIX}/lib/libimobiledevice-glue-1.0.a" \
+        "${PREFIX}/lib/libusbmuxd-2.0.a"
