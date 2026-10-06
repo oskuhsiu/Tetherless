@@ -30,6 +30,10 @@ FIXTURES = {
     'post_write_cleanup_failure_requires_recovery',
     'unavailable_lease_blocks_mutation',
 }
+HELPER_HASHES = {
+    'bounded_process.py': '7724f6c3eb7d624f49a2651b30f1d6e6bb2c47d356449cd495fad28b2dd144e4',
+    'apply_patch.py': '552c1f309ee7a782be9e0aafd84dc70c580a5aedea342225d5a2d7b714a8dd9d',
+}
 
 
 def fixture_evidence_root(temporary, configured):
@@ -52,6 +56,12 @@ def fixture_evidence_root(temporary, configured):
 
 
 class PairingGeneratedPromotionTests(unittest.TestCase):
+    def test_supervisor_helper_identities_without_swift(self):
+        # Keep the Darwin prerequisite visible even when Swift execution is unrun.
+        helper_root = ROOT / 'Integration/Dependencies/idevice'
+        for name, digest in HELPER_HASHES.items():
+            self.assertEqual(hashlib.sha256((helper_root / name).read_bytes()).hexdigest(), digest, name)
+
     def test_evidence_root_is_opt_in_new_and_separate_from_private_work(self):
         with tempfile.TemporaryDirectory() as directory:
             parent = Path(directory).resolve()
@@ -146,10 +156,7 @@ class PairingGeneratedPromotionTests(unittest.TestCase):
             'Sources/TetherlessCore/PairingCancellationController.swift',
         ]
         helper_root = ROOT / 'Integration/Dependencies/idevice'
-        helper_hashes = {
-            'bounded_process.py': '7724f6c3eb7d624f49a2651b30f1d6e6bb2c47d356449cd495fad28b2dd144e4',
-            'apply_patch.py': 'a41e75b1903265c650c198bca05a2afc08ff053a01bcf0a56682cf95ce19c80a',
-        }
+        helper_hashes = HELPER_HASHES
         for name, digest in helper_hashes.items():
             self.assertEqual(hashlib.sha256((helper_root / name).read_bytes()).hexdigest(), digest)
         spec = importlib.util.spec_from_file_location('pairing_generated_supervisor_loader', ROOT / 'Integration/verify_pairing_composition.py')
