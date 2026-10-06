@@ -130,6 +130,88 @@ class RuntimeAndBottleTests(unittest.TestCase):
         with self.assertRaises(ValueError):setup.verify_existing_tools({'existing_tools':{'make':{'path':str(p),'sha256':'a'*64,'version':'1'}}})
 
 
+class CompatibilityReaderTests(unittest.TestCase):
+    def setUp(self):
+        self.lock=setup.load_lock()
+        raw=(HERE/'tests/fixtures/homebrew-6.0.22-selected-metadata.json').read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),'328dbe191e11d9aa068686b50be18cb7b5e5087218afbad3fd65c370967d6516')
+        self.data=json.loads(raw)
+
+    def test_runtime_guard_hashes_all_reader_files_and_requires_their_presence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary).resolve(strict=True);library=root/'Library/Homebrew'
+            current=library/'vendor/portable-ruby/current'
+            version=library/'vendor/portable-ruby/4.0.6';version.mkdir(parents=True)
+            current.symlink_to(version,target_is_directory=True)
+            paths=[root/'bin/brew',library/'vendor/portable-ruby-version',library/'utils/ruby.sh',
+                   library/'Gemfile.lock',current/'bin/ruby',current/'bin/bundle']
+            paths += [root/path for path in setup.API_COMPATIBILITY_READER]
+            for path in paths:
+                path.parent.mkdir(parents=True,exist_ok=True);path.write_text('fixture never executed');path.chmod(0o755)
+            (library/'vendor/portable-ruby-version').write_text('4.0.6\n')
+            with patch.object(setup,'PREFIX',root):
+                observed_root,hashes=setup.runtime_guard(root/'bin/brew')
+                self.assertEqual(observed_root,root)
+                for path in setup.API_COMPATIBILITY_READER:
+                    self.assertEqual(hashes[str(root/path)],setup.digest(root/path))
+                (root/next(iter(setup.API_COMPATIBILITY_READER))).unlink()
+                with self.assertRaisesRegex(ValueError,'metadata reader sources required'):
+                    setup.runtime_guard(root/'bin/brew')
+
+    def test_actual_null_metadata_requires_reader_and_preserves_raw_observation(self):
+        original=copy.deepcopy(self.data)
+        with self.assertRaisesRegex(ValueError,'authenticated API reader'):
+            setup.validate_metadata(self.data,self.lock)
+        rows=setup.validate_metadata(self.data,self.lock,compatibility_reader=dict(setup.API_COMPATIBILITY_READER))
+        self.assertEqual(self.data,original)
+        self.assertEqual(set(rows),set(setup.NAMES))
+        self.assertTrue(all(row['compatibility_version'] is None for row in rows.values()))
+        self.assertTrue(all(row['compatibility_version']==1 for row in self.lock['formulas'].values()))
+
+    def test_each_reader_source_hash_and_complete_profile_are_required(self):
+        for path in setup.API_COMPATIBILITY_READER:
+            for change in ('missing','changed'):
+                reader=dict(setup.API_COMPATIBILITY_READER)
+                if change=='missing':del reader[path]
+                else:reader[path]='0'*64
+                with self.subTest(path=path,change=change),self.assertRaisesRegex(ValueError,'authenticated API reader'):
+                    setup.validate_metadata(self.data,self.lock,compatibility_reader=reader)
+        reader={**setup.API_COMPATIBILITY_READER,'unknown':'0'*64}
+        with self.assertRaisesRegex(ValueError,'authenticated API reader'):
+            setup.validate_metadata(self.data,self.lock,compatibility_reader=reader)
+
+    def test_missing_wrong_or_noninteger_compatibility_never_uses_omission_profile(self):
+        for value in ('missing',0,2,'1',True,1.0,[],{}):
+            data=copy.deepcopy(self.data)
+            if value=='missing':del data['formulae'][0]['compatibility_version']
+            else:data['formulae'][0]['compatibility_version']=value
+            with self.subTest(value=value),self.assertRaises((ValueError,KeyError)):
+                setup.validate_metadata(data,self.lock,compatibility_reader=setup.API_COMPATIBILITY_READER)
+
+    def test_null_profile_cannot_admit_formula_bottle_or_dependency_drift(self):
+        mutations=[lambda r:r['ruby_source_checksum'].update(sha256='0'*64),
+                   lambda r:r['versions'].update(stable='999'),
+                   lambda r:r['dependencies'].append('unexpected'),
+                   lambda r:r['bottle']['stable']['files']['arm64_sequoia'].update(sha256='0'*64)]
+        for mutation in mutations:
+            data=copy.deepcopy(self.data);mutation(data['formulae'][0])
+            with self.assertRaises(ValueError):
+                setup.validate_metadata(data,self.lock,compatibility_reader=setup.API_COMPATIBILITY_READER)
+
+    def test_authenticated_source_must_declare_exact_locked_integer_once(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary).resolve(strict=True);(root/'metadata-sources').mkdir()
+            path=root/'metadata-sources/m4.rb'
+            for body in (b'class M4\nend\n',b'  compatibility_version 2\n',
+                         b'  compatibility_version 1\n  compatibility_version 1\n'):
+                path.write_bytes(body);expected={**self.lock['formulas']['m4'],'ruby_source_sha256':setup.digest(path)}
+                with patch.object(setup,'HERE',root),self.assertRaisesRegex(ValueError,'compatibility declaration differs'):
+                    setup.require_formula_compatibility('m4',expected)
+            path.write_bytes(b'  compatibility_version 1\n')
+            with patch.object(setup,'HERE',root),self.assertRaisesRegex(ValueError,'formula text changed'):
+                setup.require_formula_compatibility('m4',self.lock['formulas']['m4'])
+
+
 class StartupCacheTests(unittest.TestCase):
     def exercise(self,fail_label=None,offline_json_prefix=''):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
@@ -213,11 +295,18 @@ class StartupCacheTests(unittest.TestCase):
 
 
 class PartialFailureEvidenceTests(unittest.TestCase):
-    def test_partial_install_retains_after_state_and_primary_error(self):
+    def exercise(self,null_metadata=False,reader_drift=False):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary).resolve(strict=True);work=root/'setup';brewroot=root/'homebrew';brewroot.mkdir()
             runtime=brewroot/'runtime';runtime.write_text('existing-runtime')
             lock=setup.load_lock();metadata=selected_metadata(lock)
+            reader={};runtime_hashes={str(runtime):setup.digest(runtime)}
+            for path in setup.API_COMPATIBILITY_READER:
+                fixture=brewroot/path;fixture.parent.mkdir(parents=True,exist_ok=True)
+                fixture.write_text('synthetic reader fixture: '+path)
+                reader[path]=setup.digest(fixture);runtime_hashes[str(fixture)]=reader[path]
+            if null_metadata:
+                metadata=json.loads((HERE/'tests/fixtures/homebrew-6.0.22-selected-metadata.json').read_bytes())
             before={'pkgconf':{'3.0.7':'unchanged-receipt'}}
             after={**before,'m4':{'1.4.21':'partially-installed-approved-formula'}}
             primary=ValueError('synthetic partial install failure')
@@ -233,11 +322,14 @@ class PartialFailureEvidenceTests(unittest.TestCase):
                     formula=label.rsplit('cache-',1)[1];path=work/'cache'/(formula+'.bottle.tar.gz')
                     path.write_bytes(b'synthetic asset placeholder, never executed');value=str(path)+'\n'
                 log.write_text(value);log.with_name(log.name+'.status.json').write_text(json.dumps({'synthetic_fixture':True})+'\n')
-                if 'install-four-formulas' in label:raise primary
+                if 'install-four-formulas' in label:
+                    if reader_drift:(brewroot/next(iter(reader))).write_text('changed reader fixture')
+                    raise primary
             env={'GITHUB_SHA':'a'*40,'GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1',
                  'DEVELOPER_DIR':'/Applications/Xcode_26.3.app/Contents/Developer'}
             with patch.dict(os.environ,env,clear=True),patch.object(setup,'require_approved_ci'), \
-                 patch.object(setup,'runtime_guard',return_value=(brewroot,{str(runtime):setup.digest(runtime)})), \
+                 patch.object(setup,'API_COMPATIBILITY_READER',reader), \
+                 patch.object(setup,'runtime_guard',return_value=(brewroot,runtime_hashes)), \
                  patch.object(setup,'cellar_inventory',side_effect=[before,after]), \
                  patch.object(setup,'verify_existing_tools',return_value={'fixture':'unchanged'}), \
                  patch.object(setup,'inspect_bottle',return_value={'synthetic_verified_metadata':True}), \
@@ -249,9 +341,21 @@ class PartialFailureEvidenceTests(unittest.TestCase):
             self.assertEqual(report['state'],'failed');self.assertEqual(report['final_cellar'],after)
             self.assertTrue(report['final_audit']['unrelated_formula_state_unchanged'])
             self.assertEqual(report['error']['text'],str(primary))
+            self.assertEqual(report['compatibility_reader'],{'expected':reader,'observed':reader})
+            self.assertEqual(report['metadata_compatibility']['m4']['observed'],None if null_metadata else 1)
+            self.assertEqual(report['metadata_compatibility']['m4']['source_declared'],1)
+            self.assertEqual(all(report['final_audit'].values()),not reader_drift)
             install=[row for row in report['commands'] if 'install-four-formulas' in row['log']]
             self.assertEqual(len(install),1);self.assertTrue(install[0]['offline'])
             self.assertEqual(install[0]['argv'][-4:],list(setup.NAMES))
             self.assertTrue(any('metadata-before-install' in row['log'] and row['offline'] for row in report['commands']))
+
+    def test_partial_install_retains_after_state_and_primary_error(self):self.exercise()
+
+    def test_null_reader_profile_reaches_both_metadata_gates_and_retains_raw_null(self):
+        self.exercise(null_metadata=True)
+
+    def test_reader_mutation_is_retained_by_final_audit_without_hiding_primary_failure(self):
+        self.exercise(null_metadata=True,reader_drift=True)
 
 if __name__=='__main__':unittest.main()

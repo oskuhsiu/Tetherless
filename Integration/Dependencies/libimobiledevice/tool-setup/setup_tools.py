@@ -29,18 +29,37 @@ FLAGS={name:'1' for name in ('HOMEBREW_NO_AUTO_UPDATE','HOMEBREW_NO_INSTALL_UPGR
        'HOMEBREW_NO_AUTOREMOVE','HOMEBREW_NO_ANALYTICS','HOMEBREW_NO_ENV_HINTS',
        'HOMEBREW_NO_BOOTSNAP','HOMEBREW_NO_GITHUB_API','HOMEBREW_NO_SUDO',
        'HOMEBREW_NO_COLOR','HOMEBREW_NO_EMOJI')}
+# Homebrew 6.0.22, commit 08e85c4e42f5d8f1ea17c36cb59cf61c2ccb26c3.
+# This API loader omits compatibility_version from its generated Formula class.
+# A null CLI field is admissible only with this exact reader and independently
+# authenticated formula source that still declares the locked integer value.
+API_COMPATIBILITY_READER={
+    'Library/Homebrew/brew.rb':'29d15cf96a6cc2f75173097d17f676504e4b566a6feee3b9bf83acb8e45e724f',
+    'Library/Homebrew/cmd/info.rb':'49824eab5ac1ec459221c595a813c0f60ba0fd2d0ce00b6e93837eeddceb8af8',
+    'Library/Homebrew/formula.rb':'165371769ddca7d4236f0aa194ea553fe5223d89c7a57cdc44407bc6a033b7b8',
+    'Library/Homebrew/formulary.rb':'3358a123b148e7ec5920a1238927a2cbdd7bf0423241fa27b9f2b6665f944294',
+}
 
 
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def write(path,data):path.write_text(json.dumps(data,sort_keys=True,indent=2)+'\n')
+
+def require_formula_compatibility(name,expected):
+    source=(HERE/'metadata-sources'/(name+'.rb')).read_bytes()
+    if hashlib.sha256(source).hexdigest()!=expected['ruby_source_sha256']:
+        raise ValueError('reviewed official formula text changed')
+    declarations=re.findall(rb'^  compatibility_version ([0-9]+)[ \t]*$',source,re.MULTILINE)
+    wanted=expected['compatibility_version']
+    if type(wanted) is not int or len(declarations)!=1 or int(declarations[0])!=wanted:
+        raise ValueError('authenticated formula compatibility declaration differs: '+name)
+
 
 def load_lock():
     lock=json.loads((HERE/'formula-lock.json').read_bytes())
     if set(lock['formulas'])!=set(NAMES) or lock['install_order']!=list(NAMES) or lock['bottle_tag']!='arm64_sequoia':
         raise ValueError('four-formula scope changed')
     for name,row in lock['formulas'].items():
-        if digest(HERE/'metadata-sources'/(name+'.rb'))!=row['ruby_source_sha256']:
-            raise ValueError('reviewed official formula text changed')
+        require_formula_compatibility(name,row)
         if not set(row['dependencies'])<=set(NAMES):raise ValueError('formula dependency outside approval scope')
     return lock
 
@@ -58,7 +77,7 @@ def require_approved_ci(approved,env):
     if platform.system()!='Darwin' or platform.machine()!='arm64':raise PermissionError('wrong setup host')
 
 
-def validate_metadata(data,lock):
+def validate_metadata(data,lock,*,compatibility_reader=None):
     if not isinstance(data,dict) or data.get('casks')!=[]:raise ValueError('formula-only metadata required')
     rows=data.get('formulae',[])
     if len(rows)!=4 or {r['name'] for r in rows}!=set(NAMES):raise ValueError('unexpected selected formula set')
@@ -66,12 +85,19 @@ def validate_metadata(data,lock):
     for row in rows:
         name=row['name'];expected=lock['formulas'][name]
         if row['tap']!='homebrew/core' or row['full_name']!=name:raise ValueError('unapproved formula tap/name')
-        for key in ('revision','version_scheme','compatibility_version','keg_only'):
+        for key in ('revision','version_scheme','keg_only'):
             if row[key]!=expected[key]:raise ValueError('formula identity drift: '+name+' '+key)
         if row['versions']['stable']!=expected['version'] or not row['versions']['bottle']:
             raise ValueError('selected stable/bottle version drift')
         if row['ruby_source_checksum']['sha256']!=expected['ruby_source_sha256'] or row['ruby_source_path']!=expected['ruby_source_path']:
             raise ValueError('formula source changed')
+        require_formula_compatibility(name,expected)
+        observed=row['compatibility_version']  # A missing field is never an omission profile.
+        if observed is None:
+            if compatibility_reader!=API_COMPATIBILITY_READER:
+                raise ValueError('null formula compatibility requires the authenticated API reader: '+name)
+        elif type(observed) is not int or observed!=expected['compatibility_version']:
+            raise ValueError('formula identity drift: '+name+' compatibility_version')
         for key in ('build_dependencies','test_dependencies','recommended_dependencies','optional_dependencies','requirements','conflicts_with','link_overwrite'):
             if row.get(key)!=[]:raise ValueError('unapproved dependency/requirement/overwrite: '+name+' '+key)
         if sorted(row['dependencies'])!=sorted(expected['dependencies']) or row['uses_from_macos']!=expected['uses_from_macos']:
@@ -102,6 +128,9 @@ def runtime_guard(brew=BREW):
     required=[binary,version_file,library/'utils/ruby.sh',library/'Gemfile.lock',current/'bin/ruby',current/'bin/bundle',Path('/usr/bin/perl')]
     if any(not p.is_file() for p in required) or not os.access(current/'bin/ruby',os.X_OK):
         raise ValueError('existing Ruby/Bundler/macOS Perl required; no bootstrap permitted')
+    reader_sources=[root/path for path in API_COMPATIBILITY_READER]
+    if any(not p.is_file() for p in reader_sources):raise ValueError('existing Homebrew metadata reader sources required')
+    required += reader_sources
     return root,{str(p):digest(p) for p in required}
 
 
@@ -196,6 +225,8 @@ def setup(args):
         return log.read_text().strip()
     try:
         homebrew_root,runtime=runtime_guard();report['existing_homebrew_runtime']=runtime
+        compatibility_reader={path:runtime.get(str(homebrew_root/path)) for path in API_COMPATIBILITY_READER}
+        report['compatibility_reader']={'expected':API_COMPATIBILITY_READER,'observed':compatibility_reader}
         before=cellar_inventory();report['cellar_before']=before
         report['existing_tools_before']=verify_existing_tools(lock)
         for name in NAMES:
@@ -218,7 +249,11 @@ def setup(args):
         metadata_text=run([BREW,'info','--json=v2','--formula',*NAMES],
                           'selected-metadata',offline=True)
         metadata=json.loads(metadata_text)  # Never discard warnings or arbitrary prefixes.
-        validate_metadata(metadata,lock);write(work/'selected-metadata.json',metadata)
+        validate_metadata(metadata,lock,compatibility_reader=compatibility_reader)
+        report['metadata_compatibility']={row['name']:{'observed':row['compatibility_version'],
+            'source_declared':lock['formulas'][row['name']]['compatibility_version'],
+            'formula_source_sha256':row['ruby_source_checksum']['sha256']} for row in metadata['formulae']}
+        write(work/'selected-metadata.json',metadata)
         bottles={}
         missing=[name for name in NAMES if name not in before]
         for name in missing:
@@ -235,7 +270,7 @@ def setup(args):
         # Revalidate the selected four-formula closure offline just before install.
         validated_again=json.loads(run([BREW,'info','--json=v2','--formula',*NAMES],
                                        'metadata-before-install',offline=True))
-        validate_metadata(validated_again,lock)
+        validate_metadata(validated_again,lock,compatibility_reader=compatibility_reader)
         write(work/'metadata-before-install.json',validated_again)
         # Install offline with normal dependency handling and --force-bottle.
         # Missing bottles/additional assets fail; no source build is accepted.
