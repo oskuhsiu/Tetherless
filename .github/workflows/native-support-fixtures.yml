@@ -1,0 +1,136 @@
+name: Native support fixtures
+on:
+  push:
+    branches: [verify/staged-pairing-native]
+    paths:
+      - '.github/workflows/native-support-fixtures.yml'
+      - 'Integration/tests/test_oda_cache_cleanup.py'
+      - 'Integration/tests/test_emproxy_logging_safety.py'
+      - 'Integration/tests/fixtures/ClearAppCacheOperation.swift'
+      - 'Integration/tests/fixtures/oda_cache_cleanup_harness.swift'
+      - 'Integration/tests/fixtures/EMProxyImpl.upstream.swift'
+      - 'Integration/maintenance_safety.py'
+      - 'Integration/emproxy_logging_safety.py'
+      - 'Integration/network_safety.py'
+      - 'Integration/Overrides/AnisettePackageTransfer.swift'
+      - 'Sources/TetherlessCore/PrivateFileStore.swift'
+      - 'Sources/TetherlessCore/LibraryCacheMaintenance.swift'
+      - 'Sources/TetherlessCore/TransferWorkspace.swift'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-support-fixtures-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  support-fixtures:
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: Integration/tests
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Record exact source and toolchain identity
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          mkdir -p .native-support-evidence
+          python3 - <<'PY'
+          import hashlib, json, os, platform, subprocess, tarfile
+          from pathlib import Path
+          paths = [
+              '.github/workflows/native-support-fixtures.yml',
+              'Integration/tests/test_oda_cache_cleanup.py',
+              'Integration/tests/test_emproxy_logging_safety.py',
+              'Integration/tests/fixtures/ClearAppCacheOperation.swift',
+              'Integration/tests/fixtures/oda_cache_cleanup_harness.swift',
+              'Integration/tests/fixtures/EMProxyImpl.upstream.swift',
+              'Integration/maintenance_safety.py',
+              'Integration/emproxy_logging_safety.py',
+              'Integration/network_safety.py',
+              'Integration/Overrides/AnisettePackageTransfer.swift',
+              'Sources/TetherlessCore/PrivateFileStore.swift',
+              'Sources/TetherlessCore/LibraryCacheMaintenance.swift',
+              'Sources/TetherlessCore/TransferWorkspace.swift',
+          ]
+          output = Path('.native-support-evidence')
+          files = [{'path': name, 'bytes': Path(name).stat().st_size,
+                    'sha256': hashlib.sha256(Path(name).read_bytes()).hexdigest()} for name in paths]
+          with tarfile.open(output / 'fixture-sources.tar.gz', 'w:gz') as archive:
+              for name in paths:
+                  archive.add(name, arcname=name, recursive=False)
+          (output / 'source-and-run.json').write_text(json.dumps({
+              'source_commit': os.environ['GITHUB_SHA'],
+              'checkout_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+              'checkout_tree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(),
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'ref': os.environ['GITHUB_REF'],
+              'runner_arch': platform.machine(),
+              'image_os': os.environ.get('ImageOS'),
+              'image_version': os.environ.get('ImageVersion'),
+              'developer_dir': os.environ['DEVELOPER_DIR'],
+              'scope': 'ODA cleanup ownership regression and EMProxy Swift callback privacy spy',
+              'simulator_or_app_or_device_acceptance': False,
+              'files': files,
+          }, indent=2) + '\n')
+          PY
+          {
+            xcodebuild -version
+            xcrun --find swiftc
+            swiftc --version
+            python3 --version
+          } 2>&1 | tee .native-support-evidence/toolchain.log
+      - name: Execute existing ODA and EMProxy fixtures without skipped Swift checks
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' 2>&1 | tee .native-support-evidence/unittest.log
+          import hashlib, json, os, sys, unittest
+          from pathlib import Path
+          import test_oda_cache_cleanup as oda
+          import test_emproxy_logging_safety as emproxy
+          output = Path('.native-support-evidence')
+          derived = {
+              'oda-positive.swift': oda.harness(),
+              'oda-negative.swift': oda.harness(negative=True),
+              'EMProxyImpl.transformed.swift': emproxy.m.patch(emproxy.FIXTURE.read_text()),
+          }
+          for name, source in derived.items():
+              (output / name).write_text(source)
+          suite = unittest.defaultTestLoader.loadTestsFromNames([
+              'test_oda_cache_cleanup', 'test_emproxy_logging_safety'])
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          accepted = result.wasSuccessful() and not result.skipped
+          (output / 'result.json').write_text(json.dumps({
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'tests_run': result.testsRun,
+              'failures': [test.id() for test, _ in result.failures],
+              'errors': [test.id() for test, _ in result.errors],
+              'skipped': [{'test': test.id(), 'reason': reason} for test, reason in result.skipped],
+              'accepted_without_skips': accepted,
+              'derived_sources': [{'path': name,
+                  'sha256': hashlib.sha256((output / name).read_bytes()).hexdigest()} for name in derived],
+              'simulator_or_app_or_device_acceptance': False,
+          }, indent=2) + '\n')
+          sys.exit(0 if accepted else 1)
+          PY
+      - name: Retain exact support-fixture evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 2
+        with:
+          name: native-support-fixtures-${{ github.sha }}-${{ github.run_attempt }}
+          path: .native-support-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
