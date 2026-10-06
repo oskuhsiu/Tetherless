@@ -1,0 +1,33 @@
+{
+  "contract_sha256": "20ee6e1e873cc8f6f83bf42b97e8760569a70ff95818d570a45e3966d63a9935",
+  "environment": {
+    "AARCH64_APPLE_IOS_SIM_OPENSSL_INCLUDE_DIR": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios-sim/provider/include",
+    "AARCH64_APPLE_IOS_SIM_OPENSSL_LIBS": "",
+    "AARCH64_APPLE_IOS_SIM_OPENSSL_LIB_DIR": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios-sim/provider/lib",
+    "AARCH64_APPLE_IOS_SIM_OPENSSL_NO_VENDOR": "1",
+    "AARCH64_APPLE_IOS_SIM_OPENSSL_STATIC": "1"
+  },
+  "final_link_arguments": [
+    "-F",
+    "/Users/runner/work/Tetherless/Tetherless/.proof/openssl-inputs/inputs/Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-simulator",
+    "-framework",
+    "OpenSSL"
+  ],
+  "framework_binary_sha256": "a25a4fab515e6e69d4b3c0dd6d09c6d80e022759a7169dbca565593d085abeaa",
+  "header_count": 144,
+  "include_spellings": [
+    "OpenSSL",
+    "openssl"
+  ],
+  "kind": "apple-framework-consumer",
+  "native_execution": false,
+  "native_libraries": [],
+  "product_activation": false,
+  "schema": 1,
+  "source_commit": "fdc9231384f37f053dffe058fd6dfc6c5072dae5",
+  "source_root": "/Users/runner/work/Tetherless/Tetherless/.proof/openssl-inputs/inputs",
+  "target": "aarch64-apple-ios-sim",
+  "verified_input_bytes": 40506667,
+  "verified_input_count": 443,
+  "view_root": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios-sim/provider"
+}

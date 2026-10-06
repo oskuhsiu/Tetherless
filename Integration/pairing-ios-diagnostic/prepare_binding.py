@@ -187,7 +187,7 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
         probes = {(p["group"], p["language"]) for p in row["link_probes"]}
         if (probes != {(group, language) for group in ("pairing", "host", "result_constants") for language in ("c", "swift")}
                 or len(row["link_probes"]) != 6 or any(p["executed"] is not False for p in row["link_probes"])
-                or provider["kind"] != "apple-framework" or provider["native_libraries"]
+                or provider["kind"] != "apple-framework-consumer" or provider["native_libraries"]
                 or provider["environment"].get(prefix + "OPENSSL_LIBS") != ""
                 or row["production_features"]["synthetic_peer_selected"] is not False
                 or row["header_probe_linked_or_executed"] is not False):

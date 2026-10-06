@@ -1,6 +1,7 @@
 """NEW portable boundary fixtures authored after loss of the former tests.
 
-Every artifact and retained command receipt here is synthetic. No native tool,
+Provider receipt fixtures retain genuine producer bytes. The surrounding artifact
+and command receipts are synthetic. No native tool,
 downloaded source, binary parser, signing path, or device operation is executed.
 These tests establish Python rejection/copy boundaries, not Apple acceptance.
 """
@@ -21,6 +22,12 @@ HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
 import prepare_binding as binding
 import read_runtime_producer as runtime
+
+PROVIDER_FIXTURE_ROOT = HERE / "tests/fixtures/apple-provider-9ee2ccc"
+PROVIDER_FIXTURE_HASHES = {
+    "aarch64-apple-ios": "bfd9eaf44fc2394aa2de10f38dfc2c5700d42386d135d6d865518e68e023f1d7",
+    "aarch64-apple-ios-sim": "7fa4315280cfa457a0e3285e6867cca06060f61ab0462e81162c7c9f9e8e2b3a",
+}
 
 
 def sha(data):
@@ -45,6 +52,14 @@ def success():
     return {"outcome": "success", "returncode": 0, "output_complete": True,
             "output_truncated": False,
             "cleanup": {"direct_child_reaped": True, "group_empty": True}}
+
+
+def actual_provider_receipt(target):
+    """Load genuine producer bytes; only the surrounding unit-test artifact is synthetic."""
+    raw = (PROVIDER_FIXTURE_ROOT / (target + ".json")).read_bytes()
+    if sha(raw) != PROVIDER_FIXTURE_HASHES[target]:
+        raise AssertionError("genuine Apple provider receipt fixture changed")
+    return json.loads(raw)
 
 
 class DiagnosticFixture:
@@ -101,8 +116,7 @@ class DiagnosticFixture:
             row = {"target": {"rust": target},
                    "library_sha256": put(self.artifact / (prefix + "libidevice_ffi.a"), archive),
                    "header_sha256": put(self.artifact / (prefix + "Headers/idevice.h"), final),
-                   "provider_receipt": {"kind": "apple-framework", "native_libraries": [],
-                       "environment": {target.upper().replace("-", "_") + "_OPENSSL_LIBS": ""}},
+                   "provider_receipt": actual_provider_receipt(target),
                    "production_features": {"synthetic_peer_selected": False},
                    "header_probe_linked_or_executed": False,
                    "toolchain_observations": {key: "synthetic retained " + key for key in
@@ -173,6 +187,33 @@ class DiagnosticBindingTests(unittest.TestCase):
         self.assertTrue(all(len(row["link_probes"]) == 6 for row in result["targets"].values()))
         self.assertFalse(result["binary_format_inspected"])
         self.assertEqual(set(result["device_slice"]), {"archive", "header", "module_map"})
+
+    def test_genuine_provider_receipt_bytes_match_retained_provenance(self):
+        provenance = json.loads((PROVIDER_FIXTURE_ROOT / "provenance.json").read_bytes())
+        self.assertEqual(provenance["artifact_sha256"], "c90f04e44019e67e551dca9708e9e958729ca475094aa6eefbd8e42d638f0a77")
+        self.assertEqual(provenance["apple_receipt_sha256"], "24227e8480687b027f8c1a0e9d665af4e89844bf5c3ebb0d241fb3e6b58a5cc0")
+        self.assertEqual(provenance["source_commit"], "9ee2ccc9bd3519053781087acde54d4b4ee43236")
+        self.assertEqual(provenance["run_id"], 37400684000)
+        self.assertEqual(provenance["artifact_id"], 11385154393)
+        for row in self.fixture.receipt["targets"]:
+            target = row["target"]["rust"]
+            data = (PROVIDER_FIXTURE_ROOT / (target + ".json")).read_bytes()
+            recorded = provenance["files"][target + ".json"]
+            self.assertEqual(recorded["sha256"], sha(data))
+            self.assertEqual(recorded["bytes"], len(data))
+            self.assertEqual(row["provider_receipt"], json.loads(data))
+            self.assertEqual(row["provider_receipt"]["kind"], "apple-framework-consumer")
+
+    def test_other_provider_kinds_are_rejected_on_each_target(self):
+        for row in self.fixture.receipt["targets"]:
+            original = copy.deepcopy(row["provider_receipt"])
+            for kind in ("apple-framework", "host-static", "", None, "apple-framework-consumer-extra"):
+                with self.subTest(target=row["target"]["rust"], kind=kind):
+                    row["provider_receipt"]["kind"] = kind
+                    self.fixture.refresh()
+                    self.reject_artifact()
+            row["provider_receipt"] = original
+            self.fixture.refresh()
 
     def test_frozen_contract_has_fourteen_compiler_and_one_opaque_support_sources(self):
         contract = json.loads((HERE / "input-contract.json").read_text())

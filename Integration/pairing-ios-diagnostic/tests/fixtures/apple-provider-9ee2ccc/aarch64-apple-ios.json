@@ -1,0 +1,33 @@
+{
+  "contract_sha256": "20ee6e1e873cc8f6f83bf42b97e8760569a70ff95818d570a45e3966d63a9935",
+  "environment": {
+    "AARCH64_APPLE_IOS_OPENSSL_INCLUDE_DIR": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/provider/include",
+    "AARCH64_APPLE_IOS_OPENSSL_LIBS": "",
+    "AARCH64_APPLE_IOS_OPENSSL_LIB_DIR": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/provider/lib",
+    "AARCH64_APPLE_IOS_OPENSSL_NO_VENDOR": "1",
+    "AARCH64_APPLE_IOS_OPENSSL_STATIC": "1"
+  },
+  "final_link_arguments": [
+    "-F",
+    "/Users/runner/work/Tetherless/Tetherless/.proof/openssl-inputs/inputs/Frameworks/OpenSSL.xcframework/ios-arm64",
+    "-framework",
+    "OpenSSL"
+  ],
+  "framework_binary_sha256": "355ff3a21cb4eb8ef86bfba202414de1a9070b3ddf8703d03cedfcacbe9e5431",
+  "header_count": 144,
+  "include_spellings": [
+    "OpenSSL",
+    "openssl"
+  ],
+  "kind": "apple-framework-consumer",
+  "native_execution": false,
+  "native_libraries": [],
+  "product_activation": false,
+  "schema": 1,
+  "source_commit": "fdc9231384f37f053dffe058fd6dfc6c5072dae5",
+  "source_root": "/Users/runner/work/Tetherless/Tetherless/.proof/openssl-inputs/inputs",
+  "target": "aarch64-apple-ios",
+  "verified_input_bytes": 40506667,
+  "verified_input_count": 443,
+  "view_root": "/Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/provider"
+}
