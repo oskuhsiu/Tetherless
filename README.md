@@ -4,6 +4,14 @@ Mobile-first iOS sideloading with proactive profile renewal using the user's own
 
 **Integrated development build, not a device-validated release.** The native renewal backend, no-foreground App Intent, background entry points and Auto Renewal screen are connected. Debug/Release native builds and tests are tracked in [implementation status](docs/STATUS.md). Passing compilation or a scripted test is not proof of Apple authorization or unattended execution on an iPhone.
 
+## Web signing prototype
+
+The [web frontend](WebBootstrap/README.md) signs a custom IPA locally in the browser with the pinned WASM runtime. Its optional [account service](Tools/WebBootstrapService/README.md) provides the login-first journey: read the selected Team's registered devices, explicitly choose an active record, then separately approve provisioning. It never silently registers a device. Profile-based new-device collection is a separate explicit route.
+
+At source [`757b452`](https://github.com/oskuhsiu/Tetherless/commit/757b45216adf0061542441e23b941985a6bdd04f), [browser CI](https://github.com/oskuhsiu/Tetherless/actions/runs/37501163075) passed 30 Chromium cases (12 guided synthetic + 18 static), 87 UI tests and five harness tests. [Container CI](https://github.com/oskuhsiu/Tetherless/actions/runs/37501163055) passed 24 packaging, 29 Rust and 87 UI tests, plus an isolated production-container smoke test without Apple calls. Exact receipts and limits are in [web bootstrap evidence](docs/WEB_BOOTSTRAP.md#verification-evidence).
+
+There is no deployed public HTTPS service, GitHub Pages site or official unsigned Tetherless Release asset at this checkpoint. The official-asset configuration remains `null`; choosing a custom IPA is supported without one. The 150 MiB input cap is enforced, but the current unsigned Tetherless IPA has not been produced to prove it fits. Read the [bounded hosting contract](Tools/WebBootstrapService/deployment/README.md) before any separately approved test deployment. Real Apple login/2FA, Safari, iPhone installation and unattended renewal remain unverified. [All 16 original tasks remain open](docs/PLAN_PROGRESS.md).
+
 ## Development workflow
 
 Work goes directly to `develop`, or through development PRs merged into `develop`. The owner authorized this workflow; `main` remains the stable/release branch and is not automatically promoted. PR #1 was merged into `develop`.
@@ -60,6 +68,9 @@ CI retains source revisions, build logs, prepared review sources and unsigned IP
 | `Integration/prepare.py` and its hash-locked hardening stages | Hash-locked transformations of the pinned native app |
 | `Packages/TetherlessArchive` | Production streaming extractor and real ZIP adversarial tests |
 | `Vendor/SideStore` | Native upstream gitlink; dependencies retain their licenses |
+| `WebBootstrap` | Browser signer, progressive account/custom-IPA UI and synthetic browser tests |
+| `Tools/WebBootstrapService` | Transient account/UDID adapter and bounded same-origin container packaging |
+| `docs/WEB_BOOTSTRAP.md` | Web evidence, data recipients and remaining bootstrap gates |
 | `docs/STATUS.md` | Verified evidence and remaining implementation gates |
 
 ## Security and licensing

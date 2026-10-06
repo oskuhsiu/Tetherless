@@ -1,6 +1,10 @@
 # Web bootstrap implementation and acceptance gates
 
-Date: 2026-10-06. Scope: BOOT-01 from `ORIGINAL_PLAN.md`.
+Publication addendum — 2026-10-06 18:08 UTC: the exact 14,853-byte owned UIKit fixture from run `37503567286` subsequently passed the pinned WASM signer with fresh synthetic matching material. Input and embedded-profile checks passed; the 22,169-byte output has a changed executable, verified CodeResources hashes and the exact synthetic CMS profile. Original IPA, Info.plist and BuildIdentity stayed unchanged. No private key or P12 was retained in the proof. The detailed 17:30 checkpoint below predates this replay; no live Apple, installation/launch or full Tetherless acceptance follows.
+
+Evidence checkpoint: 2026-10-06 17:30 UTC. Scope: BOOT-01 from `ORIGINAL_PLAN.md`.
+Verified implementation: [`757b45216adf0061542441e23b941985a6bdd04f`](https://github.com/oskuhsiu/Tetherless/commit/757b45216adf0061542441e23b941985a6bdd04f)
+on `verify/staged-pairing-native`.
 
 ## Status
 
@@ -8,17 +12,19 @@ This is a functional **development prototype**, not a completed clean-phone
 bootstrap or production signing service. It preserves the original free Personal
 Team goal. A paid Ad Hoc helper is separate and does not count as that goal.
 No deployment, Pages configuration, release, real Apple account action, certificate
-creation/revocation, device enrollment or iPhone installation was performed.
+creation/revocation, real device enrollment or iPhone installation was performed.
 
-The new paths are isolated from native integration:
+The web paths are isolated from native integration:
 
-- `WebBootstrap/`: relative-base static frontend, local signer, metadata checks,
+- [WebBootstrap](../WebBootstrap/README.md): relative-base static frontend, local signer, metadata checks,
   tests and pinned licensed runtime
-- `Tools/WebBootstrapService/`: genuine transient Apple account/provisioning and
+- [Tools/WebBootstrapService](../Tools/WebBootstrapService/README.md): genuine transient Apple account/provisioning and
   UDID Profile Service adapter
+- [Bounded deployment package](../Tools/WebBootstrapService/deployment/README.md):
+  same-origin frontend/service container and short-lived test access gate
 - This document
 
-Existing App/native CI/signing-admission paths are unchanged.
+The web changes do not modify App/native CI or signing-admission paths.
 
 ## Progressive default journey
 
@@ -70,8 +76,8 @@ represented as automatable.
 
 ### Existing registered-device contract
 
-The follow-on frontend requires the corresponding separately reviewed backend
-route: `GET /v1/sessions/{id}/teams/{teamId}/devices`, authenticated with the
+The published frontend and backend implement the read-only route
+`GET /v1/sessions/{id}/teams/{teamId}/devices`, authenticated with the
 in-memory Bearer token and same-origin gate cookie, with redirects rejected.
 The response is `{teamId, devices:[{udid,name,status,selectable}]}`. Team IDs are
 1–64 ASCII alphanumerics. Responses are capped at 512 KiB and 1000 records; names
@@ -100,7 +106,7 @@ actual Apple authorization, current-phone identity or installation acceptance.
 ### Official Release contract
 
 `WebBootstrap/public/config.json` contains `accountServiceUrl` and
-`officialRelease`. Both are `null` in this candidate. A deployment owner must
+`officialRelease`. Both are `null` in the published source. A deployment owner must
 review the actual release/build evidence before filling in this manifest:
 
 - `repository` (exactly `oskuhsiu/Tetherless`), `tag`, `assetId`, `assetName`, `assetUrl`
@@ -121,8 +127,25 @@ has not demonstrated that it fits. A larger artifact fails early with a clear
 size error and requires a separately measured/reviewed budget decision. Only GitHub and its release-assets redirect host
 are allowed by the page CSP. Missing assets, CORS failures, digest mismatches and
 cancellation leave the official path blocked. The same pinned asset may be
-manually downloaded and selected for the same hash check. No proxy, endpoint
-selection, release publication, backend hosting extension or deployment is added.
+manually downloaded and selected for the same hash check. The official-asset
+contract adds no proxy, endpoint selection, release publication or signed-IPA
+hosting. Public deployment remains a separate decision.
+
+Custom IPA selection is a first-class path and does not require an official
+Tetherless asset. A separate minimal owned signing-test app is published at
+[`cfd8c6e`](https://github.com/oskuhsiu/Tetherless/commit/cfd8c6ede2c85970344e9e9c0f19cc672a95df71).
+Its 24 portable tests/review pass, and authenticated [native run 37503567286](https://github.com/oskuhsiu/Tetherless/actions/runs/37503567286),
+attempt 1, successfully produced an unsigned IPA:
+
+- Size: 14,853 bytes
+- Bundle ID: `org.tetherless.signingtest.r37503567286`
+- SHA-256: `fda8c913af9d6f39f8a4351bd94d7953bb99b2b25506e67a3e7d943dafaf8111`
+- Native content: arm64 iOS `MH_EXECUTE` UIKit app, without a code signature
+
+This owned signing-test app is not Tetherless and does not close the full App
+build or size gate. Synthetic WASM replay of this actual IPA, real Apple signing,
+installation and launch remain unrun. The web results below remain bound to
+`757b452`; they do not validate this later fixture artifact.
 
 ## Tetherless identity and handoff
 
@@ -158,8 +181,13 @@ Never recommend uninstalling first as the normal update procedure.
   gate cookie; route origins are enforced and service/enrollment redirects are
   rejected, including cleanup requests. GitHub acquisition omits credentials
   and referrers. There is no cross-origin credential API
-- Apple password/2FA/session: transient service memory; bearer kept in JS memory,
-  never URL, browser storage or deliberate logs
+- Apple password/2FA/session: transient service memory for Apple authentication;
+  bearer kept in JS memory, never URL, browser storage or deliberate logs
+- Data recipients: the configured account service handles the entered password
+  and Apple authentication; the pinned remote anisette provider
+  `https://ani.stikstore.app` receives identifier/ADI provisioning data, not the
+  password, in the pinned source path. The login consent names both recipients.
+  This is a source-level boundary, not live traffic or production-security proof
 - RSA private key/P12/profile/IPA/output: current browser memory only; cancel/clear
   terminates the signing worker and revokes Blob output URLs
 - UDID round trip: enrollment ID and expiry only in tab-scoped sessionStorage;
@@ -202,6 +230,8 @@ regressions, and a static production build. DOM service/worker tests use mocks;
 WASM tests execute the actual runtime against self-signed synthetic material.
 These fixtures are not Apple-issued and cannot establish iOS acceptance.
 
+### Historical prototype evidence
+
 Backend: `Tools/WebBootstrapService/VERIFICATION.md` and `verification.json` record
 19 offline Rust tests, formatting, strict clippy, optimized build, and actual local
 release HTTP/static/Origin/Host/body-limit checks. Tests exercise synthetic CSR/CMS,
@@ -215,12 +245,50 @@ IPAs, download inspection, binary plist worker loading, cancellation/retry,
 Back/clear behavior and mobile screenshots. The screenshot used to design this
 simplification is real Chromium output from that run, not a mockup.
 
-That run does **not** validate this new progressive UI delta. This candidate's
-Node/DOM tests, static build, request-guard harness and browser-test discovery
-are separate checks. The updated 30-case actual-browser suite (18 static plus 12 separately guarded
-synthetic account/device cases) must run on the
-exact published delta, and its new mobile screenshots must be inspected. No
-localhost/IPC restriction workaround was attempted in this environment.
+### Current exact-source evidence
+
+The progressive login-first/existing-device UI has now run at `757b452`, tree
+`899f58ad3c3ad2970bba3c17dfa20234d2108464`. These are executed results, not test
+discovery or a transfer of credit from the preceding implementation:
+
+| Run, attempt 1 | Passed evidence | Boundary |
+|---|---|---|
+| [Browser 37501163075](https://github.com/oskuhsiu/Tetherless/actions/runs/37501163075) | 30 executed Chromium cases: 12 guided synthetic account/device + 18 static/manual cases across root and project-subpath routes; 87 UI + five harness tests; production build and pinned runtime checks | Zero failures/errors/skips/retries. Guided Apple/service responses are synthetic; signing runs the actual browser WASM |
+| [Container 37501163055](https://github.com/oskuhsiu/Tetherless/actions/runs/37501163055) | 24 packaging/proxy/supervisor/exporter + 29 Rust + 87 UI tests; actual Linux amd64 production image built; production-entrypoint smoke passed | Zero failed/skipped/ignored tests. Local CI container has network `none`, read-only root and user `node`; no Apple account call or public deployment |
+| [Core 37501163284](https://github.com/oskuhsiu/Tetherless/actions/runs/37501163284) | Debug and Release each pass 345 Swift Testing + 40 XCTest cases | Zero failures; no skipped-test entries observed. This does not build or accept the native App |
+
+Browser JUnit, report, source/lock identities and request audits reconcile. The new
+390-by-2267 mobile Chromium screenshot was visually inspected: it shows explicit
+synthetic existing-device selection and distinct mutation consent, including the
+warning that an account record does not identify the current phone. Device-list
+failure/empty state, cancellation, Team changes, stale responses and the separate
+new-device route are covered. The signed-output screenshot still shows direct
+installation blocked. A mobile viewport is not Safari or an iPhone.
+
+The container image is
+`sha256:1157651beafc3e3cfdd46763b3739268a532c3de9a890bb8b4d99547110f7237`.
+Image, container, revision label and source receipt all match the implementation.
+Actual health/static/WASM, access-gate, Host/Origin and synthetic local enrollment
+checks pass. The healthcheck passes, graceful stop exits 0, the lifecycle log is
+the fixed readiness line, and the owned container is removed. All eight bounded
+build receipts (18,146 bytes total) were independently decoded and their byte
+lengths and SHA-256 values verified, including the exact source-commit receipt.
+Pinned base images and retained package inventories do not establish a
+reproducible-image build; the prebuilt WASM was hash-verified, not independently rebuilt.
+
+Retained artifact identities:
+
+| Evidence | Artifact ID | SHA-256 |
+|---|---|---|
+| Browser ZIP, downloaded and verified | `11430036056` | `2aa52527e48e4afc1affa2a71b42c6799dc5fd12e0a5da4f6998d4532e9f2c49` |
+| Container ZIP, downloaded and verified | `11429543078` | `41b2588f38825c4fb1193decebe4166fbfc0f05d0d1db5f8b1d77f87e77de6c8` |
+| Core source artifact, GitHub-reported digest; not downloaded in this review | `11429114769` | `d3685b24c1f6178ff70f8a0750f1ca058a657d67663c863024ed3149c24d7a91` |
+
+The preceding `8058762` [container run 37498141911](https://github.com/oskuhsiu/Tetherless/actions/runs/37498141911)
+remains a failure: image build passed, but `docker cp` could not export a read-only
+evidence directory, so smoke was skipped. The current bounded export repair and
+successful smoke do not change that historical result.
+
 No Safari/iPhone, real profile installation, live 2FA, real Apple certificate/
 profile, free-Team installation or native self-update acceptance is claimed.
 
@@ -233,10 +301,13 @@ claim. Runtime hashes establish the retrieved pin, not a reproducible WASM rebui
 ## Required next decisions and acceptance
 
 1. Choose and authorize a separately hosted HTTPS service origin. Account-password
-   transactions do not belong on GitHub Pages. No provider, spending, sharing or
-   deployment has been authorized by this code change.
-2. Re-run the updated browser suite on this exact UI delta and inspect its phone
-   screenshots; prior run 37420583887 validates only the preceding implementation.
+   transactions do not belong on GitHub Pages. Follow the approved host/origin,
+   short-lived access-gate and fixed test-window contract before exposing the
+   container. No public service is deployed, and code publication alone authorizes
+   no provider, spending, sharing or deployment.
+2. Preserve the current 30-case Chromium and container receipts above. Safari and
+   actual HTTPS-host behavior remain separate acceptance checks; do not rerun
+   unchanged source merely because the older prototype had fewer cases.
 3. Bind a genuine unsigned Tetherless artifact using its source commit and SHA-256;
    verify all emitted IDs and default entitlements before offering a download.
 4. With separately authorized account actions, validate free-Team login/2FA,
