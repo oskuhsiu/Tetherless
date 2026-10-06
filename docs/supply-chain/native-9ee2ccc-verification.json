@@ -1,0 +1,58 @@
+{
+  "all359CrateArchiveHashesMatchedLockAndProvenance": true,
+  "allCompilerArtifactPackagesMapped": true,
+  "buildEvidence": {
+    "aarch64-apple-ios": {
+      "compilerArtifactEvents": 258,
+      "featureGraphSHA256": "51a220cf0c63d7aeea54eb64f0924e4a85e2ca0106953b2ce013d75c4eeecc13",
+      "logSHA256": "58f1fea7dca4900c21182021cb0bd75f3554b810f490273cb9598d326b780ab8",
+      "packagesWithAppleTargetArtifacts": 161,
+      "packagesWithBuildHostArtifactsOnly": 47,
+      "retainedLog": "provenance/aarch64-apple-ios/03-release-build.txt",
+      "statusSHA256": "ae30cf71abd0d0265cb6f04b38b03e82eedcbd8df25481785a722d95bbe3dbbf",
+      "targetEvidenceSHA256": "b14f60cb2cf786e9571be011f88569925fb3fea167747a8e6d9ba4daaa5d94b2",
+      "uniquePackagesWithCompilerArtifacts": 208
+    },
+    "aarch64-apple-ios-sim": {
+      "compilerArtifactEvents": 257,
+      "featureGraphSHA256": "7bc6ce8726b4d0c261db0a7af39dacc0a4d0ce98223210122c5b0220e5b6cd68",
+      "logSHA256": "a2ec421dfdebb88b29a8c2a26a98f366ddd86c61aea8b459b9cc79151be1d67f",
+      "packagesWithAppleTargetArtifacts": 160,
+      "packagesWithBuildHostArtifactsOnly": 47,
+      "retainedLog": "provenance/aarch64-apple-ios-sim/03-release-build.txt",
+      "statusSHA256": "f6e99bcb67abeaac1a65c4bc014ed60841cefcea9f88d4ed534df4bd9c794512",
+      "targetEvidenceSHA256": "a96a9c373f4e9979ab10bd77ab7da1978d64c672ba59be778f919990d4ec5254",
+      "uniquePackagesWithCompilerArtifacts": 207
+    }
+  },
+  "existingSPDXAndNoticesUntouched": true,
+  "licenseZIPFiles": 232,
+  "licenseZIPsha256": "93005f04aa29411007dacb5bb06e9c6a9a10001de11293fec3ddeb14e9052e40",
+  "noNamedNoticeHostOnlyPackagesInOriginalArchive": [],
+  "noNamedNoticeTargetPackagesInOriginalArchive": [
+    "cargo:async-compression@0.4.41",
+    "cargo:compression-codecs@0.4.37",
+    "cargo:compression-core@0.4.31",
+    "cargo:ns-keyed-archive@0.1.5",
+    "cargo:plist-macro@0.1.6",
+    "cargo:plist_ffi@0.1.6"
+  ],
+  "pinnedUpstreamNoticeRecovery": {
+    "allRetrievedLicenseBlobsMatchGitHashesAndSizes": true,
+    "allSixOriginalManifestsMatchPinnedGitBlobs": true,
+    "completePinnedTreesWithoutNamedFiles": [
+      "cargo:ns-keyed-archive@0.1.5",
+      "cargo:plist-macro@0.1.6",
+      "cargo:plist_ffi@0.1.6"
+    ],
+    "packagesWithRecoveredTexts": [
+      "cargo:async-compression@0.4.41",
+      "cargo:compression-codecs@0.4.37",
+      "cargo:compression-core@0.4.31"
+    ]
+  },
+  "registryManifestAndNamedLicenseBytesMatchedOriginalCrates": true,
+  "reviewStatus": "generator assertions passed; independent review pending",
+  "sourceCodeExtractedOrExecuted": false,
+  "sourceZIPHashMatched": true
+}

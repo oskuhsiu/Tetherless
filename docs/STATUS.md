@@ -73,8 +73,8 @@ The [16-task matrix](PLAN_PROGRESS.md) records closure conditions.
    hashes do not establish rights
 
 The accepted producer's source archive has 46,639 entries and 189 recipe files
-verified. A separately reviewed, **unpublished** inventory adds 359 registry and
-four workspace packages, target/host/source classifications, 666 notice files and
+verified. A separately reviewed [inventory supplement](supply-chain/native-9ee2ccc-README.md),
+now included in this branch, adds 359 registry and four workspace packages, target/host/source classifications, 666 notice files and
 232 exact notice texts. Three target-package and 13 additional source-only named
 notice gaps remain. It is not a complete product SBOM or license clearance.
 

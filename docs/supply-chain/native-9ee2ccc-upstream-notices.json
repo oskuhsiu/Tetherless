@@ -1,0 +1,136 @@
+{
+  "licenseArchive": "native-9ee2ccc-license-texts.zip",
+  "packages": [
+    {
+      "cargoTomlOrigMatchesPinnedTreeBlob": "a0d8837f0b9b48ad93f538a571eb3851fcbef2ae",
+      "componentID": "cargo:async-compression@0.4.41",
+      "files": [
+        {
+          "bytes": 10847,
+          "gitBlobSHA1": "16fe87b06e802f094b3fbb0894b137bca2b16ef1",
+          "includedInOriginalCrate": false,
+          "licenseArchiveMember": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "upstreamPath": "LICENSE-APACHE",
+          "url": "https://github.com/Nullus157/async-compression/blob/269174b4be20e3cfcbb7e7fa4d7d9596183e287b/LICENSE-APACHE"
+        },
+        {
+          "bytes": 1091,
+          "gitBlobSHA1": "09809729a8cd0a6fddb546d0fa21a0726b515e07",
+          "includedInOriginalCrate": false,
+          "licenseArchiveMember": "texts/88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709.txt",
+          "sha256": "88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709",
+          "upstreamPath": "LICENSE-MIT",
+          "url": "https://github.com/Nullus157/async-compression/blob/269174b4be20e3cfcbb7e7fa4d7d9596183e287b/LICENSE-MIT"
+        }
+      ],
+      "ref": "269174b4be20e3cfcbb7e7fa4d7d9596183e287b",
+      "repository": "Nullus157/async-compression",
+      "result": "pinned-upstream-notice-text-recovered",
+      "treeEntries": 196,
+      "treeRequestURL": "https://api.github.com/repos/Nullus157/async-compression/git/trees/269174b4be20e3cfcbb7e7fa4d7d9596183e287b?recursive=1",
+      "treeResponseSHA256": "90e70f8e40ebe701d0b8858fb226a6e3d5c276e5aebc09066a203b45a67a7aa1",
+      "treeTruncated": false
+    },
+    {
+      "cargoTomlOrigMatchesPinnedTreeBlob": "bd01d5babb79d133349091fa17630707ecfcf498",
+      "componentID": "cargo:compression-codecs@0.4.37",
+      "files": [
+        {
+          "bytes": 10847,
+          "gitBlobSHA1": "16fe87b06e802f094b3fbb0894b137bca2b16ef1",
+          "includedInOriginalCrate": false,
+          "licenseArchiveMember": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "upstreamPath": "LICENSE-APACHE",
+          "url": "https://github.com/Nullus157/async-compression/blob/9d848a02f13f3a56542e4123be8947a8da06097e/LICENSE-APACHE"
+        },
+        {
+          "bytes": 1091,
+          "gitBlobSHA1": "09809729a8cd0a6fddb546d0fa21a0726b515e07",
+          "includedInOriginalCrate": false,
+          "licenseArchiveMember": "texts/88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709.txt",
+          "sha256": "88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709",
+          "upstreamPath": "LICENSE-MIT",
+          "url": "https://github.com/Nullus157/async-compression/blob/9d848a02f13f3a56542e4123be8947a8da06097e/LICENSE-MIT"
+        }
+      ],
+      "ref": "9d848a02f13f3a56542e4123be8947a8da06097e",
+      "repository": "Nullus157/async-compression",
+      "result": "pinned-upstream-notice-text-recovered",
+      "treeEntries": 196,
+      "treeRequestURL": "https://api.github.com/repos/Nullus157/async-compression/git/trees/9d848a02f13f3a56542e4123be8947a8da06097e?recursive=1",
+      "treeResponseSHA256": "c025691d3eed04053d368ae32f010b713d42fb25c1bce66bafe6f5983ff9ee93",
+      "treeTruncated": false
+    },
+    {
+      "cargoTomlOrigMatchesPinnedTreeBlob": "94d0259c750207755e5a95ff054bf82d847599ad",
+      "componentID": "cargo:compression-core@0.4.31",
+      "files": [
+        {
+          "bytes": 10847,
+          "gitBlobSHA1": "16fe87b06e802f094b3fbb0894b137bca2b16ef1",
+          "includedInOriginalCrate": false,
+          "licenseArchiveMember": "texts/a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2.txt",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "upstreamPath": "LICENSE-APACHE",
+          "url": "https://github.com/Nullus157/async-compression/blob/2a28343998e67ea519b87005b9d295b134c00dd0/LICENSE-APACHE"
+        },
+        {
+          "bytes": 1091,
+          "gitBlobSHA1": "09809729a8cd0a6fddb546d0fa21a0726b515e07",
+          "includedInOriginalCrate": false,
+          "licenseArchiveMember": "texts/88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709.txt",
+          "sha256": "88d1e3160df48926ad3310a8ec5699b502889565908f1be7e77cd21282c7a709",
+          "upstreamPath": "LICENSE-MIT",
+          "url": "https://github.com/Nullus157/async-compression/blob/2a28343998e67ea519b87005b9d295b134c00dd0/LICENSE-MIT"
+        }
+      ],
+      "ref": "2a28343998e67ea519b87005b9d295b134c00dd0",
+      "repository": "Nullus157/async-compression",
+      "result": "pinned-upstream-notice-text-recovered",
+      "treeEntries": 196,
+      "treeRequestURL": "https://api.github.com/repos/Nullus157/async-compression/git/trees/2a28343998e67ea519b87005b9d295b134c00dd0?recursive=1",
+      "treeResponseSHA256": "b4fc3eb081e43504f6577d3da8689005dce13a410a38700aeeaf6dc807f1cfaa",
+      "treeTruncated": false
+    },
+    {
+      "cargoTomlOrigMatchesPinnedTreeBlob": "53192f4fff162cdc6eebefe8f4678ccb9984ddf7",
+      "componentID": "cargo:ns-keyed-archive@0.1.5",
+      "files": [],
+      "ref": "f8cec65e865cb48301d33b2244bec45a2f3d2bc2",
+      "repository": "jkcoxson/ns_keyed_archive",
+      "result": "no-named-license-notice-file-in-complete-pinned-tree",
+      "treeEntries": 8,
+      "treeRequestURL": "https://api.github.com/repos/jkcoxson/ns_keyed_archive/git/trees/f8cec65e865cb48301d33b2244bec45a2f3d2bc2?recursive=1",
+      "treeResponseSHA256": "7de1c5585ec7278c347f66535213934ef452a3a0a0aa047f7641adefb2fb2354",
+      "treeTruncated": false
+    },
+    {
+      "cargoTomlOrigMatchesPinnedTreeBlob": "4f00ebc113da48a649b78d51f7e533757ca1eb99",
+      "componentID": "cargo:plist-macro@0.1.6",
+      "files": [],
+      "ref": "d1d48559ddc8e9bd263f36180bbe1d4f2a3d55e5",
+      "repository": "jkcoxson/plist_macro",
+      "result": "no-named-license-notice-file-in-complete-pinned-tree",
+      "treeEntries": 10,
+      "treeRequestURL": "https://api.github.com/repos/jkcoxson/plist_macro/git/trees/d1d48559ddc8e9bd263f36180bbe1d4f2a3d55e5?recursive=1",
+      "treeResponseSHA256": "da8f9ea40ecb9ca1f07e0bd441a0bf41253157dcafb5e45c4a4beda98a06b609",
+      "treeTruncated": false
+    },
+    {
+      "cargoTomlOrigMatchesPinnedTreeBlob": "5cf014307d6cd00c9ca74820fd5fdc63175618bf",
+      "componentID": "cargo:plist_ffi@0.1.6",
+      "files": [],
+      "ref": "265379167ab3f9a5664621a7f1c0f494b2ac7c96",
+      "repository": "jkcoxson/plist_ffi",
+      "result": "no-named-license-notice-file-in-complete-pinned-tree",
+      "treeEntries": 155,
+      "treeRequestURL": "https://api.github.com/repos/jkcoxson/plist_ffi/git/trees/265379167ab3f9a5664621a7f1c0f494b2ac7c96?recursive=1",
+      "treeResponseSHA256": "366db3c1ee5ad2069749c0d0466abe68f48c793eb139370f9e7e3213582f086a",
+      "treeTruncated": false
+    }
+  ],
+  "schema": 1,
+  "scope": "Exact pinned public upstream supplements, separate from original crate contents; no new grant or compatibility conclusion."
+}
