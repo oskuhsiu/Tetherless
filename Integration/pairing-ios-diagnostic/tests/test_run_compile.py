@@ -39,13 +39,17 @@ class RunnerFixture:
         self.sdk = root / "iPhoneOS26.2.sdk"
         self.sdk.mkdir()
         self.toolchain = root / "toolchain.json"
-        lock_hash = put_json(self.toolchain, {"developer_dir": "/Applications/Xcode_26.3.app/Contents/Developer"})
+        retained_lock = self.f.fixture.artifact / "provenance/toolchain-lock.json"
+        lock = json.loads(retained_lock.read_bytes())
+        lock["developer_dir"] = "/Applications/Xcode_26.3.app/Contents/Developer"
+        lock_hash = put_json(self.toolchain, lock)
+        put_json(retained_lock, lock)
         self.f.fixture.receipt["toolchain_lock_sha256"] = lock_hash
         self.provider_bytes = b"controlled opaque framework fixture\n"
         for row in self.f.fixture.receipt["targets"]:
             row["sdk_root"] = str(self.sdk)
             row["provider_receipt"]["framework_binary_sha256"] = prepare.digest(self.provider_bytes)
-        self.f.fixture.refresh()
+        self.f.fixture.refresh(inventory=True)
         self.f.pack("apple-producer")
         self.f.refresh()
         self.binding = self.f.bind()

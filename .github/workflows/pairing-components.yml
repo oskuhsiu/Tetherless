@@ -271,9 +271,19 @@ jobs:
           rustup toolchain install 1.98.1 --profile minimal --no-self-update \
             --target aarch64-apple-ios,aarch64-apple-ios-sim \
             > .proof/evidence/rustup-install.txt 2>&1
-          python3 Integration/Dependencies/idevice/record_toolchain.py \
-            --output .proof/evidence/toolchain-lock.observed.json \
-            > .proof/evidence/toolchain-lock.sha256
+          if [ "$NATIVE_PROOF" = apple-producer ]; then
+            rustup component add --toolchain 1.98.1 llvm-tools \
+              > .proof/evidence/rustup-llvm-tools-install.txt 2>&1
+            rustup component list --toolchain 1.98.1 --installed \
+              > .proof/evidence/rustup-components.txt
+            python3 Integration/Dependencies/idevice/record_toolchain.py --symbol-reader \
+              --output .proof/evidence/toolchain-lock.observed.json \
+              > .proof/evidence/toolchain-lock.sha256
+          else
+            python3 Integration/Dependencies/idevice/record_toolchain.py \
+              --output .proof/evidence/toolchain-lock.observed.json \
+              > .proof/evidence/toolchain-lock.sha256
+          fi
       - name: Acquire only locked registry crates in a fresh isolated Cargo home
         timeout-minutes: 10
         run: |
@@ -353,7 +363,7 @@ jobs:
               '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()]
           if proof == 'apple-producer':
               command += ['--mixed-provider', str(root / 'mixed-provider')]
-              command += ['--recipe-lock-sha256', '654222289125b042597312d948bff6dbe947fb91cb42b79361fabac943da42bb']
+              command += ['--recipe-lock-sha256', '941c58d9dbbda4455d129de4b312e4ee23b4bc4c849cd6784ad032856059b738']
           (root / 'evidence/invocation.json').write_text(json.dumps({'proof': proof, 'argv': command}, indent=2) + '\n')
           # Each native command is supervised by the unchanged reviewed runner.
           # Retain entry-point errors as well, including failures before work/completed exists.

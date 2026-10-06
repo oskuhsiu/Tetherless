@@ -62,6 +62,20 @@ def actual_provider_receipt(target):
     return json.loads(raw)
 
 
+def synthetic_reader():
+    """Retained-only text fixture; no executable path exists or is executed."""
+    root = "/synthetic/official-rust-1.98.1"
+    value = {"schema": 1, "contract": dict(binding.rust_symbol_reader.CONTRACT), "sysroot": root}
+    for key, relative in (("rustc", "/bin/rustc"),
+            ("llvm_nm", "/lib/rustlib/aarch64-apple-darwin/bin/llvm-nm"),
+            ("component_manifest", "/lib/rustlib/manifest-llvm-tools-preview-aarch64-apple-darwin"),
+            ("installed_components", "/lib/rustlib/components")):
+        value[key] = {"path": root + relative, "sha256": sha(("synthetic " + key).encode())}
+    value["rustc"]["version"] = "rustc 1.98.1 (synthetic fixture)\nrelease: 1.98.1\nhost: aarch64-apple-darwin\nLLVM version: 22.1.8"
+    value["llvm_nm"]["version"] = "llvm-nm, compatible with GNU nm\nLLVM (http://llvm.org/):\n  LLVM version 22.1.8-rust-1.98.1-stable\n  Optimized build."
+    return value
+
+
 class DiagnosticFixture:
     """Synthetic owned files, retaining the real contract's source/path roles."""
 
@@ -159,9 +173,23 @@ class DiagnosticFixture:
             row["export_namespace"].update(binding.mixed_provider.check_mixed_symbols(rust_symbols, c_symbols))
             row["export_namespace"]["contract_sha256"] = self.contract["ffi_namespace_sha256"]
             put_json(evidence / "ffi-export-namespace.json", row["export_namespace"])
-            for name, text in (("04-rust-export-symbols.txt", rust_symbols), ("04-c-export-symbols.txt", c_symbols)):
+            reader = synthetic_reader()
+            row["symbol_reader"] = reader
+            row["toolchain_observations"]["rustc"] = reader["rustc"]["version"]
+            row["library"] = "/synthetic/producer/" + target + "/libidevice_ffi.a"
+            row["mixed_provider"]["library"] = "/synthetic/provider/" + target + "/libimobiledevice.a"
+            put_json(evidence / "symbol-reader.json", reader)
+            self.receipt["toolchain_lock_sha256"] = put_json(self.artifact / "provenance/toolchain-lock.json", {
+                "symbol_reader": reader, "observations": {"rustc": reader["rustc"]["version"]},
+                "executables": {"rustc": {key: reader["rustc"][key] for key in ("path", "sha256")}}})
+            for name, text, command in (
+                    ("04-rust-export-symbols.txt", rust_symbols, binding.rust_symbol_reader.scan_command(reader, row["library"])),
+                    ("04-c-export-symbols.txt", c_symbols, binding.rust_symbol_reader.scan_command(reader, row["mixed_provider"]["library"])),
+                    ("toolchain-symbol-rustc.txt", reader["rustc"]["version"], [reader["rustc"]["path"], "--version", "--verbose"]),
+                    ("toolchain-symbol-sysroot.txt", reader["sysroot"], [reader["rustc"]["path"], "--print", "sysroot"]),
+                    ("toolchain-llvm-nm.txt", reader["llvm_nm"]["version"], [reader["llvm_nm"]["path"], "--version"])):
                 put(evidence / name, text.encode())
-                put_json(evidence / (name + ".status.json"), success())
+                put_json(evidence / (name + ".status.json"), dict(success(), command=command))
             put_json(evidence / "mixed-provider-input-audit.json", {"original_inputs_unchanged": True})
             put_json(evidence / "pairing-result-header-check.json", checked)
             retained = {"schema": 1, "per_file_byte_limit": self.contract["result_header_contract"]["per_file_byte_limit"], "files": {}}
@@ -215,6 +243,41 @@ class DiagnosticBindingTests(unittest.TestCase):
         self.assertTrue(all(len(row["link_probes"]) == 8 for row in result["targets"].values()))
         self.assertFalse(result["binary_format_inspected"])
         self.assertEqual(set(result["device_slice"]), {"archive", "header", "module_map"})
+
+    def test_symbol_reader_identity_and_scan_commands_fail_closed(self):
+        for name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt", "toolchain-llvm-nm.txt"):
+            path = self.fixture.evidence(name + ".status.json")
+            original = path.read_bytes()
+            for change in (lambda row: row.update(command=["/usr/bin/xcrun", "nm", "ignored"]),
+                           lambda row: row.update(output_complete=False),
+                           lambda row: row.update(returncode=1),
+                           lambda row: row["cleanup"].update(group_empty=False)):
+                with self.subTest(name=name):
+                    value = json.loads(original); change(value); put_json(path, value)
+                    self.fixture.refresh(inventory=True)
+                    self.reject_artifact()
+            path.write_bytes(original)
+            self.fixture.refresh(inventory=True)
+        path = self.fixture.evidence("symbol-reader.json")
+        value = json.loads(path.read_bytes())
+        value["llvm_nm"]["sha256"] = "0" * 64
+        put_json(path, value)
+        self.fixture.receipt["targets"][0]["symbol_reader"] = value
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_old_artifact_without_reader_contract_is_rejected(self):
+        self.fixture.receipt["targets"][0].pop("symbol_reader")
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_partial_export_scan_is_rejected_even_with_all_382_names(self):
+        path = self.fixture.evidence("04-rust-export-symbols.txt")
+        self.assertEqual(len(path.read_text().splitlines()), 382)
+        status = self.fixture.evidence("04-rust-export-symbols.txt.status.json")
+        row = json.loads(status.read_bytes()); row.update(returncode=1, output_complete=False)
+        put_json(status, row); self.fixture.refresh(inventory=True)
+        self.reject_artifact()
 
     def test_genuine_provider_receipt_bytes_match_retained_provenance(self):
         provenance = json.loads((PROVIDER_FIXTURE_ROOT / "provenance.json").read_bytes())

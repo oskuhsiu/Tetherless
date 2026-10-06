@@ -18,6 +18,7 @@ sys.path.insert(0, str(HERE.parent / "Dependencies/idevice"))
 try:
     import ffi_namespace
     import mixed_provider
+    import rust_symbol_reader
 finally:
     sys.path.pop(0)
 MAX_RECEIPT = 64 * 1024 * 1024
@@ -200,8 +201,28 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
     expected_exports["contract_sha256"] = contract["ffi_namespace_sha256"]
     if retained_json("ffi-export-namespace.json") != expected_exports or row.get("export_namespace") != expected_exports:
         raise ValueError("native export namespace evidence differs")
-    for name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
-        _success(retained_json(name + ".status.json"))
+    reader = retained_json("symbol-reader.json")
+    rust_symbol_reader.validate_receipt(reader, contract.get("symbol_reader"))
+    lock = read_json(safe_file(root, "provenance/toolchain-lock.json"), receipt["toolchain_lock_sha256"])
+    if (reader != row.get("symbol_reader") or reader != lock.get("symbol_reader")
+            or reader["rustc"]["version"] != row["toolchain_observations"].get("rustc")
+            or reader["rustc"]["version"] != lock.get("observations", {}).get("rustc")
+            or {key: reader["rustc"][key] for key in ("path", "sha256")} != lock.get("executables", {}).get("rustc")):
+        raise ValueError("retained symbol reader differs from the compiler/toolchain lock")
+    for name, command, expected in (
+            ("toolchain-symbol-rustc.txt", [reader["rustc"]["path"], "--version", "--verbose"], reader["rustc"]["version"]),
+            ("toolchain-symbol-sysroot.txt", [reader["rustc"]["path"], "--print", "sysroot"], reader["sysroot"]),
+            ("toolchain-llvm-nm.txt", [reader["llvm_nm"]["path"], "--version"], reader["llvm_nm"]["version"])):
+        status = retained_json(name + ".status.json")
+        _success(status)
+        if status.get("command") != command or retained_text(name).strip() != expected:
+            raise ValueError("symbol-reader version observation differs from retained identity")
+    for name, archive in (("04-rust-export-symbols.txt", row["library"]),
+                          ("04-c-export-symbols.txt", row["mixed_provider"]["library"])):
+        status = retained_json(name + ".status.json")
+        _success(status)
+        if status.get("command") != rust_symbol_reader.scan_command(reader, archive):
+            raise ValueError("full archive symbol scan used a different reader, flags or archive")
     for language in ("c", "swift"):
         _success(retained_json("05-link-mixed_provider-" + language + ".txt.status.json"))
         link_map = retained_text("05-link-mixed_provider-" + language + ".map")

@@ -12,6 +12,8 @@ import shutil
 import sys
 import tomllib
 
+import rust_symbol_reader
+
 from apply_patch import HERE, VerificationError, canonical_json, load_lock, safe_path, sha256, stage
 from build_xcframework import (file_hash, inventory, native_environment, require_equal, toolchain_commands,
     native_static_flags, verify_generated_header, deterministic_zip)
@@ -217,6 +219,11 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
     try:
         env, binaries = native_environment(config, work)
         observations = bounded_toolchain(config, work, env, binaries, evidence)
+        reader = rust_symbol_reader.observe(binaries["rustc"], lambda command, name:
+            capture_helper_command(command, source=work, env=env, log=evidence / name))
+        if reader != config.get("symbol_reader") or reader["rustc"]["version"] != observations["rustc"]:
+            raise VerificationError("Apple symbol reader differs from the observed toolchain lock")
+        (evidence / "symbol-reader.json").write_bytes(canonical_json(reader))
         source_manifest = stage(args.source, source, HERE, PROFILE)
         (evidence / "source-manifest.json").write_bytes(canonical_json(source_manifest))
         namespace = namespace_contract(HERE, profile["export_namespace_sha256"])
@@ -287,9 +294,15 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
             raise VerificationError("Rust static archive is missing")
         if str(library) not in features["ffi_artifact"]["filenames"]:
             raise VerificationError("selected Rust archive lacks its compiler-artifact identity")
-        nm = ["/usr/bin/xcrun", "--sdk", target["sdk"], "nm", "-g", "-U", "-j"]
-        rust_symbols = run(nm + [str(library)], "04-rust-export-symbols.txt")
-        c_symbols = run(nm + [mixed["library"]], "04-c-export-symbols.txt")
+        rust_symbol_reader.audit_local(reader)
+        run(rust_symbol_reader.scan_command(reader, str(library)), "04-rust-export-symbols.txt")
+        # The supervisor returns only a bounded summary tail. Acceptance uses
+        # the complete retained log after the zero-exit/full-output/join gate.
+        rust_symbols = read_bounded_log(evidence / "04-rust-export-symbols.txt").decode("utf-8")
+        rust_symbol_reader.audit_local(reader)
+        run(rust_symbol_reader.scan_command(reader, mixed["library"]), "04-c-export-symbols.txt")
+        c_symbols = read_bounded_log(evidence / "04-c-export-symbols.txt").decode("utf-8")
+        rust_symbol_reader.audit_local(reader)
         export_namespace = check_symbols(rust_symbols, namespace, target["rust"])
         export_namespace.update(check_mixed_symbols(rust_symbols, c_symbols))
         export_namespace["contract_sha256"] = profile["export_namespace_sha256"]
@@ -325,7 +338,7 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
                   "header_probe_command": header_probe, "header_probe_linked_or_executed": False,
                   "feature_graph_command": graph, "production_features": features, "build_command": cargo_command,
                   "result_header_contract": header_contract, "header_namespace": header_namespace,
-                  "export_namespace": export_namespace, "mixed_provider": mixed,
+                  "export_namespace": export_namespace, "mixed_provider": mixed, "symbol_reader": reader,
                   "native_static_libs_command": report, "system_link_flags": system_flags, "openssl_outputs": outputs, "link_probes": links}
     finally:
         primary_failure = sys.exc_info()[0] is not None

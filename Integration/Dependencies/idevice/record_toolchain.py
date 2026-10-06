@@ -11,11 +11,14 @@ import shutil
 import subprocess
 import tempfile
 
+import rust_symbol_reader
+from bounded_process import capture_helper_command
+
 from apply_patch import HERE, VerificationError, canonical_json
 from build_xcframework import file_hash, native_environment, run, toolchain_commands, verify_toolchain
 
 
-def record(destination: Path) -> str:
+def record(destination: Path, *, symbol_reader: bool = False) -> str:
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise VerificationError("toolchain recording requires arm64 macOS")
     if destination.exists():
@@ -40,6 +43,9 @@ def record(destination: Path) -> str:
         config["observations"] = {key: run(command, cwd=work, env=clean_env)
                                   for key, command in toolchain_commands(binaries).items()}
         verify_toolchain(config, work, clean_env, binaries)
+        if symbol_reader:
+            config["symbol_reader"] = rust_symbol_reader.observe(binaries["rustc"],
+                lambda command, name: capture_helper_command(command, source=work, env=clean_env, log=work / name))
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_bytes(canonical_json(config))
     return file_hash(destination)
@@ -48,9 +54,10 @@ def record(destination: Path) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--symbol-reader", action="store_true", help="bind the installed official Rust LLVM reader for Apple archive scans")
     args = parser.parse_args()
     try:
-        print(record(args.output))
+        print(record(args.output, symbol_reader=args.symbol_reader))
     except (VerificationError, OSError, ValueError, subprocess.CalledProcessError) as exc:
         parser.exit(1, f"idevice toolchain observation failed: {exc}\n")
     return 0

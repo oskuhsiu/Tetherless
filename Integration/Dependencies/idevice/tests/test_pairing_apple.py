@@ -75,10 +75,14 @@ class AppleFixture:
         self.lock = make_archive(self.cache)
         self.defaults = tomllib.loads((ROOT / "upstream/ffi/Cargo.toml").read_text())["features"]["default"]
         self.binaries = {name: "controlled-" + name for name in ("cargo", "rustc", "cmake", "ninja")}
+        from test_rust_symbol_reader import ReaderFixture, RUST_VERSION
+        self.reader_fixture = ReaderFixture(root)
+        self.binaries["rustc"] = str(self.reader_fixture.rustc)
+        self.reader = self.reader_fixture.observe()
         self.observations = {name: "controlled " + name + " observation" for name in apple.toolchain_commands(self.binaries)}
-        self.observations.update(rustc="rustc 1.98.1 (controlled fixture)", xcode="Xcode 26.3\nBuild version controlled")
+        self.observations.update(rustc=RUST_VERSION, xcode="Xcode 26.3\nBuild version controlled")
         self.config = {"schema": 1, "source_date_epoch": 1, "developer_dir": str(root / "developer"),
-                       "rust_release": "1.98.1", "observations": self.observations}
+                       "rust_release": "1.98.1", "observations": self.observations, "symbol_reader": self.reader}
         self.toolchain = root / "toolchain.json"
         self.toolchain.write_bytes(canonical_json(self.config))
         self.args = SimpleNamespace(source=root / "input-source", crate_cache=self.cache, provider_inputs=root / "provider-source",
@@ -91,7 +95,7 @@ class AppleFixture:
         self.sdk.mkdir()
         self.tool = root / "tool"
         self.tool.write_bytes(b"opaque compiler path fixture; never executed")
-        self.sysroot = root / "rust-sysroot"
+        self.sysroot = self.reader_fixture.root
         for target in ("aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim"):
             (self.sysroot / "lib/rustlib" / target / "lib").mkdir(parents=True)
         self.calls = []
@@ -101,6 +105,8 @@ class AppleFixture:
         self.mutate_on = None
         self.bad_features = None
         self.bad_output = None
+        self.large_symbol_output = False
+        self.early_symbol_fault = None
         self.bad_slices = False
         self.bad_packaged_file = None
         self.mismatched_headers = False
@@ -199,7 +205,9 @@ class AppleFixture:
             output = str(self.sdk) + "\n"
         elif "--find" in argv:
             output = str(self.tool) + "\n"
-        elif "nm" in argv:
+        elif log.name == "toolchain-llvm-nm.txt":
+            output = self.reader["llvm_nm"]["version"] + "\n"
+        elif argv[0] == self.reader["llvm_nm"]["path"]:
             if Path(argv[-1]).name == "libidevice_ffi.a":
                 namespace = json.loads((self.recipe / "namespace/contract.json").read_bytes())
                 output = "\n".join("_" + n for n in namespace["expected_target_exports"][target_name]["after"]) + "\n"
@@ -250,8 +258,17 @@ class AppleFixture:
             output = "controlled ordinary link result\n"
         else:
             raise AssertionError("unapproved command would execute: " + repr(argv))
+        if self.large_symbol_output and log.name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
+            if self.early_symbol_fault == "alias" and log.name == "04-rust-export-symbols.txt":
+                output = "_plist_free\n" + output
+            if self.early_symbol_fault == "collision":
+                output = "_early_provider_collision\n" + output
         code = "import sys,time; sys.stdout.write(" + repr(output) + "); sys.stdout.flush()"
         options = dict(timeout_seconds=2, max_log_bytes=32768, tail_bytes=32768, term_grace_seconds=.2, kill_join_seconds=.2)
+        if self.large_symbol_output and log.name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
+            padding = "_synthetic_" + ("rust" if log.name.startswith("04-rust") else "c") + "_padding\n"
+            code += "; sys.stdout.write(" + repr(padding) + " * 12000); sys.stdout.flush()"
+            options.update(max_log_bytes=1024 * 1024, tail_bytes=bounded_process.SUMMARY_TAIL_BYTES)
         if self.mutate and (self.fail == (target_name, log.name) or self.mutate_on == (target_name, log.name)):
             self.mutate(self)
         if self.fail == (target_name, log.name):
@@ -404,6 +421,59 @@ class AppleRunnerTests(unittest.TestCase):
             self.assertTrue((folder / name).is_file(), str(folder / name))
         return {name: json.loads((folder / name).read_bytes()) for name in AUDITS}
 
+    def test_full_symbol_logs_not_summary_tails_are_validated_and_hashed(self):
+        fixture = AppleFixture(self.root / "large-symbol-success")
+        fixture.large_symbol_output = True
+        with fixture.patches(): result = apple.build(fixture.args)
+        for row in result["targets"]:
+            folder = Path(row["work"]) / "completed"
+            for name, key in (("04-rust-export-symbols.txt", "nm_stdout_sha256"),
+                              ("04-c-export-symbols.txt", "c_nm_stdout_sha256")):
+                raw = (folder / name).read_bytes()
+                self.assertGreater(len(raw), bounded_process.SUMMARY_TAIL_BYTES)
+                self.assertEqual(row["export_namespace"][key], sha256(raw))
+            self.assertEqual(row["export_namespace"]["namespaced_export_count"], 382)
+            self.assertEqual(len(row["link_probes"]), 8)
+
+    def test_early_alias_or_collision_beyond_summary_tail_is_rejected(self):
+        for fault in ("alias", "collision"):
+            fixture = AppleFixture(self.root / ("large-symbol-" + fault))
+            fixture.large_symbol_output = True
+            fixture.early_symbol_fault = fault
+            with fixture.patches(), self.assertRaises(VerificationError): apple.build(fixture.args)
+            self.assertFalse(any(call["log"].name.startswith("05-link-") for call in fixture.calls))
+            self.assertFalse(fixture.args.output.exists())
+            self.assert_audits(fixture, "aarch64-apple-ios")
+
+    def test_partial_symbol_output_with_complete_expected_names_still_fails(self):
+        for name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
+            fixture = AppleFixture(self.root / name)
+            fixture.fail = ("aarch64-apple-ios", name)
+            with fixture.patches(), self.assertRaises(VerificationError):
+                apple.build(fixture.args)
+            log = fixture.args.work_dir / "aarch64-apple-ios/completed" / name
+            status = json.loads(log.with_name(log.name + ".status.json").read_bytes())
+            self.assertEqual(status["returncode"], 7)
+            self.assertFalse(status["output_complete"])
+            self.assertFalse(any(call["log"].name.startswith("05-link-") for call in fixture.calls))
+            self.assertFalse(fixture.args.output.exists())
+            self.assert_audits(fixture, "aarch64-apple-ios")
+            if name == "04-rust-export-symbols.txt":
+                self.assertEqual(len({line for line in log.read_text().splitlines()
+                    if line.startswith("_tetherless_native_")}), 382)
+
+    def test_absent_or_changed_locked_reader_stops_before_build(self):
+        for change in (lambda config: config.pop("symbol_reader"),
+                       lambda config: config["symbol_reader"]["llvm_nm"].update(sha256="0" * 64)):
+            fixture = AppleFixture(self.root / str(len(list(self.root.iterdir()))))
+            change(fixture.config)
+            fixture.toolchain.write_bytes(canonical_json(fixture.config))
+            fixture.args.toolchain_lock_sha256 = sha256(fixture.toolchain.read_bytes())
+            with fixture.patches(), self.assertRaises(VerificationError):
+                apple.build(fixture.args)
+            self.assertFalse(any(call["log"].name == "03-release-build.txt" for call in fixture.calls))
+            self.assertFalse(fixture.args.output.exists())
+
     def test_alias_parent_uses_receipt_paths_for_both_targets_without_relaxing_checks(self):
         actual = self.root / "actual-parent"
         actual.mkdir()
@@ -447,6 +517,11 @@ class AppleRunnerTests(unittest.TestCase):
             self.assertEqual(row["source_manifest"]["source_profile"], apple.PROFILE)
             self.assertEqual(row["system_link_flags"], SYSTEM_FLAGS)
             self.assertEqual(len(row["link_probes"]), 8)
+            self.assertEqual(row["symbol_reader"], fixture.reader)
+            for scan in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
+                call = next(c for c in fixture.calls if c["target"] == target and c["log"].name == scan)
+                archive = row["library"] if scan.startswith("04-rust") else row["mixed_provider"]["library"]
+                self.assertEqual(call["argv"], apple.rust_symbol_reader.scan_command(fixture.reader, archive))
             self.assertFalse(row["header_probe_linked_or_executed"])
             self.assertIn("-fsyntax-only", row["header_probe_command"])
             self.assertNotIn("-o", row["header_probe_command"])
