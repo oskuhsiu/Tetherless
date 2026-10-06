@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 2,
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:4021cbd349aed2290584cd3551eef492d7c3a0e88df5497a40d4f262b47e60c0",
+      "size": 4484,
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux",
+        "os.version": "Ubuntu 24.04.4"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.arm64_linux",
+        "sh.brew.bottle.cpu.variant": "armv8",
+        "sh.brew.bottle.digest": "2cd12463505a1ca40c2e3f54c2777f57acb6134b92d6cfd8631180f771d2d87a",
+        "sh.brew.bottle.glibc.version": "2.39",
+        "sh.brew.bottle.size": "1128849",
+        "sh.brew.bottle.installed_size": "4374232",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/libtool\",\"bin/libtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"gcc-13\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"arm64\",\"built_on\":{\"os\":\"Linux\",\"os_version\":\"Ubuntu 24.04.4\",\"cpu_family\":\"arm\",\"glibc_version\":\"2.39\",\"oldest_cpu_family\":\"armv8\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:eb1ff0c26cd770b61fffa8bc5b47bd3822ae800ef1174a4e15929648ca657a20\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"eb1ff0c26cd770b61fffa8bc5b47bd3822ae800ef1174a4e15929648ca657a20\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"gcc-13\",\"versionInfo\":\"NOASSERTION\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:2cd12463505a1ca40c2e3f54c2777f57acb6134b92d6cfd8631180f771d2d87a\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"2cd12463505a1ca40c2e3f54c2777f57acb6134b92d6cfd8631180f771d2d87a\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/libtoolize,bin/libtool-next-version,bin/glibtool,bin/glibtoolize,bin/libtool"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:b96556d56bb99feb041cd3adc01fe70a7454de9a39393218e3c737d8773a62f3",
+      "size": 4377,
+      "platform": {
+        "architecture": "arm64",
+        "os": "darwin",
+        "os.version": "macOS 15.7"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.arm64_sequoia",
+        "sh.brew.bottle.digest": "86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410",
+        "sh.brew.bottle.size": "1123741",
+        "sh.brew.bottle.installed_size": "4246007",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/glibtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"arm64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 15.7\",\"cpu_family\":\"dunno\",\"xcode\":\"26.3\",\"clt\":\"26.3.0.0.1.1771626560\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:80f871ba39104ef553d5a15e2c70639c69dd4fb76568842f5dc1ef451918c6a8\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"80f871ba39104ef553d5a15e2c70639c69dd4fb76568842f5dc1ef451918c6a8\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"26.3\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:2fd2fd441729fa6c6cb8cc45226edcf16292b95537107a84caf9e020e88f9a33",
+      "size": 4374,
+      "platform": {
+        "architecture": "arm64",
+        "os": "darwin",
+        "os.version": "macOS 14.8"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.arm64_sonoma",
+        "sh.brew.bottle.digest": "6d51bf4ccdbc2a0cb7c23d71edc885130c955193ce6f388ab77411f8ebd4305a",
+        "sh.brew.bottle.size": "1123634",
+        "sh.brew.bottle.installed_size": "4245994",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/glibtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"arm64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 14.8\",\"cpu_family\":\"dunno\",\"xcode\":\"16.2\",\"clt\":\"16.2.0.0.1.1733547573\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:72ca35bf13692b0dc9b3880170a0272e76c96f90e499dbbc6fb8a3765df1be31\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"72ca35bf13692b0dc9b3880170a0272e76c96f90e499dbbc6fb8a3765df1be31\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"16.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:6d51bf4ccdbc2a0cb7c23d71edc885130c955193ce6f388ab77411f8ebd4305a\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"6d51bf4ccdbc2a0cb7c23d71edc885130c955193ce6f388ab77411f8ebd4305a\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:00f58f5bb1fdaa8fbeff4262f8e26c4737fd46b5942455770cff57aa255c2dc5",
+      "size": 4367,
+      "platform": {
+        "architecture": "arm64",
+        "os": "darwin",
+        "os.version": "macOS 26"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.arm64_tahoe",
+        "sh.brew.bottle.digest": "719ae9c4597d0198ee77da6bb09dfcb6f68ae0302330f1a1e61503648e59fdd2",
+        "sh.brew.bottle.size": "1123302",
+        "sh.brew.bottle.installed_size": "4244827",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/glibtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"arm64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 26\",\"cpu_family\":\"dunno\",\"xcode\":\"26.4\",\"clt\":\"26.4.0.0.1774242506\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:81e05b29593d5a7a5dc4fe5f245fc62623a84b82c67183bf26385cb86939c6d4\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"81e05b29593d5a7a5dc4fe5f245fc62623a84b82c67183bf26385cb86939c6d4\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"26.4\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:719ae9c4597d0198ee77da6bb09dfcb6f68ae0302330f1a1e61503648e59fdd2\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"719ae9c4597d0198ee77da6bb09dfcb6f68ae0302330f1a1e61503648e59fdd2\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:c87e7535e88d4ba186f7598f7f2451c83d91efbc4998356565a25b32bbe408f5",
+      "size": 4361,
+      "platform": {
+        "architecture": "amd64",
+        "os": "darwin",
+        "os.version": "macOS 15.7"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.sequoia",
+        "sh.brew.bottle.digest": "205e69efbbd83ca9ff421c98a0063bd20b64690b44248d0398bd6deb941cf81b",
+        "sh.brew.bottle.size": "1122458",
+        "sh.brew.bottle.installed_size": "4211077",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/glibtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"x86_64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 15.7\",\"cpu_family\":\"penryn\",\"xcode\":\"26.3\",\"clt\":\"26.3.0.0.1.1771626560\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:9956d5e742750c93d61a27ac209e7dfe7a6e0de2dfbc2ea73210741eb2e51461\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"9956d5e742750c93d61a27ac209e7dfe7a6e0de2dfbc2ea73210741eb2e51461\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"26.3\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:205e69efbbd83ca9ff421c98a0063bd20b64690b44248d0398bd6deb941cf81b\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"205e69efbbd83ca9ff421c98a0063bd20b64690b44248d0398bd6deb941cf81b\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:636a1cfcc4662082185692ea4ef6a65b49aa6183e403ab404f016bebd4ed025d",
+      "size": 4358,
+      "platform": {
+        "architecture": "amd64",
+        "os": "darwin",
+        "os.version": "macOS 14.8"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.sonoma",
+        "sh.brew.bottle.digest": "616479dd74d4824d290395c2551ce07c69a715b92bb3901c1438ad734e2e45d0",
+        "sh.brew.bottle.size": "1122142",
+        "sh.brew.bottle.installed_size": "4211152",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/glibtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"x86_64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 14.8\",\"cpu_family\":\"penryn\",\"xcode\":\"16.2\",\"clt\":\"16.2.0.0.1.1733547573\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:0cf6a1f36ee3fba3f5a68541cbea8bce737766b02a1805e211deef5b3b3867a6\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"0cf6a1f36ee3fba3f5a68541cbea8bce737766b02a1805e211deef5b3b3867a6\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"16.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:616479dd74d4824d290395c2551ce07c69a715b92bb3901c1438ad734e2e45d0\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"616479dd74d4824d290395c2551ce07c69a715b92bb3901c1438ad734e2e45d0\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:fc725fa41ba2533ced5c0522ab79bf5c07a288e2183a4f5523bf82daa63e20fe",
+      "size": 4351,
+      "platform": {
+        "architecture": "amd64",
+        "os": "darwin",
+        "os.version": "macOS 26"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.tahoe",
+        "sh.brew.bottle.digest": "c94ba9b047fa5744349911cd632fec5b88cd366991bb39cb06fe018d166a0a39",
+        "sh.brew.bottle.size": "1121977",
+        "sh.brew.bottle.installed_size": "4209977",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/glibtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"x86_64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 26\",\"cpu_family\":\"penryn\",\"xcode\":\"26.4\",\"clt\":\"26.4.0.0.1774242506\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:a7da5c29823df4a3c80723639e17153dc6fc71621d87cdc8f5e88f628764c816\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"a7da5c29823df4a3c80723639e17153dc6fc71621d87cdc8f5e88f628764c816\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"26.4\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:c94ba9b047fa5744349911cd632fec5b88cd366991bb39cb06fe018d166a0a39\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"c94ba9b047fa5744349911cd632fec5b88cd366991bb39cb06fe018d166a0a39\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:7930fb9b2393772761cebea0544d9b59a39bd1b52e35e99ccec9f05efaf66601",
+      "size": 4489,
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux",
+        "os.version": "Ubuntu 24.04.4"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.x86_64_linux",
+        "sh.brew.bottle.cpu.variant": "core2",
+        "sh.brew.bottle.digest": "6987dea502aa790323eeed36812983d07620595eff67992f1d6992f4de98e136",
+        "sh.brew.bottle.glibc.version": "2.39",
+        "sh.brew.bottle.size": "1126184",
+        "sh.brew.bottle.installed_size": "4283560",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.11-49-g3488a8c\",\"changed_files\":[\"bin/libtool\",\"bin/libtoolize\"],\"source_modified_time\":1784218031,\"compiler\":\"gcc-13\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"x86_64\",\"built_on\":{\"os\":\"Linux\",\"os_version\":\"Ubuntu 24.04.4\",\"cpu_family\":\"zen4\",\"glibc_version\":\"2.39\",\"oldest_cpu_family\":\"core2\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:ba0b5d546365710422739b622d9a2301f9096f78bc7d6dd5b3cb4cc4a55e184f\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"ba0b5d546365710422739b622d9a2301f9096f78bc7d6dd5b3cb4cc4a55e184f\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"gcc-13\",\"versionInfo\":\"NOASSERTION\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-07-17T03:54:35Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:6987dea502aa790323eeed36812983d07620595eff67992f1d6992f4de98e136\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"6987dea502aa790323eeed36812983d07620595eff67992f1d6992f4de98e136\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/libtoolize,bin/glibtoolize,bin/glibtool,bin/libtool,bin/libtool-next-version"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:910b914236d0bb09c9579ac363754a6c9c9540d908de971f67235a48fa2a7651",
+      "size": 4461,
+      "platform": {
+        "architecture": "arm64",
+        "os": "darwin",
+        "os.version": "macOS 27"
+      },
+      "annotations": {
+        "org.opencontainers.image.ref.name": "2.6.2.arm64_golden_gate",
+        "sh.brew.bottle.digest": "ae7e1440a083a659046301ae4f01f1bec1ee0f0a859d4fb418cf4cfd51eecaba",
+        "sh.brew.bottle.size": "1123278",
+        "sh.brew.bottle.installed_size": "4243288",
+        "sh.brew.license": "GPL-2.0-or-later",
+        "sh.brew.tab": "{\"homebrew_version\":\"6.0.22-269-ge103b39\",\"changed_files\":[\"bin/glibtoolize\"],\"linkage_files\":[\"lib/libltdl.7.dylib\"],\"binary_relocation_files\":[],\"source_modified_time\":1784218031,\"compiler\":\"clang\",\"runtime_dependencies\":[{\"full_name\":\"m4\",\"version\":\"1.4.21\",\"revision\":0,\"bottle_rebuild\":0,\"pkg_version\":\"1.4.21\",\"declared_directly\":true,\"compatibility_version\":1}],\"arch\":\"arm64\",\"built_on\":{\"os\":\"Macintosh\",\"os_version\":\"macOS 27\",\"cpu_family\":\"dunno\",\"xcode\":\"27.0\",\"clt\":\"27.0.0.0.1788430756\",\"preferred_perl\":\"5.34\"}}",
+        "sh.brew.sbom.supplement": "{\"documentDescribes\":[\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"SPDXRef-Compiler\",\"SPDXRef-Bottle-libtool\"],\"packages\":[{\"SPDXID\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"name\":\"m4\",\"versionInfo\":\"1.4.21\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"GPL-3.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:14d29a577e4af26fd2fb2f70f127d0b9b641fdafd556fdbf98e945e1d4fd2657\",\"copyrightText\":\"NOASSERTION\",\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"14d29a577e4af26fd2fb2f70f127d0b9b641fdafd556fdbf98e945e1d4fd2657\"}],\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/m4@1.4.21\",\"referenceType\":\"purl\"}]},{\"SPDXID\":\"SPDXRef-Compiler\",\"name\":\"clang\",\"versionInfo\":\"27.0\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"licenseConcluded\":\"NOASSERTION\",\"copyrightText\":\"NOASSERTION\",\"downloadLocation\":\"NOASSERTION\",\"checksums\":[],\"externalRefs\":[]},{\"SPDXID\":\"SPDXRef-Bottle-libtool\",\"name\":\"libtool\",\"versionInfo\":\"2.6.2\",\"filesAnalyzed\":false,\"licenseDeclared\":\"NOASSERTION\",\"builtDate\":\"2026-09-10T07:54:57Z\",\"licenseConcluded\":\"GPL-2.0-or-later\",\"downloadLocation\":\"https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:ae7e1440a083a659046301ae4f01f1bec1ee0f0a859d4fb418cf4cfd51eecaba\",\"copyrightText\":\"NOASSERTION\",\"externalRefs\":[{\"referenceCategory\":\"PACKAGE-MANAGER\",\"referenceLocator\":\"pkg:brew/libtool@2.6.2\",\"referenceType\":\"purl\"}],\"checksums\":[{\"algorithm\":\"SHA256\",\"checksumValue\":\"ae7e1440a083a659046301ae4f01f1bec1ee0f0a859d4fb418cf4cfd51eecaba\"}]}],\"relationships\":[{\"spdxElementId\":\"SPDXRef-Package-SPDXRef-m4-1.4.21\",\"relationshipType\":\"RUNTIME_DEPENDENCY_OF\",\"relatedSpdxElement\":\"SPDXRef-Bottle-libtool\"},{\"spdxElementId\":\"SPDXRef-Compiler\",\"relationshipType\":\"BUILD_TOOL_OF\",\"relatedSpdxElement\":\"SPDXRef-Archive-libtool-src\"}]}",
+        "sh.brew.path_exec_files": "bin/glibtool,bin/glibtoolize,bin/glibtool-next-version"
+      }
+    }
+  ],
+  "annotations": {
+    "com.github.package.type": "homebrew_bottle",
+    "org.opencontainers.image.created": "2026-07-17T03:54:35Z",
+    "org.opencontainers.image.description": "Generic library support script",
+    "org.opencontainers.image.documentation": "https://formulae.brew.sh/formula/libtool",
+    "org.opencontainers.image.licenses": "GPL-2.0-or-later",
+    "org.opencontainers.image.ref.name": "2.6.2",
+    "org.opencontainers.image.revision": "1042572b76e5c845037255a0539c651b65a9e4f6",
+    "org.opencontainers.image.source": "https://github.com/homebrew/homebrew-core/blob/1042572b76e5c845037255a0539c651b65a9e4f6/Formula/lib/libtool.rb",
+    "org.opencontainers.image.title": "libtool",
+    "org.opencontainers.image.url": "https://www.gnu.org/software/libtool/",
+    "org.opencontainers.image.vendor": "homebrew",
+    "org.opencontainers.image.version": "2.6.2"
+  }
+}

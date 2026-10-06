@@ -138,6 +138,7 @@ jobs:
             .c-provider/tool-setup/*.json
             .c-provider/tool-setup/*.txt
             .c-provider/tool-setup/*.txt.status.json
+            .c-provider/tool-setup/retained-bottles/*.bottle.tar.gz
             .c-provider/inputs/action-identity.json
             .c-provider/inputs/closed-inputs.json
             .c-provider/inputs/pristine/

@@ -107,20 +107,6 @@ class RuntimeAndBottleTests(unittest.TestCase):
         vendor=root/'Library/Homebrew/vendor';vendor.mkdir(parents=True);(vendor/'portable-ruby-version').write_text('4.0.1\n')
         with patch.object(setup,'PREFIX',root),self.assertRaisesRegex(ValueError,'runtime missing or would upgrade'):
             setup.runtime_guard(brew)
-    def bottle(self,deps):
-        path=self.root/'bottle.tar.gz';data=json.dumps({'runtime_dependencies':deps}).encode()
-        with tarfile.open(path,'w:gz') as tar:
-            info=tarfile.TarInfo('m4/1.4.21/INSTALL_RECEIPT.json');info.size=len(data);tar.addfile(info,io.BytesIO(data))
-        row={'version':'1.4.21','bottle_sha256':setup.digest(path)}
-        return path,row
-    def test_authenticated_synthetic_bottle_metadata_only(self):
-        path,row=self.bottle([]);self.assertEqual(setup.inspect_bottle(path,'m4',row)['runtime_dependencies'],[])
-    def test_extra_bottle_runtime_dependency_rejected_before_install(self):
-        path,row=self.bottle([{'full_name':'unexpected','version':'1'}])
-        with self.assertRaisesRegex(ValueError,'outside four-formula'):setup.inspect_bottle(path,'m4',row)
-    def test_bottle_hash_drift_rejected(self):
-        path,row=self.bottle([]);row['bottle_sha256']='a'*64
-        with self.assertRaises(ValueError):setup.inspect_bottle(path,'m4',row)
     def test_sandbox_protects_runtime_and_unrelated_kegs(self):
         text=setup.sandbox_policy(Path('/opt/homebrew'),{'pkgconf':{},'m4':{}},True)
         self.assertIn('(deny network*)',text);self.assertIn('/opt/homebrew/Library',text);self.assertIn('/opt/homebrew/Cellar/pkgconf',text)
@@ -295,7 +281,7 @@ class StartupCacheTests(unittest.TestCase):
 
 
 class PartialFailureEvidenceTests(unittest.TestCase):
-    def exercise(self,null_metadata=False,reader_drift=False):
+    def exercise(self,null_metadata=False,reader_drift=False,pre_install_audit_failure=False,final_bottle_audit_failure=False):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary).resolve(strict=True);work=root/'setup';brewroot=root/'homebrew';brewroot.mkdir()
             runtime=brewroot/'runtime';runtime.write_text('existing-runtime')
@@ -309,6 +295,7 @@ class PartialFailureEvidenceTests(unittest.TestCase):
                 metadata=json.loads((HERE/'tests/fixtures/homebrew-6.0.22-selected-metadata.json').read_bytes())
             before={'pkgconf':{'3.0.7':'unchanged-receipt'}}
             after={**before,'m4':{'1.4.21':'partially-installed-approved-formula'}}
+            if pre_install_audit_failure:after=before
             primary=ValueError('synthetic partial install failure')
             captured=[]
             def capture(command,**kwargs):
@@ -323,6 +310,7 @@ class PartialFailureEvidenceTests(unittest.TestCase):
                     path.write_bytes(b'synthetic asset placeholder, never executed');value=str(path)+'\n'
                 log.write_text(value);log.with_name(log.name+'.status.json').write_text(json.dumps({'synthetic_fixture':True})+'\n')
                 if 'install-four-formulas' in label:
+                    self.assertEqual(bottle_audit.call_count,1)
                     if reader_drift:(brewroot/next(iter(reader))).write_text('changed reader fixture')
                     raise primary
             env={'GITHUB_SHA':'a'*40,'GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1',
@@ -333,6 +321,8 @@ class PartialFailureEvidenceTests(unittest.TestCase):
                  patch.object(setup,'cellar_inventory',side_effect=[before,after]), \
                  patch.object(setup,'verify_existing_tools',return_value={'fixture':'unchanged'}), \
                  patch.object(setup,'inspect_bottle',return_value={'synthetic_verified_metadata':True}), \
+                 patch.object(setup,'audit_bottle_inputs',side_effect=[primary if pre_install_audit_failure else None,
+                    ValueError('synthetic final bottle audit failure') if final_bottle_audit_failure else None]) as bottle_audit, \
                  patch.object(setup,'capture_helper_command',side_effect=capture):
                 with self.assertRaises(ValueError) as result:
                     setup.setup(SimpleNamespace(execute_approved=True,output=work))
@@ -344,10 +334,12 @@ class PartialFailureEvidenceTests(unittest.TestCase):
             self.assertEqual(report['compatibility_reader'],{'expected':reader,'observed':reader})
             self.assertEqual(report['metadata_compatibility']['m4']['observed'],None if null_metadata else 1)
             self.assertEqual(report['metadata_compatibility']['m4']['source_declared'],1)
-            self.assertEqual(all(report['final_audit'].values()),not reader_drift)
+            self.assertEqual(all(report['final_audit'].values()),not (reader_drift or final_bottle_audit_failure))
+            self.assertEqual(bottle_audit.call_count,2)
             install=[row for row in report['commands'] if 'install-four-formulas' in row['log']]
-            self.assertEqual(len(install),1);self.assertTrue(install[0]['offline'])
-            self.assertEqual(install[0]['argv'][-4:],list(setup.NAMES))
+            self.assertEqual(len(install),0 if pre_install_audit_failure else 1)
+            if install:
+                self.assertTrue(install[0]['offline']);self.assertEqual(install[0]['argv'][-4:],list(setup.NAMES))
             self.assertTrue(any('metadata-before-install' in row['log'] and row['offline'] for row in report['commands']))
 
     def test_partial_install_retains_after_state_and_primary_error(self):self.exercise()
@@ -357,5 +349,9 @@ class PartialFailureEvidenceTests(unittest.TestCase):
 
     def test_reader_mutation_is_retained_by_final_audit_without_hiding_primary_failure(self):
         self.exercise(null_metadata=True,reader_drift=True)
+
+    def test_bottle_input_mutation_stops_before_install(self):self.exercise(pre_install_audit_failure=True)
+
+    def test_final_bottle_input_audit_preserves_primary_error(self):self.exercise(final_bottle_audit_failure=True)
 
 if __name__=='__main__':unittest.main()

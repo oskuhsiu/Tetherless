@@ -13,11 +13,12 @@ from pathlib import Path, PurePosixPath
 import platform
 import re
 import sys
-import tarfile
 
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE.parents[1]/'idevice'))
 from bounded_process import capture_helper_command
+sys.path.insert(0,str(HERE))
+from bottle_metadata import inspect_bottle, verify_retained_manifests, audit_bottle_inputs
 
 PREFIX=Path('/opt/homebrew')
 BREW=PREFIX/'bin/brew'
@@ -61,6 +62,7 @@ def load_lock():
     for name,row in lock['formulas'].items():
         require_formula_compatibility(name,row)
         if not set(row['dependencies'])<=set(NAMES):raise ValueError('formula dependency outside approval scope')
+    verify_retained_manifests(lock)
     return lock
 
 
@@ -159,28 +161,6 @@ def verify_existing_tools(lock):
     return result
 
 
-def inspect_bottle(path,name,row):
-    if path.is_symlink() or not path.is_file() or not 0<path.stat().st_size<=64*1024*1024 or digest(path)!=row['bottle_sha256']:
-        raise ValueError('bottle byte identity/bound mismatch')
-    receipts=[]
-    with tarfile.open(path,'r:gz') as archive:
-        members=archive.getmembers()
-        if len(members)>20000 or sum(m.size for m in members)>256*1024*1024:raise ValueError('bottle inventory bound')
-        for member in members:
-            if member.name.endswith('/INSTALL_RECEIPT.json'):
-                wanted=name+'/'+row['version']+'/INSTALL_RECEIPT.json'
-                if member.name!=wanted or not member.isfile() or member.size>1024*1024:raise ValueError('unexpected bottle receipt')
-                receipts.append(json.load(archive.extractfile(member)))
-    if len(receipts)!=1:raise ValueError('one bottle receipt required')
-    receipt=receipts[0]
-    deps=receipt.get('runtime_dependencies')
-    if not isinstance(deps,list):raise ValueError('bottle runtime dependency metadata missing')
-    for dep in deps:
-        if dep.get('full_name') not in NAMES or not dep.get('version'):
-            raise ValueError('bottle runtime dependency outside four-formula scope')
-    return {'sha256':row['bottle_sha256'],'bytes':path.stat().st_size,'runtime_dependencies':deps,'receipt':receipt}
-
-
 def sandbox_policy(homebrew_root,existing,offline):
     rules=['(version 1)','(allow default)']
     if offline:rules.append('(deny network*)')
@@ -215,7 +195,7 @@ def setup(args):
          'LANG':'en_US.UTF-8','LC_ALL':'en_US.UTF-8','CI':'1','NONINTERACTIVE':'1',
          'DEVELOPER_DIR':os.environ['DEVELOPER_DIR'],
          'HOMEBREW_CACHE':str(work/'cache'),'HOMEBREW_LOGS':str(work/'logs'),**FLAGS}
-    before={};runtime={};homebrew_root=None
+    before={};runtime={};homebrew_root=None;bottles={}
     def run(command,label,offline=False,seconds=180):
         index=len(report['commands'])+1;log=work/('%02d-%s.txt'%(index,label))
         protected=['/usr/bin/sandbox-exec','-p',sandbox_policy(homebrew_root,before,offline),*[str(x) for x in command]]
@@ -254,7 +234,7 @@ def setup(args):
             'source_declared':lock['formulas'][row['name']]['compatibility_version'],
             'formula_source_sha256':row['ruby_source_checksum']['sha256']} for row in metadata['formulae']}
         write(work/'selected-metadata.json',metadata)
-        bottles={}
+        report['bottles']=bottles
         missing=[name for name in NAMES if name not in before]
         for name in missing:
             fetch_command,cache_command=bottle_commands(name)
@@ -263,7 +243,7 @@ def setup(args):
             if len(value.splitlines())!=1:raise ValueError('unrecognized bottle cache response')
             path=Path(value).resolve(strict=True)
             if not path.is_relative_to(work/'cache'):raise ValueError('bottle outside fresh owned cache')
-            bottles[name]=inspect_bottle(path,name,lock['formulas'][name])
+            bottles[name]=inspect_bottle(path,name,lock,work/'cache',work)
         report['bottles']=bottles;report['state']='verified-bottles';write(work/'setup-receipt.json',report)
         # Standard fetch can retain official sources for these same formulas.
         # Installation still requires each selected bottle's authenticated bytes.
@@ -272,6 +252,7 @@ def setup(args):
                                        'metadata-before-install',offline=True))
         validate_metadata(validated_again,lock,compatibility_reader=compatibility_reader)
         write(work/'metadata-before-install.json',validated_again)
+        audit_bottle_inputs(bottles)
         # Install offline with normal dependency handling and --force-bottle.
         # Missing bottles/additional assets fail; no source build is accepted.
         if missing:
@@ -300,6 +281,11 @@ def setup(args):
         raise
     finally:
         report['final_audit']={}
+        try:
+            audit_bottle_inputs(bottles);report['final_audit']['bottle_inputs_unchanged']=True
+        except Exception as audit_error:
+            report['final_audit']['bottle_inputs_unchanged']=False
+            report['bottle_input_audit_error']={'type':type(audit_error).__name__,'text':str(audit_error)}
         for path,expected in runtime.items():
             try:report['final_audit'][path]=digest(Path(path))==expected
             except OSError:report['final_audit'][path]=False
