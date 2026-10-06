@@ -3,8 +3,9 @@ import { permitsLocalRequest } from './local-policy.mjs';
 import { createGuidedService, guidedApiPath } from './guided-service.mjs';
 // Separate fixture. The static suite's deny-all-mutations policy is unchanged.
 export const test = base.extend({
-  guided: [async ({ context, baseURL }, use, testInfo) => {
-    const service = createGuidedService(); const workers = [], responses = [], completed = [];
+  guidedApp: ['synthetic', { option: true }],
+  guided: [async ({ context, baseURL, guidedApp }, use, testInfo) => {
+    const service = createGuidedService(guidedApp); const workers = [], responses = [], completed = [];
     await context.route('**/*', async (route) => {
       const req = route.request(), api = guidedApiPath(req.url(), req.method(), baseURL);
       if (api) {

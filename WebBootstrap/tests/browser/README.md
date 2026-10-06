@@ -1,6 +1,7 @@
 # Static browser QA candidate
 
-This isolated browser suite tests the static frontend with synthetic inputs. It
+This isolated browser suite tests the static frontend with synthetic signing
+material and both synthetic and owned unsigned native app inputs. It
 does not enable Apple authentication, deploy Pages, publish a release or establish
 Safari/iPhone installation acceptance. Production dependency pins are unchanged.
 
@@ -27,7 +28,7 @@ node node_modules/playwright/cli.js install --with-deps chromium
 npm run test:browser
 ```
 
-`npm run test:browser -- --list --reporter=list` discovers the 30 cases without opening a browser
+`npm run test:browser -- --list --reporter=list` discovers the 32 cases without opening a browser
 or starting the server. `harness.test.mjs` also does not listen on a socket: it
 checks the static response function directly using temporary synthetic files.
 The `playwright.config.js` webServer starts the static server only for actual
@@ -35,8 +36,8 @@ browser execution. Do not attempt browser/localhost execution in an environment
 where it is denied.
 
 The CI setup steps may acquire official Node/npm/Playwright and operating-system
-browser dependencies. Runtime tests use synthetic certificates, profiles and the
-existing synthetic Mach-O fixture. They never start `WebBootstrapService`, send real Apple credentials or real
+browser dependencies. Runtime tests use synthetic certificates and profiles, the
+existing synthetic Mach-O fixture, and the pinned owned unsigned UIKit fixture. They never start `WebBootstrapService`, send real Apple credentials or real
 provisioning requests, or contact an Apple service. The guided fixture accepts
 only fixed synthetic values on exact localhost API routes.
 
@@ -113,16 +114,45 @@ checks its allowlist, synthetic-only login, CSR/cert identity and actual WASM
 signing offline. Those checks are not browser execution. The full-path case
 retains synthetic mutation-preview and signed-but-install-blocked screenshots.
 
+## Owned unsigned UIKit custom-IPA regression
+
+One additional case runs at both existing paths, bringing discovery to **32**
+(18 static, 12 synthetic guided, 2 owned-native-input guided). The original 30
+cases are unchanged. `owned-ipa.spec.js` reuses `guided-test.mjs`; its closed
+`guidedApp` option selects only the pinned second fixture identity. Routes,
+credentials, Team/device checks, consent, CSR rules and request guards stay the
+same. Unknown app selectors and arbitrary mutation plans fail closed.
+
+The case uses the exact 14,853-byte owned unsigned UIKit IPA from native build
+[37503567286, attempt 1](https://github.com/oskuhsiu/Tetherless/actions/runs/37503567286/attempts/1).
+Its source, LICENSE, identity and provenance are retained beside the fixture.
+See [`fixtures/owned-signing-test/README.md`](../fixtures/owned-signing-test/README.md).
+Through visible controls, the test selects the custom IPA, verifies login and
+provisioning consent gates and explicit existing-device selection, then signs
+using the actual browser worker and pinned WASM. It verifies the downloaded ZIP:
+changed executable, unchanged Info.plist/BuildIdentity, exact synthetic profile,
+expected member set, and SHA-1/SHA-256 CodeResources digests. Installation stays
+blocked and the UI must say installation and launch are unverified. It then
+clears the output and consent. The downloaded synthetic IPA is deleted rather
+than retained as a deliverable; keys/P12s remain in memory.
+
+`owned-ipa.test.mjs` provides four portable checks, including an offline genuine
+input WASM replay and negative controls for the output verifier and the closed
+fixture selector. These are separate from actual Chromium execution. The new
+browser case attaches a digest-only output proof plus mutation-preview and
+install-blocked screenshots only when actual browser execution reaches those
+steps. Preparation/discovery does not produce or claim screenshots.
+
 ## Evidence limits and workflow interactions
 
-The preceding frontend passed the published workflow in run 37420583887 (18/18).
-That run includes real Chromium screenshots and actual WASM synthetic signing.
-The progressive UI/Release candidate updates the original 18 static cases and
-adds 12 synthetic guided-account/device cases while preserving all original real
-signing/asset/cancellation assertions. It
-still requires a new run on its exact published SHA. Browser tests are not run
-in this preparation environment because localhost/browser IPC are restricted;
-syntax/config/discovery/harness/unit/build checks are separate evidence.
+The unchanged baseline passed actual Chromium execution in
+[run 37501163075](https://github.com/oskuhsiu/Tetherless/actions/runs/37501163075):
+18 static/manual cases and 12 synthetic guided-account/device cases. The two
+owned-native-input cases require a new run on the exact published source SHA.
+Browser tests are not run in this preparation environment because
+localhost/browser IPC are restricted; syntax/config/discovery/harness/unit/build
+checks are separate evidence. Prior green execution does not validate the new
+cases or create their screenshots.
 
 Even a green result establishes only Chromium execution with a synthetic signing
 identity. It does not validate Apple CMS trust, real Apple provisioning, Safari,

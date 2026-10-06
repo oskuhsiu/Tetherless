@@ -1,0 +1,135 @@
+{
+  "app_manifest": [
+    {
+      "mode": "0644",
+      "path": "BuildIdentity.json",
+      "sha256": "08e391580089abc87dcb83ad28db9375671263a7fea1339f4ff5588a40509df7",
+      "size_bytes": 625
+    },
+    {
+      "mode": "0644",
+      "path": "Info.plist",
+      "sha256": "6803b73af3b3258a13408ee69933eaf6bdf55c553a15beb427a7e1df933086d7",
+      "size_bytes": 1649
+    },
+    {
+      "mode": "0755",
+      "path": "SigningTest",
+      "sha256": "7372b58465e9f1c8893938787084176ddba2292fc7ddc98ef7a30a77d580708f",
+      "size_bytes": 99200
+    }
+  ],
+  "authorization_gate": "Owner must approve exact Apple Team, device, App ID, certificate action, and provisioning profile before any provisioning or signing mutation",
+  "evidence_level": "unsigned device-target compile and package; never installed or launched",
+  "identity": {
+    "bundle_identifier": "org.tetherless.signingtest.r37503567286",
+    "event": "push",
+    "label": "Signing test app, not Tetherless",
+    "repository": "oskuhsiu/Tetherless",
+    "run_attempt": "1",
+    "run_id": "37503567286",
+    "run_url": "https://github.com/oskuhsiu/Tetherless/actions/runs/37503567286/attempts/1",
+    "source_commit": "cfd8c6ede2c85970344e9e9c0f19cc672a95df71",
+    "source_ref": "refs/heads/verify/staged-pairing-native",
+    "workflow_commit": "cfd8c6ede2c85970344e9e9c0f19cc672a95df71",
+    "workflow_ref": "oskuhsiu/Tetherless/.github/workflows/web-signing-test-app.yml@refs/heads/verify/staged-pairing-native"
+  },
+  "ipa": {
+    "filename": "Signing-test-app-not-Tetherless.ipa",
+    "sha256": "fda8c913af9d6f39f8a4351bd94d7953bb99b2b25506e67a3e7d943dafaf8111",
+    "size_bytes": 14853
+  },
+  "label": "Signing test app, not Tetherless",
+  "limitations": [
+    "Not the Tetherless application",
+    "No product, pairing, renewal, unattended-operation, or install-readiness claim",
+    "Portable tests use synthetic bytes and do not validate native compilation"
+  ],
+  "schema_version": 1,
+  "scope": "owned custom-IPA web signing fixture only",
+  "signing": {
+    "apple_developer_signed": false,
+    "architectures": "arm64",
+    "binary": {
+      "mode": "0755",
+      "path": "SigningTest",
+      "sha256": "7372b58465e9f1c8893938787084176ddba2292fc7ddc98ef7a30a77d580708f",
+      "size_bytes": 99200
+    },
+    "deployment_target": "17.0",
+    "embedded_entitlements_present": false,
+    "introspection": "Apple lipo, otool, codesign; no custom Mach-O parser",
+    "label": "Signing test app, not Tetherless",
+    "linked_libraries": "/Users/runner/work/_temp/web-signing-test-app/work/SigningTest.app/SigningTest:\n\t/System/Library/Frameworks/UIKit.framework/UIKit (compatibility version 1.0.0, current version 9126.2.4)\n\t/System/Library/Frameworks/Foundation.framework/Foundation (compatibility version 300.0.0, current version 4201.0.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)\n\t/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)\n\t/usr/lib/swift/libswiftCore.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/swift/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 120.100.0, weak)\n\t/usr/lib/swift/libswiftCoreImage.dylib (compatibility version 1.0.0, current version 2.2.0, weak)\n\t/usr/lib/swift/libswiftDarwin.dylib (compatibility version 1.0.0, current version 347.40.2, weak)\n\t/usr/lib/swift/libswiftDispatch.dylib (compatibility version 1.0.0, current version 56.0.0, weak)\n\t/usr/lib/swift/libswiftMetal.dylib (compatibility version 1.0.0, current version 370.64.2, weak)\n\t/usr/lib/swift/libswiftOSLog.dylib (compatibility version 1.0.0, current version 10.0.0, weak)\n\t/usr/lib/swift/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 951.1.0, weak)\n\t/usr/lib/swift/libswiftQuartzCore.dylib (compatibility version 1.0.0, current version 5.0.0, weak)\n\t/usr/lib/swift/libswiftUniformTypeIdentifiers.dylib (compatibility version 1.0.0, current version 879.2.4, weak)\n\t/usr/lib/swift/libswiftXPC.dylib (compatibility version 1.0.0, current version 105.0.14, weak)\n\t/usr/lib/swift/libswiftos.dylib (compatibility version 1.0.0, current version 1076.40.2, weak)\n",
+    "platform": "iOS device",
+    "provisioning_profile_present": false,
+    "signature_classification": "no-code-signature; no Apple identity or provisioning"
+  },
+  "source_manifest": [
+    {
+      "path": ".github/workflows/web-signing-test-app.yml",
+      "sha256": "f3aa4ce2e0f5b80f800b9c9da408fe881abcd03e85ed4113a1da13856c2c72d5",
+      "size_bytes": 2434
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+      "size_bytes": 34523
+    },
+    {
+      "path": "Tools/WebSigningTestApp/README.md",
+      "sha256": "f46d4be161e58cd0d5fa76a2301464e99bb7cfc70babbfddca8f80639304458c",
+      "size_bytes": 6605
+    },
+    {
+      "path": "Tools/WebSigningTestApp/SigningTest.swift",
+      "sha256": "ad0beef9ac1cfa55b56535548018331cbf13e53092a90a3e88452a6529c86810",
+      "size_bytes": 4061
+    },
+    {
+      "path": "Tools/WebSigningTestApp/build.py",
+      "sha256": "5139fb82c6fa0e670607ce622a4d265cc57a94dc7f6da167d8a0c11f72918bc6",
+      "size_bytes": 12872
+    },
+    {
+      "path": "Tools/WebSigningTestApp/contract.py",
+      "sha256": "53af617bdd1c0fd4be06edad2c2f8bc7096ab281ad32575625dd27a13789a2f7",
+      "size_bytes": 15118
+    },
+    {
+      "path": "Tools/WebSigningTestApp/tests/test_contract.py",
+      "sha256": "94d3668e6096c6abb2178ad61f20ea344eca6544ed7ee7ae03061bb3292c95dc",
+      "size_bytes": 19421
+    }
+  ],
+  "source_snapshot": {
+    "filename": "signing-test-source.tar",
+    "scope": [
+      "Tools/WebSigningTestApp",
+      ".github/workflows/web-signing-test-app.yml",
+      "LICENSE"
+    ],
+    "sha256": "4db8c444bf899d3a18f9a58b43834e199734986290b588b1114f5bcf2b28b76a",
+    "size_bytes": 112640
+  },
+  "toolchain": {
+    "compiler": "/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+    "compiler_sha256": "9bbc29c4dca73682d62011992be2ecfebcaef681ad490018a48e6643ac5847b7",
+    "compiler_version": "Apple Swift version 6.2.4 (swiftlang-6.2.4.1.4 clang-1700.6.4.2)\nTarget: arm64-apple-macosx15.0",
+    "developer_dir": "/Applications/Xcode_26.3.app/Contents/Developer",
+    "image_os": "macos15",
+    "image_version": "20260907.0337.1",
+    "python_executable": "/opt/homebrew/opt/python@3.14/bin/python3.14",
+    "python_version": "3.14.7",
+    "resolved_compiler": "/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend",
+    "resolved_developer_dir": "/Applications/Xcode_26.3.app/Contents/Developer",
+    "resolved_sdk_path": "/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk",
+    "runner_arch": "arm64",
+    "runner_os": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
+    "sdk_build": "23C57",
+    "sdk_path": "/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk",
+    "sdk_version": "26.2",
+    "target": "arm64-apple-ios17.0",
+    "xcode": "Xcode 26.3\nBuild version 17C529"
+  }
+}
