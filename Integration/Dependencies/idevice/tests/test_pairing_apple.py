@@ -61,7 +61,7 @@ class AppleFixture:
         root.mkdir()
         self.recipe = root / "recipe"
         self.profile = json.loads((ROOT / apple.PROFILE).read_bytes())
-        names = [apple.PROFILE, "split-provider/header_probe.c", "overlay/ffi/pairing_result_abi.h"]
+        names = [apple.PROFILE, "split-provider/header_probe.c", "overlay/ffi/pairing_result_abi.h", "namespace/contract.json"]
         names += [p["path"] for group in self.profile["probe_sets"].values() for p in group.values()]
         names += list(PACKAGING_RECIPE_FILES)
         for name in names:
@@ -82,8 +82,11 @@ class AppleFixture:
         self.toolchain = root / "toolchain.json"
         self.toolchain.write_bytes(canonical_json(self.config))
         self.args = SimpleNamespace(source=root / "input-source", crate_cache=self.cache, provider_inputs=root / "provider-source",
+            mixed_provider=root / "mixed-provider",
             work_dir=root / "work", output=root / "published", toolchain_lock=self.toolchain,
             toolchain_lock_sha256=sha256(self.toolchain.read_bytes()), recipe_lock_sha256=sha256(index.read_bytes()))
+        self.args.mixed_provider.mkdir()
+        (self.args.mixed_provider / "authenticated-provider.zip").write_bytes(b"controlled opaque C provider archive fixture")
         self.sdk = root / "sdk"
         self.sdk.mkdir()
         self.tool = root / "tool"
@@ -138,10 +141,18 @@ class AppleFixture:
         result.update(source_profile=profile, source_profile_sha256=sha256((self.recipe / profile).read_bytes()))
         return result
 
-    def vendor(self, *, source, work, cache, env, derive_metadata):
+    def vendor(self, *, source, work, cache, env, derive_metadata, export_namespace):
         if not derive_metadata or cache != self.cache:
             raise AssertionError("expected authenticated derived vendor staging")
         return write_vendor(work, source)
+
+    def mixed_provider(self, root, target):
+        if root != self.args.mixed_provider:
+            raise AssertionError("unexpected mixed provider source")
+        # Honest orchestration fixture: no ZIP/native bytes are interpreted.
+        return {"target": target["rust"], "library": str(root / "libimobiledevice.a"),
+                "headers": str(root / "Headers"), "binary_format_inspected": False,
+                "fixture_sha256": sha256((root / "authenticated-provider.zip").read_bytes())}
 
     def prepare_provider(self, source, destination, target):
         receipt = provider.prepare_inputs(source, destination, target)
@@ -188,6 +199,13 @@ class AppleFixture:
             output = str(self.sdk) + "\n"
         elif "--find" in argv:
             output = str(self.tool) + "\n"
+        elif "nm" in argv:
+            if Path(argv[-1]).name == "libidevice_ffi.a":
+                namespace = json.loads((self.recipe / "namespace/contract.json").read_bytes())
+                output = "\n".join("_" + n for n in namespace["expected_target_exports"][target_name]["after"]) + "\n"
+            else:
+                output = "\n".join("_" + n for n in ("plist_new_dict", "plist_free", "plist_array_set_item",
+                    "afc_client_free", "lockdownd_client_free", "idevice_free")) + "\n"
         elif "-fsyntax-only" in argv:
             output = "controlled syntax-only header check\n"
         elif argv[:2] == [self.binaries["cargo"], "tree"]:
@@ -227,6 +245,8 @@ class AppleFixture:
             if argv[3] not in ("clang", "swiftc") or "-o" not in argv:
                 raise AssertionError("unexpected native command")
             Path(argv[argv.index("-o") + 1]).write_bytes(b"opaque linked probe fixture; never executed\n")
+            if "-map" in argv:
+                Path(argv[argv.index("-map") + 2]).write_bytes(b"controlled opaque linker map fixture\n")
             output = "controlled ordinary link result\n"
         else:
             raise AssertionError("unapproved command would execute: " + repr(argv))
@@ -249,6 +269,7 @@ class AppleFixture:
                               audit_inputs=provider.audit_inputs, check_build_script_output=provider.check_build_script_output)
         stack.enter_context(patch.object(apple, "HERE", self.recipe))
         for name, value in {"load_apple_profile": lambda: self.profile, "load_provider": lambda: api,
+                            "verify_mixed_provider": self.mixed_provider,
                             "native_environment": self.environment, "stage": self.stage, "prepare_offline_vendor": self.vendor,
                             "capture_helper_command": self.command}.items():
             stack.enter_context(patch.object(apple, name, side_effect=value))
@@ -425,7 +446,7 @@ class AppleRunnerTests(unittest.TestCase):
             self.assert_audits(fixture, target)
             self.assertEqual(row["source_manifest"]["source_profile"], apple.PROFILE)
             self.assertEqual(row["system_link_flags"], SYSTEM_FLAGS)
-            self.assertEqual(len(row["link_probes"]), 6)
+            self.assertEqual(len(row["link_probes"]), 8)
             self.assertFalse(row["header_probe_linked_or_executed"])
             self.assertIn("-fsyntax-only", row["header_probe_command"])
             self.assertNotIn("-o", row["header_probe_command"])

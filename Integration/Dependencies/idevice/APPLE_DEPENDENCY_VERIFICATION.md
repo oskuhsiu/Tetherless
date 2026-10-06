@@ -27,6 +27,7 @@ python3 Integration/Dependencies/idevice/build_pairing_apple.py \
   --source "$PINNED_IDEVICE_SOURCE" \
   --crate-cache "$PINNED_CRATE_ARCHIVE_DIRECTORY" \
   --provider-inputs "$VERIFIED_OPENSSL_INPUT_DIRECTORY" \
+  --mixed-provider "$VERIFIED_LIBIMOBILEDEVICE_INPUT_DIRECTORY" \
   --work-dir "$NEW_APPLE_WORK_DIRECTORY" \
   --output "$NEW_APPLE_VERIFICATION_DIRECTORY" \
   --toolchain-lock "$OBSERVED_TOOLCHAIN_LOCK_JSON" \
@@ -93,7 +94,7 @@ outputs in the existing audit receipts. Any failed audit blocks final publicatio
 
 ## XCFramework and matching source
 
-After both targets and all six language/probe links per target pass, the runner
+After both targets and all eight language/probe links per target pass, the runner
 uses normal `xcodebuild -create-xcframework` with the two Rust archives and their
 matching generated headers. It checks only generated Info.plist slice metadata
 and opaque file hashes: exactly iOS arm64 and iOS Simulator arm64, and packaged

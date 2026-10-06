@@ -70,6 +70,10 @@ class RunnerFixture:
             destination = processed / ("libidevice_ffi.a" if key == "archive" else "Headers/" + Path(name).name)
             put(destination, (root / name).read_bytes())
         framework = derived / "SourcePackages/artifacts/selected/OpenSSL.framework/OpenSSL"
+        put(processed / "libimobiledevice.a", b"controlled opaque C provider fixture\n")
+        put(processed / "Headers/plist/plist.h", b"/* controlled opaque C plist header */\n")
+        put(processed / "Headers/libimobiledevice/module.modulemap", b'module libimobiledevice [system] { header "../plist/plist.h" export * }\n')
+        put(self.args.work_dir / "evidence/link-maps/SideStore-arm64.map", b"controlled opaque final app linker map fixture\n")
         put(framework, self.provider_bytes)
         app_list, gateway_list = derived / "app.SwiftFileList", derived / "gateway.SwiftFileList"
         put(app_list, ("\n".join(shlex.quote(str(root / name)) for name in self.f.contract["prepared_composition_sources"] if name != self.omit_source) + "\n").encode())
@@ -84,7 +88,7 @@ class RunnerFixture:
             rows += [f"SwiftDriver {module} normal arm64 com.apple.xcode.tools.swift.compiler (in target '{module}' from project 'Controlled')",
                      "    cd " + shlex.quote(str(root)),
                      "    builtin-SwiftDriver -- /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc " + shlex.join(args), ""]
-        args = ["-target", "arm64-apple-ios17.0", "-isysroot", str(self.sdk), str(processed / "libidevice_ffi.a"),
+        args = ["-target", "arm64-apple-ios17.0", "-isysroot", str(self.sdk), str(processed / "libidevice_ffi.a"), str(processed / "libimobiledevice.a"),
                 "-F", str(framework.parent.parent), "-framework", "OpenSSL", "-o",
                 str(derived / ("Build/Products/" + self.args.configuration + "-iphoneos/SideStore.app/SideStore"))]
         output_path = derived / ("Build/Products/" + self.args.configuration + "-iphoneos/SideStore.app/SideStore")

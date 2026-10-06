@@ -164,6 +164,11 @@ def patched_files(root: Path, lock: dict, source_files: dict[str, bytes]) -> dic
         if sha256(data) != expected:
             raise VerificationError(f"overlay hash mismatch: {path}")
         files[path] = data
+    if "export_namespace_sha256" in lock:
+        if lock.get("profile_kind") != "apple-pairing-production-verification":
+            raise VerificationError("export namespace is restricted to the reviewed Apple profile")
+        from ffi_namespace import namespace_workspace
+        files = namespace_workspace(files, root, lock["export_namespace_sha256"])
     return files
 
 

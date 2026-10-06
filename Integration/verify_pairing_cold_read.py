@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 LOCK = 'Integration/fixtures/ColdPairingParser/source-lock.json'
-LOCK_SHA256 = '31b3b5d88dfd22bbc2a272ebce076417bb438e2b8d14477c1b9f1ccac307039f'
+LOCK_SHA256 = '5a0e9086878624a275c893f37e7f0f0f4c0b26500a07af94b606f92ed70f6be3'
 SCENARIOS = ('remote_identity', 'binary_normalization', 'xml_representation',
              'selection_precedence', 'missing_selected', 'corrupt_or_wrong_selected',
              'invalid_preference', 'reset_suppression', 'strict_ordinary_parser')

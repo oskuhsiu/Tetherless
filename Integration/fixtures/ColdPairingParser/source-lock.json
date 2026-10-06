@@ -29,9 +29,9 @@
     "Sources/TetherlessCore/PrivateFileStore.swift": "ab506c18e2ae33e2f3a940337909435c86144caeabfdf1393f2813c664626fdb",
     "Sources/TetherlessCore/PairingReset.swift": "fe0ef08f60e780d698a4be71685fdcaffe6e0160a0b206f41c31d449a8546541",
     "Sources/TetherlessCore/MutationScope.swift": "5c1c44104983f4111c8e9c5db9361a0b8b40b556eec8cff1fc9eda9f92768bbc",
-    "Integration/verify_pairing_composition.py": "f5e4615e73ce2307adf575618d53d9c3537f3dececc2aa5463e884557b0706ce",
+    "Integration/verify_pairing_composition.py": "77df50eff8d873781b2074a47772c7e71d8dd2d8be24bc61caeb09e23c1c6809",
     "Integration/Dependencies/idevice/bounded_process.py": "7724f6c3eb7d624f49a2651b30f1d6e6bb2c47d356449cd495fad28b2dd144e4",
-    "Integration/Dependencies/idevice/apply_patch.py": "a41e75b1903265c650c198bca05a2afc08ff053a01bcf0a56682cf95ce19c80a",
+    "Integration/Dependencies/idevice/apply_patch.py": "552c1f309ee7a782be9e0aafd84dc70c580a5aedea342225d5a2d7b714a8dd9d",
     "Integration/fixtures/ColdPairingParser/ConcurrencyUtils.swift": "a51cdcf1f50f5cf9c45a57ce97ab272d5d0cc5ef08b12775cac6518d7fae21a2",
     "Integration/fixtures/ColdPairingParser/MinimuxerConstants.swift": "73cbce4167032c48aa8d3386be9a7064365706c12d4876c6e44286c7f0821448",
     "Integration/fixtures/ColdPairingParser/PairingFile.swift": "3b068da97988c86ff6a239b3d3f4e601d95d9c6b55c2a5ead2a40aef21618b69",
@@ -61,5 +61,6 @@
       "git_blob_sha1": "3fb18a884d3f076d17b556220957395ba942d0e0",
       "url": "https://github.com/SideStore/minimuxer/blob/12be70dc2627307a16bfd2dc7a009080d5bec909/Common/MinimuxerConstants.swift"
     }
-  ]
+  ],
+  "helper_revision_note": "Only build-helper identities change for Apple export namespacing; all production, parser and fixture bytes retain their recorded baseline identities."
 }

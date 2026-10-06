@@ -82,6 +82,8 @@ def command(root: Path, work: Path, configuration: str, sdk: str, contract: dict
             "-derivedDataPath", str(work / "DerivedData"), "-onlyUsePackageVersionsFromResolvedFile",
             "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO", "AD_HOC_CODE_SIGNING_ALLOWED=YES",
             "DEVELOPMENT_TEAM=XYZ0123456", "ORG_IDENTIFIER=com.SideStore", "ENABLE_DEBUG_DYLIB=NO",
+            "LD_GENERATE_MAP_FILE=YES",
+            "LD_MAP_FILE_PATH=" + str(work / "evidence/link-maps/$(TARGET_NAME)-$(CURRENT_ARCH).map"),
             "SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) " + " ".join(contract["required_conditions"])]
 
 
@@ -127,6 +129,7 @@ def run(args) -> dict:
     work.mkdir(parents=True)
     evidence = work / "evidence"
     evidence.mkdir()
+    (evidence / "link-maps").mkdir()
     for name in ("home", "tmp"):
         (work / name).mkdir()
     env = {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(work / "home"), "TMPDIR": str(work / "tmp"),
@@ -157,8 +160,12 @@ def run(args) -> dict:
         observed = observe_compile(evidence / "xcodebuild.txt", root, work / "DerivedData", contract,
                                    dict(binding, sdk_path=sdk), args.configuration,
                                    evidence_directory=evidence / "compiler-inputs")
+        link_map = prepare.safe_file(evidence, "link-maps/SideStore-arm64.map")
+        if not 0 < link_map.stat().st_size <= MAX_LOG_BYTES:
+            raise ValueError("final app linker map is missing or outside the retained bound")
         result = {"schema": 1, "configuration": args.configuration, "mode": "diagnostic-only",
                   "binding_receipt_sha256": args.binding_receipt_sha256, "native_handoff": binding["native_handoff"],
+                  "link_map_sha256": prepare.file_hash(link_map),
                   "observations": observed, "toolchain_observations": observations, "command": argv,
                   "compile_process_limits": {"seconds": COMPILE_TIMEOUT_SECONDS, "log_bytes": MAX_LOG_BYTES},
                   "app_binary_executed": False, "runtime_capability_gates_changed": False,

@@ -5,11 +5,17 @@ producer run, source commit and latest attempt at runtime. Its five native lanes
 must belong to that one producer context. The consumer has a separate run,
 commit and attempt. Source preparation alone cannot authorize a binding or build.
 
-The current native recipe is index
-`9971662d8f74774b7c6e23f2a42ff311baf8991f0302e1d0810882f52b0211ac`,
-with transcript profile
+The current native recipe is pinned by `apple_recipe_index_sha256` in
+`input-contract.json`, with transcript profile
 `dbf445f10ca106d656c15ff5df84ab4bdcc38d4ecfe9d4010b6780e062a241ee`.
 Actual corrected Apple build/link/package evidence remains required at runtime.
+
+The provider-namespace candidate requires a new genuine Apple producer with the
+exact export/header namespace contract, all eight C/Swift link probes per target,
+disjoint native symbol inventories and retained mixed-provider link maps. The
+old 9ee2ccc producer remains historical evidence and cannot satisfy these new
+requirements. Its checked-in runtime selection must be replaced only after a
+new successful producer is API-authenticated; no future run ID is invented here.
 
 The indexed packaging operation is byte-identical to the independently reviewed
 tiny-archive proof at source `7476bde6280c8fec042cf7d12c7fcf4bca68fc31`,

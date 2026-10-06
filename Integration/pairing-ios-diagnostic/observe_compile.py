@@ -510,8 +510,38 @@ def _link_args(args: list[str]) -> list[str]:
     return result
 
 
+def _c_module_evidence(command: dict, files: _Files, expected: dict, sdk: str) -> dict:
+    maps = set()
+    args = [arg for arg in command["args"] if arg != "-Xcc"]
+    explicit = []
+    for index, arg in enumerate(args):
+        if arg.startswith("-fmodule-map-file="):
+            explicit.append(arg.split("=", 1)[1])
+        elif arg == "-fmodule-map-file":
+            _require(index + 1 < len(args), "missing explicit C module-map path")
+            explicit.append(args[index + 1])
+    pattern = r"\bmodule\s+libimobiledevice(?:\s+\[system\])?\s*\{"
+    for value in explicit:
+        path = files.path(value, command["cwd"])
+        if re.search(pattern, files.text(path)):
+            maps.add(path)
+    for value in _include_directories(command["args"]):
+        directory = files.search_directory(value, command["cwd"], sdk)
+        for path in (directory / "module.modulemap", directory / "libimobiledevice/module.modulemap"):
+            if path.is_file() and re.search(pattern, files.text(path)):
+                maps.add(path)
+    _require(len(maps) == 1, "C provider module selection is absent or ambiguous")
+    module_map = maps.pop()
+    header = files.path(module_map.parent.parent / "plist/plist.h", command["cwd"])
+    _require(files.opaque_hash(module_map) == _expected(expected["module_map_sha256"])
+             and files.opaque_hash(header) == _expected(expected["header_sha256"]),
+             "C provider header/module differs from the mixed-provider proof")
+    return {"c_provider_module_map": str(module_map), "c_provider_header": str(header),
+            "c_provider_module_map_sha256": expected["module_map_sha256"], "c_provider_header_sha256": expected["header_sha256"]}
+
+
 def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: str,
-                   provider_hash: str, configuration: str, sdk: str) -> dict:
+                   provider_hash: str, configuration: str, sdk: str, c_provider_hash: str) -> dict:
     args, cwd = _link_args(command["args"]), command["cwd"]
     output = files.path(_one(args, "-o"), cwd)
     _require(output.name == "SideStore" and output.parent.name == "SideStore.app"
@@ -549,6 +579,28 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
     _require(processed.is_relative_to(files.roots[1]) and processed != archive,
              "final Ld archive is not an actual processed DerivedData copy")
     _require(files.opaque_hash(processed) == archive_hash, "processed native archive identity differs")
+    c_candidates = {path for path in direct if path.name == "libimobiledevice.a"}
+    _require(not any(re.fullmatch(r"(?:lib)?(?:plist|imobiledevice)(?:[-_.A-Za-z0-9]*)\.(?:dylib|tbd)", Path(arg).name.lower())
+                     or re.fullmatch(r"-(?:weak|reexport|upward)-l(?:plist|imobiledevice)(?:[-_.A-Za-z0-9]*)", arg.lower())
+                     for arg in args), "alternate C dynamic/weak provider in final link")
+    _require(not any(("imobiledevice" in value.lower() or "plist" in value.lower()) and value != "imobiledevice"
+                     for value in libraries)
+             and not any(("imobiledevice" in path.name.lower() or "plist" in path.name.lower())
+                         and path.name != "libimobiledevice.a" for path in direct),
+             "alternate C plist provider in final link")
+    if "imobiledevice" in libraries:
+        searched = []
+        for value in _option(args, "-L", joined=True):
+            directory = files.search_directory(value, cwd, sdk)
+            searched.extend(directory / ("libimobiledevice" + suffix) for suffix in (".dylib", ".tbd", ".a")
+                            if (directory / ("libimobiledevice" + suffix)).exists())
+        _require(len(set(searched)) == 1 and searched[0].suffix == ".a",
+                 "C provider search selection is absent or ambiguous")
+        c_candidates.update(searched)
+    _require(len(c_candidates) == 1, "final Ld does not select one verified C provider")
+    c_archive = c_candidates.pop()
+    _require(c_archive.is_relative_to(files.roots[1]) and files.opaque_hash(c_archive) == c_provider_hash,
+             "processed C provider archive differs from the mixed-provider proof")
     _require("OpenSSL" in _option(args, "-framework"), "final Ld lacks selected OpenSSL framework")
     _require("OpenSSL" not in _option(args, "-weak_framework"), "weak OpenSSL provider is unsupported")
     providers = set()
@@ -570,6 +622,7 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
     _require(output_identity["size"] > 0, "final SideStore output is empty")
     return {"output": str(output), "output_sha256": output_identity["sha256"], "output_size": output_identity["size"],
             "processed_archive": str(processed), "archive_sha256": archive_hash,
+            "c_provider_archive": str(c_archive), "c_provider_archive_sha256": c_provider_hash,
             "openssl_framework_binary": str(provider), "openssl_framework_binary_sha256": provider_hash,
             "binary_format_inspected": False}
 
@@ -628,6 +681,8 @@ def observe_compile(log_path: Path, prepared_root: Path, derived_data: Path,
         _require(all(files.opaque_hash(path) == hashes[key] for key, path in local.items()), "bound local native identity differs")
         provider_hash = _expected(native_binding["native_artifact"]["targets"]["aarch64-apple-ios"]
                                   ["provider_receipt"]["framework_binary_sha256"])
+        c_provider = native_binding["native_artifact"]["targets"]["aarch64-apple-ios"]["mixed_provider"]
+        c_provider_hash = _expected(c_provider["library_sha256"])
         log_path = Path(log_path)
         _require(not log_path.is_symlink(), "build log must not be symlinked")
         with log_path.open("rb") as stream:
@@ -651,6 +706,8 @@ def observe_compile(log_path: Path, prepared_root: Path, derived_data: Path,
                 required = {gateway}
             _require(required <= command["members"], "actual " + module + " compiler filelists lack required inputs")
             module_info = _module_evidence(command, files, hashes["header"], hashes["module_map"], sdk)
+            if module == "SideStore":
+                module_info.update(_c_module_evidence(command, files, c_provider, sdk))
             observations[module] = {"line": command["line"], "command_sha256": command["command_sha256"],
                                     "compiler": command["executable"], "target": triple, "sdk": sdk,
                                     "conditions": sorted(conditions), "required_inputs": sorted(map(str, required)),
@@ -659,7 +716,7 @@ def observe_compile(log_path: Path, prepared_root: Path, derived_data: Path,
         _require(len(links) == 1, "expected one actual final SideStore Ld command")
         link = links[0]
         target = _device_identity(link, sdk)
-        link_info = _link_evidence(link, files, local["archive"], hashes["archive"], provider_hash, configuration, sdk)
+        link_info = _link_evidence(link, files, local["archive"], hashes["archive"], provider_hash, configuration, sdk, c_provider_hash)
         result = {"schema": 1, "observer_source": "new-after-workspace-reset", "configuration": configuration,
                 "log_sha256": _sha(raw_log), "compile": observations,
                 "link": {"line": link["line"], "command_sha256": link["command_sha256"],

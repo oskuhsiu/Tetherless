@@ -136,7 +136,7 @@ def require_config_absent(root: Path) -> None:
 
 
 def prepare_offline_vendor(*, source: Path, work: Path, cache: Path, env: dict[str, str],
-                           derive_metadata: bool = False) -> dict:
+                           derive_metadata: bool = False, export_namespace: dict | None = None) -> dict:
     source, work, cache = source.absolute(), work.absolute(), cache.absolute()
     if source != work / "source" or source.is_symlink() or work.is_symlink():
         raise VerificationError("expected the owned source directory beneath the fresh work root")
@@ -172,11 +172,16 @@ def prepare_offline_vendor(*, source: Path, work: Path, cache: Path, env: dict[s
     if inventory["blocked"]:
         raise VerificationError("ambient Cargo configuration rejected; see vendor-config-inventory.json (metadata only)")
     derived, build_vendor = None, vendor
+    if export_namespace is not None and not derive_metadata:
+        raise VerificationError("export namespacing requires a separate derived vendor")
     if derive_metadata:
         from derived_cbindgen import prepare_derived_vendor
         build_vendor = work / "build-vendor"
-        derived = prepare_derived_vendor(vendor=vendor, destination=build_vendor, source=source,
-                                         originals=inputs, crates=crates, env=env)
+        arguments = dict(vendor=vendor, destination=build_vendor, source=source,
+                         originals=inputs, crates=crates, env=env)
+        if export_namespace is not None:
+            arguments["export_namespace"] = export_namespace
+        derived = prepare_derived_vendor(**arguments)
     config = home / "config.toml"
     # Use an absolute TOML-quoted path: nested cargo metadata may run with a cwd
     # inside a vendored crate, independent of the top-level --manifest-path.

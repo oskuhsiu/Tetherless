@@ -7,9 +7,19 @@ import json
 from pathlib import Path, PurePosixPath
 import plistlib
 import shutil
+import sys
 from native_handoff import verify_handoff, add_handoff_arguments, context_from_args
+from namespace_gateway import GATEWAY_PATH, RENAMES as GATEWAY_RENAMES, transform_gateway
 
 HERE = Path(__file__).resolve().parent
+# These are current-recipe helpers, not downloaded code. bind() authenticates
+# the complete recipe before admitting artifact/header/source transformations.
+sys.path.insert(0, str(HERE.parent / "Dependencies/idevice"))
+try:
+    import ffi_namespace
+    import mixed_provider
+finally:
+    sys.path.pop(0)
 MAX_RECEIPT = 64 * 1024 * 1024
 OLD_TARGET = '''         .binaryTarget(
              name: "IDevice",
@@ -138,14 +148,14 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
             or checked.get("native_import_or_link_established_by_this_check") is not False
             or checked.get("cpp_header_identical") is not True
             or checked.get("declarations_sha256") != contract["result_header_contract"]["declarations_sha256"]
-            or checked.get("final_header_sha256") != row["header_sha256"]):
+            or checked.get("final_header_sha256") != row.get("header_namespace", {}).get("generated_header_sha256")):
         raise ValueError("native result header comparison differs from the reviewed producer")
     retained = retained_json("generated-header-retention.json")
     expected_headers = {
         "ffi/idevice.cbindgen-baseline.h": checked.get("baseline_sha256"),
         "ffi/idevice.cbindgen-scoped.h": checked.get("scoped_sha256"),
-        "ffi/idevice.h": row["header_sha256"],
-        "cpp/include/idevice.h": row["header_sha256"],
+        "ffi/idevice.h": checked["final_header_sha256"],
+        "cpp/include/idevice.h": checked["final_header_sha256"],
     }
     limit = contract["result_header_contract"]["per_file_byte_limit"]
     if (retained.get("schema") != 1 or retained.get("per_file_byte_limit") != limit
@@ -164,6 +174,42 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
     for group in ("pairing", "host", "result_constants"):
         for language in ("c", "swift"):
             _success(retained_json("05-link-" + group + "-" + language + ".txt.status.json"))
+    namespace = ffi_namespace.load_contract(expected_sha256=contract["ffi_namespace_sha256"])
+    header = safe_file(root, prefix + "generated-headers/ffi/idevice.h").read_bytes()
+    expected_header = ffi_namespace.public_header(header, namespace)
+    namespaced_path = prefix + "namespaced-idevice.h"
+    if (receipt["files"].get(namespaced_path) != digest(expected_header)
+            or safe_file(root, namespaced_path).read_bytes() != expected_header
+            or row["header_sha256"] != digest(expected_header)):
+        raise ValueError("native public header differs from the exact namespace transform")
+    expected_header_receipt = {"schema": 1, "contract_sha256": contract["ffi_namespace_sha256"],
+        "generated_header_sha256": digest(header), "public_header_sha256": digest(expected_header),
+        "function_signatures_preserved": True, "parser_behavior_changed": False, "old_symbol_aliases_emitted": False}
+    if retained_json("ffi-header-namespace.json") != expected_header_receipt or row.get("header_namespace") != expected_header_receipt:
+        raise ValueError("native header namespace evidence differs")
+    def retained_text(name):
+        relative = prefix + name
+        data = safe_file(root, relative).read_bytes()
+        if len(data) > MAX_RECEIPT or receipt["files"].get(relative) != digest(data):
+            raise ValueError("native export/link evidence differs from authenticated inventory")
+        return data.decode("utf-8")
+    rust = retained_text("04-rust-export-symbols.txt")
+    c_provider = retained_text("04-c-export-symbols.txt")
+    expected_exports = mixed_provider.check_symbols(rust, namespace, target)
+    expected_exports.update(mixed_provider.check_mixed_symbols(rust, c_provider))
+    expected_exports["contract_sha256"] = contract["ffi_namespace_sha256"]
+    if retained_json("ffi-export-namespace.json") != expected_exports or row.get("export_namespace") != expected_exports:
+        raise ValueError("native export namespace evidence differs")
+    for name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
+        _success(retained_json(name + ".status.json"))
+    for language in ("c", "swift"):
+        _success(retained_json("05-link-mixed_provider-" + language + ".txt.status.json"))
+        link_map = retained_text("05-link-mixed_provider-" + language + ".map")
+        probes = [p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == language]
+        if len(probes) != 1 or not link_map or probes[0].get("link_map_sha256") != digest(link_map.encode()):
+            raise ValueError("native mixed-provider link map evidence differs")
+    if retained_json("mixed-provider-input-audit.json").get("original_inputs_unchanged") is not True:
+        raise ValueError("native mixed-provider input audit failed")
 
 
 def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
@@ -174,6 +220,13 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
             or receipt["ios_binaries_executed"] is not False
             or receipt["consumer_or_product_activation"] is not False):
         raise ValueError("Apple artifact is outside the diagnostic production recipe")
+    if (receipt.get("mixed_c_provider_link_probes_only") is not True
+            or receipt.get("mixed_c_provider_embedded_in_IDevice") is not False):
+        raise ValueError("Apple artifact lacks the isolated mixed-provider verification")
+    mixed_archive = "provenance/mixed-provider-archive.zip"
+    if (receipt["files"].get(mixed_archive) != contract["mixed_c_provider_archive_sha256"]
+            or file_hash(safe_file(root, mixed_archive)) != contract["mixed_c_provider_archive_sha256"]):
+        raise ValueError("mixed C provider differs from the pinned consumer archive")
     targets = {row["target"]["rust"]: row for row in receipt["targets"]}
     if len(receipt["targets"]) != 2 or set(targets) != {"aarch64-apple-ios", "aarch64-apple-ios-sim"}:
         raise ValueError("both exact Apple target receipts are required")
@@ -185,8 +238,8 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
             raise ValueError("Apple target has no complete retained compiler/SDK identity")
         prefix = target.upper().replace("-", "_") + "_"
         probes = {(p["group"], p["language"]) for p in row["link_probes"]}
-        if (probes != {(group, language) for group in ("pairing", "host", "result_constants") for language in ("c", "swift")}
-                or len(row["link_probes"]) != 6 or any(p["executed"] is not False for p in row["link_probes"])
+        if (probes != {(group, language) for group in ("pairing", "host", "result_constants", "mixed_provider") for language in ("c", "swift")}
+                or len(row["link_probes"]) != 8 or any(p["executed"] is not False for p in row["link_probes"])
                 or provider["kind"] != "apple-framework-consumer" or provider["native_libraries"]
                 or provider["environment"].get(prefix + "OPENSSL_LIBS") != ""
                 or row["production_features"]["synthetic_peer_selected"] is not False
@@ -251,6 +304,10 @@ def bind(prepared: Path, artifact: Path, expected_artifact_receipt: str, output:
             or output.is_relative_to(artifact) or artifact.is_relative_to(output)):
         raise ValueError("diagnostic copy must be fresh and separate from its prepared source")
     source_inputs = composition_inputs(prepared, contract)
+    namespace = ffi_namespace.load_contract(expected_sha256=contract["ffi_namespace_sha256"])
+    if any(namespace["header_identifiers"].get(old) != new for old, new in GATEWAY_RENAMES.items()):
+        raise ValueError("gateway identifiers differ from the authenticated producer namespace")
+    gateway_postimage = transform_gateway(safe_file(prepared, GATEWAY_PATH).read_bytes())
     native = artifact_inputs(artifact, expected_artifact_receipt, contract)
     local_relative = (Path(contract["gateway"]["prepared_path"]).parent / contract["gateway"]["local_binary_path"]).as_posix()
     receipt_relative = "TETHERLESS_PAIRING_DIAGNOSTIC_BINDING.json"
@@ -268,6 +325,8 @@ def bind(prepared: Path, artifact: Path, expected_artifact_receipt: str, output:
     new_output_path(output, receipt_relative)
     shutil.copytree(artifact / "IDevice.xcframework", local)
     bound_files = dict(source_inputs)
+    safe_file(output, GATEWAY_PATH).write_bytes(gateway_postimage)
+    bound_files[GATEWAY_PATH] = digest(gateway_postimage)
     package.write_bytes(patched_gateway(package.read_bytes(), contract))
     bound_files[contract["gateway"]["prepared_path"]] = file_hash(package)
     onboarding = safe_file(output, contract["sentinel"]["prepared_path"])

@@ -103,6 +103,14 @@ class CompileObserverTests(unittest.TestCase):
         self.write_sources()
         self.put(self.gateway_list, (shlex.quote(str(self.gateway)) + "\n").encode())
         self.headers = self.processed / "Headers"
+        self.c_archive = self.processed / "libimobiledevice.a"
+        self.put(self.c_archive, b"opaque synthetic C provider archive\n")
+        self.put(self.headers / "plist/plist.h", b"/* opaque synthetic C plist declarations */\n")
+        self.put(self.headers / "libimobiledevice/module.modulemap", b'module libimobiledevice [system] { header "../plist/plist.h" export * }\n')
+        self.binding["native_artifact"]["targets"]["aarch64-apple-ios"]["mixed_provider"] = {
+            "library_sha256": sha(self.c_archive.read_bytes()),
+            "header_sha256": sha((self.headers / "plist/plist.h").read_bytes()),
+            "module_map_sha256": sha((self.headers / "libimobiledevice/module.modulemap").read_bytes())}
         self.app_args = ["-module-name", "SideStore", "-target", "arm64-apple-ios17.0", "-sdk", self.sdk,
                          "-filelist", str(self.app_list), "-I", str(self.headers)]
         for flag in sorted(observer.REQUIRED_CONDITIONS):
@@ -110,7 +118,7 @@ class CompileObserverTests(unittest.TestCase):
         self.gateway_args = ["-module-name", "IdeviceGateway", "-target", "arm64-apple-ios14.0", "-sdk", self.sdk,
                              "-filelist", str(self.gateway_list), "-I", str(self.headers)]
         self.link_args = ["-target", "arm64-apple-ios17.0", "-isysroot", self.sdk,
-                          str(self.processed / "libidevice_ffi.a"), "-F", str(self.framework.parent.parent),
+                          str(self.processed / "libidevice_ffi.a"), str(self.c_archive), "-F", str(self.framework.parent.parent),
                           "-framework", "OpenSSL", "-o", str(self.derived / "Build/Products/Debug-iphoneos/SideStore.app/SideStore")]
         self.output = Path(self.link_args[-1])
         self.output_bytes = b"explicitly opaque synthetic final app output, never a native executable\n"
@@ -525,7 +533,47 @@ class CompileObserverTests(unittest.TestCase):
         for args in (self.app_args, self.gateway_args):
             index = args.index("-I")
             args[index:index + 2] = ["-Xcc", "-fmodule-map-file=" + str(self.headers / "module.modulemap")]
+        # The C gateway remains a separate required module in the mixed build.
+        self.app_args += ["-I", str(self.headers / "libimobiledevice")]
         self.observe()
+
+    def test_missing_or_changed_selected_c_provider_is_rejected(self):
+        self.c_archive.write_bytes(b"another provider")
+        with self.assertRaisesRegex(observer.ObservationError, "C provider archive"):
+            self.observe()
+
+    def test_changed_selected_c_header_and_map_are_rejected(self):
+        for name in ("plist/plist.h", "libimobiledevice/module.modulemap"):
+            path = self.headers / name
+            original = path.read_bytes()
+            path.write_bytes(original + b"\n// changed")
+            with self.subTest(name=name), self.assertRaisesRegex(observer.ObservationError, "C provider header/module"):
+                self.observe()
+            path.write_bytes(original)
+
+    def test_missing_c_provider_link_is_rejected(self):
+        self.link_args.remove(str(self.c_archive))
+        with self.assertRaisesRegex(observer.ObservationError, "verified C provider"):
+            self.observe()
+
+    def test_explicit_alternate_c_module_map_is_rejected(self):
+        alternate = self.derived / "other/libimobiledevice/module.modulemap"
+        self.put(alternate, (self.headers / "libimobiledevice/module.modulemap").read_bytes())
+        self.app_args += ["-Xcc", "-fmodule-map-file=" + str(alternate)]
+        with self.assertRaisesRegex(observer.ObservationError, "C provider module selection.*ambiguous"):
+            self.observe()
+
+    def test_explicit_same_c_module_map_is_deduplicated(self):
+        self.app_args += ["-Xcc", "-fmodule-map-file=" + str(self.headers / "libimobiledevice/module.modulemap")]
+        self.observe()
+
+    def test_c_provider_dynamic_and_weak_alternatives_are_rejected(self):
+        original = list(self.link_args)
+        for extra in ([str(self.processed / "libplist.dylib")], [str(self.processed / "libimobiledevice.tbd")],
+                      ["-Wl,-weak-lplist"], ["-Wl,-reexport-limobiledevice"], ["-Wl,-upward-lplist-2.0"]):
+            self.link_args = original + extra
+            with self.subTest(extra=extra), self.assertRaisesRegex(observer.ObservationError, "alternate C"):
+                self.observe()
 
     def test_ambiguous_module_maps_fail(self):
         extra = self.derived / "unselected-module"

@@ -93,7 +93,7 @@ class DiagnosticFixture:
             raise AssertionError("reviewed gateway preimage changed")
         put(self.prepared / self.contract["gateway"]["prepared_path"], gateway)
         put(self.prepared / "Dependencies/minimuxer/DeviceGateway/idevice/IdeviceGateway.swift",
-            b"// synthetic opaque gateway source\n")
+            (HERE / "tests/fixtures/namespace_gateway/IdeviceGateway.privacy-prepared.swift").read_bytes())
         index = {"marker.py": put(self.recipe / "marker.py", b"# synthetic native recipe identity\n")}
         self.contract["apple_recipe_index_sha256"] = put_json(self.recipe / "apple-recipe-files.json", index)
         workflow = self.contract["retained_producer"]["workflow_path"]
@@ -103,7 +103,10 @@ class DiagnosticFixture:
                         "recipe_lock_sha256": self.contract["apple_recipe_index_sha256"],
                         "toolchain_lock_sha256": sha(b"synthetic toolchain lock"),
                         "framework_provider_bundled": False, "ios_binaries_executed": False,
+                        "mixed_c_provider_link_probes_only": True, "mixed_c_provider_embedded_in_IDevice": False,
                         "consumer_or_product_activation": False, "targets": [], "files": {}}
+        self.contract["mixed_c_provider_archive_sha256"] = put(self.artifact / "provenance/mixed-provider-archive.zip",
+            b"synthetic opaque C provider archive, not executable")
         libraries = []
         for target, identifier, variant in (("aarch64-apple-ios", "ios-arm64", ""),
                                              ("aarch64-apple-ios-sim", "ios-arm64-simulator", "simulator")):
@@ -124,7 +127,7 @@ class DiagnosticFixture:
                    "link_probes": [{"group": group, "language": language,
                        "command": ["synthetic-" + language, "-Wl,-u,_synthetic_" + group],
                        "output_sha256": sha((target + group + language).encode()), "executed": False}
-                       for group in ("pairing", "host", "result_constants") for language in ("c", "swift")]}
+                       for group in ("pairing", "host", "result_constants", "mixed_provider") for language in ("c", "swift")]}
             put(self.artifact / (prefix + "Headers/module.modulemap"), b"module IDevice { header \"idevice.h\" export * }\n")
             library = {"LibraryIdentifier": identifier, "LibraryPath": "libidevice_ffi.a",
                        "HeadersPath": "Headers", "SupportedPlatform": "ios", "SupportedArchitectures": ["arm64"]}
@@ -138,6 +141,28 @@ class DiagnosticFixture:
                        "native_import_or_link_established_by_this_check": False,
                        "final_header_sha256": sha(final), "cpp_header_identical": True}
             row["result_header_contract"] = checked
+            row["mixed_provider"] = {
+                "library_sha256": sha(b"controlled opaque C provider fixture\n"),
+                "header_sha256": sha(b"/* controlled opaque C plist header */\n"),
+                "module_map_sha256": sha(b'module libimobiledevice [system] { header "../plist/plist.h" export * }\n')}
+            namespace = binding.ffi_namespace.load_contract(expected_sha256=self.contract["ffi_namespace_sha256"])
+            namespaced = binding.ffi_namespace.public_header(final, namespace)
+            row["header_namespace"] = {"schema": 1, "contract_sha256": self.contract["ffi_namespace_sha256"],
+                "generated_header_sha256": sha(final), "public_header_sha256": sha(namespaced),
+                "function_signatures_preserved": True, "parser_behavior_changed": False, "old_symbol_aliases_emitted": False}
+            put_json(evidence / "ffi-header-namespace.json", row["header_namespace"])
+            put(evidence / "namespaced-idevice.h", namespaced)
+            rust_symbols = "\n".join("_" + name for name in namespace["expected_target_exports"][target]["after"]) + "\n"
+            c_symbols = "\n".join("_" + name for name in ("plist_new_dict", "plist_free", "plist_array_set_item",
+                "afc_client_free", "lockdownd_client_free", "idevice_free")) + "\n"
+            row["export_namespace"] = binding.mixed_provider.check_symbols(rust_symbols, namespace, target)
+            row["export_namespace"].update(binding.mixed_provider.check_mixed_symbols(rust_symbols, c_symbols))
+            row["export_namespace"]["contract_sha256"] = self.contract["ffi_namespace_sha256"]
+            put_json(evidence / "ffi-export-namespace.json", row["export_namespace"])
+            for name, text in (("04-rust-export-symbols.txt", rust_symbols), ("04-c-export-symbols.txt", c_symbols)):
+                put(evidence / name, text.encode())
+                put_json(evidence / (name + ".status.json"), success())
+            put_json(evidence / "mixed-provider-input-audit.json", {"original_inputs_unchanged": True})
             put_json(evidence / "pairing-result-header-check.json", checked)
             retained = {"schema": 1, "per_file_byte_limit": self.contract["result_header_contract"]["per_file_byte_limit"], "files": {}}
             for name, data in (("ffi/idevice.cbindgen-baseline.h", baseline),
@@ -147,6 +172,9 @@ class DiagnosticFixture:
                     "sha256": put(evidence / "generated-headers" / name, data)}
             put_json(evidence / "generated-header-retention.json", retained)
             for probe in row["link_probes"]:
+                if probe["group"] == "mixed_provider":
+                    probe["link_map_sha256"] = put(evidence / ("05-link-mixed_provider-" + probe["language"] + ".map"),
+                        b"synthetic opaque linker map; no native compiler executed\n")
                 put_json(evidence / ("05-link-" + probe["group"] + "-" + probe["language"] + ".txt.status.json"), success())
             self.receipt["targets"].append(row)
         put(self.artifact / "IDevice.xcframework/Info.plist", plistlib.dumps({"AvailableLibraries": libraries}))
@@ -184,7 +212,7 @@ class DiagnosticBindingTests(unittest.TestCase):
     def test_synthetic_two_slice_six_probe_metadata_is_accepted_without_execution(self):
         result = self.fixture.artifact_inputs()
         self.assertEqual(len(result["targets"]), 2)
-        self.assertTrue(all(len(row["link_probes"]) == 6 for row in result["targets"].values()))
+        self.assertTrue(all(len(row["link_probes"]) == 8 for row in result["targets"].values()))
         self.assertFalse(result["binary_format_inspected"])
         self.assertEqual(set(result["device_slice"]), {"archive", "header", "module_map"})
 
@@ -226,6 +254,34 @@ class DiagnosticBindingTests(unittest.TestCase):
     def test_external_apple_receipt_hash_is_mandatory(self):
         with self.assertRaises(ValueError):
             binding.artifact_inputs(self.fixture.artifact, "0" * 64, self.fixture.contract)
+
+    def test_legacy_unisolated_producer_is_not_accepted(self):
+        self.fixture.receipt.pop("mixed_c_provider_link_probes_only")
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_old_export_alias_or_cross_provider_overlap_is_rejected(self):
+        for filename, symbol in (("04-rust-export-symbols.txt", "_plist_free"),
+                                 ("04-c-export-symbols.txt", "_tetherless_native_plist_free")):
+            path = self.fixture.evidence(filename)
+            original = path.read_bytes()
+            with self.subTest(filename=filename):
+                path.write_bytes(original + symbol.encode() + b"\n")
+                self.fixture.refresh(inventory=True)
+                self.reject_artifact()
+            path.write_bytes(original)
+            self.fixture.refresh(inventory=True)
+
+    def test_forged_or_missing_header_namespace_and_link_map_are_rejected(self):
+        for filename in ("ffi-header-namespace.json", "namespaced-idevice.h", "05-link-mixed_provider-swift.map"):
+            path = self.fixture.evidence(filename)
+            original = path.read_bytes()
+            with self.subTest(filename=filename):
+                path.write_bytes(b"changed namespace evidence\n")
+                self.fixture.refresh(inventory=True)
+                self.reject_artifact()
+            path.write_bytes(original)
+            self.fixture.refresh(inventory=True)
 
     def test_missing_slice_is_rejected(self):
         self.fixture.receipt["targets"].pop()
@@ -404,6 +460,18 @@ class OwnedBindingCopyTests(unittest.TestCase):
             before[Path(f.contract["gateway"]["prepared_path"])], f.contract))
         support = next(iter(f.contract["prepared_support_sources"]))
         self.assertEqual((f.output / support).read_bytes(), before[Path(support)])
+        self.assertEqual(binding.digest((f.output / binding.GATEWAY_PATH).read_bytes()),
+                         "33cf02fbaf234a43e983dc590a5cf54fcaf24328e7e107593614dc2a20a6c08f")
+
+    def test_changed_rust_gateway_cannot_be_adapted_or_copied(self):
+        f = self.fixture.fixture
+        path = f.prepared / binding.GATEWAY_PATH
+        path.write_bytes(path.read_bytes() + b"\n// changed gateway\n")
+        with patch.object(binding.shutil, "copytree") as copytree:
+            with self.assertRaises(ValueError):
+                self.fixture.bind()
+            copytree.assert_not_called()
+        self.assertFalse(f.output.exists())
 
     def test_missing_handoff_never_starts_copy(self):
         f = self.fixture.fixture

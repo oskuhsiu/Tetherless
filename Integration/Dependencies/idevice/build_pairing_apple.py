@@ -20,9 +20,11 @@ from offline_vendor import prepare_offline_vendor
 from run_pairing_component_tests import load_provider, retain_openssl_outputs, retain_input_audits
 from apple_source_bundle import create_source_bundle
 from pairing_result_header import retain_headers, verify_headers
+from ffi_namespace import load_contract as namespace_contract, public_header
+from mixed_provider import verify as verify_mixed_provider, audit as audit_mixed_provider, check_symbols, check_mixed_symbols
 
 PROFILE = "candidate-profiles/apple-verification.json"
-PROFILE_SHA256 = "315f7b321804b46b94c24f89fa5f354f205a0ce1128a8ae8b518f68b6ff82cad"
+PROFILE_SHA256 = "384bbd1554e0148c7d8289b6d3a214dd82819a580c8d418ded55ff06b219c27f"
 FORBIDDEN_FEATURE = "tetherless-synthetic-peer"
 TARGETS = [
     {"rust": "aarch64-apple-ios", "sdk": "iphoneos", "clang": "arm64-apple-ios17.0", "deployment": "17.0", "extra_features": ["openssl", "obfuscate"]},
@@ -210,13 +212,18 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
     source_manifest, vendor_receipt, provider_receipt = {}, {}, None
     env, binaries = {}, {}
     header_evidence = None
+    mixed = None
     header_retention_attempted = False
     try:
         env, binaries = native_environment(config, work)
         observations = bounded_toolchain(config, work, env, binaries, evidence)
         source_manifest = stage(args.source, source, HERE, PROFILE)
         (evidence / "source-manifest.json").write_bytes(canonical_json(source_manifest))
-        vendor_receipt = prepare_offline_vendor(source=source, work=work, cache=args.crate_cache, env=env, derive_metadata=True)
+        namespace = namespace_contract(HERE, profile["export_namespace_sha256"])
+        mixed = verify_mixed_provider(args.mixed_provider, target)
+        (evidence / "mixed-provider-inputs.json").write_bytes(canonical_json(mixed))
+        vendor_receipt = prepare_offline_vendor(source=source, work=work, cache=args.crate_cache, env=env,
+                                               derive_metadata=True, export_namespace=namespace)
         (evidence / "vendor-layout.json").write_bytes(canonical_json(vendor_receipt))
         provider_receipt = provider.prepare_inputs(args.provider_inputs, work / "provider", target["rust"])
         (evidence / "provider-input-receipt.json").write_bytes(canonical_json(provider_receipt))
@@ -264,15 +271,29 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
         (evidence / "pairing-result-header-check.json").write_bytes(canonical_json(header_contract))
         header = safe_path(source, "ffi/idevice.h").read_bytes()
         verify_generated_header(header, profile["required_ffi_symbols"])
+        namespaced = public_header(header, namespace)
+        header_namespace = {"schema": 1, "contract_sha256": profile["export_namespace_sha256"],
+                            "generated_header_sha256": sha256(header), "public_header_sha256": sha256(namespaced),
+                            "function_signatures_preserved": True, "parser_behavior_changed": False,
+                            "old_symbol_aliases_emitted": False}
+        (evidence / "ffi-header-namespace.json").write_bytes(canonical_json(header_namespace))
+        (evidence / "namespaced-idevice.h").write_bytes(namespaced)
         headers = work / "headers"
         headers.mkdir()
-        (headers / "idevice.h").write_bytes(header)
+        (headers / "idevice.h").write_bytes(namespaced)
         shutil.copyfile(source / "swift/include/module.modulemap", headers / "module.modulemap")
         library = safe_path(work / "target", target["rust"] + "/release/libidevice_ffi.a")
         if not library.is_file() or not library.stat().st_size:
             raise VerificationError("Rust static archive is missing")
         if str(library) not in features["ffi_artifact"]["filenames"]:
             raise VerificationError("selected Rust archive lacks its compiler-artifact identity")
+        nm = ["/usr/bin/xcrun", "--sdk", target["sdk"], "nm", "-g", "-U", "-j"]
+        rust_symbols = run(nm + [str(library)], "04-rust-export-symbols.txt")
+        c_symbols = run(nm + [mixed["library"]], "04-c-export-symbols.txt")
+        export_namespace = check_symbols(rust_symbols, namespace, target["rust"])
+        export_namespace.update(check_mixed_symbols(rust_symbols, c_symbols))
+        export_namespace["contract_sha256"] = profile["export_namespace_sha256"]
+        (evidence / "ffi-export-namespace.json").write_bytes(canonical_json(export_namespace))
         links = []
         for group, probes in profile["probe_sets"].items():
             for language, probe in probes.items():
@@ -282,18 +303,30 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
                 command = link_command(language=language, target=target, sdk=sdk, headers=headers, library=library,
                     probe=path, symbol=profile["probe_entry_symbols"][group][language], output=binary,
                     system_flags=system_flags, framework_flags=provider_receipt["final_link_arguments"])
+                if group == "mixed_provider":
+                    link_map = evidence / ("05-link-mixed_provider-" + language + ".map")
+                    command += ["-I", mixed["headers"], "-I", str(Path(mixed["headers"]) / "libimobiledevice"),
+                                "-Xlinker", "-force_load", "-Xlinker", mixed["library"],
+                                "-Xlinker", "-map", "-Xlinker", str(link_map)]
                 run(command, "05-link-" + group + "-" + language + ".txt")
                 if binary.is_symlink() or not binary.is_file() or not binary.stat().st_size:
                     raise VerificationError("ordinary native link did not create its output")
-                links.append({"group": group, "language": language, "command": command,
-                              "output_sha256": file_hash(binary), "executed": False})
+                entry = {"group": group, "language": language, "command": command,
+                         "output_sha256": file_hash(binary), "executed": False}
+                if group == "mixed_provider":
+                    if link_map.is_symlink() or not link_map.is_file() or not 0 < link_map.stat().st_size <= MAX_LOG_BYTES:
+                        raise VerificationError("bounded mixed-provider linker map was not retained")
+                    entry["link_map_sha256"] = file_hash(link_map)
+                links.append(entry)
         result = {"target": target, "work": str(work), "source": str(source), "source_manifest": source_manifest,
                   "vendor_receipt": vendor_receipt, "provider_receipt": provider_receipt, "library": str(library),
                   "library_sha256": file_hash(library), "headers": str(headers), "header_sha256": file_hash(headers / "idevice.h"),
                   "toolchain_observations": observations, "sdk_root": sdk, "compiler_paths": tools,
                   "header_probe_command": header_probe, "header_probe_linked_or_executed": False,
                   "feature_graph_command": graph, "production_features": features, "build_command": cargo_command,
-                  "result_header_contract": header_contract, "native_static_libs_command": report, "system_link_flags": system_flags, "openssl_outputs": outputs, "link_probes": links}
+                  "result_header_contract": header_contract, "header_namespace": header_namespace,
+                  "export_namespace": export_namespace, "mixed_provider": mixed,
+                  "native_static_libs_command": report, "system_link_flags": system_flags, "openssl_outputs": outputs, "link_probes": links}
     finally:
         primary_failure = sys.exc_info()[0] is not None
         retention_error = None
@@ -307,6 +340,15 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
         checks = retain_input_audits(source=source, source_manifest=source_manifest, vendor_receipt=vendor_receipt,
                                     provider=provider, provider_receipt=provider_receipt, completed=evidence)
         unchanged = all(checks[key]["original_inputs_unchanged"] for key in ("vendor", "derived_vendor", "workspace"))
+        if mixed is not None:
+            mixed_check = audit_mixed_provider(args.mixed_provider, target, mixed, verifier=verify_mixed_provider)
+            try:
+                (evidence / "mixed-provider-input-audit.json").write_bytes(canonical_json(mixed_check))
+            except (OSError, ValueError) as error:
+                mixed_check["original_inputs_unchanged"] = False
+                if retention_error is None:
+                    retention_error = error
+            unchanged &= mixed_check["original_inputs_unchanged"]
         if retention_error is not None and not primary_failure:
             raise retention_error
         if (not unchanged or not checks["provider"]["unchanged"]) and not primary_failure:
@@ -362,6 +404,7 @@ def build(args) -> dict:
         capture_helper_command(operation_command, source=args.work_dir, env=package_env, log=args.work_dir / "create-xcframework.txt")
         slice_receipt = verify_slice_metadata(package / "IDevice.xcframework/Info.plist", targets)
         shutil.copyfile(HERE / PROFILE, provenance / "apple-verification.json")
+        shutil.copyfile(args.mixed_provider / "authenticated-provider.zip", provenance / "mixed-provider-archive.zip")
         (provenance / "toolchain-lock.json").write_bytes(toolchain_bytes)
         (provenance / "recipe-files.json").write_bytes(recipe_bytes)
         shutil.copyfile(Path(targets[0]["source"]) / "LICENSE.txt", package / "LICENSE-idevice.txt")
@@ -377,6 +420,12 @@ def build(args) -> dict:
             checks = retain_input_audits(source=Path(row["source"]), source_manifest=row["source_manifest"], vendor_receipt=row["vendor_receipt"],
                 provider=provider, provider_receipt=row["provider_receipt"], completed=Path(row["work"]) / "completed")
             clean &= all(checks[k]["original_inputs_unchanged"] for k in ("vendor", "derived_vendor", "workspace")) and checks["provider"]["unchanged"]
+            mixed_check = audit_mixed_provider(args.mixed_provider, row["target"], row["mixed_provider"], verifier=verify_mixed_provider)
+            try:
+                (Path(row["work"]) / "completed/mixed-provider-packaging-audit.json").write_bytes(canonical_json(mixed_check))
+            except (OSError, ValueError):
+                mixed_check["original_inputs_unchanged"] = False
+            clean &= mixed_check["original_inputs_unchanged"]
         if not clean and not primary_failure:
             raise VerificationError("Apple packaging input audit failed")
     for row in targets:
@@ -385,6 +434,7 @@ def build(args) -> dict:
     shutil.copyfile(args.work_dir / "create-xcframework.txt", package / "provenance/create-xcframework.txt")
     shutil.copyfile(args.work_dir / "create-xcframework.txt.status.json", package / "provenance/create-xcframework.txt.status.json")
     receipt = {"schema": 1, "profile_sha256": PROFILE_SHA256, "targets": targets, "xcframework_command": command,
+               "mixed_c_provider_link_probes_only": True, "mixed_c_provider_embedded_in_IDevice": False,
                "xcframework_operation_command": operation_command, "xcframework_operation_sha256": operation_sha256,
                "xcframework_slice_receipt": slice_receipt,
                "toolchain_lock_sha256": sha256(toolchain_bytes), "recipe_lock_sha256": sha256(recipe_bytes),
@@ -400,12 +450,12 @@ def build(args) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("source", "crate-cache", "provider-inputs", "work-dir", "output", "toolchain-lock"):
+    for name in ("source", "crate-cache", "provider-inputs", "mixed-provider", "work-dir", "output", "toolchain-lock"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--toolchain-lock-sha256", required=True)
     parser.add_argument("--recipe-lock-sha256", required=True)
     args = parser.parse_args()
-    for name in ("source", "crate_cache", "provider_inputs", "work_dir", "output", "toolchain_lock"):
+    for name in ("source", "crate_cache", "provider_inputs", "mixed_provider", "work_dir", "output", "toolchain_lock"):
         setattr(args, name, getattr(args, name).absolute())
     try:
         result = build(args)

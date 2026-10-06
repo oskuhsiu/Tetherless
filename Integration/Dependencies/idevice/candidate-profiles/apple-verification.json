@@ -88,6 +88,7 @@
     "upstream/swift/Package.swift": "04dbaefcb9183b154399c9fc397efbd602a552327424075ce19ffd4c0f6f74d7",
     "upstream/swift/include/module.modulemap": "d9f7093c17127841806e2ddffdf540ef1728ed29be75304687952bdb61ae9b82"
   },
+  "export_namespace_sha256": "4ed3bc7f9e1895eb1afea60566dd1ff154aa1ed91c9d40a3d279ae86cf83bed2",
   "fixture_inventory": {
     "authored_count": 100,
     "executed": false,
@@ -198,6 +199,10 @@
       "c": "tetherless_host_c_link_probe",
       "swift": "tetherless_host_swift_link_probe"
     },
+    "mixed_provider": {
+      "c": "tetherless_mixed_provider_c_probe",
+      "swift": "tetherless_mixed_provider_swift_probe"
+    },
     "pairing": {
       "c": "tetherless_c_link_probe",
       "swift": "tetherless_swift_link_probe"
@@ -216,6 +221,16 @@
       "swift": {
         "path": "probes/host_probe.swift",
         "sha256": "e926e8506bb848a061f1437557cf0144ae7da83874dcef8bedfc9f6e0afd7496"
+      }
+    },
+    "mixed_provider": {
+      "c": {
+        "path": "probes/mixed_provider_probe.c",
+        "sha256": "4bb8d49628bdd886161c419311a6543e5f8490bfe055586f65a4adebaf34c3e5"
+      },
+      "swift": {
+        "path": "probes/mixed_provider_probe.swift",
+        "sha256": "27e1729f41427f2d643fca2a5a92ef20e3ab7ddf11ad3d9a136735b481645e25"
       }
     },
     "pairing": {

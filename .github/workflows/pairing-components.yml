@@ -321,6 +321,16 @@ jobs:
         run: |
           python3 Integration/Dependencies/idevice/retain_openssl_inputs.py \
             --source .proof/openssl-pristine --output .proof/openssl-inputs
+      - name: Retain the pinned C provider for mixed-provider link verification
+        if: matrix.proof == 'apple-producer'
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          curl --fail --location --max-time 120 \
+            https://github.com/SideStore/libimobiledevice-xcframework/releases/download/1.4.0-ss-0f88f7b/libimobiledevice.xcframework.zip \
+            --output .proof/libimobiledevice.xcframework.zip
+          python3 Integration/Dependencies/idevice/mixed_provider.py \
+            --archive .proof/libimobiledevice.xcframework.zip --output .proof/mixed-provider
       - name: Run the exact reviewed native proof offline
         timeout-minutes: 300
         run: |
@@ -342,7 +352,8 @@ jobs:
               '--toolchain-lock', str(root / 'evidence/toolchain-lock.observed.json'),
               '--toolchain-lock-sha256', (root / 'evidence/toolchain-lock.sha256').read_text().strip()]
           if proof == 'apple-producer':
-              command += ['--recipe-lock-sha256', '9971662d8f74774b7c6e23f2a42ff311baf8991f0302e1d0810882f52b0211ac']
+              command += ['--mixed-provider', str(root / 'mixed-provider')]
+              command += ['--recipe-lock-sha256', '654222289125b042597312d948bff6dbe947fb91cb42b79361fabac943da42bb']
           (root / 'evidence/invocation.json').write_text(json.dumps({'proof': proof, 'argv': command}, indent=2) + '\n')
           # Each native command is supervised by the unchanged reviewed runner.
           # Retain entry-point errors as well, including failures before work/completed exists.
@@ -359,6 +370,8 @@ jobs:
           name: pairing-native-proof-${{ matrix.proof }}-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             .proof/evidence/
+            .proof/mixed-provider/mixed-provider-inputs.json
+            .proof/mixed-provider/authenticated-provider.zip
             .proof/${{ matrix.proof }}-output/
             .proof/${{ matrix.proof }}-work/completed/*.txt
             .proof/${{ matrix.proof }}-work/completed/*.json
@@ -370,12 +383,16 @@ jobs:
             .proof/apple-producer-work/create-xcframework.txt.status.json
             .proof/apple-producer-work/aarch64-apple-ios/completed/*.txt
             .proof/apple-producer-work/aarch64-apple-ios/completed/*.json
+            .proof/apple-producer-work/aarch64-apple-ios/completed/*.h
+            .proof/apple-producer-work/aarch64-apple-ios/completed/*.map
             .proof/apple-producer-work/aarch64-apple-ios/completed/generated-headers/
             .proof/apple-producer-work/aarch64-apple-ios/vendor-config-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios/vendor-derivation-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios/derived-vendor-input-audit.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.txt
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.json
+            .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.h
+            .proof/apple-producer-work/aarch64-apple-ios-sim/completed/*.map
             .proof/apple-producer-work/aarch64-apple-ios-sim/completed/generated-headers/
             .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-config-inventory.json
             .proof/apple-producer-work/aarch64-apple-ios-sim/vendor-derivation-inventory.json

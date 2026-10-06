@@ -125,7 +125,8 @@ def patch_metadata_source(data: bytes) -> bytes:
 
 
 def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
-                           originals: dict, crates: dict, env: dict) -> dict:
+                           originals: dict, crates: dict, env: dict,
+                           export_namespace: dict | None = None) -> dict:
     if crates.get(CRATE) != ARCHIVE_SHA256:
         raise VerificationError("locked cbindgen archive identity mismatch")
     if vendor.is_symlink() or not vendor.is_dir() or destination.exists() or destination.is_symlink():
@@ -182,6 +183,11 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
     expected = dict(originals)
     expected[source_name] = PATCHED_SHA256
     expected[checksum_name] = sha256(patched_checksum)
+    namespace_changes = {}
+    if export_namespace is not None:
+        from ffi_namespace import namespace_vendor
+        namespace_changes = namespace_vendor(destination, originals, crates, export_namespace)
+        expected.update({name: row["after_sha256"] for name, row in namespace_changes.items()})
     for name, digest in expected.items():
         if file_hash(safe_path(destination, name)) != digest:
             raise VerificationError("derived vendor input differs from exact registered result")
@@ -189,6 +195,7 @@ def prepare_derived_vendor(*, vendor: Path, destination: Path, source: Path,
     return {"schema": 1, "directory": str(destination), "input_kind": "derived_build_vendor",
             "authenticated_inputs": expected, "archive_origin_sha256": ARCHIVE_SHA256,
             "source_changes": {source_name: {"before_sha256": SOURCE_SHA256, "after_sha256": PATCHED_SHA256}},
+            "export_namespace_changes": namespace_changes,
             "generated_checksum_metadata": {checksum_name: {
                 "before_sha256": sha256(original_checksum), "after_sha256": sha256(patched_checksum)}},
             "metadata_context": {"environment_key": CONTEXT_VARIABLE, "manifest_path": str(manifest),
