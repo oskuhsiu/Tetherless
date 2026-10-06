@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 mod apple;
+mod devices;
 mod enrollment;
 mod model;
 
@@ -162,6 +163,7 @@ fn routes(app: Arc<App>) -> Router {
         .route("/v1/sessions/{id}", get(status).delete(cancel))
         .route("/v1/sessions/{id}/2fa", post(two_factor))
         .route("/v1/sessions/{id}/teams", get(teams))
+        .route("/v1/sessions/{id}/teams/{team_id}/devices", get(registered_devices))
         .route("/v1/sessions/{id}/provision", post(provision))
         .fallback_service(ServeDir::new(std::env::var("TETHERLESS_FRONTEND_DIR").unwrap_or_else(|_| "../../WebBootstrap/dist".into())))
         .layer(DefaultBodyLimit::max(32 * 1024))
@@ -425,6 +427,54 @@ async fn teams(
         result = tokio::time::timeout(UPSTREAM_TIMEOUT, operation) => result.map_err(|_| ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::AppleRequestFailed))?,
     }
 }
+/// Bounded read-only work does not extend a session or survive cancellation.
+async fn authenticated_read<T>(
+    session: &Session,
+    operation: impl std::future::Future<Output = ApiResult<T>>,
+) -> ApiResult<T> {
+    if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+        return Err(ApiError(StatusCode::GONE, ErrorCode::Expired));
+    }
+    if session.view.lock().await.state != "authenticated" {
+        return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState));
+    }
+    let remaining = TTL.saturating_sub(session.created.elapsed());
+    let result = tokio::select! {
+        biased;
+        _ = session.cancel.cancelled() => Err(ApiError(StatusCode::GONE, ErrorCode::Expired)),
+        result = tokio::time::timeout(UPSTREAM_TIMEOUT.min(remaining), operation) =>
+            result.unwrap_or(Err(ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::AppleRequestFailed))),
+    };
+    if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+        return Err(ApiError(StatusCode::GONE, ErrorCode::Expired));
+    }
+    result
+}
+
+async fn registered_devices(
+    State(app): State<Arc<App>>,
+    Path((id, team_id)): Path<(String, String)>,
+    headers: HeaderMap,
+) -> ApiResult<Json<devices::RegisteredDevices>> {
+    let session = lookup(&app, &id, &headers).await?;
+    if !valid_team_id(&team_id) {
+        return Err(invalid());
+    }
+    authenticated_read(&session, async {
+        // Share the same lock as Team reads and provisioning; never race the
+        // upstream developer session's mutable anisette/token state.
+        let mut developer = session.developer.lock().await;
+        if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+            return Err(ApiError(StatusCode::GONE, ErrorCode::Expired));
+        }
+        let dev = developer
+            .as_mut()
+            .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))?;
+        devices::list(dev, &team_id).await.map(Json)
+    })
+    .await
+}
+
 async fn provision(
     State(app): State<Arc<App>>,
     Path(id): Path<String>,
@@ -489,6 +539,141 @@ async fn provision(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn synthetic_session(state: &'static str, age: Duration) -> Arc<Session> {
+        let (tx, _) = mpsc::channel(1);
+        Arc::new(Session {
+            token: Zeroizing::new("synthetic-bearer".into()),
+            created: Instant::now() - age,
+            cancel: CancellationToken::new(),
+            view: Mutex::new(SessionView::state(state)),
+            developer: Mutex::new(None),
+            two_factor: tx,
+            provision: Mutex::new(None),
+        })
+    }
+    #[tokio::test]
+    async fn registered_device_route_requires_bearer_state_and_origin_without_network() {
+        use tower::ServiceExt;
+        let app = test_app();
+        let session = synthetic_session("starting", Duration::ZERO);
+        app.sessions
+            .write()
+            .await
+            .insert("id".into(), session.clone());
+        for (token, origin, team, expected) in [
+            (None, None, "SYNTHETIC", StatusCode::UNAUTHORIZED),
+            (
+                Some("Bearer wrong"),
+                None,
+                "SYNTHETIC",
+                StatusCode::UNAUTHORIZED,
+            ),
+            (
+                Some("Bearer synthetic-bearer"),
+                Some("https://wrong.example"),
+                "SYNTHETIC",
+                StatusCode::FORBIDDEN,
+            ),
+            (
+                Some("Bearer synthetic-bearer"),
+                None,
+                "SYNTHETIC",
+                StatusCode::CONFLICT,
+            ),
+            (
+                Some("Bearer synthetic-bearer"),
+                None,
+                "INVALID-TEAM",
+                StatusCode::BAD_REQUEST,
+            ),
+        ] {
+            let mut request = axum::http::Request::builder()
+                .uri(format!("/v1/sessions/id/teams/{team}/devices"))
+                .header("host", "127.0.0.1:8787");
+            if let Some(token) = token {
+                request = request.header(header::AUTHORIZATION, token);
+            }
+            if let Some(origin) = origin {
+                request = request.header(header::ORIGIN, origin);
+            }
+            let response = routes(app.clone())
+                .oneshot(request.body(axum::body::Body::empty()).unwrap())
+                .await
+                .unwrap();
+            assert_eq!(response.status(), expected);
+            assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        }
+        *session.view.lock().await = SessionView::state("authenticated");
+        session.cancel.cancel();
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_static("Bearer synthetic-bearer"),
+        );
+        assert!(matches!(
+            registered_devices(State(app), Path(("id".into(), "SYNTHETIC".into())), headers).await,
+            Err(ApiError(StatusCode::GONE, ErrorCode::Expired))
+        ));
+    }
+    #[tokio::test]
+    async fn authenticated_read_does_not_start_or_return_after_cancel_or_expiry() {
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        session.cancel.cancel();
+        assert!(matches!(
+            authenticated_read(&session, async {
+                panic!("read must not run");
+                #[allow(unreachable_code)]
+                Ok::<_, ApiError>(())
+            })
+            .await,
+            Err(ApiError(StatusCode::GONE, ErrorCode::Expired))
+        ));
+        let expired = synthetic_session("authenticated", TTL);
+        assert!(matches!(
+            authenticated_read(&expired, async {
+                panic!("expired read must not run");
+                #[allow(unreachable_code)]
+                Ok::<_, ApiError>(())
+            })
+            .await,
+            Err(ApiError(StatusCode::GONE, ErrorCode::Expired))
+        ));
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        let cancelled = session.clone();
+        assert!(matches!(
+            authenticated_read(&session, async move {
+                cancelled.cancel.cancel();
+                Ok("must not escape cancellation")
+            })
+            .await,
+            Err(ApiError(StatusCode::GONE, ErrorCode::Expired))
+        ));
+    }
+    #[tokio::test]
+    async fn authenticated_read_can_be_cancelled_while_waiting_on_serialized_work() {
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        let guard = session.developer.lock().await;
+        let worker = session.clone();
+        let (started, waiting) = tokio::sync::oneshot::channel();
+        let task = tokio::spawn(async move {
+            authenticated_read(&worker, async {
+                let _ = started.send(());
+                let _guard = worker.developer.lock().await;
+                panic!("cancelled directory read must not acquire the upstream session");
+                #[allow(unreachable_code)]
+                Ok::<_, ApiError>(())
+            })
+            .await
+        });
+        waiting.await.unwrap();
+        session.cancel.cancel();
+        assert!(matches!(
+            task.await.unwrap(),
+            Err(ApiError(StatusCode::GONE, ErrorCode::Expired))
+        ));
+        drop(guard);
+        assert!(session.developer.try_lock().is_ok());
+    }
     #[test]
     fn passwords_are_not_accepted_for_plaintext_remote_origins() {
         for s in [

@@ -5,7 +5,7 @@ import { makeIpa, makeSignedFixture } from './fixtures.mjs';
 import { inspectInputs } from '../src/material.js';
 const base='http://127.0.0.1:4173/Tetherless/';
 test('guided fixture: exact local synthetic API routes only, without weakening static policy',()=>{
-  for(const [path,method] of [['health','GET'],['config.json','GET'],['v1/sessions','POST'],['v1/sessions/synthetic-session-1','GET'],['v1/sessions/synthetic-session-1','DELETE'],['v1/sessions/synthetic-session-1/teams','GET'],['v1/sessions/synthetic-session-1/2fa','POST'],['v1/sessions/synthetic-session-1/provision','POST']]) assert.equal(guidedApiPath(new URL(path,base),method,base),path);
+  for(const [path,method] of [['health','GET'],['config.json','GET'],['v1/sessions','POST'],['v1/sessions/synthetic-session-1','GET'],['v1/sessions/synthetic-session-1','DELETE'],['v1/sessions/synthetic-session-1/teams','GET'],['v1/sessions/synthetic-session-1/teams/TESTTEAM01/devices','GET'],['v1/sessions/synthetic-session-1/2fa','POST'],['v1/sessions/synthetic-session-1/provision','POST']]) assert.equal(guidedApiPath(new URL(path,base),method,base),path);
   for(const [url,method] of [['https://apple.com/v1/sessions','POST'],['http://127.0.0.1:4173/v1/sessions','POST'],[base+'v1/sessions','DELETE'],[base+'v1/sessions/real-session','GET'],[base+'v1/sessions/synthetic-session-1/provision','GET'],[base+'v1/sessions?secret=1','POST'],[base+'v1/device-enrollments','POST']]) assert.equal(guidedApiPath(url,method,base),null);
 });
 test('guided fixture: login and 2FA accept only exact synthetic values',async()=>{

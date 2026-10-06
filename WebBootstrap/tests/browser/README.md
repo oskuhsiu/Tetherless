@@ -27,7 +27,7 @@ node node_modules/playwright/cli.js install --with-deps chromium
 npm run test:browser
 ```
 
-`npm run test:browser -- --list --reporter=list` discovers the 24 cases without opening a browser
+`npm run test:browser -- --list --reporter=list` discovers the 30 cases without opening a browser
 or starting the server. `harness.test.mjs` also does not listen on a socket: it
 checks the static response function directly using temporary synthetic files.
 The `playwright.config.js` webServer starts the static server only for actual
@@ -82,16 +82,17 @@ passing browser result. CI runner images and OS packages are not content-pinned.
 ## Separate synthetic guided-account cases
 
 `guided-test.mjs` leaves the static request policy unchanged. Its own guard allows
-only exact localhost/project-path health/config/login/session/2FA/team/provision
+only exact localhost/project-path health/config/login/session/2FA/team/device-list/provision
 routes and methods, answered entirely in process by `guided-service.mjs`. Only
 fixed `.invalid` login values and a fixed synthetic code/device/Team/App are
 accepted. Unknown API paths, external requests and WebSockets are denied. Static
 assets and real dedicated workers still come from the same bounded preview
 server. Service workers remain blocked. The guard is not a host-level firewall.
 
-Three additional cases run at both `/` and `/Tetherless/`:
+Six guided cases run at both `/` and `/Tetherless/`:
 
-1. Custom IPA independent of a missing official Release; explicit login and
+1. Custom IPA independent of a missing official Release; explicit active
+   registered-device selection, login and
    mutation consent, synthetic 2FA, exact bundle preview, local CSR generation,
    matching synthetic certificate/profile, then real browser WASM signing and
    embedded-profile/download verification
@@ -100,6 +101,12 @@ Three additional cases run at both `/` and `/Tetherless/`:
 3. Uncertain provisioning retries the identical CSR/request and signs once;
    a later held provisioning response cancelled before completion cannot restore
    output or begin another signing worker
+4. An explicitly chosen new-device path retains its separate registration consent
+   and signs with the real browser WASM runtime
+5. Failed/empty device lists block provisioning without fallback; a cancelled
+   delayed list cannot revive the dismissed form
+6. Team changes clear selection/consent; a delayed old-Team list cannot replace
+   the currently selected registered device
 
 The fixture has no real Apple data or endpoint. `guided-fixture.test.mjs` also
 checks its allowlist, synthetic-only login, CSR/cert identity and actual WASM
@@ -111,7 +118,7 @@ retains synthetic mutation-preview and signed-but-install-blocked screenshots.
 The preceding frontend passed the published workflow in run 37420583887 (18/18).
 That run includes real Chromium screenshots and actual WASM synthetic signing.
 The progressive UI/Release candidate updates the original 18 static cases and
-adds six synthetic guided-account cases while preserving all original real
+adds 12 synthetic guided-account/device cases while preserving all original real
 signing/asset/cancellation assertions. It
 still requires a new run on its exact published SHA. Browser tests are not run
 in this preparation environment because localhost/browser IPC are restricted;

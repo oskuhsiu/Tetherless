@@ -32,11 +32,15 @@ cannot collect credentials or pretend to complete a login on static hosting.
    `officialRelease` value is `null`: no genuine current unsigned App asset exists
    yet, so there is no fallback to an old release. A user may explicitly choose
    a custom IPA or the existing manual certificate route instead.
-2. When the service advertises device-profile support, collect or enter the UDID
-   **before login**, with explicit device-data consent. The iOS Settings round
-   trip can clear the page's Apple session; doing it first avoids deliberately
-   asking for two logins. Only enrollment ID/expiry persist, never Apple secrets.
-   Device metadata is untrusted until the user confirms the target iPhone.
+2. The default device route logs in first, then reads the selected Team's
+   registered devices. Only active/selectable records can be explicitly chosen;
+   even a sole record is not selected automatically. This identifies an Apple
+   account record, not the current iPhone. A separate new-device route is an
+   explicit choice: collect/enter its UDID before login when profile collection
+   is needed. The Settings round trip clears Apple sessions and may require a
+   new login. Only enrollment ID/expiry persist, never Apple secrets. A fresh
+   document restores the new-device route only for a valid, unexpired existing
+   enrollment ID; it never starts a new collection or registers a device.
 3. Approve the named service/anisette data transmission and log in. Required
    trusted-device/SMS 2FA is shown only when requested. A pinned official package
    is acquired and hash checked before credentials are posted; cancellation or
@@ -63,6 +67,35 @@ The browser's private key remains local. Exact bundle IDs and recognized
 Tetherless App Groups are preserved. System profile/installation, trust and
 Developer Mode confirmations must be completed by the user; they are not
 represented as automatable.
+
+### Existing registered-device contract
+
+The follow-on frontend requires the corresponding separately reviewed backend
+route: `GET /v1/sessions/{id}/teams/{teamId}/devices`, authenticated with the
+in-memory Bearer token and same-origin gate cookie, with redirects rejected.
+The response is `{teamId, devices:[{udid,name,status,selectable}]}`. Team IDs are
+1–64 ASCII alphanumerics. Responses are capped at 512 KiB and 1000 records; names
+must be nonempty, control-free and at most 128 UTF-8 bytes. Wrong-Team, malformed,
+duplicate, oversized or failed responses cannot enable provisioning. Missing or
+unknown status is not eligibility; only `active` plus `selectable:true` is usable.
+
+Changing Team, rereading the list, or cancellation clears selection and consent;
+old responses are aborted and generation-checked. Multiple Teams require an
+explicit choice. After selection, the full name/UDID and the exact mutation plan
+are visible. The device selector cannot change after provisioning begins.
+
+The existing-only request sets `device.existingOnly:true` and exactly one of:
+
+- `use-existing-device-register-app-ids-and-issue-certificate`
+- `use-existing-device-register-app-ids-app-group-and-issue-certificate`
+
+The backend independently rechecks active membership before certificate mutation
+and never registers a missing device. The new-device route retains its original
+explicit registration consent. There is no fallback between routes. Empty/error
+lists remain blocked with read-only retry. A submitted request, including a cached
+`deviceNotAvailable` preflight failure, retains its original key/CSR/selection:
+choosing a different request requires cancel/restart. Nothing here establishes
+actual Apple authorization, current-phone identity or installation acceptance.
 
 ### Official Release contract
 
@@ -184,8 +217,8 @@ simplification is real Chromium output from that run, not a mockup.
 
 That run does **not** validate this new progressive UI delta. This candidate's
 Node/DOM tests, static build, request-guard harness and browser-test discovery
-are separate checks. The updated 24-case actual-browser suite (18 static plus six separately guarded
-synthetic account cases) must run on the
+are separate checks. The updated 30-case actual-browser suite (18 static plus 12 separately guarded
+synthetic account/device cases) must run on the
 exact published delta, and its new mobile screenshots must be inspected. No
 localhost/IPC restriction workaround was attempted in this environment.
 No Safari/iPhone, real profile installation, live 2FA, real Apple certificate/

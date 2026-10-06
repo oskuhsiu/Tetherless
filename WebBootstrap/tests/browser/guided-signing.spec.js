@@ -5,18 +5,21 @@ import { readFileSync } from 'node:fs';
 import { ZipReader, Uint8ArrayReader, Uint8ArrayWriter } from '@zip.js/zip.js';
 let ipa;
 test.beforeAll(async () => { ipa = Buffer.from(await makeIpa()); });
-async function chooseCustom(page) {
+async function chooseCustom(page, deviceRoute = 'existing') {
   await page.goto('.'); await expect(page.locator('#account-form')).toBeVisible();
+  if (deviceRoute !== 'existing') await page.locator('#device-route').selectOption(deviceRoute);
   await page.locator('#app-options > summary').click(); await page.locator('#app-source').selectOption('custom');
   await page.setInputFiles('#ipa', { name: 'Fixture.ipa', mimeType: 'application/zip', buffer: ipa });
 }
 async function credentials(page) {
   await page.locator('#apple-id').fill(SYNTHETIC.appleId); await page.locator('#apple-password').fill(SYNTHETIC.password); await page.locator('#login-consent').check();
 }
-async function authenticate(page) {
+async function authenticate(page, { selectDevice = true } = {}) {
   await credentials(page); await page.locator('#login-button').click(); await expect(page.locator('#two-factor')).toBeVisible();
   await page.locator('#verification-code').fill(SYNTHETIC.code); await page.locator('#verify-button').click(); await expect(page.locator('#provision-form')).toBeVisible();
-  await page.locator('#account-udid').fill(SYNTHETIC.udid);
+  if (!selectDevice) return;
+  if (await page.locator('#device-route').inputValue() === 'existing') { await expect(page.locator('#existing-device')).toBeEnabled(); await page.locator('#existing-device').selectOption(SYNTHETIC.udid); }
+  else await page.locator('#account-udid').fill(SYNTHETIC.udid);
 }
 async function approveProvision(page) { await page.locator('#provision-consent').check(); await page.locator('#provision-button').click(); }
 async function assertRealOutput(page, guided) {
@@ -33,14 +36,14 @@ async function assertRealOutput(page, guided) {
   } finally { await reader.close(); }
   expect(guided.workers.some(url => url.endsWith('/sign-worker.js'))).toBe(true);
 }
-test('synthetic guided account: custom IPA, explicit consent, 2FA and mutation preview feed real browser WASM', async ({ page, guided }, testInfo) => {
+test('synthetic guided account: custom IPA, explicit registered-device selection/consent, 2FA and mutation preview feed real browser WASM', async ({ page, guided }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 }); await chooseCustom(page);
   await page.locator('#apple-id').fill(SYNTHETIC.appleId); await page.locator('#apple-password').fill(SYNTHETIC.password); await page.locator('#login-button').click();
   expect(guided.calls.filter(c => c.name === 'login')).toHaveLength(0);
   await authenticate(page); await expect(page.locator('#provision-plan')).toContainText(SYNTHETIC.bundleId); await expect(page.locator('#team-summary')).toContainText(SYNTHETIC.teamId);
   await page.locator('#provision-button').click(); expect(guided.provisioningBodies).toHaveLength(0);
   await testInfo.attach('synthetic-guided-mutation-preview', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
-  await approveProvision(page); await assertRealOutput(page, guided); expect(guided.provisioningBodies).toHaveLength(1);
+  await approveProvision(page); await assertRealOutput(page, guided); expect(guided.provisioningBodies).toHaveLength(1); expect(JSON.parse(guided.provisioningBodies[0]).device.existingOnly).toBe(true); expect(JSON.parse(guided.provisioningBodies[0]).consent).toBe('use-existing-device-register-app-ids-and-issue-certificate');
   await testInfo.attach('synthetic-guided-signed-install-blocked', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
 });
@@ -67,5 +70,40 @@ test('synthetic guided account: same-CSR provisioning retry signs once; cancelle
   await expect.poll(() => guided.completed.filter(c => c.path.endsWith('/provision')).length).toBe(3);
   await expect(page.locator('#account-form')).toBeVisible(); await expect(page.locator('#download')).toBeHidden(); await expect(page.locator('#install-panel')).toBeHidden();
   expect(guided.workers.filter(url => url.endsWith('/sign-worker.js'))).toHaveLength(1);
+  } finally { hold.release(); }
+});
+test('synthetic guided account: new-device registration stays an explicit separate consent path', async ({ page, guided }) => {
+  await chooseCustom(page, 'new'); await expect(page.locator('#device-route-hint')).toContainText('重新登入'); await authenticate(page);
+  await expect(page.locator('#registered-device-panel')).toBeHidden(); await expect(page.locator('#provision-consent-text')).toContainText('註冊此裝置');
+  await approveProvision(page); await assertRealOutput(page, guided);
+  const body = JSON.parse(guided.provisioningBodies[0]); expect(body.device.existingOnly).toBeUndefined(); expect(body.consent).toBe('register-device-app-ids-and-issue-certificate');
+  expect(guided.calls.some(call => call.path.endsWith('/devices'))).toBe(false);
+});
+test('synthetic registered devices: errors and empty lists block mutations; cancelled list responses stay dismissed', async ({ page, guided }) => {
+  guided.failNextDevices = true; await chooseCustom(page); await authenticate(page, { selectDevice: false });
+  await expect(page.locator('#existing-status')).toContainText('無法讀取'); await expect(page.locator('#provision-button')).toBeDisabled();
+  guided.deviceLists.set(SYNTHETIC.teamId, []); await page.locator('#reload-devices').click(); await expect(page.locator('#existing-status')).toContainText('沒有可用');
+  await expect(page.locator('#device-route')).toHaveValue('existing'); expect(guided.provisioningBodies).toHaveLength(0);
+  const count = guided.completed.filter(call => call.path.endsWith('/devices')).length;
+  const hold = guided.holdNext(`devices:${SYNTHETIC.teamId}`);
+  try {
+    await page.locator('#reload-devices').click(); await hold.entered; await page.locator('#logout').click(); hold.release();
+    await expect.poll(() => guided.completed.filter(call => call.path.endsWith('/devices')).length).toBe(count + 1);
+    await expect(page.locator('#account-form')).toBeVisible(); await expect(page.locator('#registered-device-panel')).toBeHidden(); await expect(page.locator('#provision-form')).toBeHidden();
+  } finally { hold.release(); }
+});
+test('synthetic registered devices: Team changes clear consent and a stale old-Team response cannot replace the selected device', async ({ page, guided }) => {
+  const secondTeam = 'TESTTEAM02', secondUdid = '22222222-2222222222222222';
+  guided.teams.push({ id: secondTeam, name: 'Second synthetic Team', type: 'organization' }); guided.deviceLists.set(secondTeam, [{ udid: secondUdid, name: 'Second Team device', status: 'active', selectable: true }]);
+  await chooseCustom(page); await authenticate(page, { selectDevice: false }); await expect(page.locator('#team')).toHaveValue('');
+  const hold = guided.holdNext(`devices:${SYNTHETIC.teamId}`);
+  try {
+    await page.locator('#team').selectOption(SYNTHETIC.teamId); await hold.entered;
+    await page.locator('#team').selectOption(secondTeam); await expect(page.locator('#provision-consent')).not.toBeChecked(); await expect(page.locator('#existing-device')).toBeEnabled();
+    await page.locator('#existing-device').selectOption(secondUdid); await page.locator('#provision-consent').check(); hold.release();
+    await expect.poll(() => guided.completed.some(call => call.path.endsWith(`/teams/${SYNTHETIC.teamId}/devices`))).toBe(true);
+    await expect(page.locator('#existing-device')).toHaveValue(secondUdid); await expect(page.locator('#existing-device-summary')).toContainText('Second Team device'); await expect(page.locator('#provision-consent')).toBeChecked();
+    await page.locator('#team').selectOption(SYNTHETIC.teamId); await expect(page.locator('#provision-consent')).not.toBeChecked(); await expect(page.locator('#existing-device')).toHaveValue('');
+    expect(guided.provisioningBodies).toHaveLength(0);
   } finally { hold.release(); }
 });

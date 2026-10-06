@@ -43,13 +43,18 @@ export function setupDeviceEnrollment(base, { enabled = () => true, onReceived =
       await observe(current);
     } catch (error) { if (current === generation) { clear(); $('device-status').textContent = error.name === 'AbortError' ? '已取消' : error.message; } }
   };
+  function readPending() {
+    let stored; try { stored = JSON.parse(sessionStorage.getItem(key)); } catch { removeStored(); return; }
+    const now = Date.now();
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored) || Object.keys(stored).some(name => !['id', 'expiresAt'].includes(name)) || typeof stored.id !== 'string' || !/^[a-zA-Z0-9-]{16,100}$/.test(stored.id) || !Number.isFinite(stored.expiresAt) || stored.expiresAt <= now || stored.expiresAt > now + 600000) { removeStored(); return; }
+    return stored;
+  }
   function resume() {
     if (!enabled()) return;
     pause();
-    let stored; try { stored = JSON.parse(sessionStorage.getItem(key)); } catch { removeStored(); return; }
-    if (!stored || !/^[a-zA-Z0-9-]{16,100}$/.test(stored.id) || stored.expiresAt <= Date.now() || stored.expiresAt > Date.now() + 600000) { removeStored(); return; }
+    const stored = readPending(); if (!stored) return;
     enrollment = stored; const current = ++generation; controller = new AbortController(); $('collect-device').disabled = true; $('cancel-device').hidden = false;
     $('device-status').textContent = '正在讀取剛才的裝置回傳結果…'; void observe(current);
   }
-  return { clear, pause, resume };
+  return { clear, pause, resume, hasPending: () => Boolean(readPending()) };
 }

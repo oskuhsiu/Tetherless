@@ -5,14 +5,16 @@ import { makeIpa, makeMaterial, makeSignedFixture } from './fixtures.mjs';
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const tick = () => new Promise((r) => setTimeout(r, 10));
 async function until(fn) { for (let i=0;i<200;i++) { if(fn()) return; await tick(); } throw new Error('Condition did not become true'); }
-async function environment({ service = false, profileService = service, config = { accountServiceUrl: null, officialRelease: null }, fetcher } = {}) {
+async function environment({ service = false, profileService = service, config = { accountServiceUrl: null, officialRelease: null }, deviceRoute = 'new', storedEnrollment, fetcher } = {}) {
   const dom = new JSDOM(html, { url: 'http://127.0.0.1:8787/', pretendToBeVisual: true });
   for (const key of ['document', 'location', 'DOMParser', 'window', 'sessionStorage']) globalThis[key] = key === 'window' ? dom.window : dom.window[key];
+  if (storedEnrollment !== undefined) dom.window.sessionStorage.setItem('tetherless-device-enrollment', storedEnrollment);
   const calls = [];
   globalThis.fetch = async (url, options = {}) => { calls.push({ url: String(url), options }); if (fetcher) { const result = await fetcher(String(url), options); if (result) return result; } if (String(url).endsWith('/health')) return Response.json({ protocol: 1, appleAuthAvailable: service, profileServiceAvailable: profileService }); if (String(url).endsWith('/config.json')) return Response.json(config); return Response.json({ error:'unexpected' }, { status: 404 }); };
   class MockWorker { static all=[]; constructor() { MockWorker.all.push(this); } postMessage(data) { this.data=data; } terminate() { this.terminated=true; } succeed() { this.onmessage?.({data:{phase:'done',bytes:fixture.signed}}); } }
   globalThis.Worker = MockWorker;
   await import(`../src/main.js?test=${Math.random()}`); await tick();
+  if (service && deviceRoute === 'new') { dom.window.document.getElementById('device-route').value='new'; dom.window.document.getElementById('device-route').dispatchEvent(new dom.window.Event('change')); }
   const $ = (id) => dom.window.document.getElementById(id);
   const setFiles = (id, values) => Object.defineProperty($(id), 'files', { configurable:true, value:values });
   return { dom, $, calls, MockWorker, setFiles, dispose() { $('clear').click(); dom.window.close(); } };
@@ -141,4 +143,86 @@ test('DOM mock: exact inspected bundle IDs/App Group are shown before consent an
     e.setFiles('ipa',[fixture.ipa]);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>body);
     assert.equal(body.apps[0].bundleId,'org.tetherless.Tetherless');assert.equal(body.appGroup.identifier,'group.org.tetherless.Tetherless');
   }finally{e.dispose();}
+});
+function existingLogin(e,ipa=fixture.ipa){e.$('app-source').value='custom';e.$('app-source').dispatchEvent(new e.dom.window.Event('change'));e.setFiles('ipa',[ipa]);e.$('apple-id').value='test@example.invalid';e.$('apple-password').value='synthetic-not-a-secret';e.$('login-consent').checked=true;submit(e,'account-form');}
+const registeredDevice={udid:'00000000-0000000000000000',name:'Already registered iPhone',status:'active',selectable:true};
+function chooseExisting(e,udid=registeredDevice.udid){e.$('existing-device').value=udid;e.$('existing-device').dispatchEvent(new e.dom.window.Event('change'));}
+test('DOM mock: existing-device default logs in first, requires explicit active selection, and never registers a new device',async()=>{
+  let provision;
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher((url,opts)=>{
+    if(url.endsWith('/teams/TESTTEAM01/devices'))return Response.json({teamId:'TESTTEAM01',devices:[registeredDevice,{...registeredDevice,udid:'11111111-1111111111111111',status:'disabled',selectable:false}]});
+    if(url.endsWith('/provision')){provision=JSON.parse(opts.body);return Response.json({error:'deviceNotAvailable'},{status:409});}
+  })});try{
+    assert(!e.$('account-form').hidden);assert(e.$('prelogin-device').hidden);assert.equal(e.$('device-route').value,'existing');existingLogin(e);await until(()=>e.$('existing-device').options.length===2);
+    assert.equal(e.$('existing-device').value,'');assert(e.$('provision-button').disabled);assert(e.$('provision-consent').disabled);submit(e,'provision-form');assert.equal(provision,undefined);
+    chooseExisting(e);assert(e.$('existing-device-summary').textContent.includes('未驗證'));assert(!e.$('provision-consent').checked);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>provision);
+    assert.equal(provision.device.existingOnly,true);assert.equal(provision.device.udid,registeredDevice.udid);assert.equal(provision.device.name,registeredDevice.name);assert.equal(provision.consent,'use-existing-device-register-app-ids-and-issue-certificate');
+    await until(()=>!e.$('provision-button').disabled);assert(e.$('account-status').textContent.includes('不會改成新增裝置'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments')));
+  }finally{e.dispose();}
+});
+test('DOM mock: existing-device list errors and empty results stay blocked and permit a read-only retry',async()=>{
+  let attempts=0;
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher(url=>{if(url.endsWith('/devices')){attempts++;return attempts===1?Response.json({error:'appleRequestFailed'},{status:502}):Response.json({teamId:'TESTTEAM01',devices:[]});}})});try{
+    existingLogin(e);await until(()=>e.$('existing-status').textContent.includes('無法讀取'));assert(e.$('provision-button').disabled);e.$('reload-devices').click();await until(()=>attempts===2&&!e.$('reload-devices').disabled);assert(e.$('existing-status').textContent.includes('沒有可用'));assert(e.$('provision-button').disabled);assert(!e.calls.some(c=>c.url.endsWith('/provision')));
+  }finally{e.dispose();}
+});
+test('DOM mock: Team changes clear device selection/consent and ignore a late old-Team response',async()=>{
+  let release;const pending=new Promise(r=>release=r);let held=false;
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher(async url=>{
+    if(url.endsWith('/teams/TESTTEAM01/devices')){held=true;await pending;return Response.json({teamId:'TESTTEAM01',devices:[registeredDevice]});}
+    if(url.endsWith('/teams/TESTTEAM02/devices'))return Response.json({teamId:'TESTTEAM02',devices:[{...registeredDevice,udid:'22222222-2222222222222222',name:'Second Team phone'}]});
+  },[{id:'TESTTEAM01',name:'One',type:'personal'},{id:'TESTTEAM02',name:'Two',type:'organization'}])});try{
+    existingLogin(e);await until(()=>!e.$('provision-form').hidden);assert.equal(e.$('team').value,'');e.$('team').value='TESTTEAM01';e.$('team').dispatchEvent(new e.dom.window.Event('change'));await until(()=>held);
+    e.$('provision-consent').checked=true;e.$('team').value='TESTTEAM02';e.$('team').dispatchEvent(new e.dom.window.Event('change'));assert(!e.$('provision-consent').checked);await until(()=>e.$('existing-device').options.length===2);release();await tick();
+    assert(e.$('existing-device').textContent.includes('Second Team phone'));assert(!e.$('existing-device').textContent.includes('Already registered'));chooseExisting(e,'22222222-2222222222222222');e.$('provision-consent').checked=true;e.$('reload-devices').click();assert(!e.$('provision-consent').checked);assert.equal(e.$('existing-device').value,'');
+  }finally{release();e.dispose();}
+});
+test('DOM mock: cancellation and oversized existing-device responses cannot restore selection or enable provisioning',async()=>{
+  let release;const pending=new Promise(r=>release=r);let held=false;
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher(async url=>{if(url.endsWith('/devices')){held=true;await pending;return new Response('x'.repeat(512*1024+1));}})});try{
+    existingLogin(e);await until(()=>held);e.$('logout').click();release();await tick();assert(e.$('provision-form').hidden);assert.equal(e.$('existing-device').options.length,1);assert(!e.$('provision-consent').checked);
+    existingLogin(e);await until(()=>e.$('existing-status').textContent.includes('超過允許大小'));assert(e.$('provision-button').disabled);
+  }finally{release();e.dispose();}
+});
+test('DOM mock: existing-device App Group consent and uncertain retry preserve the exact original selection/request',async()=>{
+  const bodies=[];
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher((url,opts)=>{
+    if(url.endsWith('/devices'))return Response.json({teamId:'TESTTEAM01',devices:[registeredDevice]});
+    if(url.endsWith('/provision')){bodies.push(opts.body);return Response.json({error:'provisioningUncertain'},{status:503});}
+  })});try{
+    existingLogin(e,new File([await makeIpa({bundleId:'org.tetherless.Tetherless'})],'Tetherless.ipa'));await until(()=>!e.$('existing-device').disabled);chooseExisting(e);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>bodies.length===1&&!e.$('provision-button').disabled);
+    assert(e.$('existing-device').disabled);assert(e.$('team').disabled);assert(e.$('reload-devices').disabled);const body=JSON.parse(bodies[0]);assert.equal(body.consent,'use-existing-device-register-app-ids-app-group-and-issue-certificate');assert.equal(body.device.existingOnly,true);assert.equal(body.appGroup.identifier,'group.org.tetherless.Tetherless');
+    submit(e,'provision-form');await until(()=>bodies.length===2&&!e.$('provision-button').disabled);assert.equal(bodies[0],bodies[1]);
+  }finally{e.dispose();}
+});
+test('DOM mock: switching from an empty new-device name to existing route passes native form validation; new route restores it',async()=>{
+  let posted=false;
+  const e=await environment({service:true,profileService:false,deviceRoute:'new',fetcher:sessionFetcher((url)=>{
+    if(url.endsWith('/devices'))return Response.json({teamId:'TESTTEAM01',devices:[registeredDevice]});
+    if(url.endsWith('/provision')){posted=true;return Response.json({error:'provisioningUncertain'},{status:503});}
+  })});try{
+    e.$('device-name').value='';e.$('device-route').value='existing';e.$('device-route').dispatchEvent(new e.dom.window.Event('change'));
+    existingLogin(e);await until(()=>!e.$('existing-device').disabled);chooseExisting(e);e.$('provision-consent').checked=true;
+    assert(e.$('device-name').disabled);assert(e.$('account-udid').disabled);assert(e.$('provision-form').checkValidity());e.$('provision-form').requestSubmit();await until(()=>posted);
+    e.$('logout').click();e.$('device-route').value='new';e.$('device-route').dispatchEvent(new e.dom.window.Event('change'));loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('provision-consent').checked=true;
+    assert(!e.$('device-name').disabled);assert(!e.$('provision-form').checkValidity());e.$('device-name').value='My iPhone';assert(e.$('provision-form').checkValidity());
+  }finally{e.dispose();}
+});
+test('DOM mock: a new document resumes only a valid previously-started enrollment without a new collection or Apple login',async()=>{
+  const id='11111111-2222-3333-4444-555555555555';
+  const e=await environment({service:true,deviceRoute:'existing',storedEnrollment:JSON.stringify({id,expiresAt:Date.now()+300000}),fetcher:async(url,opts)=>{
+    if(url.includes(`/device-enrollments/${id}`)&&opts.method!=='DELETE')return Response.json({state:'received',device:{udid:registeredDevice.udid}});
+    if(opts.method==='DELETE')return new Response(null,{status:204});
+  }});try{
+    await until(()=>e.$('account-udid').value===registeredDevice.udid);assert.equal(e.$('device-route').value,'new');assert(!e.$('account-form').hidden);assert.equal(e.dom.window.sessionStorage.length,0);
+    assert(e.calls.some(c=>c.url.includes(`/device-enrollments/${id}`)&&!c.options.method));assert(!e.calls.some(c=>c.options.method==='POST'));
+  }finally{e.dispose();}
+});
+test('DOM mock: a new document rejects malformed, expired, nonfinite or over-TTL enrollment state without restoring the new-device route',async()=>{
+  const id='11111111-2222-3333-4444-555555555555';
+  for(const stored of ['{bad',JSON.stringify({id,expiresAt:Date.now()-1}),JSON.stringify({id,expiresAt:null}),JSON.stringify({id,expiresAt:'later'}),JSON.stringify({id,expiresAt:Date.now()+900000}),JSON.stringify({id,expiresAt:Date.now()+300000,secret:'not-accepted'})]){
+    const e=await environment({service:true,deviceRoute:'existing',storedEnrollment:stored});try{
+      assert.equal(e.$('device-route').value,'existing');assert(!e.$('account-form').hidden);assert.equal(e.dom.window.sessionStorage.length,0);assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')));
+    }finally{e.dispose();}
+  }
 });

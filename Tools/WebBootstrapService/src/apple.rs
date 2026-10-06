@@ -177,6 +177,12 @@ pub async fn provision(
         .into_iter()
         .find(|t| t.team_id == input.team_id)
         .ok_or_else(invalid)?;
+    // Existing-only intent is checked before ANY certificate/App ID/device mutation.
+    // Re-read the selected authenticated team's directory; never silently register,
+    // enable, or substitute a missing/disabled/unknown device.
+    if input.device.existing_only {
+        crate::devices::require_existing(dev, &team, &input.device.udid).await?;
+    }
     // Read and reuse an account-owned certificate with the CSR's exact public key.
     // Calling CertificateIdentity::retrieve would introduce key persistence and
     // optional revocation. This service intentionally never calls that API.
@@ -233,11 +239,13 @@ pub async fn provision(
             ErrorCode::CertificateMismatch,
         ));
     }
-    let devices = dev.list_devices(&team, None).await.map_err(apple_error)?;
-    if !devices.iter().any(|d| d.device_number == input.device.udid) {
-        dev.add_device(&team, &input.device.name, &input.device.udid, None)
-            .await
-            .map_err(apple_error)?;
+    if !input.device.existing_only {
+        let devices = dev.list_devices(&team, None).await.map_err(apple_error)?;
+        if !devices.iter().any(|d| d.device_number == input.device.udid) {
+            dev.add_device(&team, &input.device.name, &input.device.udid, None)
+                .await
+                .map_err(apple_error)?;
+        }
     }
     let existing = dev.list_app_ids(&team, None).await.map_err(apple_error)?;
     let app_group = if let Some(requested) = &input.app_group {

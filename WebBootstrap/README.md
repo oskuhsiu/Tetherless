@@ -29,16 +29,19 @@ blocked. See `../docs/WEB_BOOTSTRAP.md` for current evidence and gates.
 
 The default view starts with official Tetherless Release availability and the
 Apple-account journey. P12/profile/custom-file/hosting details are advanced
-choices. Required device identification, data/mutation consent and 2FA remain
-explicit. A single Team is selected and named automatically; multiple Teams stay
+choices. Required device selection, data/mutation consent and 2FA remain
+explicit. The default account route logs in first and lists already-registered
+active devices; it never silently adds a device. Selecting an Apple record does
+not identify the current browser device. A single Team is selected and named automatically; multiple Teams stay
 user-selected. Approved provisioning feeds directly into local signing, with
 cancellation and original-request retry preserved.
 
 1. **Apple Account (service and verified App required):** serve the built frontend
    from the same separate HTTPS origin as `Tools/WebBootstrapService`. Health
    must advertise protocol 1 and account availability before credentials appear.
-   Profile-based device identification happens before login so a Settings round
-   trip need not repeat Apple authentication. The browser creates the private
+   The default route lists Team-scoped registered devices after login. The separate
+   explicit new-device route may collect a profile-based UDID before login; its
+   Settings round trip clears sessions and can otherwise require another login. The browser creates the private
    key/CSR; the existing service performs SRP/2FA/provisioning calls.
 2. **Manual certificate/profile:** expand the advanced route, choose your IPA,
    P12 and exact bundle profiles, acknowledge rights and sign locally. File

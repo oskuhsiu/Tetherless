@@ -57,6 +57,7 @@ jobs:
           node --test --test-concurrency=1 \
             Tools/WebBootstrapService/deployment/tests/proxy.test.mjs \
             Tools/WebBootstrapService/deployment/tests/supervisor.test.mjs \
+            Tools/WebBootstrapService/deployment/tests/export-build-info.test.mjs \
             2>&1 | tee deployment-evidence/proxy-supervisor-tests.txt
       - name: Build actual Linux image from locked source
         timeout-minutes: 25
@@ -89,8 +90,10 @@ jobs:
           test "$(docker inspect --format '{{.Image}}' tetherless-offline-smoke)" = "$(cat deployment-evidence/image-id.txt)"
           docker inspect --format '{"image":{{json .Image}},"networkMode":{{json .HostConfig.NetworkMode}},"readOnly":{{json .HostConfig.ReadonlyRootfs}},"user":{{json .Config.User}}}' \
             tetherless-offline-smoke > deployment-evidence/container-isolation.json
-          docker cp tetherless-offline-smoke:/app/build-info deployment-evidence/build-info
-          test "$(cat deployment-evidence/build-info/source-commit.txt)" = "$GITHUB_SHA"
+          # Read fixed nonsecret files without importing image read-only directory
+          # modes onto the runner. The bounded exporter checks the exact source SHA.
+          docker exec tetherless-offline-smoke node /verification/export-build-info.mjs "$GITHUB_SHA" \
+            > deployment-evidence/build-info.json
       - name: Smoke production entrypoint through loopback inside isolated container
         timeout-minutes: 2
         shell: bash

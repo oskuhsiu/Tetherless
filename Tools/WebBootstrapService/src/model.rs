@@ -35,6 +35,7 @@ pub enum ErrorCode {
     ProfileMismatch,
     ProvisioningUncertain,
     OriginRejected,
+    DeviceNotAvailable,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -116,6 +117,9 @@ pub enum TwoFactorRequest {
 pub struct DeviceInput {
     pub udid: String,
     pub name: String,
+    /// Existing-only selection must never fall back to registering a device.
+    #[serde(default)]
+    pub existing_only: bool,
 }
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -147,10 +151,11 @@ impl ProvisionRequest {
     /// Only transport/metadata checks. Apple validates the CSR; this does not
     /// replace native signing admission or establish installed-app trust.
     pub fn validate(&self) -> ApiResult<Vec<u8>> {
-        let required_consent = if self.app_group.is_some() {
-            "register-device-app-ids-app-group-and-issue-certificate"
-        } else {
-            "register-device-app-ids-and-issue-certificate"
+        let required_consent = match (self.device.existing_only, self.app_group.is_some()) {
+            (true, true) => "use-existing-device-register-app-ids-app-group-and-issue-certificate",
+            (true, false) => "use-existing-device-register-app-ids-and-issue-certificate",
+            (false, true) => "register-device-app-ids-app-group-and-issue-certificate",
+            (false, false) => "register-device-app-ids-and-issue-certificate",
         };
         if self.consent != required_consent {
             return Err(invalid());
@@ -162,9 +167,7 @@ impl ProvisionRequest {
         {
             return Err(invalid());
         }
-        if !self.team_id.bytes().all(|b| b.is_ascii_alphanumeric())
-            || !(1..=64).contains(&self.team_id.len())
-        {
+        if !valid_team_id(&self.team_id) {
             return Err(invalid());
         }
         if !valid_udid(&self.device.udid)
@@ -201,6 +204,9 @@ impl ProvisionRequest {
         let bytes = serde_json::to_vec(self).map_err(|_| invalid())?;
         Ok(Sha256::digest(bytes).into())
     }
+}
+pub fn valid_team_id(team_id: &str) -> bool {
+    (1..=64).contains(&team_id.len()) && team_id.bytes().all(|b| b.is_ascii_alphanumeric())
 }
 pub fn valid_udid(udid: &str) -> bool {
     (udid.len() == 40 && udid.bytes().all(|b| b.is_ascii_hexdigit()))
@@ -287,6 +293,7 @@ mod tests {
             device: DeviceInput {
                 udid: "0".repeat(40),
                 name: "Synthetic Device".into(),
+                existing_only: false,
             },
             csr_pem: include_str!("../tests/fixtures/request.pem").into(),
             machine_name: "Synthetic".into(),
@@ -344,5 +351,41 @@ mod tests {
             input.app_group.unwrap().identifier,
             "group.org.tetherless.Tetherless"
         );
+    }
+    #[test]
+    fn existing_only_mode_requires_exact_distinct_consent_and_affects_fingerprint() {
+        let mut input = synthetic_request();
+        let registration_fingerprint = input.fingerprint().unwrap();
+        input.device.existing_only = true;
+        assert_ne!(input.fingerprint().unwrap(), registration_fingerprint);
+        assert!(input.validate().is_err());
+        input.consent = "use-existing-device-register-app-ids-and-issue-certificate".into();
+        assert!(input.validate().is_ok());
+        input.app_group = Some(AppGroupInput {
+            identifier: "group.org.example.synthetic".into(),
+            name: "Synthetic group".into(),
+        });
+        assert!(input.validate().is_err());
+        input.consent =
+            "use-existing-device-register-app-ids-app-group-and-issue-certificate".into();
+        assert!(input.validate().is_ok());
+        input.device.existing_only = false;
+        assert!(input.validate().is_err());
+    }
+    #[test]
+    fn old_explicit_registration_requests_remain_registration_only() {
+        let mut value = serde_json::to_value(synthetic_request()).unwrap();
+        value["device"]
+            .as_object_mut()
+            .unwrap()
+            .remove("existingOnly");
+        let input: ProvisionRequest = serde_json::from_value(value).unwrap();
+        assert!(!input.device.existing_only);
+        assert!(input.validate().is_ok());
+        for id in ["", "A/B", "A?B", "A B", "é", &"A".repeat(65)] {
+            assert!(!valid_team_id(id));
+        }
+        assert!(valid_team_id("SYNTHETIC123"));
+        assert!(valid_team_id(&"A".repeat(64)));
     }
 }

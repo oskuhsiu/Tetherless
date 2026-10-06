@@ -24,6 +24,7 @@ export function guidedApiPath(raw, method, baseURL) {
     if (method === 'GET' && ['health', 'config.json'].includes(path)) return path;
     if (method === 'POST' && path === 'v1/sessions') return path;
     if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?$/.test(path) && ['GET', 'DELETE'].includes(method)) return path;
+    if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/teams\/[A-Za-z0-9]{1,64}\/devices$/.test(path) && method === 'GET') return path;
     if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/teams$/.test(path) && method === 'GET') return path;
     if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/(2fa|provision)$/.test(path) && method === 'POST') return path;
     return null;
@@ -31,11 +32,11 @@ export function guidedApiPath(raw, method, baseURL) {
 }
 export function createGuidedService() {
   const sessions = new Map(), holds = new Map(); let counter = 0;
-  const service = { calls: [], blocked: [], profiles: [], provisioningBodies: [], failNextProvision: false,
+  const service = { teams: [{ id: SYNTHETIC.teamId, name: 'Synthetic Personal Team', type: 'personal' }], deviceLists: new Map([[SYNTHETIC.teamId, [{ udid: SYNTHETIC.udid, name: 'My iPhone', status: 'active', selectable: true }]]]), failNextDevices: false, calls: [], blocked: [], profiles: [], provisioningBodies: [], failNextProvision: false,
     holdNext(name) { assert(!holds.has(name)); let enter, release; const entered = new Promise(r => enter = r), wait = new Promise(r => release = r); holds.set(name, { enter, wait }); return { entered, release }; },
     async handle(path, method, text, authorization) {
       assert(text.length <= 32 * 1024); const body = text ? JSON.parse(text) : {};
-      const name = path === 'v1/sessions' ? 'login' : path.endsWith('/provision') ? 'provision' : path.endsWith('/2fa') ? 'twoFactor' : path;
+      const name = path.endsWith('/devices') ? `devices:${path.split('/')[4]}` : path === 'v1/sessions' ? 'login' : path.endsWith('/provision') ? 'provision' : path.endsWith('/2fa') ? 'twoFactor' : path;
       service.calls.push({ path, method, name }); let response;
       if (path === 'health') response = { protocol: 1, appleAuthAvailable: true, profileServiceAvailable: false };
       else if (path === 'config.json') response = { accountServiceUrl: null, officialRelease: null };
@@ -47,10 +48,11 @@ export function createGuidedService() {
         if (method === 'DELETE') { sessions.delete(id); response = { ok: true }; }
         else if (!action) response = { state: session.state, challenge: { retry: false, numbers: [] } };
         else if (action === '2fa') { assert.deepEqual(body, { action: 'submitCode', code: SYNTHETIC.code }); session.state = 'authenticated'; response = {}; }
-        else if (action === 'teams') { assert.equal(session.state, 'authenticated'); response = { teams: [{ id: SYNTHETIC.teamId, name: 'Synthetic Personal Team', type: 'personal' }] }; }
+        else if (action === 'teams' && path.endsWith('/devices')) { assert.equal(session.state, 'authenticated'); const teamId = path.split('/')[4]; assert(service.teams.some(team => team.id === teamId)); session.listedTeams ||= new Set(); session.listedTeams.add(teamId); if (service.failNextDevices) { service.failNextDevices = false; response = { status: 502, error: 'appleRequestFailed' }; } else response = { teamId, devices: service.deviceLists.get(teamId) || [] }; }
+        else if (action === 'teams') { assert.equal(session.state, 'authenticated'); response = { teams: service.teams }; }
         else if (action === 'provision') {
           assert.equal(session.state, 'authenticated'); assert.deepEqual(Object.keys(body).sort(), ['apps', 'consent', 'csrPem', 'device', 'machineName', 'teamId']);
-          assert.equal(body.consent, 'register-device-app-ids-and-issue-certificate'); assert.equal(body.teamId, SYNTHETIC.teamId); assert.equal(body.device.udid, SYNTHETIC.udid); assert.equal(body.device.name, 'My iPhone'); assert.equal(body.machineName, 'Tetherless Web'); assert.deepEqual(body.apps, [{ bundleId: SYNTHETIC.bundleId, name: 'Fixture' }]);
+          const existing = body.device.existingOnly === true; assert.equal(body.consent, existing ? 'use-existing-device-register-app-ids-and-issue-certificate' : 'register-device-app-ids-and-issue-certificate'); if (existing) assert(session.listedTeams?.has(body.teamId)); assert.equal(body.teamId, SYNTHETIC.teamId); assert.equal(body.device.udid, SYNTHETIC.udid); assert.equal(body.device.name, 'My iPhone'); assert.equal(body.machineName, 'Tetherless Web'); assert.deepEqual(body.apps, [{ bundleId: SYNTHETIC.bundleId, name: 'Fixture' }]);
           service.provisioningBodies.push(text);
           if (session.provisionBody) assert.equal(text, session.provisionBody); else { session.provisionBody = text; session.material = syntheticProvision(body.csrPem); service.profiles.push(session.material.profile); }
           if (service.failNextProvision) { service.failNextProvision = false; response = { status: 503, error: 'provisioningUncertain' }; } else response = session.material.response;
