@@ -30,9 +30,26 @@ jobs:
         run: |
           set -euo pipefail
           test ! -e .c-provider
-          mkdir .c-provider
-          python3 -m unittest discover -s Integration/Dependencies/libimobiledevice/tests -v
-          python3 -m unittest discover -s Integration/Dependencies/libimobiledevice/probes/host -p 'test_*.py' -v
+          mkdir -p .c-provider/evidence
+          python3 - <<'PYCODE'
+          import json, os, platform, tempfile
+          from pathlib import Path
+          temp = Path(tempfile.gettempdir())
+          Path('.c-provider/evidence/early-run-context.json').write_text(json.dumps({
+              'source_commit': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'job': os.environ['GITHUB_JOB'],
+              'python': platform.python_version(),
+              'temporary_root': str(temp),
+              'canonical_temporary_root': str(temp.resolve(strict=True)),
+              'scope': 'portable contracts before acquisition or native compilation'
+          }, indent=2, sort_keys=True) + '\n')
+          PYCODE
+          python3 -m unittest discover -s Integration/Dependencies/libimobiledevice/tests -v \
+            2>&1 | tee .c-provider/evidence/portable-contracts.log
+          python3 -m unittest discover -s Integration/Dependencies/libimobiledevice/probes/host -p 'test_*.py' -v \
+            2>&1 | tee .c-provider/evidence/host-contracts.log
       - name: Acquire pinned main C sources
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         timeout-minutes: 5
@@ -108,6 +125,7 @@ jobs:
         with:
           name: c-provider-${{ github.sha }}-${{ github.run_attempt }}
           path: |
+            .c-provider/evidence/
             .c-provider/inputs/action-identity.json
             .c-provider/inputs/closed-inputs.json
             .c-provider/inputs/pristine/

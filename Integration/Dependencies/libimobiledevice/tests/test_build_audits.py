@@ -19,22 +19,22 @@ class MainAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             error=RuntimeError('original compile failure')
             def fail(args):args._work_created=True;raise error
-            with patch.object(sys,'argv',self.argv(Path(d))),patch.object(b,'build',side_effect=fail),patch.object(b,'final_audits',side_effect=ValueError('audit secondary')):
+            with patch.object(sys,'argv',self.argv(Path(d).resolve(strict=True))),patch.object(b,'build',side_effect=fail),patch.object(b,'final_audits',side_effect=ValueError('audit secondary')):
                 with self.assertRaises(RuntimeError) as observed:b.main()
             self.assertIs(observed.exception,error)
     def test_false_audit_after_success_fails(self):
         with tempfile.TemporaryDirectory() as d:
             def ok(args):args._work_created=True
-            with patch.object(sys,'argv',self.argv(Path(d))),patch.object(b,'build',side_effect=ok),patch.object(b,'final_audits',return_value={'all_passed':False}):
+            with patch.object(sys,'argv',self.argv(Path(d).resolve(strict=True))),patch.object(b,'build',side_effect=ok),patch.object(b,'final_audits',return_value={'all_passed':False}):
                 with self.assertRaisesRegex(ValueError,'final input integrity'):b.main()
     def test_audit_exception_after_success_fails(self):
         with tempfile.TemporaryDirectory() as d:
             def ok(args):args._work_created=True
-            with patch.object(sys,'argv',self.argv(Path(d))),patch.object(b,'build',side_effect=ok),patch.object(b,'final_audits',side_effect=OSError('audit write failure')):
+            with patch.object(sys,'argv',self.argv(Path(d).resolve(strict=True))),patch.object(b,'build',side_effect=ok),patch.object(b,'final_audits',side_effect=OSError('audit write failure')):
                 with self.assertRaisesRegex(OSError,'audit write'):b.main()
     def test_preexisting_work_never_written_by_audit(self):
         with tempfile.TemporaryDirectory() as d:
-            root=Path(d);work=root/'work';work.mkdir();(work/'sentinel').write_text('unchanged')
+            root=Path(d).resolve(strict=True);work=root/'work';work.mkdir();(work/'sentinel').write_text('unchanged')
             with patch.object(sys,'argv',self.argv(root)),patch.object(b,'final_audits') as audit:
                 with self.assertRaisesRegex(ValueError,'fresh'):b.main()
                 audit.assert_not_called()
@@ -43,7 +43,7 @@ class MainAuditTests(unittest.TestCase):
 
 class FinalInputAuditTests(unittest.TestCase):
     def setUp(self):
-        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);root=Path(self.tmp.name)
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);root=Path(self.tmp.name).resolve(strict=True)
         self.args=argparse.Namespace(source=root/'source',openssl=root/'ssl',old_provider=root/'old',work=root/'work')
         for p in [self.args.source,self.args.openssl,self.args.old_provider,self.args.work]:p.mkdir()
         self.evidence=self.args.work/'evidence';self.evidence.mkdir();self.prefix=root/'tool';self.prefix.mkdir()

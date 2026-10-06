@@ -21,7 +21,7 @@ class HostRunnerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix=".test-output-unit-", dir=HERE)
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve(strict=True)
         self.source = self.root / "prepared"
         ed = self.source / "root" / "3rd_party" / "ed25519"
         glue = self.source / "glue" / "src"

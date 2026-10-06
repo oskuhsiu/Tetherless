@@ -1,3 +1,33 @@
+# Next run: canonical owned fixture roots and early evidence
+
+- Actual first isolated C run: `37452546963`, attempt `1`, job `112232293033`
+- Exact source: `7d89a9f35e105e0bc66df0fad66f9739e4816147`
+- First failed step: `Portable contract checks` (step 3), before any source acquisition, host-crypto execution or Apple C compilation
+- Actual assertion: `test_map_owns_all_globals_and_both_families` failed at `symbols.py:75`, `required global has wrong archive owner: _afc_client_free`
+- Result: 62 of 63 portable tests passed; host-contract command did not execute; every acquisition/native step was skipped
+- Exact decoded job log SHA-256: `34bee3dde85d3d48b957757c989a43ff8aa5990e37b62f8c2bdd555ab8cc12b2`
+- Evidence export also failed because all configured paths belonged to later, skipped steps; GitHub API reported zero artifacts
+
+The owned test fixture rendered `str(lib)` while the unchanged production checker requires `lib.resolve(strict=True)`. A controlled temporary symlink reproduces the exact failure. Canonical fixture paths pass the unchanged checker. The actual macOS temporary path was not logged, so `/var` versus `/private/var` is a plausible platform explanation, not a directly observed path from that run.
+
+## Narrow correction and regression evidence
+
+Canonicalize each owned temporary fixture root immediately after creation: namespace/path fixtures, link-map fixtures, build-audit fixtures and host-runner mock fixtures. Add a controlled symlink-root regression. Keep a separate negative regression proving a raw alias in a map is still rejected by the unchanged production ownership check.
+
+All temporary-root creation sites in the new C and host fixtures were audited. Production build roots already use `resolve()` before construction, and the host runner resolves its source and newly created output roots. Those production implementations and `symbols.py` remain byte-for-byte unchanged.
+
+Create `.c-provider/evidence` and a source/run/attempt/Python/temporary-path context receipt before portable tests. Retain both test streams with `tee` and the existing `set -euo pipefail`; upload the early evidence directory in the unconditional artifact step. A behavioral fixture forces failures in both the portable and host-contract commands, requiring a nonzero result and retained logs/context. Missing later artifacts cannot erase this early evidence.
+
+The original 63-test suite reproduces one failure under a controlled symlinked `TMPDIR`. The corrected 66-test suite and 16 host-runner contract tests pass on both ordinary Linux paths and the same controlled symlinked `TMPDIR`. These are portable fixture results, not Apple execution.
+
+## One next-run decision
+
+A single next C-producer run is justified after independent review and parent-controlled publication of this small fixture/workflow correction. Expected observation: the portable and host-contract stages pass even when the runner temporary path has a symlink alias, then the unchanged acquisition and native gates run. Any early failure must retain its context and complete portable output.
+
+No native source, C/Rust ABI, namespace contract, OpenSSL choice, source authentication, force-loading, complete symbol coverage, map ownership, public-header equality, offline build, final-audit requirement or runtime boundary is weakened. The original failed run is preserved; it is not a native-build failure or evidence of a rebuilt C archive. Missing tools, later source/build failures or the same unexplained symptom must be diagnosed from retained evidence, not blindly rerun. No publication or rerun is performed by this correction worker.
+
+## Historical first C-source rebuild decision
+
 # One-run decision: C source namespace isolation
 
 - Current Tetherless source: 6af17537bcebfa797bf3c2659f749edd4c9d53eb

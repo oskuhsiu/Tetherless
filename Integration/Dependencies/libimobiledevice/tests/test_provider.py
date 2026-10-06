@@ -1,6 +1,8 @@
 import copy
 import importlib.util
 import json
+import os
+import subprocess
 from pathlib import Path
 import shutil
 import sys
@@ -28,7 +30,7 @@ class NamespaceTests(unittest.TestCase):
         self.assertIn(b'#include "sha512.h"',after)
     def fixture(self):
         t=tempfile.TemporaryDirectory();self.addCleanup(t.cleanup)
-        root=Path(t.name)/'root';shutil.copytree(HERE/'upstream/root',root)
+        root=Path(t.name).resolve(strict=True)/'root';shutil.copytree(HERE/'upstream/root',root)
         return root
     def test_real_transform_and_inverse(self):
         root=self.fixture();before={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob('*') if p.is_file()}
@@ -67,7 +69,7 @@ class NamespaceTests(unittest.TestCase):
     def test_path_escape_and_symlink_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             for p in ['../x','/x','x/../y','x\\y']:
-                with self.assertRaises(ValueError):source_inputs.safe_file(Path(d),p)
+                with self.assertRaises(ValueError):source_inputs.safe_file(Path(d).resolve(strict=True),p)
 
 class TreeMetadataTests(unittest.TestCase):
     def root(self):return json.loads((HERE/'provenance/root-tree.json').read_text())
@@ -124,8 +126,10 @@ class SymbolTests(unittest.TestCase):
             with self.assertRaises(ValueError):symbols.exported(self.new()+'\n'+bad)
     def test_empty_nm_rejected(self):
         with self.assertRaises(ValueError):symbols.exported('')
-    def map_fixture(self):
-        t=tempfile.TemporaryDirectory();self.addCleanup(t.cleanup);lib=Path(t.name)/'libimobiledevice.a';lib.write_bytes(b'fixture')
+    def map_fixture(self, temp_parent=None):
+        t=tempfile.TemporaryDirectory(dir=temp_parent);self.addCleanup(t.cleanup)
+        # Match production's canonical owned build root, including macOS temp aliases.
+        lib=Path(t.name).resolve(strict=True)/'libimobiledevice.a';lib.write_bytes(b'fixture')
         text='# Object files:\n[ 1] '+str(lib)+'[41](sha512.o)\n[ 2] '+str(lib)+'[81](sha512.o)\n[ 3] '+str(lib)+'(api.o)\n# Symbols:\n'
         for name in sorted(symbols.REQUIRED|symbols.GLUE|symbols.ED):
             owner=1 if name in symbols.ED else 2 if name in symbols.GLUE else 3
@@ -133,6 +137,20 @@ class SymbolTests(unittest.TestCase):
         return lib,text
     def test_map_owns_all_globals_and_both_families(self):
         lib,text=self.map_fixture();r=symbols.link_ownership(text,lib,symbols.REQUIRED|symbols.GLUE|symbols.ED);self.assertNotEqual(r['ed25519_sha512_member'],r['glue_sha512_member'])
+    def test_owned_fixture_canonicalizes_symlinked_temporary_root(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d).resolve(strict=True);real=root/'real';real.mkdir();alias=root/'alias';alias.symlink_to(real,target_is_directory=True)
+            lib,text=self.map_fixture(alias)
+            self.assertEqual(lib,lib.resolve(strict=True))
+            self.assertTrue(lib.is_relative_to(real))
+            symbols.link_ownership(text,lib,symbols.REQUIRED|symbols.GLUE|symbols.ED)
+    def test_raw_alias_map_is_still_rejected_by_production_owner_check(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d).resolve(strict=True);real=root/'real';real.mkdir();alias=root/'alias';alias.symlink_to(real,target_is_directory=True)
+            lib,text=self.map_fixture(alias)
+            noncanonical=text.replace(str(real),str(alias))
+            with self.assertRaisesRegex(ValueError,'wrong archive owner'):
+                symbols.link_ownership(noncanonical,lib,symbols.REQUIRED|symbols.GLUE|symbols.ED)
     def test_dead_stripped_symbol_not_accepted(self):
         lib,text=self.map_fixture();text=text.replace('0x1000 0x40 [ 2] _sha512\n','# Dead Stripped Symbols:\n0x1000 0x40 [ 2] _sha512\n')
         with self.assertRaises(ValueError):symbols.link_ownership(text,lib,symbols.REQUIRED|symbols.GLUE|symbols.ED)
@@ -154,6 +172,31 @@ class BuildContractTests(unittest.TestCase):
         self.assertNotIn("'Integration/Dependencies/idevice/**'",w)
         self.assertNotIn('brew install',w);self.assertNotIn('brew upgrade',w)
         self.assertIn('(deny network*)',w)
+    def test_early_failure_retains_context_log_and_pipefail(self):
+        workflow=(HERE.parents[2]/'.github/workflows/c-provider-native.yml').read_text()
+        block=workflow.split('      - name: Portable contract checks\n',1)[1].split('      - name:',1)[0]
+        body=block.split('        run: |\n',1)[1]
+        script='\n'.join(line[10:] if line.startswith('          ') else line for line in body.splitlines())
+        for failure in ('portable','host'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as d:
+                root=Path(d).resolve(strict=True)
+                env={'PATH':os.environ['PATH'],'GITHUB_SHA':'a'*40,'GITHUB_RUN_ID':'123',
+                     'GITHUB_RUN_ATTEMPT':'1','GITHUB_JOB':'c-provider','LANG':'C','LC_ALL':'C'}
+                if 'TMPDIR' in os.environ:env['TMPDIR']=os.environ['TMPDIR']
+                if failure=='host':
+                    # One synthetic passing test reaches the missing host-suite error.
+                    tests=root/'Integration/Dependencies/libimobiledevice/tests';tests.mkdir(parents=True)
+                    (tests/'test_fixture.py').write_text('import unittest\nclass Fixture(unittest.TestCase):\n    def test_pass(self): self.assertTrue(True)\n')
+                # Missing suite paths deliberately fail before any native work.
+                run=subprocess.run(['/bin/bash','-c',script],cwd=root,env=env,
+                                   stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=15)
+                self.assertNotEqual(run.returncode,0)
+                evidence=root/'.c-provider/evidence'
+                self.assertEqual(json.loads((evidence/'early-run-context.json').read_text())['source_commit'],'a'*40)
+                self.assertTrue((evidence/'portable-contracts.log').read_text())
+                if failure=='portable':self.assertFalse((evidence/'host-contracts.log').exists())
+                else:self.assertTrue((evidence/'host-contracts.log').read_text())
+                self.assertIn('            .c-provider/evidence/',workflow)
     def test_force_load_and_declared_frameworks_retained(self):
         b=(HERE/'build_provider.py').read_text()
         for required in ['-force_load','CoreFoundation','SystemConfiguration','link_ownership','internal_global_definitions_unique']:
