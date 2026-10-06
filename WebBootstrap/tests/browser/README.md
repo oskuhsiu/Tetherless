@@ -1,10 +1,8 @@
 # Static browser QA candidate
 
-This is a test-only change. It does not enable Apple authentication, deploy Pages,
-change the app/service, or establish Safari/iPhone installation acceptance. The
-existing README's `/usr/bin/chromium`/`CHROMIUM_PATH` instruction is superseded by
-the portable bundled-browser steps below. No production dependency changes are
-required.
+This isolated browser suite tests the static frontend with synthetic inputs. It
+does not enable Apple authentication, deploy Pages, publish a release or establish
+Safari/iPhone installation acceptance. Production dependency pins are unchanged.
 
 ## Toolchain and execution
 
@@ -29,7 +27,7 @@ node node_modules/playwright/cli.js install --with-deps chromium
 npm run test:browser
 ```
 
-`npm run test:browser -- --list --reporter=list` discovers the 18 cases without opening a browser
+`npm run test:browser -- --list --reporter=list` discovers the 24 cases without opening a browser
 or starting the server. `harness.test.mjs` also does not listen on a socket: it
 checks the static response function directly using temporary synthetic files.
 The `playwright.config.js` webServer starts the static server only for actual
@@ -38,10 +36,11 @@ where it is denied.
 
 The CI setup steps may acquire official Node/npm/Playwright and operating-system
 browser dependencies. Runtime tests use synthetic certificates, profiles and the
-existing synthetic Mach-O fixture. They never start `WebBootstrapService`, send
-Apple credentials or provisioning requests, or contact an Apple service.
+existing synthetic Mach-O fixture. They never start `WebBootstrapService`, send real Apple credentials or real
+provisioning requests, or contact an Apple service. The guided fixture accepts
+only fixed synthetic values on exact localhost API routes.
 
-Every test's automatic context fixture allows only GET/HEAD within its exact
+Each static test's automatic context fixture allows only GET/HEAD within its exact
 localhost origin and active project path. Same-origin Blob URLs remain allowed.
 Unexpected requests fail the test and are aborted; WebSockets never connect;
 service workers are blocked. This is an application-request guard, not a firewall
@@ -55,7 +54,9 @@ then falls through to the same guard without substituting bytes or signing outpu
 The original six cases run twice, once at `/` and once at `/Tetherless/`. They
 cover closed Apple credential entry on static hosting, rights consent, wrong P12
 password with recovery, real WASM signing and embedded-profile equality, immediate
-inspection cancellation with recovery, and a 390 by 844 mobile layout screenshot.
+inspection cancellation with recovery, and a 390 by 844 mobile layout screenshot of the compact default journey.
+The mobile case checks that technical/manual/sign/install panels are initially
+hidden, both missing prerequisites are visible, and manual/back controls work.
 
 Three additional cases per path cover:
 
@@ -78,13 +79,43 @@ The screenshots and traces contain synthetic test inputs only. A failed setup or
 earlier test may prevent screenshots from existing; artifact presence is not a
 passing browser result. CI runner images and OS packages are not content-pinned.
 
+## Separate synthetic guided-account cases
+
+`guided-test.mjs` leaves the static request policy unchanged. Its own guard allows
+only exact localhost/project-path health/config/login/session/2FA/team/provision
+routes and methods, answered entirely in process by `guided-service.mjs`. Only
+fixed `.invalid` login values and a fixed synthetic code/device/Team/App are
+accepted. Unknown API paths, external requests and WebSockets are denied. Static
+assets and real dedicated workers still come from the same bounded preview
+server. Service workers remain blocked. The guard is not a host-level firewall.
+
+Three additional cases run at both `/` and `/Tetherless/`:
+
+1. Custom IPA independent of a missing official Release; explicit login and
+   mutation consent, synthetic 2FA, exact bundle preview, local CSR generation,
+   matching synthetic certificate/profile, then real browser WASM signing and
+   embedded-profile/download verification
+2. A held synthetic login response is cancelled, a new login progresses, and
+   the old response cannot change the new view
+3. Uncertain provisioning retries the identical CSR/request and signs once;
+   a later held provisioning response cancelled before completion cannot restore
+   output or begin another signing worker
+
+The fixture has no real Apple data or endpoint. `guided-fixture.test.mjs` also
+checks its allowlist, synthetic-only login, CSR/cert identity and actual WASM
+signing offline. Those checks are not browser execution. The full-path case
+retains synthetic mutation-preview and signed-but-install-blocked screenshots.
+
 ## Evidence limits and workflow interactions
 
-The proposed workflow has not been published or dispatched by this candidate.
-Browser tests have not run in the preparation environment because localhost and
-browser IPC were denied. Offline syntax/config/discovery/harness/unit/build checks
-are separate evidence. Browser screenshots, request interception and cancellation
-behavior still require execution in a supported authorized environment.
+The preceding frontend passed the published workflow in run 37420583887 (18/18).
+That run includes real Chromium screenshots and actual WASM synthetic signing.
+The progressive UI/Release candidate updates the original 18 static cases and
+adds six synthetic guided-account cases while preserving all original real
+signing/asset/cancellation assertions. It
+still requires a new run on its exact published SHA. Browser tests are not run
+in this preparation environment because localhost/browser IPC are restricted;
+syntax/config/discovery/harness/unit/build checks are separate evidence.
 
 Even a green result establishes only Chromium execution with a synthetic signing
 identity. It does not validate Apple CMS trust, real Apple provisioning, Safari,

@@ -1,0 +1,40 @@
+# Allowlist context; never send local credentials, Rust caches, target, uploads,
+# or old candidate artifacts to a Docker builder.
+**
+!LICENSE
+!WebBootstrap/
+!WebBootstrap/**
+!Tools/
+!Tools/WebBootstrapService/
+!Tools/WebBootstrapService/README.md
+!Tools/WebBootstrapService/Cargo.toml
+!Tools/WebBootstrapService/Cargo.lock
+!Tools/WebBootstrapService/src/
+!Tools/WebBootstrapService/src/**
+!Tools/WebBootstrapService/tests/
+!Tools/WebBootstrapService/tests/**
+!Tools/WebBootstrapService/deployment/
+!Tools/WebBootstrapService/deployment/**
+**/node_modules
+**/dist
+**/target
+**/.toolchain
+**/.env*
+**/.git
+**/*secret*
+**/*.pem
+**/*.p8
+**/*.mobileprovision
+**/.npmrc
+**/.netrc
+**/.git-credentials
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.ipa
+**/test-results
+**/playwright-report
+**/qa-evidence
+
+# Public synthetic CSR required by backend tests (not a private key).
+!Tools/WebBootstrapService/tests/fixtures/request.pem

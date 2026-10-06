@@ -20,21 +20,35 @@ GitHub Pages project subpath works. No deployment workflow or Pages setting is
 changed by this implementation. Publish only after the deployment is separately
 authorized and tested.
 
-`npm run test:browser` runs the Playwright suite, using `CHROMIUM_PATH` or
-`/usr/bin/chromium`. `npm run check` requires those browser tests in addition to
+`npm run test:browser` runs the Playwright suite using its pinned, managed Chromium
+revision (see `tests/browser/README.md` for acquisition and restrictions). `npm run check` requires those browser tests in addition to
 unit tests/build and must not be described as passing while browser access is
 blocked. See `../docs/WEB_BOOTSTRAP.md` for current evidence and gates.
 
-## Two distinct routes
+## Progressive default and advanced manual route
 
-1. **Existing certificate/profile:** choose your IPA, P12 and all bundle profiles;
-   inspect basic bounds and consistency; sign with the real local WASM engine;
-   download output. It does not produce a new Apple identity or install the app.
-2. **Apple Account (service required):** serve this built frontend from the same
-   separate HTTPS origin as `Tools/WebBootstrapService`. Its `/health` must
-   advertise protocol 1 and account availability before a password form appears.
-   The browser creates the private key/CSR. The service performs real SRP/2FA and
-   provisioning API calls; no mock provider is used in production.
+The default view starts with official Tetherless Release availability and the
+Apple-account journey. P12/profile/custom-file/hosting details are advanced
+choices. Required device identification, data/mutation consent and 2FA remain
+explicit. A single Team is selected and named automatically; multiple Teams stay
+user-selected. Approved provisioning feeds directly into local signing, with
+cancellation and original-request retry preserved.
+
+1. **Apple Account (service and verified App required):** serve the built frontend
+   from the same separate HTTPS origin as `Tools/WebBootstrapService`. Health
+   must advertise protocol 1 and account availability before credentials appear.
+   Profile-based device identification happens before login so a Settings round
+   trip need not repeat Apple authentication. The browser creates the private
+   key/CSR; the existing service performs SRP/2FA/provisioning calls.
+2. **Manual certificate/profile:** expand the advanced route, choose your IPA,
+   P12 and exact bundle profiles, acknowledge rights and sign locally. File
+   selection is preserved when switching modes; secrets/results are invalidated.
+
+`public/config.json` ships with both `accountServiceUrl` and `officialRelease`
+set to `null`. This is an honest unavailable state, not a runnable placeholder.
+No old release or third-party service is selected automatically. The official
+Release contract, pinned source/build/digest fields, bounded GitHub acquisition
+and exact-file CORS fallback are described in `../docs/WEB_BOOTSTRAP.md`.
 
 On GitHub Pages, set `public/config.json`'s `accountServiceUrl` only to the approved
 separate service origin before rebuilding. The Pages site provides an outbound

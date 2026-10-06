@@ -20,33 +20,76 @@ The new paths are isolated from native integration:
 
 Existing App/native CI/signing-admission paths are unchanged.
 
-## Implemented route
+## Progressive default journey
 
-1. Select a trusted IPA. No unverified Tetherless download is hardcoded.
-2. On a separately hosted service origin, optionally obtain a device UDID with a
-   ten-minute, challenge-bound Profile Service exchange. This requests UDID,
-   product and OS version only, not serial/IMEI, MDM enrollment or a trust root.
-3. Explicitly approve transmitting credentials to that service and anisette
-   identity data to the named anisette provider; perform SRP/GrandSlam and
-   trusted-device or SMS 2FA through actual pinned isideload APIs.
-4. Choose the Team and confirm device/App ID/certificate mutations. Browser
-   generates RSA2048/SHA256 CSR and retains the private key. The service receives
-   only the CSR, registers the selected resources and issues/reuses a matching
-   development certificate. It never silently revokes another certificate.
-5. For recognized Tetherless input IDs, also request exactly the artifact-derived
-   shared App Group and assign it to every supplied app/extension. Check each
-   returned profile's CMS signature integrity and metadata. Apple signer-chain
-   trust is not independently established.
-6. Assemble P12 in browser memory, check key/certificate/profile/Team/bundle/device
-   consistency, sign with the real zsign WASM engine in a disposable worker, and
-   check that each output bundle embeds exactly its intended profile.
-7. Download the signed IPA. **This is not installation.** The free Personal Team
-   Safari first-install transport remains unproved. The paid Ad Hoc-only helper
-   can generate a manifest and install URL for separately authorized user-owned
-   HTTPS hosting; it does not upload anything.
+The default view now shows the Apple-account journey, three compact progress
+steps and the official-release availability. P12, profile, custom IPA and paid
+Ad Hoc hosting controls are explicit advanced choices rather than four expanded
+forms. An empty service configuration remains visibly unavailable; the page
+cannot collect credentials or pretend to complete a login on static hosting.
 
-A second, already-materialized P12/profile route supports the same local signer.
-It is a distinct partial route, not a claim that account-only onboarding is done.
+1. Use the **official Tetherless GitHub Release** by default. The shipped
+   `officialRelease` value is `null`: no genuine current unsigned App asset exists
+   yet, so there is no fallback to an old release. A user may explicitly choose
+   a custom IPA or the existing manual certificate route instead.
+2. When the service advertises device-profile support, collect or enter the UDID
+   **before login**, with explicit device-data consent. The iOS Settings round
+   trip can clear the page's Apple session; doing it first avoids deliberately
+   asking for two logins. Only enrollment ID/expiry persist, never Apple secrets.
+   Device metadata is untrusted until the user confirms the target iPhone.
+3. Approve the named service/anisette data transmission and log in. Required
+   trusted-device/SMS 2FA is shown only when requested. A pinned official package
+   is acquired and hash checked before credentials are posted; cancellation or
+   consent revocation prevents that post. A missing/unreadable package blocks
+   the official route without silently switching sources.
+4. The actual IPA bundle IDs and derived App Group are inspected and displayed
+   before mutation consent, and the session stays bound to that exact IPA. A
+   single Team is selected and named automatically; multiple Teams remain an
+   explicit choice. Confirm the device, rights to the IPA, and device/App ID/
+   certificate/App Group mutations. One approval starts CSR/key generation,
+   provisioning, P12 assembly, bounded inspection and local WASM signing. There
+   is no separate P12 upload, profile upload or second Sign click in this route.
+5. Uncertain provisioning keeps the original private key, exact request, IPA and
+   selection. Retry queries that same request, with inputs frozen; it does not
+   issue another key/certificate. Cancellation/expiry discards it and warns that
+   committed Apple actions are not undone.
+6. Signed output opens **installation guidance, not an installed state**. Direct
+   free Personal Team installation remains visibly disabled. The existing manual
+   paid Ad Hoc helper can expose an explicit `itms-services` handoff only after
+   local signing with eligible profiles, device binding and the user's HTTPS
+   manifest. It neither uploads files nor verifies remote content or installation.
+
+The browser's private key remains local. Exact bundle IDs and recognized
+Tetherless App Groups are preserved. System profile/installation, trust and
+Developer Mode confirmations must be completed by the user; they are not
+represented as automatable.
+
+### Official Release contract
+
+`WebBootstrap/public/config.json` contains `accountServiceUrl` and
+`officialRelease`. Both are `null` in this candidate. A deployment owner must
+review the actual release/build evidence before filling in this manifest:
+
+- `repository` (exactly `oskuhsiu/Tetherless`), `tag`, `assetId`, `assetName`, `assetUrl`
+- `size` (integer bytes, at most 150 MiB), `sha256` (64 lowercase hex)
+- `sourceCommit`, `buildHeadSha` (40 lowercase hex), `buildRunId`,
+  `runAttempt` (positive integer)
+
+Asset/run IDs are decimal strings. The asset URL must exactly match
+`https://github.com/{repository}/releases/download/{encoded tag}/{encoded assetName}`.
+The pinned configuration is the trust root, not an unauthenticated lookup of
+`latest`. It records source/build identities for review; the browser does not
+independently attest the build. Before adopting downloaded or locally selected
+official bytes it checks exact size and SHA-256. Direct GitHub acquisition is
+credential-free, no-referrer, CORS-only, limited to 120 seconds and 150 MiB, with
+an incremental exact-size cap shared with the existing archive parser input
+budget. The 150 MiB cap is unchanged; the not-yet-produced actual Tetherless App
+has not demonstrated that it fits. A larger artifact fails early with a clear
+size error and requires a separately measured/reviewed budget decision. Only GitHub and its release-assets redirect host
+are allowed by the page CSP. Missing assets, CORS failures, digest mismatches and
+cancellation leave the official path blocked. The same pinned asset may be
+manually downloaded and selected for the same hash check. No proxy, endpoint
+selection, release publication, backend hosting extension or deployment is added.
 
 ## Tetherless identity and handoff
 
@@ -78,6 +121,10 @@ Never recommend uninstalling first as the normal update procedure.
 
 ## Data and cancellation
 
+- Same-origin service/health/config/delete requests may carry the deployment
+  gate cookie; route origins are enforced and service/enrollment redirects are
+  rejected, including cleanup requests. GitHub acquisition omits credentials
+  and referrers. There is no cross-origin credential API
 - Apple password/2FA/session: transient service memory; bearer kept in JS memory,
   never URL, browser storage or deliberate logs
 - RSA private key/P12/profile/IPA/output: current browser memory only; cancel/clear
@@ -128,12 +175,21 @@ release HTTP/static/Origin/Host/body-limit checks. Tests exercise synthetic CSR/
 nonce/replay/expiry/cancellation, parser lifetime and idempotence. No live Apple
 traffic was used.
 
-Browser acceptance did **not** run: local Chromium launch was blocked by the
-execution environment's IPC restriction, including an approved escalation, and
-the cloud browser blocked localhost. No restriction workaround was attempted.
-The Playwright suite remains available for a suitable authorized environment.
-No Safari/iPhone, visual mobile-layout, real profile installation, live 2FA, real
-Apple certificate/profile, OTA or native self-update acceptance is claimed.
+The preceding frontend passed actual Chromium CI in
+[run 37420583887](https://github.com/oskuhsiu/Tetherless/actions/runs/37420583887):
+**18/18** root/project-subpath cases, including actual WASM signing of synthetic
+IPAs, download inspection, binary plist worker loading, cancellation/retry,
+Back/clear behavior and mobile screenshots. The screenshot used to design this
+simplification is real Chromium output from that run, not a mockup.
+
+That run does **not** validate this new progressive UI delta. This candidate's
+Node/DOM tests, static build, request-guard harness and browser-test discovery
+are separate checks. The updated 24-case actual-browser suite (18 static plus six separately guarded
+synthetic account cases) must run on the
+exact published delta, and its new mobile screenshots must be inspected. No
+localhost/IPC restriction workaround was attempted in this environment.
+No Safari/iPhone, real profile installation, live 2FA, real Apple certificate/
+profile, free-Team installation or native self-update acceptance is claimed.
 
 `npm audit --omit=dev` reports one unpatched high-severity node-forge signature
 verification advisory, GHSA-86w9-cpqp-85rv. The application does not use that
@@ -146,7 +202,8 @@ claim. Runtime hashes establish the retrieved pin, not a reproducible WASM rebui
 1. Choose and authorize a separately hosted HTTPS service origin. Account-password
    transactions do not belong on GitHub Pages. No provider, spending, sharing or
    deployment has been authorized by this code change.
-2. Run the included browser suite and inspect phone layout in an authorized browser.
+2. Re-run the updated browser suite on this exact UI delta and inspect its phone
+   screenshots; prior run 37420583887 validates only the preceding implementation.
 3. Bind a genuine unsigned Tetherless artifact using its source commit and SHA-256;
    verify all emitted IDs and default entitlements before offering a download.
 4. With separately authorized account actions, validate free-Team login/2FA,

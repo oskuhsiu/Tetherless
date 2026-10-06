@@ -1,0 +1,119 @@
+name: Web bootstrap deployment package
+
+on:
+  push:
+    branches: [develop, verify/staged-pairing-native]
+    paths:
+      - 'WebBootstrap/**'
+      - 'Tools/WebBootstrapService/**'
+      - '.github/workflows/web-bootstrap-deployment.yml'
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'WebBootstrap/**'
+      - 'Tools/WebBootstrapService/**'
+      - '.github/workflows/web-bootstrap-deployment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-bootstrap-deployment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-nonaccount:
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/verify/staged-pairing-native' || github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      CI: 'true'
+      IMAGE: tetherless-web-test:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Record exact source and pinned build inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployment-evidence
+          git rev-parse HEAD > deployment-evidence/implementation-sha.txt
+          git ls-files -z -- WebBootstrap Tools/WebBootstrapService .github/workflows/web-bootstrap-deployment.yml LICENSE |
+            sort -z | xargs -0 sha256sum > deployment-evidence/source.sha256
+          docker version > deployment-evidence/docker-version.txt
+          node --version > deployment-evidence/local-node.txt
+          cp Tools/WebBootstrapService/deployment/base-images.json deployment-evidence/
+      - name: Proxy and supervisor regression tests (synthetic loopback only)
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 \
+            Tools/WebBootstrapService/deployment/tests/proxy.test.mjs \
+            Tools/WebBootstrapService/deployment/tests/supervisor.test.mjs \
+            2>&1 | tee deployment-evidence/proxy-supervisor-tests.txt
+      - name: Build actual Linux image from locked source
+        timeout-minutes: 25
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --platform linux/amd64 --progress=plain \
+            --build-arg SOURCE_COMMIT="${GITHUB_SHA}" \
+            --file Tools/WebBootstrapService/deployment/Dockerfile \
+            --tag "$IMAGE" . 2>&1 | tee deployment-evidence/docker-build.txt
+          docker image inspect "$IMAGE" > deployment-evidence/image-inspect.json
+          test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$IMAGE")" = "$GITHUB_SHA"
+          docker image inspect --format '{{.Id}}' "$IMAGE" > deployment-evidence/image-id.txt
+      - name: Start exact image with all external networking disabled
+        timeout-minutes: 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Public fixture only. Never use a real code, password or account here.
+          TEST_DIGEST=$(node -e "process.stdout.write(require('node:crypto').createHash('sha256').update('Z'.repeat(43)).digest('hex'))")
+          TEST_END=$(date -u -d '+1 hour' '+%Y-%m-%dT%H:%M:%SZ')
+          docker run --detach --name tetherless-offline-smoke --network none --read-only \
+            --mount "type=bind,source=$PWD/Tools/WebBootstrapService/deployment/tests,target=/verification,readonly" \
+            --env FRONTEND_ORIGIN=https://bootstrap.example.com \
+            --env TETHERLESS_PUBLIC_HOST=bootstrap.example.com \
+            --env TETHERLESS_TEST_ACCESS_SHA256="$TEST_DIGEST" \
+            --env TETHERLESS_TEST_EXPIRES_AT="$TEST_END" \
+            "$IMAGE"
+          test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' tetherless-offline-smoke)" = none
+          test "$(docker inspect --format '{{.Image}}' tetherless-offline-smoke)" = "$(cat deployment-evidence/image-id.txt)"
+          docker inspect --format '{"image":{{json .Image}},"networkMode":{{json .HostConfig.NetworkMode}},"readOnly":{{json .HostConfig.ReadonlyRootfs}},"user":{{json .Config.User}}}' \
+            tetherless-offline-smoke > deployment-evidence/container-isolation.json
+          docker cp tetherless-offline-smoke:/app/build-info deployment-evidence/build-info
+          test "$(cat deployment-evidence/build-info/source-commit.txt)" = "$GITHUB_SHA"
+      - name: Smoke production entrypoint through loopback inside isolated container
+        timeout-minutes: 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec tetherless-offline-smoke node /verification/container-smoke.mjs \
+            2>&1 | tee deployment-evidence/container-smoke.txt
+          docker exec tetherless-offline-smoke node /app/deployment/healthcheck.mjs
+          docker stop --time 15 tetherless-offline-smoke
+          test "$(docker inspect --format '{{.State.ExitCode}}' tetherless-offline-smoke)" = 0
+          docker logs tetherless-offline-smoke > deployment-evidence/container-lifecycle.txt 2>&1
+          # Exact fixed log only: no request, header, enrollment capability or cookie.
+          printf 'Tetherless bounded test service ready. Request logging is disabled.\n' > deployment-evidence/expected-lifecycle.txt
+          cmp deployment-evidence/expected-lifecycle.txt deployment-evidence/container-lifecycle.txt
+      - name: Remove only this synthetic test container
+        if: always()
+        shell: bash
+        run: docker rm --force tetherless-offline-smoke 2>/dev/null || true
+      - name: Retain image identity and exact-source nonaccount verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: web-bootstrap-deployment-${{ github.sha }}-${{ github.run_attempt }}
+          path: deployment-evidence/
+          retention-days: 14
+          if-no-files-found: error

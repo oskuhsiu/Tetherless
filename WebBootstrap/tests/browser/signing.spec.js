@@ -9,6 +9,7 @@ test.beforeAll(async () => {
   fixture = { ipa: Buffer.from(await makeIpa()), binaryIpa: await makeBinaryIpa(), ...makeMaterial() };
 });
 async function fill(page, ipa = fixture.ipa) {
+  if (await page.locator('#files-mode').isVisible()) await page.locator('#files-mode').click();
   await page.setInputFiles('#ipa', { name: 'Fixture.ipa', mimeType: 'application/zip', buffer: ipa });
   await page.setInputFiles('#p12', { name: 'test.p12', mimeType: 'application/x-pkcs12', buffer: fixture.p12 });
   await page.setInputFiles('#profiles', { name: 'test.mobileprovision', mimeType: 'application/octet-stream', buffer: fixture.profile });
@@ -42,16 +43,16 @@ async function assertSignedDownload(page, input = fixture.ipa) {
 // The original six cases remain, and each runs at root and the real project path.
 test('static page never presents an Apple password field and stays local', async ({ page, baseURL, localTraffic }) => {
   await page.goto('.');
-  await page.locator('#account-mode').click();
   await expect(page.locator('#apple-password')).toBeHidden();
   await expect(page.locator('#account-unavailable')).toContainText('不收集 Apple 密碼');
-  await expect(page.locator('body')).toContainText('免費帳號的 Safari 首裝尚未實機驗證');
+  await expect(page.locator('body')).toContainText('免費 Personal Team 的 Safari 首裝仍待實機驗證');
   await expect.poll(() => localTraffic.responses.some((r) => r.url === new URL('config.json', baseURL).href && r.status === 200)).toBe(true);
   expect(localTraffic.blocked).toEqual([]);
 });
 
 test('requires explicit rights acknowledgement', async ({ page, localTraffic }) => {
   await page.goto('.');
+  await page.locator('#files-mode').click();
   await page.locator('#sign').click();
   await expect(page.locator('#status')).toContainText('確認你有權');
   expect(localTraffic.workers).toEqual([]);
@@ -103,14 +104,24 @@ test('cancel during inspection cannot publish a stale successful result', async 
   await assertSignedDownload(page);
 });
 
-test('mobile layout has no horizontal overflow and exposes the local workflow', async ({ page }, testInfo) => {
+test('mobile layout keeps the default journey compact and manual signing progressive', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('.');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.locator('#p12')).toBeVisible();
+  await expect(page.locator('#p12')).toBeHidden();
+  await expect(page.locator('#signing-panel')).toBeHidden();
+  await expect(page.locator('#install-panel')).toBeHidden();
+  await expect(page.locator('#account-unavailable')).toBeVisible();
+  await expect(page.locator('#release-status')).toContainText('尚未綁定');
+  await expect(page.locator('#app-source')).toHaveValue('official');
   const screenshot = testInfo.outputPath('mobile-bootstrap.png');
   await page.screenshot({ path: screenshot, fullPage: true });
   await testInfo.attach('mobile-bootstrap', { path: screenshot, contentType: 'image/png' });
+  await page.locator('#files-mode').click();
+  await expect(page.locator('#p12')).toBeVisible();
+  await page.locator('#account-mode').click();
+  await expect(page.locator('#p12')).toBeHidden();
+  await expect(page.locator('#account-unavailable')).toBeVisible();
 });
 
 test('built assets, binary plist worker, and signing WASM resolve under the active project path', async ({ page, baseURL, localTraffic }) => {
