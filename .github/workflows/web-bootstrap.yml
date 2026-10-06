@@ -1,0 +1,93 @@
+name: Web bootstrap browser QA
+
+on:
+  push:
+    branches: [develop, verify/staged-pairing-native]
+    paths:
+      - 'WebBootstrap/**'
+      - '.github/workflows/web-bootstrap.yml'
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'WebBootstrap/**'
+      - '.github/workflows/web-bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-bootstrap-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-browser-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: WebBootstrap
+        shell: bash
+    env:
+      CI: 'true'
+      npm_config_audit: 'false'
+      npm_config_fund: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Record source identity and lock hashes
+        run: |
+          mkdir -p qa-evidence
+          git rev-parse HEAD > qa-evidence/implementation-sha.txt
+          sha256sum package-lock.json runtime-lock.json > qa-evidence/locks.sha256
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: '24.19.0'
+          package-manager-cache: false
+      - name: Acquire lockfile dependencies (network allowed only for setup)
+        timeout-minutes: 4
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Record locked toolchain
+        run: |
+          node --version > qa-evidence/node-version.txt
+          npm --version > qa-evidence/npm-version.txt
+          node - <<'NODE' > qa-evidence/playwright-browser-lock.json
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          assert.equal(process.versions.node, '24.19.0');
+          for (const name of ['@playwright/test', 'playwright', 'playwright-core']) {
+            assert.equal(require(`${name}/package.json`).version, '1.58.2');
+          }
+          const lock = JSON.parse(fs.readFileSync('node_modules/playwright-core/browsers.json', 'utf8'));
+          const chromium = lock.browsers.filter((b) => ['chromium', 'chromium-headless-shell'].includes(b.name));
+          assert.equal(chromium.length, 2);
+          for (const browser of chromium) {
+            assert.equal(browser.revision, '1208');
+            assert.equal(browser.browserVersion, '145.0.7632.6');
+          }
+          console.log(JSON.stringify(chromium, null, 2));
+          NODE
+      - name: Unit tests and verified static build (no Apple service)
+        timeout-minutes: 3
+        run: |
+          npm test
+          npm run build
+          node --test tests/browser/harness.test.mjs
+      - name: Acquire locked Playwright Chromium (official dependencies)
+        timeout-minutes: 4
+        run: node node_modules/playwright/cli.js install --with-deps chromium
+      - name: Run request-gated local browser tests (synthetic inputs only)
+        timeout-minutes: 9
+        run: npm run test:browser
+      - name: Retain exact-source evidence, browser reports, traces and mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: web-bootstrap-qa-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            WebBootstrap/qa-evidence/
+            WebBootstrap/playwright-report/
+            WebBootstrap/test-results/
+          retention-days: 14
+          if-no-files-found: error
