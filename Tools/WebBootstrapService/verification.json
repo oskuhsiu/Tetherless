@@ -1,0 +1,34 @@
+{
+  "dateUTC": "2026-10-06",
+  "scope": "Independent WebBootstrapService; synthetic/no-account tests only",
+  "toolchain": {
+    "rustc": "1.99.0 (b940084d7 2026-09-28)",
+    "cargo": "1.99.0 (5f94df478 2026-08-27)",
+    "openssl": "3.5.7"
+  },
+  "isideloadRevision": "dd442588370060b8776b1276a1acd717b6668b26",
+  "checks": {
+    "cargoTestLockedAllTargets": {
+      "passed": 19,
+      "failed": 0
+    },
+    "cargoClippyLockedAllTargetsDWarnings": "passed",
+    "cargoFmtCheck": "passed",
+    "cargoBuildLockedRelease": "passed",
+    "releaseHTTPHealthStaticOriginHostBodyLimit": "passed"
+  },
+  "liveAppleAuthentication": false,
+  "liveDeviceOrProfileInstallation": false,
+  "releaseBinarySHA256": "a57763bf0248f3fd0f97027bba3a4da3aaf5ea2a7e35a8e1d6897534a80aac1e",
+  "sourceSHA256": {
+    "Cargo.toml": "08a887faf90391c813bf39e0bd11590c546a84bba17e4d3301493c4ebfba3b39",
+    "Cargo.lock": "a682b4f53c32039823e4be971a8729c5862d6b4b69952286adbb3b76e20b649b",
+    "src/apple.rs": "3b324b50c49a89d6b757f3540f04ba0ed5afb53dd63a4afd6850f23ab970cf32",
+    "src/enrollment.rs": "66cc538fdefa93b1a4f5901ab3c9602cac92631c36171649668c67446c3dadf2",
+    "src/main.rs": "011c9d87bf8ca021590e02b77aea260dbeb557f71bf0feda581c606232bef444",
+    "src/model.rs": "0fe9e675d35ddd91f9b1dc1ea1b9df1f21d0063d3e506adf94618775091f6c66",
+    "tests/fixtures/request.pem": "b6b0d2df80cb74676ce5572033f839a6f6b34e9ddc1554a7fe635cc3d4f0feaf",
+    "tests/fixtures/certificate.der": "5a0c223ff37dd3160a4b6f9996c67988bcd2f5d964f92943a5b8ad221047490b",
+    "tests/fixtures/other-certificate.der": "4b5fa2653d9780cbaf920400e15f51e82aa680da68cbece73db72b1abb37ff74"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "package": "@plist/binary.parse",
+  "version": "1.1.0",
+  "source": "https://github.com/mat-sz/plist/tree/c300f9fa63b3bba2f9ec3e246ef03b9c06b10027",
+  "npm_integrity": "sha512-0Bkyt9rCZnlEHQghafWStePBMquIne+9Z9nFTns8OF3ku4QsQ2HMdSSM1MvQfc+6JOU0Q5JlGvAPEUtP9meFsw==",
+  "original_file": "lib/esm/index.js",
+  "original_sha256": "55f3ba4d54aa2940dd7621631067976d46342f419702443398ac9d69fd40851e",
+  "patched_sha256": "b010a557efa350c618cff67e235ee5dc908220eb74cbd9737f60c0cda7b4378c",
+  "license": "BSD-3-Clause-Clear",
+  "changes": [
+    "metadata byte/object limits",
+    "object visits/depth/cycle budget",
+    "cumulative data/string materialization budget",
+    "basic reference/table bounds",
+    "prototype-free dictionaries and duplicate keys",
+    "data normalized to Uint8Array"
+  ],
+  "scope": "Browser metadata only. No native certificate/Mach-O parser changes."
+}
