@@ -9,12 +9,13 @@ import argparse
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import sys
 
 import prepare_binding as prepare
 from native_handoff import add_handoff_arguments, context_from_args, verify_handoff
-from observe_compile import observe_compile
+from observe_compile import observe_compile, APP_C_ROOTS, APP_RUST_ROOTS, C_SYSTEM_FRAMEWORKS
 
 HERE = Path(__file__).resolve().parent
 COMPILE_TIMEOUT_SECONDS = 1800
@@ -83,7 +84,7 @@ def command(root: Path, work: Path, configuration: str, sdk: str, contract: dict
             "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO", "AD_HOC_CODE_SIGNING_ALLOWED=YES",
             "DEVELOPMENT_TEAM=XYZ0123456", "ORG_IDENTIFIER=com.SideStore", "ENABLE_DEBUG_DYLIB=NO",
             "LD_GENERATE_MAP_FILE=YES",
-            "LD_MAP_FILE_PATH=" + str(work / "evidence/link-maps/$(TARGET_NAME)-$(CURRENT_ARCH).map"),
+            "LD_MAP_FILE_PATH=" + str(work / "DerivedData/LinkMaps/$(TARGET_NAME)-$(CURRENT_ARCH).map"),
             "SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) " + " ".join(contract["required_conditions"])]
 
 
@@ -129,6 +130,7 @@ def run(args) -> dict:
     work.mkdir(parents=True)
     evidence = work / "evidence"
     evidence.mkdir()
+    (work / "DerivedData/LinkMaps").mkdir(parents=True)
     (evidence / "link-maps").mkdir()
     for name in ("home", "tmp"):
         (work / name).mkdir()
@@ -160,12 +162,19 @@ def run(args) -> dict:
         observed = observe_compile(evidence / "xcodebuild.txt", root, work / "DerivedData", contract,
                                    dict(binding, sdk_path=sdk), args.configuration,
                                    evidence_directory=evidence / "compiler-inputs")
-        link_map = prepare.safe_file(evidence, "link-maps/SideStore-arm64.map")
+        link_map = prepare.safe_file(work, "DerivedData/LinkMaps/SideStore-arm64.map")
         if not 0 < link_map.stat().st_size <= MAX_LOG_BYTES:
             raise ValueError("final app linker map is missing or outside the retained bound")
+        map_sha256 = observed["link"]["live_map_ownership"]["map_sha256"]
+        if prepare.file_hash(link_map) != map_sha256:
+            raise ValueError("final App linker map changed after observation")
+        retained_map = prepare.new_output_path(evidence, "link-maps/SideStore-arm64.map")
+        shutil.copyfile(link_map, retained_map)
+        if prepare.file_hash(retained_map) != map_sha256:
+            raise ValueError("retained final App linker map differs")
         result = {"schema": 1, "configuration": args.configuration, "mode": "diagnostic-only",
                   "binding_receipt_sha256": args.binding_receipt_sha256, "native_handoff": binding["native_handoff"],
-                  "link_map_sha256": prepare.file_hash(link_map),
+                  "link_map_sha256": map_sha256,
                   "observations": observed, "toolchain_observations": observations, "command": argv,
                   "compile_process_limits": {"seconds": COMPILE_TIMEOUT_SECONDS, "log_bytes": MAX_LOG_BYTES},
                   "app_binary_executed": False, "runtime_capability_gates_changed": False,

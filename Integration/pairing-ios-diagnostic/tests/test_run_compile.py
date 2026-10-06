@@ -49,6 +49,10 @@ class RunnerFixture:
         for row in self.f.fixture.receipt["targets"]:
             row["sdk_root"] = str(self.sdk)
             row["provider_receipt"]["framework_binary_sha256"] = prepare.digest(self.provider_bytes)
+        for row in self.f.fixture.receipt["targets"]:
+            identity = prepare.retained_c_provider.provider_identity(row["provider_receipt"])
+            row["mixed_provider"]["provider_identity"] = identity
+            self.f.fixture.c_targets[row["target"]["rust"]]["provider_identity"] = identity
         self.f.fixture.refresh(inventory=True)
         self.f.pack("apple-producer")
         self.f.refresh()
@@ -77,7 +81,14 @@ class RunnerFixture:
         put(processed / "libimobiledevice.a", b"controlled opaque C provider fixture\n")
         put(processed / "Headers/plist/plist.h", b"/* controlled opaque C plist header */\n")
         put(processed / "Headers/libimobiledevice/module.modulemap", b'module libimobiledevice [system] { header "../plist/plist.h" export * }\n')
-        put(self.args.work_dir / "evidence/link-maps/SideStore-arm64.map", b"controlled opaque final app linker map fixture\n")
+        c_provider = self.binding["native_artifact"]["targets"]["aarch64-apple-ios"]["mixed_provider"]
+        local_module = root / self.binding["local_c_device_files"]["module_map"]
+        for name in c_provider["header_inventory"]:
+            put(processed / "Headers" / name, (local_module.parent.parent / name).read_bytes())
+        from test_diagnostic_binding import synthetic_map
+        map_path = derived / "LinkMaps/SideStore-arm64.map"
+        put(map_path, synthetic_map(processed / "libimobiledevice.a", c_provider["symbols"],
+            processed / "libidevice_ffi.a", self.binding["native_artifact"]["rust_symbols"]["aarch64-apple-ios"]).encode())
         put(framework, self.provider_bytes)
         app_list, gateway_list = derived / "app.SwiftFileList", derived / "gateway.SwiftFileList"
         put(app_list, ("\n".join(shlex.quote(str(root / name)) for name in self.f.contract["prepared_composition_sources"] if name != self.omit_source) + "\n").encode())
@@ -95,6 +106,11 @@ class RunnerFixture:
         args = ["-target", "arm64-apple-ios17.0", "-isysroot", str(self.sdk), str(processed / "libidevice_ffi.a"), str(processed / "libimobiledevice.a"),
                 "-F", str(framework.parent.parent), "-framework", "OpenSSL", "-o",
                 str(derived / ("Build/Products/" + self.args.configuration + "-iphoneos/SideStore.app/SideStore"))]
+        args[0:0] = ["-map", str(map_path)]
+        for name in sorted(runner.C_SYSTEM_FRAMEWORKS):
+            args[0:0] = ["-framework", name]
+        for symbol in sorted(runner.APP_C_ROOTS | runner.APP_RUST_ROOTS):
+            args[0:0] = ["-u", symbol]
         output_path = derived / ("Build/Products/" + self.args.configuration + "-iphoneos/SideStore.app/SideStore")
         put(output_path, b"controlled opaque app output; never executed\n")
         rows += ["Ld SideStore.app/SideStore normal arm64 (in target 'SideStore' from project 'Controlled')",
@@ -133,6 +149,7 @@ class RunnerFixture:
         real_is_dir = Path.is_dir
         stack.enter_context(patch.object(Path, "is_dir", lambda p: str(p) == "/Applications/Xcode_26.3.app/Contents/Developer" or real_is_dir(p)))
         stack.enter_context(patch.object(prepare, "HERE", self.f.fixture.here))
+        stack.enter_context(self.f.fixture.mock_retained())
         stack.enter_context(patch.object(runner, "HERE", self.f.fixture.here))
         stack.enter_context(patch.object(runner, "load_supervisor", return_value=SimpleNamespace(capture_helper_command=self.capture)))
         return stack

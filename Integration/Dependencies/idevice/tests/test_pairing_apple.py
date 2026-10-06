@@ -86,11 +86,25 @@ class AppleFixture:
         self.toolchain = root / "toolchain.json"
         self.toolchain.write_bytes(canonical_json(self.config))
         self.args = SimpleNamespace(source=root / "input-source", crate_cache=self.cache, provider_inputs=root / "provider-source",
-            mixed_provider=root / "mixed-provider",
+            retained_c_provider=root / "retained-c-provider",
+            retained_c_handoff_sha256=sha256(b"controlled synthetic handoff fixture"),
             work_dir=root / "work", output=root / "published", toolchain_lock=self.toolchain,
             toolchain_lock_sha256=sha256(self.toolchain.read_bytes()), recipe_lock_sha256=sha256(index.read_bytes()))
-        self.args.mixed_provider.mkdir()
-        (self.args.mixed_provider / "authenticated-provider.zip").write_bytes(b"controlled opaque C provider archive fixture")
+        self.args.retained_c_provider.mkdir()
+        (self.args.retained_c_provider / "actions-artifact.zip").write_bytes(b"controlled opaque C provider archive fixture")
+        (self.args.retained_c_provider / "handoff.json").write_bytes(b"controlled synthetic handoff fixture")
+        for name, data in {
+            "product/matching-source.tar": b"controlled synthetic matching source fixture",
+            "product/NOTICE.md": b"controlled synthetic C notices fixture",
+            "product/producer-receipt.json": b"controlled synthetic C producer receipt fixture",
+        }.items():
+            path = self.args.retained_c_provider / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        for target in apple.TARGETS:
+            library = self.args.retained_c_provider / "product" / target["sdk"] / "libimobiledevice.a"
+            library.parent.mkdir(parents=True)
+            library.write_bytes(b"controlled opaque C library fixture")
         self.sdk = root / "sdk"
         self.sdk.mkdir()
         self.tool = root / "tool"
@@ -117,7 +131,7 @@ class AppleFixture:
         files = {"LICENSE.txt": b"controlled OpenSSL license\n"}
         for row in apple.TARGETS:
             framework = row["sdk"] + "/OpenSSL.framework"
-            self.contract["targets"][row["rust"]] = {"kind": "apple-framework", "header_root": framework + "/Headers",
+            self.contract["targets"][row["rust"]] = {"kind": "apple-framework-consumer", "header_root": framework + "/Headers",
                 "framework_root": framework, "framework_binary": framework + "/OpenSSL", "header_count": 2,
                 "native_library_input_paths": [], "environment_values": {"OPENSSL_LIBS": "", "OPENSSL_NO_VENDOR": "1"}}
             files.update({framework + "/Headers/ssl.h": b"controlled header\n",
@@ -152,13 +166,44 @@ class AppleFixture:
             raise AssertionError("expected authenticated derived vendor staging")
         return write_vendor(work, source)
 
-    def mixed_provider(self, root, target):
-        if root != self.args.mixed_provider:
-            raise AssertionError("unexpected mixed provider source")
-        # Honest orchestration fixture: no ZIP/native bytes are interpreted.
-        return {"target": target["rust"], "library": str(root / "libimobiledevice.a"),
-                "headers": str(root / "Headers"), "binary_format_inspected": False,
-                "fixture_sha256": sha256((root / "authenticated-provider.zip").read_bytes())}
+    def c_export_names(self):
+        retained = apple.retained_c_provider
+        names = retained.REQUIRED_C | retained.ED | retained.GLUE
+        if self.large_symbol_output:
+            names |= {"_synthetic_c_padding_" + str(i) for i in range(12000)}
+        return sorted(names)
+
+    def mixed_provider(self, root, target, *, expected_handoff_sha256):
+        if root != self.args.retained_c_provider:
+            raise AssertionError("unexpected retained C provider source")
+        if sha256((root / "handoff.json").read_bytes()) != expected_handoff_sha256:
+            raise VerificationError("controlled handoff hash differs")
+        # Only the artifact authentication boundary is synthetic. Real SDK,
+        # provider identity, full symbol and live-map validators still run.
+        selected = self.contract["targets"][target["rust"]]
+        return {"target": target["rust"], "library": str(root / "product" / target["sdk"] / "libimobiledevice.a"),
+                "headers": str(root / "product" / target["sdk"] / "Headers"), "binary_format_inspected": False,
+                "fixture_sha256": sha256((root / "actions-artifact.zip").read_bytes()),
+                "handoff_sha256": expected_handoff_sha256, "source_commit": "c" * 40,
+                "symbols": self.c_export_names(), "system_frameworks": ["CoreFoundation", "SystemConfiguration"],
+                "sdk": target["sdk"], "sdk_version": self.observations["sdk_" + target["sdk"] + "_version"],
+                "sdk_build": self.observations["sdk_" + target["sdk"] + "_build"], "xcode": self.observations["xcode"],
+                "provider_identity": {"target": target["rust"], "kind": selected["kind"],
+                    "source_commit": provider.COMMIT, "contract_sha256": provider.CONTRACT_SHA256,
+                    "framework_binary_sha256": sha256((self.args.provider_inputs / selected["framework_binary"]).read_bytes())}}
+
+    def map_fixture(self, target_name, rust_library, c_library):
+        namespace = json.loads((self.recipe / "namespace/contract.json").read_bytes())
+        rust = ["_" + n for n in namespace["expected_target_exports"][target_name]["after"]]
+        objects = ["# Object files:", "[ 1] " + str(c_library) + "(c.o)",
+                   "[ 2] " + str(c_library) + "(sha512-glue.o)",
+                   "[ 3] " + str(c_library) + "(sha512-ed.o)",
+                   "[ 4] " + str(rust_library) + "(rust.o)", "# Symbols:"]
+        for name in self.c_export_names():
+            owner = 2 if name in apple.retained_c_provider.GLUE else 3 if name in apple.retained_c_provider.ED else 1
+            objects.append("0x00000001 0x00000001 [ " + str(owner) + "] " + name)
+        objects += ["0x00000001 0x00000001 [ 4] " + name for name in rust]
+        return "\n".join(objects) + "\n"
 
     def prepare_provider(self, source, destination, target):
         receipt = provider.prepare_inputs(source, destination, target)
@@ -212,8 +257,7 @@ class AppleFixture:
                 namespace = json.loads((self.recipe / "namespace/contract.json").read_bytes())
                 output = "\n".join("_" + n for n in namespace["expected_target_exports"][target_name]["after"]) + "\n"
             else:
-                output = "\n".join("_" + n for n in ("plist_new_dict", "plist_free", "plist_array_set_item",
-                    "afc_client_free", "lockdownd_client_free", "idevice_free")) + "\n"
+                output = "\n".join(n for n in self.c_export_names() if not n.startswith("_synthetic_c_padding_")) + "\n"
         elif "-fsyntax-only" in argv:
             output = "controlled syntax-only header check\n"
         elif argv[:2] == [self.binaries["cargo"], "tree"]:
@@ -254,7 +298,8 @@ class AppleFixture:
                 raise AssertionError("unexpected native command")
             Path(argv[argv.index("-o") + 1]).write_bytes(b"opaque linked probe fixture; never executed\n")
             if "-map" in argv:
-                Path(argv[argv.index("-map") + 2]).write_bytes(b"controlled opaque linker map fixture\n")
+                archives = [argv[i + 2] for i, value in enumerate(argv) if value == "-force_load"]
+                Path(argv[argv.index("-map") + 2]).write_text(self.map_fixture(target_name, archives[0], archives[1]))
             output = "controlled ordinary link result\n"
         else:
             raise AssertionError("unapproved command would execute: " + repr(argv))
@@ -266,8 +311,10 @@ class AppleFixture:
         code = "import sys,time; sys.stdout.write(" + repr(output) + "); sys.stdout.flush()"
         options = dict(timeout_seconds=2, max_log_bytes=32768, tail_bytes=32768, term_grace_seconds=.2, kill_join_seconds=.2)
         if self.large_symbol_output and log.name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
-            padding = "_synthetic_" + ("rust" if log.name.startswith("04-rust") else "c") + "_padding\n"
-            code += "; sys.stdout.write(" + repr(padding) + " * 12000); sys.stdout.flush()"
+            if log.name.startswith("04-rust"):
+                code += "; sys.stdout.write('_synthetic_rust_padding\\n' * 12000); sys.stdout.flush()"
+            else:
+                code += "; sys.stdout.write(''.join('_synthetic_c_padding_' + str(i) + '\\n' for i in range(12000))); sys.stdout.flush()"
             options.update(max_log_bytes=1024 * 1024, tail_bytes=bounded_process.SUMMARY_TAIL_BYTES)
         if self.mutate and (self.fail == (target_name, log.name) or self.mutate_on == (target_name, log.name)):
             self.mutate(self)
@@ -286,10 +333,10 @@ class AppleFixture:
                               audit_inputs=provider.audit_inputs, check_build_script_output=provider.check_build_script_output)
         stack.enter_context(patch.object(apple, "HERE", self.recipe))
         for name, value in {"load_apple_profile": lambda: self.profile, "load_provider": lambda: api,
-                            "verify_mixed_provider": self.mixed_provider,
                             "native_environment": self.environment, "stage": self.stage, "prepare_offline_vendor": self.vendor,
                             "capture_helper_command": self.command}.items():
             stack.enter_context(patch.object(apple, name, side_effect=value))
+        stack.enter_context(patch.object(apple.retained_c_provider, "verify", side_effect=self.mixed_provider))
         return stack
 
 

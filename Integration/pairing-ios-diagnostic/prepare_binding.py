@@ -10,6 +10,7 @@ import shutil
 import sys
 from native_handoff import verify_handoff, add_handoff_arguments, context_from_args
 from namespace_gateway import GATEWAY_PATH, RENAMES as GATEWAY_RENAMES, transform_gateway
+from diagnostic_link_project import PROJECT_PATH, PROJECT_SHA256, PROJECT_GIT_BLOB, patch_project
 
 HERE = Path(__file__).resolve().parent
 # These are current-recipe helpers, not downloaded code. bind() authenticates
@@ -18,6 +19,7 @@ sys.path.insert(0, str(HERE.parent / "Dependencies/idevice"))
 try:
     import ffi_namespace
     import mixed_provider
+    import retained_c_provider
     import rust_symbol_reader
 finally:
     sys.path.pop(0)
@@ -27,6 +29,14 @@ OLD_TARGET = '''         .binaryTarget(
              url: "https://github.com/SideStore/idevice/releases/download/v0.1.68-ss-3e55c84/idevice-xcframework-v0.1.68-ss-3e55c84.zip#DeviceGateway",
              checksum: "445702d53942597deb4cdec2c4122d16a3f4ac124ce26cd75b68dab3dad92416"
          ),'''
+
+OLD_C_TARGET = '''        .binaryTarget(
+            name: "libimobiledevice",
+            url: "https://github.com/SideStore/libimobiledevice-xcframework/releases/download/1.4.0-ss-0f88f7b/libimobiledevice.xcframework.zip#DeviceGateway",
+            checksum: "7ccbdd56b074807461fc43d2e32ba92f20df2501a6c14cf9f64a917e7f3fe6e7"
+        ),'''
+C_ROOT = "provenance/retained-c-provider"
+C_PRODUCT = C_ROOT + "/product/libimobiledevice.xcframework"
 
 
 def digest(data: bytes) -> str:
@@ -92,7 +102,11 @@ def patched_gateway(original: bytes, contract: dict) -> bytes:
         raise ValueError("exact IDevice release declaration not found once")
     replacement = ('         .binaryTarget(\n             name: "IDevice",\n'
                    '             path: "' + expected["local_binary_path"] + '"\n         ),')
-    return source.replace(OLD_TARGET, replacement, 1).encode()
+    if source.count(OLD_C_TARGET) != 1:
+        raise ValueError("exact libimobiledevice release declaration not found once")
+    c_replacement = ('        .binaryTarget(\n            name: "libimobiledevice",\n'
+                     '            path: "' + expected["local_c_binary_path"] + '"\n        ),')
+    return source.replace(OLD_TARGET, replacement, 1).replace(OLD_C_TARGET, c_replacement, 1).encode()
 
 
 def new_output_path(root: Path, relative: str, *, create_parents: bool = False) -> Path:
@@ -122,6 +136,12 @@ def composition_inputs(root: Path, contract: dict) -> dict:
             if actual != item["sha256"]:
                 raise ValueError("prepared composition/support source differs: " + name)
             files[name] = actual
+    if contract.get("diagnostic_project") != {"prepared_path": PROJECT_PATH, "sha256": PROJECT_SHA256,
+            "git_blob": PROJECT_GIT_BLOB, "linker_flag_targets": ["SideStore"], "configurations": ["Debug", "Release"]}:
+        raise ValueError("diagnostic project target-scope contract differs")
+    project = safe_file(root, PROJECT_PATH).read_bytes()
+    patch_project(project)
+    files[PROJECT_PATH] = digest(project)
     package = contract["gateway"]["prepared_path"]
     original = safe_file(root, package).read_bytes()
     patched_gateway(original, contract)
@@ -131,7 +151,7 @@ def composition_inputs(root: Path, contract: dict) -> dict:
     return files
 
 
-def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: dict, contract: dict) -> None:
+def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: dict, contract: dict, mixed: dict) -> None:
     """Bind the new producer's retained header and six link receipts to its ZIP-authenticated inventory."""
     prefix = "provenance/" + target + "/"
 
@@ -196,6 +216,12 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
         return data.decode("utf-8")
     rust = retained_text("04-rust-export-symbols.txt")
     c_provider = retained_text("04-c-export-symbols.txt")
+    retained_c_provider.exported(rust, unique=False)
+    c_contract = retained_c_provider.check_symbols(c_provider, mixed["symbols"])
+    if (retained_json("retained-c-export-contract.json") != c_contract
+            or row.get("c_export_contract") != c_contract
+            or row.get("retained_c_handoff_sha256") != mixed["handoff_sha256"]):
+        raise ValueError("native full C export or handoff receipt differs")
     expected_exports = mixed_provider.check_symbols(rust, namespace, target)
     expected_exports.update(mixed_provider.check_mixed_symbols(rust, c_provider))
     expected_exports["contract_sha256"] = contract["ffi_namespace_sha256"]
@@ -229,6 +255,11 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
         probes = [p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == language]
         if len(probes) != 1 or not link_map or probes[0].get("link_map_sha256") != digest(link_map.encode()):
             raise ValueError("native mixed-provider link map evidence differs")
+        ownership = retained_c_provider.link_ownership(link_map, row["mixed_provider"]["library"], mixed["symbols"],
+            row["library"], {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
+        if (retained_json("05-link-mixed_provider-" + language + "-ownership.json") != ownership
+                or probes[0].get("ownership") != ownership):
+            raise ValueError("native full C/required Rust live ownership receipt differs")
     if retained_json("mixed-provider-input-audit.json").get("original_inputs_unchanged") is not True:
         raise ValueError("native mixed-provider input audit failed")
 
@@ -244,14 +275,43 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
     if (receipt.get("mixed_c_provider_link_probes_only") is not True
             or receipt.get("mixed_c_provider_embedded_in_IDevice") is not False):
         raise ValueError("Apple artifact lacks the isolated mixed-provider verification")
-    mixed_archive = "provenance/mixed-provider-archive.zip"
-    if (receipt["files"].get(mixed_archive) != contract["mixed_c_provider_archive_sha256"]
-            or file_hash(safe_file(root, mixed_archive)) != contract["mixed_c_provider_archive_sha256"]):
-        raise ValueError("mixed C provider differs from the pinned consumer archive")
+    c_handoff_sha256 = receipt.get("retained_c_handoff_sha256")
+    if (not isinstance(c_handoff_sha256, str) or len(c_handoff_sha256) != 64
+            or any(c not in "0123456789abcdef" for c in c_handoff_sha256)):
+        raise ValueError("Apple artifact lacks the caller-bound retained C handoff")
+    # Authenticate the entire nested C handoff. It travels inside the existing
+    # Apple lane; the consumer never fetches a sixth artifact or executes its code.
+    nested_files = {name: expected for name, expected in receipt["files"].items()
+                    if name.startswith(C_ROOT + "/")}
+    actual_nested = {}
+    nested_root = root / C_ROOT
+    if nested_root.is_symlink() or not nested_root.is_dir():
+        raise ValueError("retained C handoff tree is missing")
+    for path in sorted(nested_root.rglob("*")):
+        if path.is_symlink():
+            raise ValueError("retained C handoff tree contains a symlink")
+        if path.is_file():
+            actual_nested[path.relative_to(root).as_posix()] = file_hash(path)
+    if (not nested_files or nested_files != actual_nested
+            or receipt.get("retained_c_provider_files") != {
+                name.removeprefix(C_ROOT + "/"): value for name, value in nested_files.items()}):
+        raise ValueError("retained C handoff bytes differ from Apple artifact inventory")
+    c_targets, rust_symbols = {}, {}
     targets = {row["target"]["rust"]: row for row in receipt["targets"]}
     if len(receipt["targets"]) != 2 or set(targets) != {"aarch64-apple-ios", "aarch64-apple-ios-sim"}:
         raise ValueError("both exact Apple target receipts are required")
     for target, row in targets.items():
+        mixed = retained_c_provider.verify(nested_root, row["target"],
+                                           expected_handoff_sha256=c_handoff_sha256)
+        # Absolute producer paths identify retained commands/maps, not local
+        # input locations. Every non-path identity must match the nested proof.
+        original = row.get("mixed_provider", {})
+        if ({key: value for key, value in original.items() if key not in ("library", "headers")}
+                != {key: value for key, value in mixed.items() if key not in ("library", "headers")}
+                or not all(isinstance(original.get(key), str) and Path(original[key]).is_absolute()
+                           for key in ("library", "headers"))):
+            raise ValueError("Rust mixed-provider identity differs from the retained C handoff")
+        c_targets[target] = mixed
         provider = row["provider_receipt"]
         observations = row.get("toolchain_observations", {})
         if any(not isinstance(observations.get(name), str) or not observations[name] for name in
@@ -266,7 +326,11 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
                 or row["production_features"]["synthetic_peer_selected"] is not False
                 or row["header_probe_linked_or_executed"] is not False):
             raise ValueError("native composition/provider probe receipt is incomplete")
-        verify_result_header_evidence(root, receipt, target, row, contract)
+        retained_c_provider.verify_provider(mixed, provider)
+        retained_c_provider.verify_sdk(mixed, observations)
+        verify_result_header_evidence(root, receipt, target, row, contract, mixed)
+        rust_symbols[target] = sorted(mixed_provider.exported_symbols(
+            safe_file(root, "provenance/" + target + "/04-rust-export-symbols.txt").read_text()))
     expected = {name: value for name, value in receipt["files"].items() if name.startswith("IDevice.xcframework/")}
     directory = root / "IDevice.xcframework"
     actual = {}
@@ -302,7 +366,15 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
                     raise ValueError("device module/header/archive is absent from the artifact inventory")
     if identities != {("ios", "", ("arm64",)), ("ios", "simulator", ("arm64",))}:
         raise ValueError("diagnostic requires device and Simulator arm64 slice metadata")
+    c_files = {name.removeprefix(C_ROOT + "/product/"): value
+               for name, value in nested_files.items() if name.startswith(C_PRODUCT + "/")}
+    c_device = c_targets["aarch64-apple-ios"]
+    c_device_slice = {"archive": c_device["library_relative"],
+                      "header": c_device["headers_relative"] + "/plist/plist.h",
+                      "module_map": c_device["headers_relative"] + "/libimobiledevice/module.modulemap"}
     return {"receipt_sha256": expected_receipt, "files": expected,
+            "c_files": c_files, "c_targets": c_targets, "c_device_slice": c_device_slice, "rust_symbols": rust_symbols,
+            "retained_c_handoff_sha256": c_handoff_sha256,
             "recipe_index_sha256": receipt["recipe_lock_sha256"], "targets": targets,
             "toolchain_lock_sha256": receipt["toolchain_lock_sha256"], "device_slice": device_slice,
             "binary_format_inspected": False}
@@ -331,21 +403,28 @@ def bind(prepared: Path, artifact: Path, expected_artifact_receipt: str, output:
     gateway_postimage = transform_gateway(safe_file(prepared, GATEWAY_PATH).read_bytes())
     native = artifact_inputs(artifact, expected_artifact_receipt, contract)
     local_relative = (Path(contract["gateway"]["prepared_path"]).parent / contract["gateway"]["local_binary_path"]).as_posix()
+    local_c_relative = (Path(contract["gateway"]["prepared_path"]).parent / contract["gateway"]["local_c_binary_path"]).as_posix()
     receipt_relative = "TETHERLESS_PAIRING_DIAGNOSTIC_BINDING.json"
     new_output_path(prepared, local_relative)
+    new_output_path(prepared, local_c_relative)
     new_output_path(prepared, receipt_relative)
     sentinel = (HERE / "PairingCompositionCompileSentinel.swift").read_bytes()
     if digest(sentinel) != contract["sentinel"]["sha256"]:
         raise ValueError("compile sentinel changed")
-    # Preserve the prepared app/dependency tree; only the two explicit diagnostic
-    # postimages below differ. Git administration is not needed by xcodebuild.
+    # Preserve the prepared app/dependency tree; only the explicit diagnostic
+    # manifest, Rust gateway, sentinel and local artifact postimages differ. Git administration is not needed by xcodebuild.
     shutil.copytree(prepared, output, symlinks=True, ignore=shutil.ignore_patterns(".git"))
     composition_inputs(output, contract)
     package = safe_file(output, contract["gateway"]["prepared_path"])
     local = new_output_path(output, local_relative, create_parents=True)
     new_output_path(output, receipt_relative)
+    local_c = new_output_path(output, local_c_relative, create_parents=True)
     shutil.copytree(artifact / "IDevice.xcframework", local)
+    shutil.copytree(artifact / C_PRODUCT, local_c)
     bound_files = dict(source_inputs)
+    project = safe_file(output, PROJECT_PATH)
+    project.write_bytes(patch_project(project.read_bytes()))
+    bound_files[PROJECT_PATH] = file_hash(project)
     safe_file(output, GATEWAY_PATH).write_bytes(gateway_postimage)
     bound_files[GATEWAY_PATH] = digest(gateway_postimage)
     package.write_bytes(patched_gateway(package.read_bytes(), contract))
@@ -353,7 +432,7 @@ def bind(prepared: Path, artifact: Path, expected_artifact_receipt: str, output:
     onboarding = safe_file(output, contract["sentinel"]["prepared_path"])
     onboarding.write_bytes(onboarding.read_bytes() + b"\n" + sentinel)
     bound_files[contract["sentinel"]["prepared_path"]] = file_hash(onboarding)
-    for name, expected in native["files"].items():
+    for name, expected in {**native["files"], **native["c_files"]}.items():
         copied = local.parent / name
         if file_hash(safe_file(local.parent, name)) != expected:
             raise ValueError("copied local XCFramework changed")
@@ -376,6 +455,8 @@ def bind(prepared: Path, artifact: Path, expected_artifact_receipt: str, output:
                "native_or_app_build_executed": False}
     receipt["local_device_files"] = {key: (local.parent / name).relative_to(output).as_posix()
                                      for key, name in native["device_slice"].items()}
+    receipt["local_c_device_files"] = {key: (local_c.parent / name).relative_to(output).as_posix()
+                                       for key, name in native["c_device_slice"].items()}
     receipt["preparation_gate"] = {"path": str(gate), "sha256": contract["preparation_gate"]["sha256"]}
     receipt_path = new_output_path(output, receipt_relative)
     with receipt_path.open("x", encoding="utf-8") as stream:

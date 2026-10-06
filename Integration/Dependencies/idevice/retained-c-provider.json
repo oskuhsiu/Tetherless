@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "selection": {
+    "archive_sha256": "08a805e7fb0638442015b3652e82b86f4761637f032a055e687e385b5bb2196d",
+    "artifact_id": 11434159465,
+    "head_branch": "verify/staged-pairing-native",
+    "job_id": 112435152933,
+    "repository": "oskuhsiu/Tetherless",
+    "repository_id": 1401003096,
+    "run_attempt": 1,
+    "run_id": 37511975945,
+    "size_in_bytes": 11550030,
+    "source_commit": "9bc57ac1ada919b15e0dee3b46cf70d8cae7cb89",
+    "workflow_path": ".github/workflows/c-provider-native.yml"
+  },
+  "status": "Genuine successful isolated C producer selected for Rust verification; Rust and App acceptance remain pending."
+}

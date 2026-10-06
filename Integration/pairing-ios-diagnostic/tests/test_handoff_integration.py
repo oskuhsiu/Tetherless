@@ -80,6 +80,9 @@ class HandoffIntegrationTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.fixture = NativeHandoffFixture(self.root / "producer")
+        retained = self.fixture.fixture.mock_retained()
+        retained.start()
+        self.addCleanup(retained.stop)
         producer = self.fixture.data["producer_context"]
         self.consumer = {"repository": producer["repository"],
                          "repository_id": producer["repository_id"],

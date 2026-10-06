@@ -143,6 +143,7 @@ class PackageFixture:
     def patches(self):
         stack = ExitStack()
         stack.enter_context(patch.object(runner, 'HERE', self.native.fixture.here))
+        stack.enter_context(self.native.fixture.mock_retained())
         stack.enter_context(patch.object(bound.packager.subprocess, 'run', side_effect=self.zip_command))
         stack.enter_context(patch.object(bound.delivery, 'toolchain', return_value={'fixture': True}))
         return stack

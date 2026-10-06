@@ -137,7 +137,7 @@ class MixedProviderAuditRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AppleFixture(Path(temporary) / "fixture")
             fixture.fail = ("aarch64-apple-ios", "05-link-host-c.txt")
-            fixture.mutate = lambda f: (f.args.mixed_provider / "authenticated-provider.zip").unlink()
+            fixture.mutate = lambda f: (f.args.retained_c_provider / "actions-artifact.zip").unlink()
             with fixture.patches(), self.assertRaises(Exception) as raised:
                 apple.build(fixture.args)
             self.assertNotIsInstance(raised.exception, FileNotFoundError)

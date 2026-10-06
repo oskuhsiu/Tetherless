@@ -8,6 +8,8 @@ from pathlib import Path
 import shlex
 import tempfile
 import unittest
+
+from test_diagnostic_binding import synthetic_map
 from unittest import mock
 
 HERE = Path(__file__).resolve().parents[1]
@@ -64,7 +66,8 @@ class CompileObserverTests(unittest.TestCase):
             "sentinel": {"prepared_path": "SideStore/Views/Onboarding/OnboardingView.swift",
                          "sha256": sha((HERE / "PairingCompositionCompileSentinel.swift").read_bytes())},
             "gateway": {"prepared_path": "Dependencies/minimuxer/DeviceGateway/Package.swift",
-                        "local_binary_path": "TetherlessDiagnosticArtifacts/IDevice.xcframework"},
+                        "local_binary_path": "TetherlessDiagnosticArtifacts/IDevice.xcframework",
+                        "local_c_binary_path": "TetherlessDiagnosticArtifacts/libimobiledevice.xcframework"},
         }
         self.binding = {"bound_files": {}, "local_device_files": {}, "sdk_path": self.sdk,
                         "native_artifact": {"targets": {"aarch64-apple-ios": {"provider_receipt": {}}}}}
@@ -111,6 +114,30 @@ class CompileObserverTests(unittest.TestCase):
             "library_sha256": sha(self.c_archive.read_bytes()),
             "header_sha256": sha((self.headers / "plist/plist.h").read_bytes()),
             "module_map_sha256": sha((self.headers / "libimobiledevice/module.modulemap").read_bytes())}
+        self.put(self.headers / "libimobiledevice/afc.h", b"/* extra C public header */\n")
+        c_provider = self.binding["native_artifact"]["targets"]["aarch64-apple-ios"]["mixed_provider"]
+        c_provider["header_inventory"] = {name: {"sha256": sha((self.headers / name).read_bytes()),
+                                               "bytes": (self.headers / name).stat().st_size}
+            for name in ("plist/plist.h", "libimobiledevice/module.modulemap", "libimobiledevice/afc.h")}
+        c_provider["symbols"] = sorted(observer.APP_C_ROOTS | {"_synthetic_c_live", "_synthetic_c_dead"})
+        self.rust_symbols = sorted(observer.APP_RUST_ROOTS | {"_synthetic_rust_live", "_synthetic_rust_dead"})
+        self.binding["native_artifact"]["rust_symbols"] = {"aarch64-apple-ios": self.rust_symbols}
+        c_xcf = self.xcframework.parent / "libimobiledevice.xcframework"
+        c_base = c_xcf / "ios-arm64"
+        c_files = {"archive": c_base / "libimobiledevice.a", "header": c_base / "Headers/plist/plist.h",
+                   "module_map": c_base / "Headers/libimobiledevice/module.modulemap"}
+        self.binding["local_c_device_files"] = {key: path.relative_to(self.app).as_posix() for key, path in c_files.items()}
+        self.put(c_files["archive"], self.c_archive.read_bytes())
+        for name in c_provider["header_inventory"]:
+            self.put(c_base / "Headers" / name, (self.headers / name).read_bytes())
+        for path in c_xcf.rglob("*"):
+            if path.is_file():
+                self.binding["bound_files"][path.relative_to(self.app).as_posix()] = sha(path.read_bytes())
+        self.map_path = self.derived / "LinkMaps/SideStore-arm64.map"
+        self.map_text = synthetic_map(self.c_archive, set(c_provider["symbols"]) - {"_synthetic_c_dead"},
+                                      self.processed / "libidevice_ffi.a", set(self.rust_symbols) - {"_synthetic_rust_dead"})
+        self.map_text += "# Dead Stripped Symbols:\n<<dead>> 0x10 [ 3] _synthetic_c_dead\n<<dead>> 0x10 [ 4] _synthetic_rust_dead\n"
+        self.put(self.map_path, self.map_text.encode())
         self.app_args = ["-module-name", "SideStore", "-target", "arm64-apple-ios17.0", "-sdk", self.sdk,
                          "-filelist", str(self.app_list), "-I", str(self.headers)]
         for flag in sorted(observer.REQUIRED_CONDITIONS):
@@ -120,6 +147,12 @@ class CompileObserverTests(unittest.TestCase):
         self.link_args = ["-target", "arm64-apple-ios17.0", "-isysroot", self.sdk,
                           str(self.processed / "libidevice_ffi.a"), str(self.c_archive), "-F", str(self.framework.parent.parent),
                           "-framework", "OpenSSL", "-o", str(self.derived / "Build/Products/Debug-iphoneos/SideStore.app/SideStore")]
+        flags = ["-map", str(self.map_path)]
+        for name in sorted(observer.C_SYSTEM_FRAMEWORKS):
+            flags += ["-framework", name]
+        for symbol in sorted(observer.APP_C_ROOTS | observer.APP_RUST_ROOTS):
+            flags += ["-u", symbol]
+        self.link_args[0:0] = flags
         self.output = Path(self.link_args[-1])
         self.output_bytes = b"explicitly opaque synthetic final app output, never a native executable\n"
         self.put(self.output, self.output_bytes)
@@ -547,7 +580,7 @@ class CompileObserverTests(unittest.TestCase):
             path = self.headers / name
             original = path.read_bytes()
             path.write_bytes(original + b"\n// changed")
-            with self.subTest(name=name), self.assertRaisesRegex(observer.ObservationError, "C provider header/module"):
+            with self.subTest(name=name), self.assertRaisesRegex(observer.ObservationError, "C provider full header/module"):
                 self.observe()
             path.write_bytes(original)
 

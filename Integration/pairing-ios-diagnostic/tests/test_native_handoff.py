@@ -117,12 +117,13 @@ class NativeHandoffFixture:
         return self.handoff_hash
 
     def verify(self):
-        return native_handoff.verify_handoff(self.contract, self.path, self.handoff_hash, self.context,
-            self.fixture.artifact, self.fixture.receipt_hash, self.recipe)
+        with self.fixture.mock_retained():
+            return native_handoff.verify_handoff(self.contract, self.path, self.handoff_hash, self.context,
+                self.fixture.artifact, self.fixture.receipt_hash, self.recipe)
 
     def bind(self):
         self.fixture.write_contract()
-        with patch.object(binding, "HERE", self.fixture.here):
+        with patch.object(binding, "HERE", self.fixture.here), self.fixture.mock_retained():
             return binding.bind(self.fixture.prepared, self.fixture.artifact, self.fixture.receipt_hash, self.fixture.output,
                 handoff_path=self.path, handoff_sha256=self.handoff_hash, context=self.context, native_recipe=self.recipe)
 

@@ -1,5 +1,9 @@
 # Original 16-task closure matrix
 
+Current checkpoint — 2026-10-06 18:40 UTC: the corrected isolated C producer is now verified at [`9bc57ac1`](https://github.com/oskuhsiu/Tetherless/commit/9bc57ac1ada919b15e0dee3b46cf70d8cae7cb89), [run 37511975945](https://github.com/oskuhsiu/Tetherless/actions/runs/37511975945), attempt 1. Both arm64 platforms pass 829-global uniqueness, unchanged 56-file public headers/modules and all four C/Swift forced-link ownership maps; packaged archive/source identities and all eight final audits are verified. The exact outer artifact is `11434159465`, SHA-256 `08a805e7fb0638442015b3652e82b86f4761637f032a055e687e385b5bb2196d`, 11,550,030 bytes. Same-source Core passes 345 Swift Testing + 40 XCTest cases per configuration.
+
+This advances native integration prerequisites, while genuine retained-C Rust mixed-provider acceptance and the full unsigned App build/package remain open. It does not execute iOS binaries or establish Apple-account, pairing, installation, renewal or free-account web-bootstrap acceptance. All 16 original task IDs and closure conditions below remain open; their dated rows preserve historical evidence rather than making earlier C failures the current blocker.
+
 Publication addendum — 2026-10-06 18:08 UTC: later C runs established approved tool installation, host crypto/device compilation, exact headers, 829 unique globals and the device C force-link. Current run [37507597771](https://github.com/oskuhsiu/Tetherless/actions/runs/37507597771), source `1a717852`, remains rejected at link-map section parsing; no C provider is admitted. The 17:30 rows below retain their dated evidence rather than implying those earlier prerequisites are still unaddressed. All 16 closure conditions remain open.
 
 The owned test IPA subsequently passed synthetic WASM replay with its original bytes preserved. Real Apple signing, installation/launch and full Tetherless acceptance remain unrun.

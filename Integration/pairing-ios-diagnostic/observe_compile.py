@@ -15,9 +15,18 @@ from pathlib import Path
 import re
 import shlex
 import stat
+import sys
+
+_HELPERS = Path(__file__).resolve().parents[1] / "Dependencies/idevice"
+sys.path.insert(0, str(_HELPERS))
+try:
+    import retained_c_provider
+finally:
+    sys.path.pop(0)
 
 MAX_LOG = 64 * 1024 * 1024
 MAX_TEXT = 4 * 1024 * 1024
+MAX_MAP = 32 * 1024 * 1024
 MAX_LINE = 512 * 1024
 MAX_TOKENS = 100_000
 MAX_REFERENCES = 128
@@ -48,6 +57,10 @@ REQUIRED_SOURCES = frozenset({
     "SideStore/Views/Settings/Advanced/PairingFile/WirelessPair/WirelessPairView.swift",
 })
 GATEWAY_SOURCE = "Dependencies/minimuxer/DeviceGateway/idevice/IdeviceGateway.swift"
+
+# Diagnostic-only -u roots keep these checks meaningful under Release dead
+# stripping. All other C/Rust exports are checked only if actually live.
+from diagnostic_link_project import APP_C_ROOTS, APP_RUST_ROOTS, C_SYSTEM_FRAMEWORKS
 
 
 class ObservationError(ValueError):
@@ -193,9 +206,9 @@ class _Capture:
             path = self.root / record["retained_path"]
             before = path.lstat()
             _require(stat.S_ISREG(before.st_mode) and before.st_size == record["size"]
-                     and before.st_size <= MAX_TEXT, "retained compiler input changed or obstructed")
+                     and before.st_size <= MAX_MAP, "retained compiler input changed or obstructed")
             with path.open("rb") as stream:
-                data = stream.read(MAX_TEXT + 1)
+                data = stream.read(MAX_MAP + 1)
             after = path.lstat()
             _require(stat.S_ISREG(after.st_mode) and self._inode(before) == self._inode(after)
                      and before.st_mtime_ns == after.st_mtime_ns and len(data) == record["size"]
@@ -285,8 +298,8 @@ class _Files:
         except OSError as error:
             raise ObservationError("required evidence file is unavailable: " + str(path)) from error
 
-    def text(self, path: Path) -> str:
-        data = self.read(path, compiler_text=True)
+    def text(self, path: Path, limit: int = MAX_TEXT) -> str:
+        data = self.read(path, limit, compiler_text=True)
         previous = self.references.get(str(path))
         # Persist bytes before any decoding or parsing so a failing input can
         # be inspected. A changed reread retains both versions and fails closed.
@@ -532,17 +545,72 @@ def _c_module_evidence(command: dict, files: _Files, expected: dict, sdk: str) -
                 maps.add(path)
     _require(len(maps) == 1, "C provider module selection is absent or ambiguous")
     module_map = maps.pop()
-    header = files.path(module_map.parent.parent / "plist/plist.h", command["cwd"])
-    _require(files.opaque_hash(module_map) == _expected(expected["module_map_sha256"])
+    header_root = files.path(module_map.parent.parent, command["cwd"])
+    inventory = expected.get("header_inventory")
+    _require(isinstance(inventory, dict) and inventory, "complete C header/module inventory is missing")
+    actual = {}
+    # A compiler include root may also contain unrelated package headers.
+    # Every selected C namespace, however, must have exactly its full inventory.
+    prefixes = {Path(name).parts[0] for name in inventory}
+    for prefix in prefixes:
+        subtree = files.path(header_root / prefix, command["cwd"])
+        _require(subtree.exists(), "C header namespace is absent")
+        paths = [subtree] if subtree.is_file() else sorted(subtree.rglob("*"))
+        for path in paths:
+            files.path(path, command["cwd"])
+            if path.is_file():
+                identity = files.opaque_identity(path)
+                actual[path.relative_to(header_root).as_posix()] = {
+                    "sha256": identity["sha256"], "bytes": identity["size"]}
+    for value in _include_directories(command["args"]):
+        directory = files.search_directory(value, command["cwd"], sdk)
+        for name in inventory:
+            candidate = directory / name
+            if candidate.is_file():
+                _require(files.path(candidate, command["cwd"]) == header_root / name,
+                         "alternate C public header search input")
+    header = files.path(header_root / "plist/plist.h", command["cwd"])
+    _require(actual == inventory and files.opaque_hash(module_map) == _expected(expected["module_map_sha256"])
              and files.opaque_hash(header) == _expected(expected["header_sha256"]),
-             "C provider header/module differs from the mixed-provider proof")
+             "C provider full header/module inventory differs from the retained proof")
     return {"c_provider_module_map": str(module_map), "c_provider_header": str(header),
-            "c_provider_module_map_sha256": expected["module_map_sha256"], "c_provider_header_sha256": expected["header_sha256"]}
+            "c_provider_module_map_sha256": expected["module_map_sha256"], "c_provider_header_sha256": expected["header_sha256"],
+            "c_provider_header_inventory": actual}
+
+
+def _live_map_ownership(text: str, c_archive: Path, c_symbols: list[str], rust_archive: Path,
+                        rust_symbols: list[str]) -> dict:
+    """Check actual live known exports; dead-stripped rows never satisfy roots."""
+    _require(isinstance(c_symbols, list) and c_symbols == sorted(set(c_symbols))
+             and isinstance(rust_symbols, list) and rust_symbols == sorted(set(rust_symbols))
+             and not set(c_symbols) & set(rust_symbols), "full Rust/C export identities differ")
+    live, section = set(), None
+    for line in text.splitlines():
+        if line == "# Symbols:":
+            section = "live"
+        elif line == "# Dead Stripped Symbols:":
+            section = None
+        elif line.startswith("#"):
+            continue
+        elif section == "live" and line.strip():
+            match = re.fullmatch(r"0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+\[\s*\d+\]\s+(.+)", line)
+            _require(match is not None, "unparsed live App map row")
+            live.add(match[1])
+    c_live, rust_live = live & set(c_symbols), live & set(rust_symbols)
+    _require(APP_C_ROOTS <= c_live and APP_RUST_ROOTS <= rust_live,
+             "required diagnostic C/Rust roots are absent from live App map")
+    try:
+        proof = retained_c_provider.link_ownership(text, c_archive, c_live, rust_archive, rust_live)
+    except ValueError as error:
+        raise ObservationError("App live map ownership differs: " + str(error)) from error
+    return dict(proof, c_live_symbols=sorted(c_live), rust_live_symbols=sorted(rust_live),
+                dead_stripped_symbols_used=False)
 
 
 def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: str,
-                   provider_hash: str, configuration: str, sdk: str, c_provider_hash: str) -> dict:
+                   provider_hash: str, configuration: str, sdk: str, c_provider: dict, rust_symbols: list[str]) -> dict:
     args, cwd = _link_args(command["args"]), command["cwd"]
+    c_provider_hash = _expected(c_provider["library_sha256"])
     output = files.path(_one(args, "-o"), cwd)
     _require(output.name == "SideStore" and output.parent.name == "SideStore.app"
              and output.is_relative_to(files.roots[1])
@@ -580,12 +648,19 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
              "final Ld archive is not an actual processed DerivedData copy")
     _require(files.opaque_hash(processed) == archive_hash, "processed native archive identity differs")
     c_candidates = {path for path in direct if path.name == "libimobiledevice.a"}
-    _require(not any(re.fullmatch(r"(?:lib)?(?:plist|imobiledevice)(?:[-_.A-Za-z0-9]*)\.(?:dylib|tbd)", Path(arg).name.lower())
-                     or re.fullmatch(r"-(?:weak|reexport|upward)-l(?:plist|imobiledevice)(?:[-_.A-Za-z0-9]*)", arg.lower())
+    c_provider_name = re.compile(r"(?:lib)?(?:plist|imobiledevice|usbmuxd)(?:[-_.A-Za-z0-9]*)", re.I)
+    framework_names = [name for flag in ("-framework", "-weak_framework", "-reexport_framework",
+                                         "-upward_framework", "-lazy_framework") for name in _option(args, flag)]
+    _require(not any(c_provider_name.fullmatch(name) for name in framework_names)
+             and not any(c_provider_name.fullmatch(part[:-len(".framework")])
+                         for arg in args for part in Path(arg).parts if part.lower().endswith(".framework")),
+             "alternate C framework provider in final link")
+    _require(not any(re.fullmatch(r"(?:lib)?(?:plist|imobiledevice|usbmuxd)(?:[-_.A-Za-z0-9]*)\.(?:dylib|tbd)", Path(arg).name.lower())
+                     or re.fullmatch(r"-(?:weak|reexport|upward)-l(?:plist|imobiledevice|usbmuxd)(?:[-_.A-Za-z0-9]*)", arg.lower())
                      for arg in args), "alternate C dynamic/weak provider in final link")
-    _require(not any(("imobiledevice" in value.lower() or "plist" in value.lower()) and value != "imobiledevice"
+    _require(not any(("imobiledevice" in value.lower() or "plist" in value.lower() or "usbmuxd" in value.lower()) and value != "imobiledevice"
                      for value in libraries)
-             and not any(("imobiledevice" in path.name.lower() or "plist" in path.name.lower())
+             and not any(("imobiledevice" in path.name.lower() or "plist" in path.name.lower() or "usbmuxd" in path.name.lower())
                          and path.name != "libimobiledevice.a" for path in direct),
              "alternate C plist provider in final link")
     if "imobiledevice" in libraries:
@@ -601,6 +676,14 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
     c_archive = c_candidates.pop()
     _require(c_archive.is_relative_to(files.roots[1]) and files.opaque_hash(c_archive) == c_provider_hash,
              "processed C provider archive differs from the mixed-provider proof")
+    _require(C_SYSTEM_FRAMEWORKS <= set(_option(args, "-framework"))
+             and not C_SYSTEM_FRAMEWORKS & set(_option(args, "-weak_framework")),
+             "final Ld lacks strong C system frameworks")
+    _require(APP_C_ROOTS | APP_RUST_ROOTS <= set(_option(args, "-u")),
+             "final Ld lacks diagnostic C/Rust live roots")
+    map_path = files.path(_one(args, "-map"), cwd)
+    _require(map_path.is_relative_to(files.roots[1]), "App linker map must be inside owned DerivedData")
+    ownership = _live_map_ownership(files.text(map_path, MAX_MAP), c_archive, c_provider["symbols"], processed, rust_symbols)
     _require("OpenSSL" in _option(args, "-framework"), "final Ld lacks selected OpenSSL framework")
     _require("OpenSSL" not in _option(args, "-weak_framework"), "weak OpenSSL provider is unsupported")
     providers = set()
@@ -624,6 +707,7 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
             "processed_archive": str(processed), "archive_sha256": archive_hash,
             "c_provider_archive": str(c_archive), "c_provider_archive_sha256": c_provider_hash,
             "openssl_framework_binary": str(provider), "openssl_framework_binary_sha256": provider_hash,
+            "link_map": str(map_path), "live_map_ownership": ownership,
             "binary_format_inspected": False}
 
 
@@ -682,7 +766,24 @@ def observe_compile(log_path: Path, prepared_root: Path, derived_data: Path,
         provider_hash = _expected(native_binding["native_artifact"]["targets"]["aarch64-apple-ios"]
                                   ["provider_receipt"]["framework_binary_sha256"])
         c_provider = native_binding["native_artifact"]["targets"]["aarch64-apple-ios"]["mixed_provider"]
-        c_provider_hash = _expected(c_provider["library_sha256"])
+        c_local = {key: files.path(native_binding["local_c_device_files"][key], files.roots[0])
+                   for key in ("archive", "header", "module_map")}
+        c_xcframework = files.path(package.parent / contract["gateway"]["local_c_binary_path"], files.roots[0])
+        _require(c_xcframework.name == "libimobiledevice.xcframework"
+                 and all(path.is_relative_to(c_xcframework) for path in c_local.values()),
+                 "bound C files are outside the selected local XCFramework")
+        for key, path in c_local.items():
+            expected = _expected(c_provider[{"archive": "library_sha256", "header": "header_sha256",
+                                             "module_map": "module_map_sha256"}[key]])
+            _require(bound[path.relative_to(files.roots[0]).as_posix()] == expected
+                     and files.opaque_hash(path) == expected, "bound local C identity differs")
+        header_root = c_local["module_map"].parent.parent
+        for name, entry in c_provider["header_inventory"].items():
+            path = files.path(header_root / name, files.roots[0])
+            _require(bound[path.relative_to(files.roots[0]).as_posix()] == _expected(entry["sha256"])
+                     and files.opaque_identity(path) == {"sha256": entry["sha256"], "size": entry["bytes"]},
+                     "bound complete C header inventory differs")
+        rust_symbols = native_binding["native_artifact"]["rust_symbols"]["aarch64-apple-ios"]
         log_path = Path(log_path)
         _require(not log_path.is_symlink(), "build log must not be symlinked")
         with log_path.open("rb") as stream:
@@ -716,7 +817,7 @@ def observe_compile(log_path: Path, prepared_root: Path, derived_data: Path,
         _require(len(links) == 1, "expected one actual final SideStore Ld command")
         link = links[0]
         target = _device_identity(link, sdk)
-        link_info = _link_evidence(link, files, local["archive"], hashes["archive"], provider_hash, configuration, sdk, c_provider_hash)
+        link_info = _link_evidence(link, files, local["archive"], hashes["archive"], provider_hash, configuration, sdk, c_provider, rust_symbols)
         result = {"schema": 1, "observer_source": "new-after-workspace-reset", "configuration": configuration,
                 "log_sha256": _sha(raw_log), "compile": observations,
                 "link": {"line": link["line"], "command_sha256": link["command_sha256"],
