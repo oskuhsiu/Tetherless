@@ -1,141 +1,93 @@
 # Original 16-task closure matrix
 
-Evidence checkpoint: **2026-10-05 23:25 UTC**. The [original plan](ORIGINAL_PLAN.md)
-is unchanged, SHA-256
-49d049cea36c0872224e888e20074d08d313031a72d6ed9a128ef320370fe3a6.
-All 16 IDs retain their original scope. No overall completion claim follows from
-the new component, Swift/Core or unsigned-build evidence.
+Evidence checkpoint: **2026-10-06 05:56 UTC**. All 16 original IDs retain their
+scope and remain open. The [original plan](ORIGINAL_PLAN.md) is unchanged:
+SHA-256 `49d049cea36c0872224e888e20074d08d313031a72d6ed9a128ef320370fe3a6`.
 
-## Current position
+## Current position and evidence boundaries
 
-- develop remains 3d97ef75a224a76f84ba6741da8d9a6b89f99217
-- Published source is bf077f8ee433524422efc0ae6c2a8720c8cd6d4e, tree
-  6e8e2532794dc6cef7fd5206d3afa989bba177eb, 552 leaves. Its reviewed 11-file
-  typed promotion/harness slice leaves the native recipe unchanged
-- Latest native source is bdb4d45c717a2a661d5a8814b6b6d18d5f88e0a3, tree
-  2aa598314ff123c608494a513ea5334fb8399d9f, 546 leaves. Run 37384014669 reports
-  success for all five Rust lanes. Current Rust artifacts are not independently
-  reconciled here; verified 3ae component/host transcript and 1ed acquisition
-  transcript (three tests) evidence retains its exact historical scope
-- At bdb4d45, Apple device release Rust compilation passes in 177.527 seconds,
-  exact Cargo artifact selection succeeds and the C host probe links. Swift host
-  import then fails on the duplicate enum/UInt32 result-type name. The analogous
-  validation-result collision is source-reviewed; its probe was not reached.
-  Repair remains pending; no Simulator slice or XCFramework is established
-- At bf077f8, Swift run 37386817674 independently verifies eight actual-manager
-  cases in each Debug/optimized configuration and 41 composition cases in each
-  Debug/Release mode, with source hashes and all joined commands. Manager parser,
-  app state and process-lease acquisition are synthetic seams; composition uses
-  a C ownership spy. Host Core 37386817620 independently verifies 345 Swift Testing
-  + 33 XCTest cases per mode, including eight new promotion-boundary cases.
-  iOS Core 37386817629 is terminal failure: all 33 XCTest cases and a separate
-  20-case Swift Testing target pass, but the 339-case Core target fails three
-  unchanged 60-second limits. The adjacent post-await trace gap is 101.862882459
-  seconds, with no intervening await/lease operation; cause remains unknown.
-  Automatic retry is forbidden and no rerun is planned. App run 37386817575 is skipped
-- Historical 3ae Swift composition run 37375339728 verifies 41 cases in each
-  Debug/Release mode and all 24 source hashes. Host Core run 37375339731 verifies
-  345 Swift Testing + 25 XCTest cases in each mode. No iOS Core run was triggered
-  at 3ae; ad9 and newer bf077 evidence remain separate. Separate Swift-19 and
-  helper jobs report success, but their artifacts are not separately reconciled
-- The four-file ODA cleanup candidate has no blocking independent source-review
-  findings, with 23 portable passes and five Swift skips. It is unpublished and
-  has no actual Swift composition execution. Header repair and gated UI remain
-  in review without native-success credit
-- Actual Rust helper/RSD 43 and host 20 fixtures pass at their recorded source
-  revisions. Configuration, metadata and README alias build blockers are resolved
-  within this host path
-- Historical acquisition/combined profiles at 1366ace abort in the same composite
-  cancellation fixture after preceding 18/25 passes. The repaired 5a40878
-  [matrix 37369016726](https://github.com/oskuhsiu/Tetherless/actions/runs/37369016726)
-  now passes acquisition 74 and combined 94, including 20 host fixtures. Original
-  staged-acquisition tests, both new regressions, source/provider audits, hashes
-  and command joins verify. This closes the observed fixture failure, not whole pairing
-- Gated app composition at ad9b33f passes host Core with 345 Swift Testing + 25
-  XCTest cases in each Debug/Release configuration, and iOS Core with 339 + 25.
-  The standalone Swift/C-spy retry and artifact reconciliation establish 41 unique
-  cases in each Debug/Release mode and all 24 input hashes. Neither route establishes
-  real IDevice/Rust ABI or UIKit compilation
-- Earlier 1fc native Debug/Core/iOS Core evidence remains scoped; its Release app
-  job was cancelled. Latest full UI is still failed at 3d97ef7. Historical c5
-  iOS 18.6 acceptance does not validate newer revisions
-- New pairing routes remain gated off. Synthetic host and acquisition transcripts
-  now have verified native evidence at their respective sources. Apple Swift import,
-  remaining probes/Simulator/XCFramework, diagnostic iOS consumer and UIKit
-  composition remain open. Typed promotion’s actual-manager harness passes with
-  synthetic external seams; its live backend handoff remains unverified.
-  Existing reload retains the cached protocol and does not prove all-caller/native
-  adapter quiescence; saved bytes are not active-backend proof. Gates stay off.
-  Published EMProxy privacy still needs its real native Swift spy
-- Existing UI evidence shows Browse Locations with On My iPhone selected, without
-  opening the local root. Fixture installation/LaunchServices and document creation
-  succeeded; the original remains intact. Archive run 37375339797 exports/queries
-  successfully but classifies 803 of 807 nonblank records and remains inconclusive.
-  Enumeration predates root activation; 19 unlisted-domain records match an
-  iconServices warning; a late timeout has no identified operation. Exact-event run
-  37381049415 at ec7 observes one exact match but only “assertion failure: <value>”,
-  without operation/error details and with four unsupported lines. This inconclusive
-  diagnostic path stops; no rerun, widening, resolved cause or product fix is claimed
+`develop` remains `3d97ef75a224a76f84ba6741da8d9a6b89f99217`. Published branch
+head is `00c1c9397a01107b045d17b0ccba64431197d975`, tree
+`6b535da4d6e85190a0474e56fbc046bef7c43993`, 699 leaves: the original 70 web
+files plus the reviewed nine-file browser-QA delta, with unrelated entries
+unchanged. Native consumer evidence remains tied to
+`3f717ea5441d2cacee13e1d078e5ba7f1484edc5`. The accepted native producer is
+`9ee2ccc9bd3519053781087acde54d4b4ee43236`,
+[run 37400684000](https://github.com/oskuhsiu/Tetherless/actions/runs/37400684000).
+Both Apple slices, all 12 C/Swift ABI link probes, the XCFramework and all five
+Rust lanes now have reconciled evidence.
 
-[STATUS.md](STATUS.md) gives the summary. The [checkpoint](checkpoints/2026-10-05-native-pairing-progress.md)
-records exact source identities, artifacts and the boundary of each result.
+At `3f717ea`, [diagnostic run 37407474925](https://github.com/oskuhsiu/Tetherless/actions/runs/37407474925)
+passes normal tests, preparation, producer binding and unsigned Release app
+compilation. Debug fails on the `PLIST_OPT_COERCE`/`plist_write_options_t`
+declaration mismatch. Review also found overlapping Rust/C exports with differing
+ABIs in the two directly linked static archives; no link map proves the selected
+providers. A header-only patch was rejected. Full Rust FFI namespace isolation
+and matched consumer changes have a reviewed 35-file candidate; the candidate remains
+unpublished, with no new native commit or run. Both real C-provider slice inputs
+now pass the unchanged verifier; new Apple mixed-provider linking and final
+provider ownership remain unverified.
+The run remains terminal failure. Product wireless gates remain off. The new
+native and source-fixture evidence closes specific earlier blockers, not the
+overall tasks below.
 
-## Gap types
+At `00c1c93`, [browser run 37420583887](https://github.com/oskuhsiu/Tetherless/actions/runs/37420583887)
+passes all 18 real Chromium cases at root/project-subpath, with source/lock and
+JUnit reconciliation. Its synthetic signing material does not establish Apple,
+Safari or install acceptance. [Core run 37420583864](https://github.com/oskuhsiu/Tetherless/actions/runs/37420583864)
+also reports API success; raw test counts are not reconciled here.
 
-- **Active, non-device:** feasible implementation or verification without the
-  owner's phone or credentials. A queued run or reviewed source is not a pass
-- **External evidence:** authenticated binary evidence or a documented rights/
-  compatibility basis. Passing tests cannot create rights
-- **Paused:** signing-admission, manager-replacement integration and aggregate
-  install RAM/disk budget work, including dependent startup/callback boundaries.
-  Their unpublished drafts receive no implementation, review or acceptance credit
+- **Active:** feasible implementation or verification without the owner's phone
+  or credentials. Reviewed source, queued work and skipped tests are not passes
+- **External:** missing rights, authenticity or source/binary provenance evidence
+- **Paused:** native signing-admission/certificate/Mach-O parser work,
+  manager-replacement integration, aggregate install RAM/disk budgets and dependent
+  startup/callback ownership. No inspection, implementation or review credit is
+  assigned to their paused drafts
 - **Physical, later:** one consolidated authorized phone phase after feasible
-  development and non-device gates
-- **Separate research:** BOOT-01, outside ordinary mobile-only renewal proof
+  development/non-device gates; real-time observation remains separate
+- **Bootstrap:** clean-phone first installation is independently unproved and
+  cannot be inferred from pairing, signed-output generation or daily renewal
 
 ## Closure matrix
 
 | ID | Established, scoped evidence | Remaining closure condition and gap type |
 |---|---|---|
-| BASE-01 | Prior app/Core/Swift and 3ae/1ed native artifacts stay scoped. At bdb, all five Rust lanes report success; Apple device Rust compilation, exact Cargo selection and C host linking pass. At bf077f8, manager 8 and composition 41 pass per configuration; host Core passes 345 + 33 per mode, while iOS Core passes all 33 XCTest cases but fails three unchanged Swift Testing limits | **Active, non-device:** repair Swift result-type import and respect the repeated iOS Core failure’s no-retry decision; verify remaining probes/Simulator/ABI/XCFramework and app/UI at one final SHA. Current Rust artifacts need separate reconciliation. Latest full UI failed, 1fc Release was cancelled, and current full app compilation is not established |
-| BASE-02 | Historical 32-component inventory, GPLv3 supplement and structural SPDX checks remain. Exact 1fc delivery reconciles 3,992 source entries and 91 notices. Component vendor/configuration/source audits now support actual host fixture builds | **Active + external evidence:** complete corresponding and producer source, linked notices, applicable relinking materials and durable delivery. Establish ADI origin/admission/use basis, Unicorn combined-license compatibility and binary provenance. Host compilation and matching hashes do not clear these gates |
-| AUTH-01 | Account/key/session and typed authentication boundaries exist. Actual 1fc IDevice logger-Off spy checks pass in Debug/Release modes. Five-file EMProxy callback privacy is published at 5a with four portable passes | **Active, non-device:** execute the EMProxy native Swift spy and remaining logging/lifetime checks. Changes do not erase old logs or reconfigure existing subscribers. **Dependent on paused work:** public-certificate/profile startup/callback ownership. **Physical:** real login, 2FA, session expiry and repair |
-| LEASE-01 | Profile-only renewal is separated from necessary full signing/install; core behavior is tested | **Active, non-device:** preserve this separation through final integration. **Physical:** prove both real routes; ordinary renewal must not become routine app or manager reinstallation |
-| LEASE-02 | Profile selection, earliest effective expiry, readback and journal/database reconciliation are wired | **Physical:** actual profile application, compatible readback, forward effective expiry and launch. UI dates, mocks and appliedUnverified cannot close this row |
-| AUTO-01 | Headless App Intent and background entrypoints are wired; policy/core tests exist | **Active, non-device:** finish candidate integration and honest trigger/permission diagnostics. **Physical:** scheduled locked-screen execution without opening the manager or connecting a computer |
-| AUTO-02 | Historical c5 UI and failed current 3d97 boundaries stay unchanged. Archive analysis has 803/807 records classified; exact-event analysis finds one matching record but only a static assertion template, with four unsupported lines and no operation/error | **Active, non-device:** stop this inconclusive diagnostic path without rerun or widening. Actual UIKit compilation and any different readiness investigation require their own evidence-backed next step. No product fix or cause is established. Latest 18.6 stopped during installation; 26.2 never selected a file. **Physical:** authorized non-foreground self-check and automation |
-| AUTO-03 | Core serialization/cancellation/backoff and scoped cache/backup/ODA ownership have tests. Earlier iOS Core runs pass with original bounds; bf077 repeats three 60-second failures with an adjacent post-await trace gap. The unpublished four-file ODA cleanup candidate has source review and 23 portable passes, with five Swift skips | **Active, non-device:** execute the reviewed cross-cleaner repair’s Swift composition checks, preserving the ODA live stage and stable usage.lock inode and leaving reclamation to TransferWorkspace; then verify the final native candidate. Current published cleanup remains vulnerable to deleting that pool. No production lock fix or unique stall cause is proved. **Dependent/paused:** certificate startup, local profile mutations and aggregate install budgets remain uncredited |
-| SAFE-01 | Manager profile has renewal priority; ordinary renewal does not require manager replacement | **Physical:** next-day renewal and manager execution across original expiry. Manual refresh or a longer paid-account profile does not establish the free-account objective |
-| SAFE-02 | Portable journal/lock tests cover write-ahead and commit failures, partial success, cancellation and reconciliation without duplicate mutation; scoped deletion harnesses preserve ownership | **Active, non-device:** verify these routes in the final native candidate and execute/integrate the reviewed, unpublished ODA pool/lock cleanup repair. **Paused:** replacement and startup-dependent cases remain uncredited. **Physical:** real interruption/recovery without dropping pending evidence |
-| INSTALL-01 | Input snapshots, bounded downloads and archive protections exist. Pairing-file UI and Swift/Core evidence remain limited to their own routes | **Active, non-device:** finish provider/data-retention coverage and final integration. **Paused:** signing/Mach-O/entitlement/nested-signature admission and aggregate install budgets. **Physical:** trusted IPA installation/launch and data preservation |
-| INSTALL-02 | Certificate issuance/recovery and manager-replacement receipt primitives exist | **Paused:** first-sign to manager-replacement integration, identity/data-access continuity and interruption recovery receive no new credit. **Active when resumed:** verify the integrated candidate. **Physical:** authorized first signing/replacement and data recovery |
-| PAIR-01 | Stored/import/reset and earlier static/Swift proofs stay scoped. Verified 3ae host (26, including M5), acquisition (74), combined (100), host transcript (10) and 1ed full acquisition transcript (3) are retained. All five bdb Rust lanes report success. Typed promotion’s actual-manager harness passes eight cases per configuration at bf077f8 with synthetic external seams | **Active, non-device:** resolve Apple Swift import and remaining probes/Simulator/XCFramework, then consumer/UIKit integration. Verify real parser/lock integration and a quiescent handoff of the committed record and intended protocol; existing reload uses cached protocol and lacks all-caller/adapter join proof. Preserve cancellation, PIN lifetime, same-container challenge and failure-atomic promotion. Gates stay off. **Physical:** valid import/retention, peer compatibility, cancellation and re-pairing |
-| QA-01 | Consolidated acceptance procedure exists; no device or soak test has run | **Physical, last:** next-day proactive locked-screen renewal, original-expiry crossing and longer observation. Do not wait seven days to iterate, advance the device clock or count manual refresh as unattended evidence |
-| QA-02 | Historical app/UI/Core/Swift and reconciled native transcripts remain scoped. At bdb, all Rust lanes have API success; Apple device compilation, Cargo selection and C host link pass, then Swift import fails. Promotion manager 8 and composition 41 pass per mode; host Core passes 345 + 33 per mode. iOS Core passes 33 XCTest cases but repeats three unchanged Swift Testing limits; no automatic retry or rerun is planned. Exact-event diagnosis remains inconclusive and stopped | **Active + external evidence:** Swift import repair and remaining Apple producer/provider/link proofs, promotion/backend handoff, current artifact reconciliation, final app/UI evidence, source/rights/provenance and ODA pool/lock protection during generic cleanup. **Dependent/paused:** signing/replacement/install budgets and startup/callback ownership. **Physical:** traffic, performance, power, hardware protection and aggregate faults |
-| BOOT-01 | Clean-phone first-install approaches remain documented research | **Separate research:** trusted completely computer-free initial delivery/install. Importing or generating pairing data does not prove initial installation; do not broaden the daily-renewal milestone |
+| BASE-01 | Exact published source/locks; accepted `9ee` producer with five Rust lanes (26/74/100/10/3), both Apple slices, 12 ABI probes and retained XCFramework. At `3f`, host Core 345 + 40 per Debug/Release mode, 492 Integration passes plus seven skips, 231 diagnostic and 13 prepared-contract passes; unsigned Release app compiles | **Active:** publish and natively verify the reviewed 35-file namespace/consumer candidate, prove provider ownership and verify one integrated final SHA and applicable app/UI gates. Actual C-provider device/Simulator inputs now pass the unchanged verifier; this is not mixed-provider link success. Release directly links both archives; its compile pass proves neither selected-provider ownership nor execution; latest full product UI remains failed |
+| BASE-02 | Historical product inventory/delivery retained. Exact `9ee` source archive: 46,639 entries and 189 recipe files verified. Reviewed unpublished supplement: 359 registry + four workspace packages, compiler-target/host/source distinctions, 666 notice files and 232 texts | **Active + external:** publish/integrate the scoped supplement and complete product source/notices/relinking/durable delivery; resolve three target and 13 additional source-only named-notice gaps. ADI origin/admission/acquisition-use basis, Unicorn compatibility and provider source/binary equivalence remain open. Inventory is not rights clearance or a final linked graph |
+| AUTH-01 | Native authentication/secret boundaries and historical IDevice logger-Off fixtures exist. Actual EMProxy initializer/callback spy passes Debug/Release within ten support tests at `4838168`; current normal Integration passes that route | **Active:** finish remaining unpaused logging/lifetime and final integration checks. **Paused dependency:** public-certificate/profile startup/callback ownership. **Physical:** real login, 2FA, session expiry/repair and secret-access conditions. Existing subscriber state and prior logs are not retroactively changed |
+| LEASE-01 | Profile-only renewal is separated from necessary full signing/install; core policy tests pass at the current source | **Active:** preserve the separation through coherent integration. **Physical:** prove both real routes; normal renewal must not require routine app/manager reinstallation |
+| LEASE-02 | Profile selection, effective expiry, readback and journal/database reconciliation are wired and fixture-tested | **Physical:** actual application, compatible system readback, forward effective expiry and launch. UI dates, synthetic results and `appliedUnverified` cannot close this row; paused admission work receives no new credit |
+| AUTO-01 | Headless App Intent/background entrypoints and coordinator policies exist; current Core tests pass | **Active:** complete final integration and honest trigger/permission diagnostics within unpaused scope. **Physical:** authorized locked-screen execution without opening the manager or connecting a computer; no guaranteed OS timer claim |
+| AUTO-02 | Guided setup/self-check source exists. Historical `c5` invalid-input/signed-out UI passed; latest `3d97` full UI failed. Retained archive/exact-event diagnostics are inconclusive | **Active:** final UI integration and a distinct evidence-backed readiness investigation under Simulator CI rules; do not rerun/widen the exhausted diagnostic path or claim a cause. **Physical:** initial authorization and a real non-foreground self-check without an Open App step |
+| AUTO-03 | Core serialization, cancellation, backoff and scoped ownership tests pass. Published ODA pool/lock preservation is exercised by actual Swift positive/negative controls at `4838168`; current Integration passes | **Active:** final integrated non-device verification. Historical `bf077` three 60-second failures remain unexplained despite later `a12` iOS Core success. **Paused dependency:** startup/profile-mutation ownership and aggregate install budgets. **Physical:** competing real entrypoints and cancellation without unsafe mutation |
+| SAFE-01 | Manager profile renewal has priority; ordinary renewal is distinct from manager replacement | **Physical:** proactive next-day renewal and continued manager execution across original expiry. Manual refresh/restart or a longer paid-account profile cannot establish the free-account objective |
+| SAFE-02 | Portable journal/lock tests cover write-ahead/commit failure, partial success, cancellation and reconciliation before retry. Published ODA ownership repair now has actual positive/negative Swift evidence | **Active:** verify recovery in the final integrated candidate. **Paused:** replacement/startup-dependent recovery receives no new credit. **Physical:** interruption/readback recovery without duplicate resources or loss of pending evidence |
+| INSTALL-01 | Input snapshots, bounded downloads and archive protections have scoped tests. Current unsigned Release diagnostic builds | **Active:** remaining unpaused provider/data-retention coverage and final integration. **Paused:** signing/Mach-O/entitlement/nested-signature admission and aggregate install budgets. **Physical:** trusted IPA installation/launch and data preservation; a compiled app or synthetic web-signed IPA is insufficient |
+| INSTALL-02 | Previously documented certificate/replacement receipt primitives remain historical evidence | **Paused:** first-sign to manager-replacement integration, certificate/admission, identity/data-access continuity and interruption recovery are uncredited. **After authorized resumption:** integrated verification. **Physical:** authorized identity transition/replacement and recovery; web bootstrap does not close this dependency |
+| PAIR-01 | Accepted `9ee` native fixtures, transcripts, both slices and ABI probes; current Release UIKit/composition compile. `a12` promotion eight and composition 41 per mode. Current cold reader runs actual manager/store/ordinary parser across separate writer/reader processes, nine scenarios per mode | **Active:** publish/natively verify reviewed FFI namespace/consumer isolation with provider-ownership evidence, final integration and safe committed-record/intended-protocol handoff with caller/native-worker quiescence. Cold fixtures exclude actual gateway/native handle/live peer/startup. Cached-protocol and live-backend proof remain open; no per-renewal manual restart. Gates stay off. **Physical:** valid import/retention, peer compatibility, cancellation and phone-side re-pairing |
+| QA-01 | Consolidated acceptance procedure exists; no device or soak execution has occurred | **Physical, last:** next-day unattended locked-screen renewal, original-expiry crossing and the original 30-day observation under declared conditions. Do not advance the clock, wait seven days for each development iteration or count manual refresh/debugger activity as unattended evidence |
+| QA-02 | Current Core/Integration/diagnostic/prepared-contract passes and Release compile; accepted native/source evidence; actual ODA/EMProxy and cold-reader fixtures. Real Chromium bootstrap QA passes 18 cases at `00c1c93`, with synthetic input. Historical failure artifacts preserved | **Active + external:** FFI namespace and provider-ownership proof, Debug/final-app/UI closure, live-backend contract, remaining source/notice/provenance/rights checks and unpaused security tests. **Paused dependencies:** signing/replacement/install budgets and startup/callback ownership. **Physical:** traffic, power, performance, hardware protection and real fault matrix. No general production-safety claim |
+| BOOT-01 | Original reviewed 70-file prototype published at `01bf960`: real zsign WASM synthetic IPA signing, 47 frontend tests/build; 19 offline Rust tests, format/Clippy/release/HTTP checks. Temporary account/UDID service and browser-only signed output are implemented. Nine-file browser-QA delta published at `00c1c93`; all 18 real Chromium tests pass across root/project-subpath, including real WASM synthetic signing, cancellation/retry, stale-output prevention and mobile layout | **Active + authorization + physical:** genuine artifact binding, Safari checks and separately authorized Apple operations; Chromium synthetic-material results do not establish those gates. The 18-file hosted-OTA extension is unapproved and paused at review; no deployment is authorized. Still needed: free Personal Team clean-phone installation, first native login and identity continuity. No signed-IPA host endpoint; ten-minute TTL covers account/enrollment sessions only. Paid Ad Hoc needs external HTTPS hosting and cannot replace free-Team proof; tracked dependency risk remains |
 
 ## Remaining order
 
-1. Retain scoped bf077f8 host Core/manager/composition passes and the terminal iOS
-   Core failure. Respect the classifier’s no-retry decision; cause remains unknown.
-   Preserve bdb device
-   compilation, exact selection and C host link evidence separately from its Rust
-   API successes and the reconciled historical artifacts
-2. Repair and verify Apple Swift result-type import, remaining probes, Simulator
-   build and XCFramework, then diagnostic consumer and actual UIKit composition.
-   Establish a quiescent handoff of the committed record and intended protocol;
-   persistence alone does not prove backend readiness. Keep pairing gates off
-3. Execute the reviewed, unpublished ODA pool/lock cleanup candidate’s Swift
-   composition checks, then integrate only with the required evidence.
-   Run the published EMProxy spy in the normal native phase. Integrate reviewed
-   changes into one app candidate. Stop the inconclusive exact-event path without
-   rerun or widening; any different UI work needs new discriminating evidence and
-   original assertions. No cause or product fix follows from the retained diagnostics
-4. Complete source/notice/delivery and external authenticity/rights gates. Keep
-   paused signing/replacement/budget scope and its dependencies separate
-5. Request one consolidated [phone phase](DEVICE_ACCEPTANCE.md) only after feasible
-   development: authorized login/2FA and permissions, pairing/recovery, install/launch,
-   profile application/readback, next-day locked-screen renewal and expiry crossing
+1. Complete publication of the reviewed namespace/consumer candidate, then verify
+   the exact new producer and app consumer, including provider ownership and
+   retained linker maps. The actual C inputs are now verified; Apple mixed-provider
+   execution has not run. A header-only patch is insufficient
+2. Close the unpaused pairing handoff and remaining app/UI/integration work without
+   manual per-renewal restart or weakened acceptance assertions; keep gates off
+3. Integrate the reviewed source/notice work with its stated limits; the original
+   70 web files and browser-QA delta are published, and Chromium tests pass.
+   Resolve external
+   rights/provenance; respect paused native and hosted-OTA scope, plus separate
+   deployment/account permissions
+4. Request one consolidated [phone phase](DEVICE_ACCEPTANCE.md) only after feasible
+   development gates. Keep clean-phone bootstrap, normal unattended renewal and
+   the 30-day observation as distinct acceptance outcomes
 
-Development authorization excludes main promotion and release. BOOT-01 remains
-separate; iOS background execution is not guaranteed under every condition.
+See [current status](STATUS.md) and the
+[dated checkpoint](checkpoints/2026-10-06-retained-native-consumer-progress.md).
+The [previous matrix](PLAN_PROGRESS-2026-10-05-2325.md) is preserved as history.
+No all-task completion, release, `main` promotion or phone readiness is claimed.

@@ -1,0 +1,79 @@
+{
+  "diagnostic_artifact_sha256": "6fe740a1687b2f9d6fbfe01df4b7f82e02c0804d4a83a4d71b266289073648e9",
+  "diagnostic_job_id": 112088119151,
+  "diagnostic_run_id": 37407474925,
+  "first_failure": {
+    "configuration": "Debug",
+    "line": 8989,
+    "member": "PLIST_OPT_COERCE",
+    "stage": "build"
+  },
+  "other_concrete_overlap_examples": [
+    "afc_client_free",
+    "lockdownd_client_free",
+    "idevice_free",
+    "misagent_install",
+    "house_arrest_client_free",
+    "debugserver_command_free"
+  ],
+  "pinned_libplist": {
+    "public_header_blob": "e720aac920447186f9ce04c70bc972b7a842c15e",
+    "public_header_sha256": "f17f07c6b1eb70acfcc36190acf7331c63928b57db852d15afc65bd75f60e545",
+    "revision": "32428abacb909988e8e960a8845a6430b17b6a60",
+    "source_build_bundles_libplist": true
+  },
+  "producer": {
+    "artifact_sha256": "c90f04e44019e67e551dca9708e9e958729ca475094aa6eefbd8e42d638f0a77",
+    "commit": "9ee2ccc9bd3519053781087acde54d4b4ee43236",
+    "device_header_sha256": "fd131679e900a2ab44ed2ced25a3cc9e56dad06e3a6147baeeb11bbc00ee0b64",
+    "run_id": 37400684000,
+    "rust_plist_archive_index_exports": 100,
+    "source_bundle_sha256": "004f310d48bdb1e4c8f9a407b95d8d9923f6a155cf7aff65e165339fd14730ca"
+  },
+  "release": {
+    "arguments": [
+      "-lidevice_ffi",
+      "-limobiledevice"
+    ],
+    "final_plist_provider_selection": "not established; no retained link map",
+    "link_line": 7005,
+    "linker_warnings_suppressed_by_existing_command": true,
+    "result": "BUILD SUCCEEDED"
+  },
+  "return_type_mismatches": {
+    "plist_array_append_item": {
+      "c_decl": "PLIST_API plist_err_t plist_array_append_item(plist_t node, plist_t item);",
+      "rust_decl": "PLIST_API void plist_array_append_item(plist_t node, plist_t item);"
+    },
+    "plist_array_insert_item": {
+      "c_decl": "PLIST_API plist_err_t plist_array_insert_item(plist_t node, plist_t item, uint32_t n);",
+      "rust_decl": "PLIST_API void plist_array_insert_item(plist_t node, plist_t item, uint32_t n);"
+    },
+    "plist_array_item_remove": {
+      "c_decl": "PLIST_API plist_err_t plist_array_item_remove(plist_t item);",
+      "rust_decl": "PLIST_API void plist_array_item_remove(plist_t node);"
+    },
+    "plist_array_remove_item": {
+      "c_decl": "PLIST_API plist_err_t plist_array_remove_item(plist_t node, uint32_t n);",
+      "rust_decl": "PLIST_API void plist_array_remove_item(plist_t node, uint32_t n);"
+    },
+    "plist_array_set_item": {
+      "c_decl": "PLIST_API plist_err_t plist_array_set_item(plist_t node, plist_t item, uint32_t n);",
+      "rust_decl": "PLIST_API void plist_array_set_item(plist_t node, plist_t item, uint32_t n);"
+    },
+    "plist_dict_merge": {
+      "c_decl": "PLIST_API plist_err_t plist_dict_merge(plist_t *target, plist_t source);",
+      "rust_decl": "PLIST_API void plist_dict_merge(plist_t *target, plist_t source);"
+    },
+    "plist_dict_remove_item": {
+      "c_decl": "PLIST_API plist_err_t plist_dict_remove_item(plist_t node, const char* key);",
+      "rust_decl": "PLIST_API void plist_dict_remove_item(plist_t node, const char* key);"
+    },
+    "plist_dict_set_item": {
+      "c_decl": "PLIST_API plist_err_t plist_dict_set_item(plist_t node, const char* key, plist_t item);",
+      "rust_decl": "PLIST_API void plist_dict_set_item(plist_t node, const char* key, plist_t item);"
+    }
+  },
+  "safety_conclusion": "A header-only enum addition does not establish correct provider ownership. Source-level export isolation plus scoped IDevice consumer changes and mixed-provider link probes required.",
+  "source_commit": "3f717ea5441d2cacee13e1d078e5ba7f1484edc5"
+}
