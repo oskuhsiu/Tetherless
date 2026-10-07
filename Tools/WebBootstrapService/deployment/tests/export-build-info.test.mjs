@@ -123,7 +123,7 @@ test('Docker context permits only the pinned public owned IPA after blanket arti
     '**/node_modules', '**/dist', '**/target', '**/.toolchain', '**/.env*',
     '**/.git', '**/*secret*', '**/*.pem', '**/*.p8', '**/*.mobileprovision',
     '**/.npmrc', '**/.netrc', '**/.git-credentials', '**/*.key', '**/*.p12',
-    '**/*.pfx', '**/*.ipa', '**/test-results', '**/playwright-report', '**/qa-evidence',
+    '**/*.pfx', '**/*.ipa', '**/test-results', '**/playwright-report', '**/playwright-gate-report', '**/qa-evidence',
     '!Tools/WebBootstrapService/tests/fixtures/request.pem',
   ];
   assert.deepEqual(rules, [...baseline, `!${owned}`]);

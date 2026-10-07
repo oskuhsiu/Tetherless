@@ -2,6 +2,8 @@
 // These are harness/HTTP checks, not substitutes for the Chromium assertions.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import gateConfig from '../../playwright.gate.config.js';
 import { createHarness, ORIGIN, PUBLIC_CODE, PUBLIC_DIGEST, FIXTURE_EXPIRY } from './harness.mjs';
 import { gateCSP } from '../../../Tools/WebBootstrapService/deployment/gate-page.mjs';
 
@@ -93,4 +95,16 @@ test('restarting the bridge swaps only loopback services and loses old cookie au
   assert.equal(readback.headers['x-tetherless-test-access'], undefined);
   assert.match(readback.body.toString(), /generate-code/);
   assert.deepEqual(f.h.upstreamRequests, []);
+});
+
+
+test('the harness is the sole trace owner and retains manual failure capture', async () => {
+  assert.equal(gateConfig.use.trace, 'off');
+  const harness = await readFile(new URL('./harness.mjs', import.meta.url), 'utf8');
+  const spec = await readFile(new URL('./gate.spec.js', import.meta.url), 'utf8');
+  assert.ok(harness.includes('await context.tracing?.start({ screenshots: true, snapshots: true, sources: true });'));
+  assert.ok(harness.includes('await context.tracing?.stop(tracePath ? { path: tracePath } : {});'));
+  assert.ok(spec.includes("const tracePath = failed ? testInfo.outputPath('public-fixture-trace.zip') : undefined;"));
+  assert.ok(spec.includes('await current.close({ tracePath });'));
+  assert.ok(spec.includes("if (tracePath) await testInfo.attach('public-fixture-trace', { path: tracePath, contentType: 'application/zip' });"));
 });

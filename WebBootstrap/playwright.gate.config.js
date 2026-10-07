@@ -24,7 +24,7 @@ export default defineConfig({
     headless: true,
     serviceWorkers: 'block',
     screenshot: 'only-on-failure',
-    trace: 'retain-on-failure',
+    trace: 'off', // The harness alone starts/stops traces and attaches failures.
     actionTimeout: 5_000,
     navigationTimeout: 10_000,
   },
