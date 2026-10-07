@@ -21,6 +21,8 @@ try:
     import mixed_provider
     import retained_c_provider
     import rust_symbol_reader
+    import symbol_visibility
+    from apply_patch import canonical_json
 finally:
     sys.path.pop(0)
 MAX_RECEIPT = 64 * 1024 * 1024
@@ -151,7 +153,7 @@ def composition_inputs(root: Path, contract: dict) -> dict:
     return files
 
 
-def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: dict, contract: dict, mixed: dict) -> None:
+def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: dict, contract: dict, mixed: dict, archives: dict) -> dict:
     """Bind the new producer's retained header and six link receipts to its ZIP-authenticated inventory."""
     prefix = "provenance/" + target + "/"
 
@@ -252,6 +254,9 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
         _success(status)
         if status.get("command") != rust_symbol_reader.scan_command(reader, archive):
             raise ValueError("full archive symbol scan used a different reader, flags or archive")
+    visibility = symbol_visibility.load_evidence(retained_bytes, target=target, reader=reader,
+        archives=archives, context={"source_manifest_sha256": digest(canonical_json(row["source_manifest"])),
+                                   "recipe_lock_sha256": receipt["recipe_lock_sha256"]}, links=row["link_probes"])
     for language in ("c", "swift"):
         _success(retained_json("05-link-mixed_provider-" + language + ".txt.status.json"))
         link_map = retained_bytes("05-link-mixed_provider-" + language + ".map", retained_c_provider.MAX_TEXT)
@@ -259,12 +264,14 @@ def verify_result_header_evidence(root: Path, receipt: dict, target: str, row: d
         if len(probes) != 1 or not link_map or probes[0].get("link_map_sha256") != digest(link_map):
             raise ValueError("native mixed-provider link map evidence differs")
         ownership = retained_c_provider.link_ownership(link_map, row["mixed_provider"]["library"], mixed["symbols"],
-            row["library"], {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
+            row["library"], {"_" + name for name in namespace["expected_target_exports"][target]["after"]},
+            visibility=visibility)
         if (retained_json("05-link-mixed_provider-" + language + "-ownership.json") != ownership
                 or probes[0].get("ownership") != ownership):
             raise ValueError("native full C/required Rust live ownership receipt differs")
     if retained_json("mixed-provider-input-audit.json").get("original_inputs_unchanged") is not True:
         raise ValueError("native mixed-provider input audit failed")
+    return visibility
 
 
 def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
@@ -299,10 +306,48 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
             or receipt.get("retained_c_provider_files") != {
                 name.removeprefix(C_ROOT + "/"): value for name, value in nested_files.items()}):
         raise ValueError("retained C handoff bytes differ from Apple artifact inventory")
-    c_targets, rust_symbols = {}, {}
+    c_targets, rust_symbols, visibility = {}, {}, {}
     targets = {row["target"]["rust"]: row for row in receipt["targets"]}
     if len(receipt["targets"]) != 2 or set(targets) != {"aarch64-apple-ios", "aarch64-apple-ios-sim"}:
         raise ValueError("both exact Apple target receipts are required")
+    expected = {name: value for name, value in receipt["files"].items() if name.startswith("IDevice.xcframework/")}
+    directory = root / "IDevice.xcframework"
+    actual = {}
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError("local Rust XCFramework is missing")
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            raise ValueError("local Rust XCFramework contains a symlink")
+        if path.is_file():
+            actual[path.relative_to(root).as_posix()] = file_hash(path)
+    if not expected or actual != expected:
+        raise ValueError("local XCFramework bytes differ from its native build receipt")
+    info = plistlib.loads(safe_file(root, "IDevice.xcframework/Info.plist").read_bytes())
+    rows = info["AvailableLibraries"]
+    if len(rows) != 2:
+        raise ValueError("expected two XCFramework slices")
+    identities = set()
+    device_slice, rust_archives = {}, {}
+    for row in rows:
+        variant = row.get("SupportedPlatformVariant", "")
+        identities.add((row["SupportedPlatform"], variant, tuple(row["SupportedArchitectures"])))
+        target = targets["aarch64-apple-ios-sim" if variant == "simulator" else "aarch64-apple-ios"]
+        prefix = "IDevice.xcframework/" + row["LibraryIdentifier"] + "/"
+        if (file_hash(safe_file(root, prefix + row["LibraryPath"])) != target["library_sha256"]
+                or file_hash(safe_file(root, prefix + row["HeadersPath"] + "/idevice.h")) != target["header_sha256"]):
+            raise ValueError("packaged native library/header identity differs")
+        library_path = safe_file(root, prefix + row["LibraryPath"])
+        rust_archives[target["target"]["rust"]] = {
+            "source": target["library"], "sha256": target["library_sha256"], "bytes": library_path.stat().st_size}
+        if variant == "":
+            device_slice = {"archive": prefix + row["LibraryPath"],
+                            "header": prefix + row["HeadersPath"] + "/idevice.h",
+                            "module_map": prefix + row["HeadersPath"] + "/module.modulemap"}
+            for name in device_slice.values():
+                if name not in expected:
+                    raise ValueError("device module/header/archive is absent from the artifact inventory")
+    if identities != {("ios", "", ("arm64",)), ("ios", "simulator", ("arm64",))}:
+        raise ValueError("diagnostic requires device and Simulator arm64 slice metadata")
     for target, row in targets.items():
         mixed = retained_c_provider.verify(nested_root, row["target"],
                                            expected_handoff_sha256=c_handoff_sha256)
@@ -331,44 +376,13 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
             raise ValueError("native composition/provider probe receipt is incomplete")
         retained_c_provider.verify_provider(mixed, provider)
         retained_c_provider.verify_sdk(mixed, observations)
-        verify_result_header_evidence(root, receipt, target, row, contract, mixed)
-        rust_symbols[target] = sorted(mixed_provider.exported_symbols(
-            safe_file(root, "provenance/" + target + "/04-rust-export-symbols.txt").read_text()))
-    expected = {name: value for name, value in receipt["files"].items() if name.startswith("IDevice.xcframework/")}
-    directory = root / "IDevice.xcframework"
-    actual = {}
-    if directory.is_symlink() or not directory.is_dir():
-        raise ValueError("local Rust XCFramework is missing")
-    for path in sorted(directory.rglob("*")):
-        if path.is_symlink():
-            raise ValueError("local Rust XCFramework contains a symlink")
-        if path.is_file():
-            actual[path.relative_to(root).as_posix()] = file_hash(path)
-    if not expected or actual != expected:
-        raise ValueError("local XCFramework bytes differ from its native build receipt")
-    info = plistlib.loads(safe_file(root, "IDevice.xcframework/Info.plist").read_bytes())
-    rows = info["AvailableLibraries"]
-    if len(rows) != 2:
-        raise ValueError("expected two XCFramework slices")
-    identities = set()
-    device_slice = {}
-    for row in rows:
-        variant = row.get("SupportedPlatformVariant", "")
-        identities.add((row["SupportedPlatform"], variant, tuple(row["SupportedArchitectures"])))
-        target = targets["aarch64-apple-ios-sim" if variant == "simulator" else "aarch64-apple-ios"]
-        prefix = "IDevice.xcframework/" + row["LibraryIdentifier"] + "/"
-        if (file_hash(safe_file(root, prefix + row["LibraryPath"])) != target["library_sha256"]
-                or file_hash(safe_file(root, prefix + row["HeadersPath"] + "/idevice.h")) != target["header_sha256"]):
-            raise ValueError("packaged native library/header identity differs")
-        if variant == "":
-            device_slice = {"archive": prefix + row["LibraryPath"],
-                            "header": prefix + row["HeadersPath"] + "/idevice.h",
-                            "module_map": prefix + row["HeadersPath"] + "/module.modulemap"}
-            for name in device_slice.values():
-                if name not in expected:
-                    raise ValueError("device module/header/archive is absent from the artifact inventory")
-    if identities != {("ios", "", ("arm64",)), ("ios", "simulator", ("arm64",))}:
-        raise ValueError("diagnostic requires device and Simulator arm64 slice metadata")
+        c_library = safe_file(nested_root / "product", mixed["library_relative"])
+        if file_hash(c_library) != mixed["library_sha256"]:
+            raise ValueError("retained C archive identity changed before visibility validation")
+        archives = {"rust": rust_archives[target], "c": {"source": row["mixed_provider"]["library"],
+            "sha256": mixed["library_sha256"], "bytes": c_library.stat().st_size}}
+        visibility[target] = verify_result_header_evidence(root, receipt, target, row, contract, mixed, archives)
+        rust_symbols[target] = list(visibility[target]["archives"]["rust"]["external_symbols"])
     c_files = {name.removeprefix(C_ROOT + "/product/"): value
                for name, value in nested_files.items() if name.startswith(C_PRODUCT + "/")}
     c_device = c_targets["aarch64-apple-ios"]
@@ -377,7 +391,7 @@ def artifact_inputs(root: Path, expected_receipt: str, contract: dict) -> dict:
                       "module_map": c_device["headers_relative"] + "/libimobiledevice/module.modulemap"}
     return {"receipt_sha256": expected_receipt, "files": expected,
             "c_files": c_files, "c_targets": c_targets, "c_device_slice": c_device_slice, "rust_symbols": rust_symbols,
-            "retained_c_handoff_sha256": c_handoff_sha256,
+            "retained_c_handoff_sha256": c_handoff_sha256, "symbol_visibility": visibility,
             "recipe_index_sha256": receipt["recipe_lock_sha256"], "targets": targets,
             "toolchain_lock_sha256": receipt["toolchain_lock_sha256"], "device_slice": device_slice,
             "binary_format_inspected": False}

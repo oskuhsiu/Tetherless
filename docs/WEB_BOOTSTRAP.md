@@ -311,7 +311,7 @@ claim. Runtime hashes establish the retrieved pin, not a reproducible WASM rebui
    short-lived access-gate and fixed test-window contract before exposing the
    container. No public service is deployed, and code publication alone authorizes
    no provider, spending, sharing or deployment.
-2. Preserve the current 30-case Chromium and container receipts above. Safari and
+2. Preserve the current 32-case Chromium and container receipts above. Safari and
    actual HTTPS-host behavior remain separate acceptance checks; do not rerun
    unchanged source merely because the older prototype had fewer cases.
 3. Bind a genuine unsigned Tetherless artifact using its source commit and SHA-256;

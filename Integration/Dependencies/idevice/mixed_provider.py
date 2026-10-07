@@ -116,7 +116,8 @@ def verify(root: Path, target: dict) -> dict:
 
 
 def exported_symbols(text: str) -> set[str]:
-    return {line.strip() for line in text.splitlines() if line.strip() and not line.rstrip().endswith(":")}
+    from symbol_visibility import exported
+    return exported(text.encode("utf-8"))
 
 
 def audit(root: Path, target: dict, expected: dict, verifier=verify) -> dict:

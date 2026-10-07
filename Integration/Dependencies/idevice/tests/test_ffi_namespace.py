@@ -511,7 +511,7 @@ class NativeSymbolInventoryTests(unittest.TestCase):
 
     def nm_text(self, target, extra=()):
         names = ["_" + name for name in self.contract["expected_target_exports"][target]["after"]]
-        return "fixture.a(member.o):\n\n" + "\n".join(names + list(extra)) + "\n"
+        return "\nmember.o:\n" + "\n".join(names + list(extra)) + "\n"
 
     def test_exact_nm_export_inventory_accepts_each_target_and_records_input_hash(self):
         for target in self.contract["expected_target_exports"]:

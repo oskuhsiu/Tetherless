@@ -88,6 +88,68 @@ def synthetic_map(c_archive, c_symbols, rust_archive, rust_symbols):
     return "# Object files:\n" + "\n".join(objects) + "\n# Sections:\n0x1000 0x100 __TEXT __text\n# Symbols:\n" + "\n".join(rows) + "\n"
 
 
+def synthetic_visibility_evidence(evidence, row, recipe_lock_sha256, archives, *, emit_scans=True):
+    """Complete synthetic byte/command lineage; never execute native payloads."""
+    reader = row["symbol_reader"]
+    root = evidence / "linkage-observation"
+    context = {"source_manifest_sha256": sha(binding.canonical_json(row["source_manifest"])),
+               "recipe_lock_sha256": recipe_lock_sha256}
+    inputs = {"schema": 2, "target": row["target"]["rust"], "diagnostic_only": False,
+              "ownership_acceptance_changed": True, "native_payloads_executed": False,
+              "archive_byte_limit_each": 256 * 1024 * 1024,
+              "archives": {role: dict(identity, canonical_source=identity["source"], retained=role + "-staticlib.a")
+                           for role, identity in archives.items()},
+              "symbol_reader": reader, "observation_flags": ["--defined-only", "--format=darwin", "--print-file-name", "--quiet"],
+              "source_context": context}
+    put_json(root / "inputs.json", inputs)
+    operations = []
+    for role in ("rust", "c"):
+        name = role + "-defined-members.txt"
+        symbols = (evidence / ("04-" + role + "-export-symbols.txt")).read_text().splitlines()
+        lines = []
+        for symbol in symbols:
+            member = ("ed-sha512.o" if symbol in binding.retained_c_provider.ED else
+                      "glue-sha512.o" if symbol in binding.retained_c_provider.GLUE else "c-fixture.o") if role == "c" else "rust-fixture.o"
+            lines.append(archives[role]["source"] + ":" + member + ": 0000000000001000 (__TEXT,__text) external " + symbol)
+        if emit_scans:
+            put(root / name, ("\n".join(lines) + "\n").encode())
+        command = [reader["llvm_nm"]["path"], *inputs["observation_flags"], archives[role]["source"]]
+        operations.append((root / name, command, ()))
+    for role in ("rust", "c"):
+        operations.append((evidence / ("04-" + role + "-export-symbols.txt"),
+                           binding.rust_symbol_reader.scan_command(reader, archives[role]["source"]), ()))
+    for probe in row["link_probes"]:
+        name = "05-link-" + probe["group"] + "-" + probe["language"]
+        path = evidence / (name + ".txt")
+        if not path.exists():
+            put(path, b"synthetic successful command output\n")
+        maps = (evidence / (name + ".map"),) if probe["group"] == "mixed_provider" else ()
+        operations.append((path, probe["command"], maps))
+    before = {role: {key: {field: identity[field] for field in ("sha256", "bytes")}
+                    for key in ("source", "retained")} for role, identity in archives.items()}
+    for index, (path, command, maps) in enumerate(operations, 1):
+        status = dict(success(), schema=1, command=command, stop_reason=None,
+                      log_bytes=len(path.read_bytes()), max_log_bytes=32 * 1024 * 1024,
+                      output_bytes_over_limit_observed=0)
+        status_path = path.with_name(path.name + ".status.json")
+        put_json(status_path, status)
+        def source_path(item):
+            return row["work"] + ("/linkage-observation/" if item.parent == root else "/completed/") + item.name
+        outputs = {item.name: {"path": source_path(item), "sha256": sha(item.read_bytes()), "bytes": len(item.read_bytes())}
+                   for item in (path, status_path, *maps)}
+        put_json(root / (f"{index:02d}-" + path.stem + ".json"), {
+            "schema": 1, "diagnostic_only": False, "command": command, "log": source_path(path),
+            "command_completed": True, "inputs_unchanged": True, "before": before, "after": before,
+            "outputs": outputs, "retention_errors": []})
+    def read(name, limit):
+        raw = (evidence / name).read_bytes()
+        if len(raw) > limit:
+            raise ValueError("synthetic evidence exceeds byte bound")
+        return raw
+    return binding.symbol_visibility.load_evidence(read, target=row["target"]["rust"], reader=reader,
+        archives=archives, context=context, links=row["link_probes"])
+
+
 class DiagnosticFixture:
     """Synthetic owned files, retaining the real contract's source/path roles."""
 
@@ -247,12 +309,37 @@ class DiagnosticFixture:
                         {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
                     put_json(evidence / ("05-link-mixed_provider-" + probe["language"] + "-ownership.json"), probe["ownership"])
                 put_json(evidence / ("05-link-" + probe["group"] + "-" + probe["language"] + ".txt.status.json"), success())
+            row["work"] = "/synthetic/producer/" + target
+            row["source_manifest"] = {"schema": 1, "files": {"synthetic.rs": sha(b"opaque fixture source")}}
             self.receipt["targets"].append(row)
+            self.refresh_visibility(len(self.receipt["targets"]) - 1)
         put(self.artifact / "IDevice.xcframework/Info.plist", plistlib.dumps({"AvailableLibraries": libraries}))
         c_libraries = [dict(item, LibraryPath="libimobiledevice.a") for item in libraries]
         put(self.artifact / binding.C_PRODUCT / "Info.plist", plistlib.dumps({"AvailableLibraries": c_libraries}))
         self.refresh(inventory=True)
         self.write_contract()
+
+    def refresh_visibility(self, target_index=0, *, emit_scans=True, recompute_ownership=True):
+        row = self.receipt["targets"][target_index]
+        target = row["target"]["rust"]
+        identifier = "ios-arm64-simulator" if target.endswith("-sim") else "ios-arm64"
+        rust_path = self.artifact / "IDevice.xcframework" / identifier / "libidevice_ffi.a"
+        c_path = self.artifact / binding.C_ROOT / "product" / row["mixed_provider"]["library_relative"]
+        archives = {"rust": {"source": row["library"], "sha256": row["library_sha256"], "bytes": rust_path.stat().st_size},
+                    "c": {"source": row["mixed_provider"]["library"], "sha256": row["mixed_provider"]["library_sha256"], "bytes": c_path.stat().st_size}}
+        visibility = synthetic_visibility_evidence(self.artifact / "provenance" / target, row,
+            self.receipt["recipe_lock_sha256"], archives, emit_scans=emit_scans)
+        if recompute_ownership:
+            namespace = binding.ffi_namespace.load_contract(expected_sha256=self.contract["ffi_namespace_sha256"])
+            for probe in row["link_probes"]:
+                if probe["group"] == "mixed_provider":
+                    name = "05-link-mixed_provider-" + probe["language"]
+                    raw = self.evidence(name + ".map", target_index).read_bytes()
+                    probe["ownership"] = binding.retained_c_provider.link_ownership(raw, row["mixed_provider"]["library"],
+                        row["mixed_provider"]["symbols"], row["library"],
+                        {"_" + symbol for symbol in namespace["expected_target_exports"][target]["after"]}, visibility=visibility)
+                    put_json(self.evidence(name + "-ownership.json", target_index), probe["ownership"])
+        return visibility
 
     def write_contract(self):
         put_json(self.here / "input-contract.json", self.contract)

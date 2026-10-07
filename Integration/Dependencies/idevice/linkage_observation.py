@@ -1,8 +1,8 @@
-"""Retain bounded, byte-bound diagnostic linkage inputs without accepting them.
+"""Retain bounded linkage inputs around every supervised scan and link.
 
-Only the caller's existing supervised commands run. The opaque archive copies,
-member-qualified nm output and operation receipts are offline review evidence;
-none replace the producer's export, ownership or input-audit gates.
+Legacy calls are diagnostic-only. A source-bound capture can be consumed only
+after symbol_visibility validates its compiler text and complete provenance.
+Opaque archives are hashed/copied, never parsed or executed by this module.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ import rust_symbol_reader
 
 MAX_ARCHIVE_BYTES = 256 * 1024 * 1024
 MAX_STATUS_BYTES = 1024 * 1024
-MAX_OPERATIONS = 12  # two diagnostic scans, two acceptance scans, eight links
+MAX_OPERATIONS = 12  # two visibility scans, two external scans, eight links
 TARGETS = ("aarch64-apple-ios", "aarch64-apple-ios-sim")
 OBSERVATION_FLAGS = ["--defined-only", "--format=darwin", "--print-file-name", "--quiet"]
 
@@ -84,7 +84,7 @@ def observation_command(reader: dict, archive: Path) -> list[str]:
 
 class LinkageObservation:
     def __init__(self, root: Path, *, target: str, rust_archive: Path,
-                 c_archive: Path, c_sha256: str, reader: dict):
+                 c_archive: Path, c_sha256: str, reader: dict, source_context: dict | None = None):
         if target not in TARGETS:
             raise VerificationError("unreviewed linkage observation target")
         if not root.is_absolute() or ".." in root.parts or root.exists() or root.is_symlink():
@@ -93,6 +93,7 @@ class LinkageObservation:
         rust_symbol_reader.audit_local(reader)
         root.mkdir()
         self.root, self.reader, self.operations = root, reader, 0
+        self.acceptance = source_context is not None
         self.argument_paths = {"rust": rust_archive, "c": c_archive}
         self.paths = {role: _canonical_file(path) for role, path in self.argument_paths.items()}
         self.copies = {"rust": root / "rust-staticlib.a", "c": root / "c-staticlib.a"}
@@ -107,8 +108,8 @@ class LinkageObservation:
         if not self._unchanged(self._snapshot()):
             raise VerificationError("linkage archives changed during retention")
         (root / "inputs.json").write_bytes(canonical_json({
-            "schema": 1, "target": target, "diagnostic_only": True,
-            "ownership_acceptance_changed": False, "native_payloads_executed": False,
+            "schema": 2 if self.acceptance else 1, "target": target, "diagnostic_only": not self.acceptance,
+            "ownership_acceptance_changed": self.acceptance, "source_context": source_context, "native_payloads_executed": False,
             "archive_byte_limit_each": MAX_ARCHIVE_BYTES,
             "archives": {role: {**self.expected[role], "source": str(self.argument_paths[role]),
                                  "canonical_source": str(self.paths[role]),
@@ -135,7 +136,7 @@ class LinkageObservation:
             raise VerificationError("unreviewed linkage observation operation")
         self.operations += 1
         receipt = self.root / (f"{self.operations:02d}-" + log.stem + ".json")
-        row = {"schema": 1, "diagnostic_only": True, "command": command,
+        row = {"schema": 1, "diagnostic_only": not self.acceptance, "command": command,
                "log": str(log), "command_completed": False, "inputs_unchanged": False}
         primary = None
         retention_errors = []
@@ -179,6 +180,11 @@ class LinkageObservation:
                     raise
             if retention_errors and primary is None:
                 raise VerificationError("linkage observation retention failed: " + "; ".join(retention_errors))
+
+    def audit(self) -> None:
+        if not self._unchanged(self._snapshot()):
+            raise VerificationError("linkage archive changed after observed operations")
+        rust_symbol_reader.audit_local(self.reader)
 
     def scans(self, invoke) -> None:
         for role in ("rust", "c"):

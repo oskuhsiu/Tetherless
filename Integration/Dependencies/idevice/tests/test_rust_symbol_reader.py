@@ -54,7 +54,7 @@ class ReaderTests(unittest.TestCase):
         self.assertEqual(value["llvm_nm"]["path"], str(self.f.nm))
         self.assertEqual(len(self.f.calls), 3)
         self.assertEqual(reader.scan_command(value, "/opaque/full.a"),
-            [str(self.f.nm), "--extern-only", "--defined-only", "--format=just-symbols", "/opaque/full.a"])
+            [str(self.f.nm), "--extern-only", "--defined-only", "--format=just-symbols", "--quiet", "/opaque/full.a"])
 
     def test_absent_component_never_falls_back_to_path_or_xcode(self):
         self.f.manifest.unlink()

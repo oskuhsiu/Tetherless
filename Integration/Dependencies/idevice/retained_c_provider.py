@@ -382,16 +382,62 @@ def parse_link_map(raw):
     return objects, live
 
 
-def link_ownership(raw, c_archive, c_symbols, rust_archive=None, rust_symbols=()):
+def link_ownership(raw, c_archive, c_symbols, rust_archive=None, rust_symbols=(), *, visibility=None):
     c_required, rust_required = set(c_symbols), set(rust_symbols)
     require(c_required and not c_required & rust_required, 'ambiguous mixed-provider ownership contract')
     required, owners = c_required | rust_required, {}
     objects, live = parse_link_map(raw)
+    candidates = {name: [] for name in required}
     for owner, name in live:
         if name in required:
-            require(name not in owners, 'ambiguous required live map symbol')
+            candidates[name].append(owner)
+    require(all(candidates.values()), 'required symbol missing from live map')
+    locals_by_name = {}
+    if visibility is None:
+        # Historical C-only artifacts keep their original strict interpretation.
+        # Mixed producers/consumers must supply fully bound visibility evidence.
+        for name, rows in candidates.items():
+            require(len(rows) == 1, 'ambiguous required live map symbol')
+            owners[name] = rows[0]
+    else:
+        require(visibility.get('schema') == 1 and set(visibility.get('archives', {})) == {'rust', 'c'},
+                'mixed-provider visibility contract differs')
+        scans = visibility['archives']
+        paths = {'c': str(c_archive), 'rust': str(rust_archive)}
+        require(all(scans[role]['source'] == path and Path(path).is_absolute() for role, path in paths.items())
+                and paths['c'] != paths['rust'], 'visibility belongs to different archive paths')
+        require(not set(scans['c']['external_symbols']) & set(scans['rust']['external_symbols'])
+                and c_required <= set(scans['c']['external_symbols'])
+                and rust_required <= set(scans['rust']['external_symbols']), 'visibility external ownership contract differs')
+        for name, rows in candidates.items():
+            require(len(rows) == len(set(rows)), 'ambiguous repeated required live map row')
+            expected_role = 'c' if name in c_required else 'rust'
+            external, local = [], []
+            for owner in rows:
+                matches = []
+                for role, archive in paths.items():
+                    match = re.fullmatch(re.escape(archive) + r'(?:\[(?:0|[1-9][0-9]*)\])?\(([^()]+)\)', objects[owner])
+                    if match:
+                        matches.append((role, match[1]))
+                require(len(matches) == 1, 'required symbol belongs to wrong or unknown archive: ' + name)
+                role, member = matches[0]
+                kinds = scans[role]['members'].get(member, {}).get(name, [])
+                require(len(kinds) == 1, 'missing or ambiguous exact member visibility: ' + name)
+                kind = kinds[0]
+                require(kind in ('local', 'external', 'weak'), 'unknown required symbol visibility')
+                if kind == 'local':
+                    local.append(owner)
+                else:
+                    external.append((owner, role, kind))
+            require(len(external) == 1, 'ambiguous or missing required external map owner: ' + name)
+            owner, role, kind = external[0]
+            require(role == expected_role, 'required symbol belongs to wrong archive: ' + name)
+            # A sole weak global preserves existing App behavior. It cannot
+            # resolve a collision or impersonate a non-external implementation.
+            require(not local or kind == 'external', 'weak external cannot resolve local map candidates: ' + name)
             owners[name] = owner
-    require(set(owners) == required, 'required symbol missing from live map')
+            if local:
+                locals_by_name[name] = sorted(local)
     for name, owner in owners.items():
         archive = str(c_archive if name in c_required else rust_archive)
         require(Path(archive).is_absolute() and re.fullmatch(re.escape(archive) + r'(?:\[[0-9]+\])?\([^()]+\)', objects.get(owner, '')),
@@ -399,9 +445,14 @@ def link_ownership(raw, c_archive, c_symbols, rust_archive=None, rust_symbols=()
     if ED | GLUE <= c_required:
         ed, glue = {owners[n] for n in ED}, {owners[n] for n in GLUE}
         require(len(ed) == len(glue) == 1 and not ed & glue, 'C SHA512 families do not have distinct real members')
-    return {'schema': 1, 'c_required_live_symbols': len(c_required), 'rust_required_live_symbols': len(rust_required),
-            'owners': owners, 'archive_members': {k: objects[k] for k in sorted(set(owners.values()))},
-            'map_sha256': digest(raw)}
+    result = {'schema': 1, 'c_required_live_symbols': len(c_required), 'rust_required_live_symbols': len(rust_required),
+              'owners': owners, 'archive_members': {k: objects[k] for k in sorted(set(owners.values()))},
+              'map_sha256': digest(raw)}
+    if visibility is not None:
+        result.update(schema=2, visibility_evidence_sha256=visibility['evidence_sha256'],
+                      proven_local_candidates=locals_by_name,
+                      local_archive_members={k: objects[k] for k in sorted({v for rows in locals_by_name.values() for v in rows})})
+    return result
 
 
 def success(status):

@@ -9,7 +9,7 @@ import shlex
 import tempfile
 import unittest
 
-from test_diagnostic_binding import synthetic_map
+from test_diagnostic_binding import synthetic_map, synthetic_reader, synthetic_visibility_evidence, put
 from unittest import mock
 
 HERE = Path(__file__).resolve().parents[1]
@@ -122,6 +122,16 @@ class CompileObserverTests(unittest.TestCase):
         c_provider["symbols"] = sorted(observer.APP_C_ROOTS | {"_synthetic_c_live", "_synthetic_c_dead"})
         self.rust_symbols = sorted(observer.APP_RUST_ROOTS | {"_synthetic_rust_live", "_synthetic_rust_dead"})
         self.binding["native_artifact"]["rust_symbols"] = {"aarch64-apple-ios": self.rust_symbols}
+        producer_evidence = self.base / "synthetic-producer-evidence"
+        for role, symbols in (("rust", self.rust_symbols), ("c", c_provider["symbols"])):
+            put(producer_evidence / ("04-" + role + "-export-symbols.txt"), ("\n".join(symbols) + "\n").encode())
+        self.visibility_archives = {
+            "rust": {"source": "/synthetic/producer/libidevice_ffi.a", "sha256": sha(data["archive"]), "bytes": len(data["archive"])},
+            "c": {"source": "/synthetic/provider/libimobiledevice.a", "sha256": c_provider["library_sha256"], "bytes": self.c_archive.stat().st_size}}
+        self.visibility_row = {"target": {"rust": "aarch64-apple-ios"}, "symbol_reader": synthetic_reader(),
+                               "source_manifest": {"synthetic": True}, "work": "/synthetic/producer", "link_probes": []}
+        self.binding["native_artifact"]["symbol_visibility"] = {"aarch64-apple-ios": synthetic_visibility_evidence(
+            producer_evidence, self.visibility_row, sha(b"synthetic recipe"), self.visibility_archives)}
         c_xcf = self.xcframework.parent / "libimobiledevice.xcframework"
         c_base = c_xcf / "ios-arm64"
         c_files = {"archive": c_base / "libimobiledevice.a", "header": c_base / "Headers/plist/plist.h",

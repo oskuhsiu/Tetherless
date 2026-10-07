@@ -102,8 +102,9 @@ class RetainedCBindingBoundaryTests(unittest.TestCase):
         path = f.evidence("05-link-mixed_provider-c.map")
         path.write_text(path.read_text().replace(row["mixed_provider"]["library"], "/other/libimobiledevice.a"))
         next(p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == "c")["link_map_sha256"] = binding.file_hash(path)
+        f.refresh_visibility(recompute_ownership=False)
         f.refresh(inventory=True)
-        with self.assertRaisesRegex(ValueError, "wrong archive"):
+        with self.assertRaisesRegex(ValueError, "wrong or unknown archive"):
             f.artifact_inputs()
 
     def test_both_producer_maps_read_and_hash_genuine_literal_bytes(self):
@@ -117,10 +118,7 @@ class RetainedCBindingBoundaryTests(unittest.TestCase):
                 path.write_bytes(raw)
                 probe = next(p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == language)
                 probe["link_map_sha256"] = sha(raw)
-                probe["ownership"] = binding.retained_c_provider.link_ownership(raw,
-                    row["mixed_provider"]["library"], f.c_targets[target]["symbols"], row["library"],
-                    {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
-                put_json(f.evidence("05-link-mixed_provider-" + language + "-ownership.json", index), probe["ownership"])
+            f.refresh_visibility(index)
         f.refresh(inventory=True)
         result = f.artifact_inputs()
         self.assertEqual(len(result["targets"]), 2)
@@ -137,8 +135,9 @@ class RetainedCBindingBoundaryTests(unittest.TestCase):
         raw = path.read_bytes() + genuine_literal_rows() + b"0x1000 0x10 [ 4] _plist_free\n"
         path.write_bytes(raw)
         next(p for p in row["link_probes"] if p["group"] == "mixed_provider" and p["language"] == "c")["link_map_sha256"] = sha(raw)
+        f.refresh_visibility(recompute_ownership=False)
         f.refresh(inventory=True)
-        with self.assertRaisesRegex(ValueError, "ambiguous required live map symbol"):
+        with self.assertRaisesRegex(ValueError, "exact member visibility"):
             f.artifact_inputs()
 
     def test_owned_copy_binds_every_c_byte_and_preserves_unmodified_c_gateway(self):
@@ -254,7 +253,7 @@ class RetainedCObserverBoundaryTests(unittest.TestCase):
     def test_final_live_map_wrong_archive_and_path_lookalike_fail(self):
         for owner in ("/other/libimobiledevice.a", str(self.c_archive) + ".wrong"):
             self.map_path.write_text(self.map_text.replace(str(self.c_archive), owner))
-            with self.subTest(owner=owner), self.assertRaisesRegex(observer.ObservationError, "wrong archive"):
+            with self.subTest(owner=owner), self.assertRaisesRegex(observer.ObservationError, "wrong or unknown archive|exact member visibility"):
                 self.observe()
 
     def test_alternate_C_framework_forms_and_direct_framework_binary_fail(self):
@@ -281,14 +280,14 @@ class RetainedCObserverBoundaryTests(unittest.TestCase):
     def test_duplicate_live_symbol_is_not_hidden_by_set(self):
         text = self.map_text.replace("# Dead Stripped Symbols:", "0x1000 0x10 [ 4] _plist_free\n# Dead Stripped Symbols:")
         self.map_path.write_text(text)
-        with self.assertRaisesRegex(observer.ObservationError, "ambiguous required live map symbol"):
+        with self.assertRaisesRegex(observer.ObservationError, "exact member visibility"):
             self.observe()
 
     def test_nonroot_live_exports_must_also_have_exact_owners(self):
         for symbol, old_owner, new_owner in (("_synthetic_c_live", 3, 4), ("_synthetic_rust_live", 4, 3)):
             text = self.map_text.replace(f"[ {old_owner}] {symbol}", f"[ {new_owner}] {symbol}")
             self.map_path.write_text(text)
-            with self.subTest(symbol=symbol), self.assertRaisesRegex(observer.ObservationError, "wrong archive"):
+            with self.subTest(symbol=symbol), self.assertRaisesRegex(observer.ObservationError, "wrong or unknown archive|exact member visibility"):
                 self.observe()
 
     def test_diagnostic_roots_and_both_strong_system_frameworks_are_required(self):

@@ -123,7 +123,7 @@ class MixedProviderTests(unittest.TestCase):
 
     def test_c_provider_symbols_must_be_present_and_disjoint(self):
         c = "\n".join("_" + n for n in ("plist_new_dict", "plist_free", "plist_array_set_item",
-            "afc_client_free", "lockdownd_client_free", "idevice_free"))
+            "afc_client_free", "lockdownd_client_free", "idevice_free")) + "\n"
         result = mixed.check_mixed_symbols("_tetherless_native_plist_free\n", c)
         self.assertTrue(result["provider_export_sets_disjoint"])
         for rust, other in (("_plist_free\n", c), ("_tetherless_native_plist_free\n", c.replace("_idevice_free", ""))):

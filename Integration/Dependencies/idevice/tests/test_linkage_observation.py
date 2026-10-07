@@ -205,7 +205,35 @@ class AppleLinkageCaptureTests(unittest.TestCase):
             for row in receipts:
                 self.assertEqual(row["before"], row["after"])
                 self.assertEqual(row["retention_errors"], [])
-        self.assertFalse(any("linkage-observation" in name or "-staticlib.a" in name for name in result["files"]))
+        self.assertTrue(any("linkage-observation" in name for name in result["files"]))
+        self.assertFalse(any("-staticlib.a" in name for name in result["files"]))
+
+    def test_mutated_packaged_visibility_bytes_block_publication(self):
+        fixture = self.fixture
+        original = apple.shutil.copytree
+        def copying(source, destination, *args, **kwargs):
+            result = original(source, destination, *args, **kwargs)
+            if Path(source).name == "linkage-observation":
+                path = Path(destination) / "rust-defined-members.txt"
+                path.write_bytes(path.read_bytes()[:-2] + b"X\n")
+            return result
+        with fixture.patches(), patch.object(apple.shutil, "copytree", side_effect=copying):
+            with self.assertRaisesRegex(VerificationError, "output bytes/paths differ"):
+                apple.build(fixture.args)
+        self.assertFalse(fixture.args.output.exists())
+
+    def test_archive_change_after_final_link_validation_blocks_target_receipt(self):
+        fixture = self.fixture
+        original = apple.symbol_visibility.load_evidence
+        def loading(read, **kwargs):
+            result = original(read, **kwargs)
+            if len(kwargs.get("links", ())) == 8:
+                Path(kwargs["archives"]["rust"]["source"]).write_bytes(b"changed after final link")
+            return result
+        with fixture.patches(), patch.object(apple.symbol_visibility, "load_evidence", side_effect=loading):
+            with self.assertRaisesRegex(VerificationError, "changed after observed operations"):
+                apple.build(fixture.args)
+        self.assertFalse(fixture.args.output.exists())
 
     def test_duplicate_owner_rejection_retains_archive_scan_map_and_status_evidence(self):
         fixture = self.fixture
@@ -218,7 +246,7 @@ class AppleLinkageCaptureTests(unittest.TestCase):
                     stream.write(b"0x00000001 0x00000001 [ 4] _sha512_init\n")
             return result
         with fixture.patches(), patch.object(apple, "capture_helper_command", side_effect=capture):
-            with self.assertRaisesRegex(VerificationError, "ambiguous required live map symbol"):
+            with self.assertRaisesRegex(VerificationError, "missing or ambiguous exact member visibility"):
                 apple.build(fixture.args)
         target = fixture.args.work_dir / "aarch64-apple-ios"
         root = target / "linkage-observation"

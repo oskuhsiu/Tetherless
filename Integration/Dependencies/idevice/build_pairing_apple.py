@@ -13,6 +13,7 @@ import sys
 import tomllib
 
 import rust_symbol_reader
+import symbol_visibility
 import retained_c_provider
 from linkage_observation import LinkageObservation
 
@@ -332,7 +333,9 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
         if str(library) not in features["ffi_artifact"]["filenames"]:
             raise VerificationError("selected Rust archive lacks its compiler-artifact identity")
         linkage = LinkageObservation(work / "linkage-observation", target=target["rust"],
-            rust_archive=library, c_archive=Path(mixed["library"]), c_sha256=mixed["library_sha256"], reader=reader)
+            rust_archive=library, c_archive=Path(mixed["library"]), c_sha256=mixed["library_sha256"], reader=reader,
+            source_context={"source_manifest_sha256": sha256(canonical_json(source_manifest)),
+                            "recipe_lock_sha256": args.recipe_lock_sha256})
         linkage.scans(lambda command, log: capture_helper_command(command, source=source, env=env, log=log))
         def linkage_run(command, name, maps=()):
             return linkage.run(command, log=evidence / name, maps=maps,
@@ -352,6 +355,21 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
         (evidence / "retained-c-export-contract.json").write_bytes(canonical_json(c_export_contract))
         export_namespace["contract_sha256"] = profile["export_namespace_sha256"]
         (evidence / "ffi-export-namespace.json").write_bytes(canonical_json(export_namespace))
+        visibility_archives = {role: {"source": str(path), **linkage.expected[role]}
+                               for role, path in linkage.argument_paths.items()}
+        visibility_context = {"source_manifest_sha256": sha256(canonical_json(source_manifest)),
+                              "recipe_lock_sha256": args.recipe_lock_sha256}
+        def visibility_bytes(name, limit):
+            path = work / name if name.startswith("linkage-observation/") else evidence / name
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+                raise VerificationError("visibility evidence file is missing or exceeds bound")
+            with path.open("rb") as stream:
+                raw = stream.read(limit + 1)
+            if len(raw) > limit:
+                raise VerificationError("visibility evidence bytes exceed bound")
+            return raw
+        visibility = symbol_visibility.load_evidence(visibility_bytes, target=target["rust"], reader=reader,
+            archives=visibility_archives, context=visibility_context)
         links = []
         for group, probes in profile["probe_sets"].items():
             for language, probe in probes.items():
@@ -378,13 +396,19 @@ def build_target(args, profile: dict, config: dict, provider, target: dict) -> d
                     entry["ownership"] = retained_c_provider.link_ownership(
                         map_bytes, Path(mixed["library"]), set(mixed["symbols"]),
                         rust_archive=library,
-                        rust_symbols={"_" + name for name in namespace["expected_target_exports"][target["rust"]]["after"]})
+                        rust_symbols={"_" + name for name in namespace["expected_target_exports"][target["rust"]]["after"]},
+                        visibility=visibility)
                     (evidence / ("05-link-mixed_provider-" + language + "-ownership.json")).write_bytes(
                         canonical_json(entry["ownership"]))
                 links.append(entry)
+        if symbol_visibility.load_evidence(visibility_bytes, target=target["rust"], reader=reader,
+                archives=visibility_archives, context=visibility_context, links=links) != visibility:
+            raise VerificationError("visibility changed across complete target link operations")
+        linkage.audit()
         result = {"target": target, "work": str(work), "source": str(source), "source_manifest": source_manifest,
                   "vendor_receipt": vendor_receipt, "provider_receipt": provider_receipt, "library": str(library),
-                  "library_sha256": file_hash(library), "headers": str(headers), "header_sha256": file_hash(headers / "idevice.h"),
+                  "library_sha256": linkage.expected["rust"]["sha256"], "library_bytes": linkage.expected["rust"]["bytes"],
+                  "visibility_archives": visibility_archives, "headers": str(headers), "header_sha256": file_hash(headers / "idevice.h"),
                   "toolchain_observations": observations, "sdk_root": sdk, "compiler_paths": tools,
                   "header_probe_command": header_probe, "header_probe_linked_or_executed": False,
                   "feature_graph_command": graph, "production_features": features, "build_command": cargo_command,
@@ -504,6 +528,29 @@ def build(args) -> dict:
     for row in targets:
         destination = provenance / row["target"]["rust"]
         shutil.copytree(Path(row["work"]) / "completed", destination)
+        # Full compiler text and bound operation receipts travel with the product.
+        # Archive bytes already travel as XCFramework and nested C handoff files.
+        observed = Path(row["work"]) / "linkage-observation"
+        shutil.copytree(observed, destination / "linkage-observation",
+                        ignore=shutil.ignore_patterns("rust-staticlib.a", "c-staticlib.a"))
+        def packaged_visibility_bytes(name, limit):
+            path = destination / name
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+                raise VerificationError("packaged visibility evidence file differs")
+            with path.open("rb") as stream:
+                return stream.read(limit + 1)
+        packaged_visibility = symbol_visibility.load_evidence(packaged_visibility_bytes, target=row["target"]["rust"],
+            reader=row["symbol_reader"], archives=row["visibility_archives"],
+            context={"source_manifest_sha256": sha256(canonical_json(row["source_manifest"])),
+                     "recipe_lock_sha256": args.recipe_lock_sha256}, links=row["link_probes"])
+        for probe in row["link_probes"]:
+            if probe["group"] == "mixed_provider":
+                name = "05-link-mixed_provider-" + probe["language"]
+                if (probe["ownership"]["visibility_evidence_sha256"] != packaged_visibility["evidence_sha256"]
+                        or probe["link_map_sha256"] != sha256(packaged_visibility_bytes(name + ".map", MAX_LOG_BYTES))
+                        or retained_c_provider.read_json_bytes(packaged_visibility_bytes(name + "-ownership.json", MAX_LOG_BYTES))
+                           != probe["ownership"]):
+                    raise VerificationError("packaged visibility/map proof differs from accepted target")
     shutil.copyfile(args.work_dir / "create-xcframework.txt", package / "provenance/create-xcframework.txt")
     shutil.copyfile(args.work_dir / "create-xcframework.txt.status.json", package / "provenance/create-xcframework.txt.status.json")
     if inventory(provenance / "retained-c-provider") != retained_c_inventory:
