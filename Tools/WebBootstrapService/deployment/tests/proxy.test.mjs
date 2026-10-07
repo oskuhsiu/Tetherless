@@ -2,8 +2,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { createHash } from 'node:crypto';
+import crypto, { createHash } from 'node:crypto';
+import { syncBuiltinESMExports } from 'node:module';
 import { createProxy, readConfig } from '../proxy.mjs';
+import { gateCSP } from '../gate-page.mjs';
+
+// Isolated test process only: even gate cookies are public deterministic fixtures.
+// Keep the production entropy source unchanged; never use these in a deployment.
+let cookieFixture = 0;
+crypto.randomBytes = size => { assert.equal(size, 32); return Buffer.alloc(size, ++cookieFixture); };
+syncBuiltinESMExports();
 
 const SOURCE = 'a'.repeat(40);
 const CODE = 'A'.repeat(43); // Synthetic fixture only, never a usable deployment code.
@@ -23,16 +31,17 @@ function request(port, path = '/', { method = 'GET', headers = {}, data = '' } =
     req.on('error', reject); req.end(data);
   });
 }
-async function harness(t, { now = Date.now, delay = 0 } = {}) {
+async function harness(t, { now = Date.now, delay = 0, rootStatus = 200, spoofMarker = false } = {}) {
   const received = [];
   const upstream = http.createServer((req, res) => {
     const chunks = [];
     req.on('data', c => chunks.push(c));
     req.on('end', async () => {
       received.push({ method: req.method, path: req.url, headers: req.headers, body: Buffer.concat(chunks).toString() });
-      if (req.url === '/v1/slow' && delay) await new Promise(r => setTimeout(r, delay));
-      res.writeHead(200, { 'content-type': 'application/json', 'set-cookie': 'enrollment=fixture; Secure; HttpOnly',
-        'content-security-policy': "default-src 'self'", 'connection': 'keep-alive' });
+      if (['/v1/slow', '/'].includes(req.url) && delay) await new Promise(r => setTimeout(r, delay));
+      res.writeHead(req.url === '/' ? rootStatus : 200, { 'content-type': 'application/json', 'set-cookie': 'enrollment=fixture; Secure; HttpOnly',
+        'content-security-policy': "default-src 'self'", 'connection': 'keep-alive',
+        ...(spoofMarker ? { 'x-tetherless-test-access': 'granted' } : {}) });
       res.end(JSON.stringify({ ok: true }));
     });
   });
@@ -65,7 +74,11 @@ test('configuration is fail-closed and contains no credentials in errors', () =>
 test('gate is visible and CSP-compatible, APIs remain denied, exact health only is public', async t => {
   const h = await harness(t);
   const gate = await h.call('/'); assert.equal(gate.status, 200); assert.match(gate.body, /Test access code/);
-  assert.match(gate.headers['content-security-policy'], /form-action 'self'/);
+  assert.equal(gate.headers['content-security-policy'], gateCSP);
+  assert.equal(gate.headers['x-tetherless-test-access'], undefined);
+  assert.match(gate.body, /id="generate-code"/);
+  assert.match(gate.body, /id="test-access-sha256"[^>]*><\/output>/);
+  assert.ok(!gate.body.includes(BASE.TETHERLESS_TEST_ACCESS_SHA256));
   assert.ok(gate.body.includes(`https://github.com/oskuhsiu/Tetherless/tree/${SOURCE}`));
   assert.ok(gate.body.includes(`https://github.com/oskuhsiu/Tetherless/blob/${SOURCE}/LICENSE`));
   assert.ok(!gate.body.includes('/tree/main'));
@@ -190,4 +203,37 @@ test('response window exceeds input timeout without retrying a slow operation', 
   const h = await harness(t, { delay: 16000 }); const opened = await h.unlock(); const cookie = opened.headers['set-cookie'][0].split(';')[0];
   const response = await h.call('/v1/slow', { method: 'POST', headers: { cookie, origin: BASE.FRONTEND_ORIGIN }, data: 'synthetic' });
   assert.equal(response.status, 200); assert.equal(h.received.length, 1);
+});
+
+
+test('only authenticated successful root readback gets a non-spoofable proof marker', async t => {
+  const h = await harness(t, { spoofMarker: true });
+  for (const path of ['/', '/_test/access', '/health', '/v1/synthetic']) {
+    assert.equal((await h.call(path)).headers['x-tetherless-test-access'], undefined);
+  }
+  const opened = await h.unlock(); assert.equal(opened.status, 303);
+  assert.equal(opened.headers.location, '/'); assert.equal(opened.headers['x-tetherless-test-access'], undefined);
+  const cookie = opened.headers['set-cookie'][0].split(';')[0];
+  const root = await h.call('/', { headers: { cookie } });
+  assert.equal(root.status, 200); assert.equal(root.headers['x-tetherless-test-access'], 'granted');
+  for (const path of ['/health', '/v1/synthetic', '/_test/access']) {
+    assert.equal((await h.call(path, { headers: { cookie } })).headers['x-tetherless-test-access'], undefined);
+  }
+  assert.equal((await h.call('/', { method: 'HEAD', headers: { cookie } })).headers['x-tetherless-test-access'], undefined);
+  assert.equal((await h.call('/', { headers: { cookie: '__Host-tetherless-test=' + 'B'.repeat(43) } })).headers['x-tetherless-test-access'], undefined);
+});
+test('failed root response cannot masquerade as successful unlock even with an upstream marker', async t => {
+  const h = await harness(t, { rootStatus: 503, spoofMarker: true });
+  const opened = await h.unlock(); const cookie = opened.headers['set-cookie'][0].split(';')[0];
+  const root = await h.call('/', { headers: { cookie } });
+  assert.equal(root.status, 503); assert.equal(root.headers['x-tetherless-test-access'], undefined);
+});
+test('expired root readback never grants proof and closed page has no runnable Generate code', async t => {
+  let time = Date.now(); const h = await harness(t, { now: () => time, delay: 40, spoofMarker: true });
+  const opened = await h.unlock(); const cookie = opened.headers['set-cookie'][0].split(';')[0];
+  const pending = h.call('/', { headers: { cookie } });
+  setTimeout(() => { time += 3600001; }, 20);
+  const root = await pending; assert.equal(root.headers['x-tetherless-test-access'], undefined);
+  const closed = await h.call('/'); assert.equal(closed.status, 410);
+  assert.doesNotMatch(closed.body, /<script>/); assert.match(closed.body, /測試期限已結束/);
 });

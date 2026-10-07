@@ -2,13 +2,13 @@
 // Deliberately dependency-free. This perimeter never logs requests or errors.
 import http from 'node:http';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { gateCSP, gatePage } from './gate-page.mjs';
 
 const COOKIE = '__Host-tetherless-test';
 const MAX_BODY = 32 * 1024;
 const HOP = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
   'te', 'trailer', 'transfer-encoding', 'upgrade']);
 const CALLBACK = /^\/v1\/device-enrollments\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/callback$/;
-const page = (sourceCommit, closed = false) => `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tetherless test access</title><main><h1>Tetherless test access</h1><p>${closed ? 'This test window has closed. Account access is unavailable.' : 'This is a private, time-limited test. Enter the test access code supplied by the operator.'}</p><p>This code is separate from your Apple Account password. Do not enter an Apple password here.</p><form method="post" action="/_test/access"><label for="access-code">Test access code</label><input id="access-code" name="code" type="password" ${closed ? 'disabled' : ''} required minlength="43" maxlength="43" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[A-Za-z0-9_-]{43}"><button type="submit" ${closed ? 'disabled' : ''}>Open test</button></form><p>Access is held in a temporary secure cookie. Restarting the service ends this access and any Apple session.</p><section aria-label="Source and license"><h2>Source and license</h2><p><a href="https://github.com/oskuhsiu/Tetherless/tree/${sourceCommit}" rel="noopener noreferrer">Source for this deployed version (${sourceCommit})</a></p><p><a href="https://github.com/oskuhsiu/Tetherless/blob/${sourceCommit}/LICENSE" rel="noopener noreferrer">GNU Affero General Public License</a></p></section></main></html>`;
 
 function fail(message) { throw new Error(message); }
 export function readConfig(env = process.env, now = Date.now(), sourceCommit) {
@@ -51,8 +51,8 @@ function send(res, status, error, extra = {}) {
 }
 function gate(res, config, closed = false) {
   res.writeHead(closed ? 410 : 200, { ...headers(), 'content-type': 'text/html; charset=utf-8',
-    'content-security-policy': "default-src 'none'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" });
-  res.end(page(config.sourceCommit, closed));
+    'content-security-policy': gateCSP });
+  res.end(gatePage(config.sourceCommit, config.expires, closed));
 }
 function filteredHeaders(input) {
   const excluded = new Set(HOP);
@@ -195,6 +195,12 @@ export function createProxy(config, { upstreamPort = 8787, now = Date.now } = {}
     const upstream = http.request({ hostname: '127.0.0.1', port: upstreamPort,
       path, method: req.method, headers: outgoing, agent: health ? healthAgent : agent, timeout: health ? 2000 : 130000 }, response => {
       const downstream = filteredHeaders(response.headers);
+      // Only an authenticated successful root readback proves the gate cookie
+      // survived the redirect. Never trust an upstream-supplied marker.
+      delete downstream['x-tetherless-test-access'];
+      if (req.method === 'GET' && path === '/' && response.statusCode === 200 && now() < authorizedUntil) {
+        downstream['x-tetherless-test-access'] = 'granted';
+      }
       // Preserve the frontend's own CSP rather than overriding its WASM policy.
       res.writeHead(response.statusCode ?? 502, { ...downstream, ...headers() });
       response.on('error', () => res.destroy());

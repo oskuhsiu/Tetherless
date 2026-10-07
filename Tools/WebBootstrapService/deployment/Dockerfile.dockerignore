@@ -34,6 +34,7 @@
 **/*.ipa
 **/test-results
 **/playwright-report
+**/playwright-gate-report
 **/qa-evidence
 
 # Public synthetic CSR required by backend tests (not a private key).

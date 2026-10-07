@@ -2,7 +2,7 @@ name: Web bootstrap deployment package
 
 on:
   push:
-    branches: [develop, verify/staged-pairing-native]
+    branches: [develop, verify/staged-pairing-native, verify/web-signing-preview]
     paths:
       - 'WebBootstrap/**'
       - 'Tools/WebBootstrapService/**'
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   docker-nonaccount:
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/verify/staged-pairing-native' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/verify/staged-pairing-native' || github.ref == 'refs/heads/verify/web-signing-preview' || github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
@@ -56,6 +56,7 @@ jobs:
           set -euo pipefail
           node --test --test-concurrency=1 \
             Tools/WebBootstrapService/deployment/tests/proxy.test.mjs \
+            Tools/WebBootstrapService/deployment/tests/gate-page.test.mjs \
             Tools/WebBootstrapService/deployment/tests/supervisor.test.mjs \
             Tools/WebBootstrapService/deployment/tests/export-build-info.test.mjs \
             2>&1 | tee deployment-evidence/proxy-supervisor-tests.txt

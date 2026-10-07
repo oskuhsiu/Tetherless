@@ -2,14 +2,16 @@ name: Web bootstrap browser QA
 
 on:
   push:
-    branches: [develop, verify/staged-pairing-native]
+    branches: [develop, verify/staged-pairing-native, verify/web-signing-preview]
     paths:
       - 'WebBootstrap/**'
+      - 'Tools/WebBootstrapService/deployment/**'
       - '.github/workflows/web-bootstrap.yml'
   pull_request:
     branches: [develop]
     paths:
       - 'WebBootstrap/**'
+      - 'Tools/WebBootstrapService/deployment/**'
       - '.github/workflows/web-bootstrap.yml'
   workflow_dispatch:
 
@@ -23,7 +25,7 @@ concurrency:
 jobs:
   static-browser-qa:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 24
     defaults:
       run:
         working-directory: WebBootstrap
@@ -73,13 +75,18 @@ jobs:
         run: |
           npm test
           npm run build
-          node --test tests/browser/harness.test.mjs
+          node --test tests/browser/harness.test.mjs tests/gate-browser/harness.test.mjs
       - name: Acquire locked Playwright Chromium (official dependencies)
         timeout-minutes: 4
         run: node node_modules/playwright/cli.js install --with-deps chromium
       - name: Run request-gated local browser tests (synthetic inputs only)
         timeout-minutes: 9
         run: npm run test:browser
+      - name: Run production gate browser and HTTP regression (public synthetic fixtures only)
+        timeout-minutes: 4
+        run: |
+          printf '%s\n' 'WARNING: Gate browser traces contain deterministic PUBLIC fixtures, never deployment credentials.' > qa-evidence/gate-fixture-warning.txt
+          node node_modules/playwright/cli.js test --config playwright.gate.config.js
       - name: Retain exact-source evidence, browser reports, traces and mobile screenshots
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -88,6 +95,7 @@ jobs:
           path: |
             WebBootstrap/qa-evidence/
             WebBootstrap/playwright-report/
+            WebBootstrap/playwright-gate-report/
             WebBootstrap/test-results/
           retention-days: 14
           if-no-files-found: error

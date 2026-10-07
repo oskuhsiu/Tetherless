@@ -38,12 +38,13 @@ applicable dependency license/source obligation.
   - `TETHERLESS_TEST_EXPIRES_AT`: an absolute UTC timestamp, `YYYY-MM-DDTHH:MM:SSZ`,
     in the future and at most 24 hours from process startup
   - `TETHERLESS_TEST_ACCESS_SHA256`: lowercase SHA256 of a separate test code
-- Generate the test code with a cryptographically secure generator on an approved
-  operator-controlled system: 32 random bytes encoded as 43 unpadded base64url
-  characters. The visible gate rejects other lengths/alphabets; a digest cannot
-  prove randomness, so do not use repeated characters, memorable phrases or an
-  Apple password. Never put the code in chat, source, build arguments or logs.
-  This package does not generate or configure a real operator credential.
+- The same-origin gate offers **產生測試碼**. Only the tester's explicit trusted
+  button gesture invokes WebCrypto: 32 random bytes become 43 unpadded base64url
+  characters, then SHA-256 is computed over the code string's UTF-8 bytes.
+  The code stays in the read-only password field and page memory. Generation
+  never submits it, configures the service or replaces an existing page code.
+  Missing/failed secure-context WebCrypto fails closed with no weak fallback.
+  Never put the code in chat, source, build arguments, screenshots or logs.
 - Store only its digest as runtime configuration, never the actual code. A
   short-lived test gate is access control, not a substitute for approved HTTPS,
   account data-recipient consent or action-time certificate confirmation.
@@ -54,7 +55,41 @@ applicable dependency license/source obligation.
   hostname; adding another custom hostname changes Render's health-check Host
   behavior and requires deliberate origin/configuration review.
 
-The gate has an accessible password-type form suitable for secure browser
+### No-copy setup in the approved cloud Chrome handoff
+
+1. Keep the tester on the gate page in the operator's explicitly shared cloud
+   Chrome handoff. The tester presses **產生測試碼** themselves. The operator must
+   not generate it, inspect the password input/value, capture the page/screenshot,
+   or read broad DOM/browser state after generation.
+2. The only approved narrow read is the text content of the stable
+   `#test-access-sha256` node, exactly 64 lowercase hex characters. That digest
+   is the only value used for `TETHERLESS_TEST_ACCESS_SHA256` on the existing
+   approved service. There is no public verifier registration/reset endpoint.
+3. Apply that verifier through the authorized hosting configuration and wait for
+   the existing service restart to complete. Keep the original gate page open
+   without reload. Preserve the previously approved absolute expiry, origin,
+   service and plan. Restarting ends previous gate and Apple sessions, so do
+   this before any account work.
+4. After the operator confirms readiness, the tester explicitly presses
+   **Open test**. Only that gesture POSTs the code, form-url-encoded, to the
+   same-origin `/_test/access`. The page neither polls nor submits automatically.
+
+Opening the URL separately on Android or another browser does not let the
+operator read that browser's digest. The no-copy setup requires the shared
+cloud Chrome handoff; it does not promise a remote read of the tester's browser.
+Reload, closing, leaving, or browser loss may lose the code. The page warns on
+ordinary navigation while holding one, clears it on page departure, and never
+replaces it on repeated Generate clicks. It does not claim secure memory erasure.
+
+An early Open, rate limit, network timeout or restart failure retains the code
+on the original page and needs another explicit user attempt. Navigation occurs
+only after a followed same-origin redirect to `/`, status 200, and the proxy's
+`x-tetherless-test-access: granted` marker on authenticated root readback. A
+public gate page after a lost cookie/restart cannot supply that proof. The proxy
+strips any upstream-supplied marker on every other response. The original POST
+Origin/content-type/length/digest checks and secure session limits are unchanged.
+
+The gate has an accessible masked password field suitable for secure browser
 handoff. Its code is separate from an Apple Account password. Successful access
 creates a random in-memory `__Host-tetherless-test` cookie with Secure, HttpOnly,
 SameSite=Lax, Path=/, at most 30 minutes and never beyond the fixed test window.
@@ -139,8 +174,10 @@ Unit checks:
 
 ```sh
 node --test --test-concurrency=1 \
+  Tools/WebBootstrapService/deployment/tests/gate-page.test.mjs \
   Tools/WebBootstrapService/deployment/tests/proxy.test.mjs \
-  Tools/WebBootstrapService/deployment/tests/supervisor.test.mjs
+  Tools/WebBootstrapService/deployment/tests/supervisor.test.mjs \
+  Tools/WebBootstrapService/deployment/tests/export-build-info.test.mjs
 ```
 
 Real backend integration, with an already compiled release and built frontend:
@@ -161,7 +198,18 @@ or starts Apple/network-dependent account work. Fixture codes are public test
 data, deliberately unusable for deployment. An unset integration environment
 produces a visible skipped test, not a passed live-service claim.
 
-A true Docker build and offline-container integration must pass before deployment.
+The scoped gate browser suite uses the existing lockfile's Playwright/Chromium,
+with `crypto.getRandomValues` replaced before page execution by deterministic
+public fixture bytes. It tests the real proxy over loopback behind a browser
+request allowlist; no live service, Apple account or actual test code is used:
+
+```sh
+cd WebBootstrap
+node node_modules/playwright/cli.js test --config playwright.gate.config.js
+```
+
+A true Docker build, offline-container integration and scoped gate Chromium
+suite for the exact new source commit must pass before deployment.
 Local native release/HTTP tests alone do not prove that the image builds, all
 runtime libraries are present, TLS works at the hosting edge, or a deployed
 service is correctly configured. The scoped `web-bootstrap-deployment.yml` workflow
