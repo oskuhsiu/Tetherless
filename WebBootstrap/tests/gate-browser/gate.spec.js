@@ -125,8 +125,9 @@ test('successful explicit Open follows real 303 and secure cookie readback befor
     { method: 'GET', path: '/', status: 200, marker: 'granted' },
     { method: 'GET', path: '/', status: 200, marker: 'granted' },
   ]);
+  // Pinned Chromium CDP reports the redirected fetch readback as XHR.
   expect(h.requests.slice(2).map(request => ({ type: request.resourceType, cookie: request.hasCookie })))
-    .toEqual([{ type: 'fetch', cookie: true }, { type: 'document', cookie: true }]);
+    .toEqual([{ type: 'xhr', cookie: true }, { type: 'document', cookie: true }]);
   expect(h.upstreamRequests).toEqual([{ method: 'GET', path: '/' }, { method: 'GET', path: '/' }]);
   const cookies = await h.context.cookies();
   expect(cookies).toHaveLength(1);
