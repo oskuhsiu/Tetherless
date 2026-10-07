@@ -31,13 +31,14 @@ function request(port, path = '/', { method = 'GET', headers = {}, data = '' } =
     req.on('error', reject); req.end(data);
   });
 }
-async function harness(t, { now = Date.now, delay = 0, rootStatus = 200, spoofMarker = false } = {}) {
+async function harness(t, { now = Date.now, delay = 0, rootStatus = 200, spoofMarker = false, accessMode, hold } = {}) {
   const received = [];
   const upstream = http.createServer((req, res) => {
     const chunks = [];
     req.on('data', c => chunks.push(c));
     req.on('end', async () => {
       received.push({ method: req.method, path: req.url, headers: req.headers, body: Buffer.concat(chunks).toString() });
+      if (req.url === '/v1/slow' && hold) await hold;
       if (['/v1/slow', '/'].includes(req.url) && delay) await new Promise(r => setTimeout(r, delay));
       res.writeHead(req.url === '/' ? rootStatus : 200, { 'content-type': 'application/json', 'set-cookie': 'enrollment=fixture; Secure; HttpOnly',
         'content-security-policy': "default-src 'self'", 'connection': 'keep-alive',
@@ -46,7 +47,9 @@ async function harness(t, { now = Date.now, delay = 0, rootStatus = 200, spoofMa
     });
   });
   await new Promise(resolve => upstream.listen(0, '127.0.0.1', resolve));
-  const proxy = createProxy(readConfig(env(now()), now(), SOURCE), { upstreamPort: upstream.address().port, now });
+  const configuration = { ...env(now()), ...(accessMode === undefined ? {} : {
+    TETHERLESS_PREVIEW_ACCESS_MODE: accessMode, TETHERLESS_TEST_ACCESS_SHA256: undefined }) };
+  const proxy = createProxy(readConfig(configuration, now(), SOURCE), { upstreamPort: upstream.address().port, now });
   await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve));
   t.after(async () => { proxy.closeAllConnections(); upstream.closeAllConnections(); await Promise.all([
     new Promise(resolve => proxy.close(resolve)), new Promise(resolve => upstream.close(resolve))]); });
@@ -236,4 +239,128 @@ test('expired root readback never grants proof and closed page has no runnable G
   const root = await pending; assert.equal(root.headers['x-tetherless-test-access'], undefined);
   const closed = await h.call('/'); assert.equal(closed.status, 410);
   assert.doesNotMatch(closed.body, /<script>/); assert.match(closed.body, /測試期限已結束/);
+});
+
+
+test('preview access mode defaults gated, rejects unknown values and allows public without a digest', () => {
+  const good = env();
+  assert.equal(readConfig(good, Date.now(), SOURCE).accessMode, 'gated');
+  assert.equal(readConfig({ ...good, TETHERLESS_PREVIEW_ACCESS_MODE: 'gated' }, Date.now(), SOURCE).accessMode, 'gated');
+  for (const value of ['', 'PUBLIC', ' public', 'public ', 'disabled', 'false', null, false, 0]) {
+    assert.throws(() => readConfig({ ...good, TETHERLESS_PREVIEW_ACCESS_MODE: value }, Date.now(), SOURCE));
+  }
+  assert.throws(() => readConfig({ ...good, TETHERLESS_TEST_ACCESS_SHA256: undefined }, Date.now(), SOURCE));
+  for (const digest of [undefined, '', good.TETHERLESS_TEST_ACCESS_SHA256]) {
+    const config = readConfig({ ...good, TETHERLESS_PREVIEW_ACCESS_MODE: 'public', TETHERLESS_TEST_ACCESS_SHA256: digest }, Date.now(), SOURCE);
+    assert.equal(config.accessMode, 'public'); assert.equal(config.digest, undefined);
+  }
+  for (const override of [{ FRONTEND_ORIGIN: 'http://bootstrap.example.com' },
+    { TETHERLESS_PUBLIC_HOST: 'wrong.example.com' }, { TETHERLESS_TEST_EXPIRES_AT: '2000-01-01T00:00:00Z' }]) {
+    assert.throws(() => readConfig({ ...good, TETHERLESS_PREVIEW_ACCESS_MODE: 'public', ...override }, Date.now(), SOURCE));
+  }
+});
+
+test('public root and assets need no preview cookie and never emit an upstream-spoofed granted marker', async t => {
+  const h = await harness(t, { accessMode: 'public', spoofMarker: true });
+  for (const path of ['/', '/licenses.html', '/wasm/zsign-mobile.wasm', '/health']) {
+    const answer = await h.call(path);
+    assert.equal(answer.status, 200); assert.equal(answer.headers['x-tetherless-test-access'], undefined);
+    assert.doesNotMatch(answer.body, /Test access code|generate-code/);
+    assert.equal(answer.headers['cache-control'], 'no-store');
+  }
+  assert.equal(h.received.length, 4);
+  assert.ok(h.received.every(r => !r.headers.cookie));
+});
+
+test('public access endpoint only redirects GET and never generates or issues a preview cookie', async t => {
+  const h = await harness(t, { accessMode: 'public' }); const before = cookieFixture;
+  const get = await h.call('/_test/access');
+  assert.equal(get.status, 303); assert.equal(get.headers.location, '/'); assert.equal(get.body, '');
+  assert.equal(get.headers['set-cookie'], undefined); assert.equal(get.headers['x-tetherless-test-access'], undefined);
+  for (const method of ['POST', 'HEAD', 'DELETE', 'OPTIONS']) {
+    const answer = await h.call('/_test/access', { method, headers: { origin: BASE.FRONTEND_ORIGIN,
+      'content-type': 'application/x-www-form-urlencoded' }, data: method === 'POST' ? `code=${CODE}` : '' });
+    assert.equal(answer.status, 404); assert.equal(answer.headers['set-cookie'], undefined);
+    assert.equal(answer.headers['x-tetherless-test-access'], undefined);
+  }
+  assert.equal(cookieFixture, before); assert.equal(h.received.length, 0);
+});
+
+test('public mode strips obsolete preview cookies while preserving independent authority and Origin', async t => {
+  const h = await harness(t, { accessMode: 'public' });
+  const obsolete = '__Host-tetherless-test=' + 'B'.repeat(43);
+  assert.equal((await h.call('/v1/synthetic', { headers: { cookie: `${obsolete}; enrollment=fixture; ${obsolete}`,
+    authorization: 'Bearer SYNTHETIC-ONLY', origin: BASE.FRONTEND_ORIGIN, 'x-forwarded-host': 'hostile.example.com' } })).status, 200);
+  assert.equal(h.received[0].headers.cookie, 'enrollment=fixture');
+  assert.equal(h.received[0].headers.authorization, 'Bearer SYNTHETIC-ONLY');
+  assert.equal(h.received[0].headers.origin, BASE.FRONTEND_ORIGIN);
+  assert.equal(h.received[0].headers.host, BASE.TETHERLESS_PUBLIC_HOST);
+  assert.equal(h.received[0].headers['x-forwarded-host'], undefined);
+  assert.equal((await h.call('/', { headers: { host: 'hostile.example.com' } })).status, 403);
+  for (const connection of ['host', 'origin', 'authorization', 'cookie', 'content-length']) {
+    assert.equal((await h.call('/v1/synthetic', { headers: { connection } })).status, 400);
+  }
+  assert.equal((await h.call('/?code=fixture')).status, 400);
+  assert.equal((await h.call('/', { method: 'PUT' })).status, 405);
+  assert.equal((await h.call('/', { headers: { 'x-oversized': 'x'.repeat(16384) } })).status, 400);
+  assert.equal(h.received.length, 1); assert.equal(h.proxy.maxConnections, 64);
+});
+
+test('public mode retains body limits, login-start rate and no automatic retries', async t => {
+  const h = await harness(t, { accessMode: 'public', now: () => Date.parse('2030-01-01T00:00:00Z') });
+  const headers = { origin: BASE.FRONTEND_ORIGIN, 'content-type': 'application/json' };
+  assert.equal((await h.call('/v1/synthetic', { method: 'POST', headers, data: 'x'.repeat(32769) })).status, 413);
+  assert.equal(h.received.length, 0);
+  for (let i = 0; i < 3; i++) assert.equal((await h.call('/v1/sessions', { method: 'POST', headers, data: '{}' })).status, 200);
+  assert.equal((await h.call('/v1/sessions', { method: 'POST', headers, data: '{}' })).status, 429);
+  assert.equal(h.received.length, 3);
+});
+
+test('public mode retains general, mutation and callback quotas with separate healthy liveness', async t => {
+  const now = () => Date.parse('2030-01-01T00:00:00Z');
+  const all = await harness(t, { accessMode: 'public', now });
+  for (let i = 0; i < 240; i++) assert.equal((await all.call('/')).status, 200);
+  assert.equal((await all.call('/')).status, 429); assert.equal((await all.call('/health')).status, 200);
+  const mutate = await harness(t, { accessMode: 'public', now });
+  for (let i = 0; i < 30; i++) assert.equal((await mutate.call('/v1/synthetic', { method: 'POST' })).status, 200);
+  assert.equal((await mutate.call('/v1/synthetic', { method: 'POST' })).status, 429);
+  const callback = await harness(t, { accessMode: 'public', now });
+  const path = '/v1/device-enrollments/12345678-1234-4234-8234-123456789012/callback';
+  for (let i = 0; i < 10; i++) assert.equal((await callback.call(path, { method: 'POST' })).status, 200);
+  assert.equal((await callback.call(path, { method: 'POST' })).status, 429);
+});
+
+test('public mode retains the sixteen active request cap without starving health', { timeout: 5000 }, async t => {
+  let release; const hold = new Promise(resolve => { release = resolve; });
+  const h = await harness(t, { accessMode: 'public', hold });
+  const pending = Array.from({ length: 16 }, () => h.call('/v1/slow'));
+  while (h.received.length < 16) await new Promise(resolve => setTimeout(resolve, 2));
+  try {
+    assert.equal((await h.call('/')).status, 503);
+    assert.equal((await h.call('/health')).status, 200);
+  } finally { release(); }
+  assert.ok((await Promise.all(pending)).every(answer => answer.status === 200));
+});
+
+test('public expiry closes root with exact source links and no gate controls, including slow body input', async t => {
+  let time = Date.now(); const h = await harness(t, { accessMode: 'public', now: () => time });
+  const result = new Promise((resolve, reject) => {
+    const req = http.request({ hostname: '127.0.0.1', port: h.proxy.address().port, path: '/v1/synthetic', method: 'POST',
+      headers: { host: BASE.TETHERLESS_PUBLIC_HOST, origin: BASE.FRONTEND_ORIGIN, 'content-type': 'application/json' } }, res => {
+      res.resume(); res.on('end', () => resolve(res.statusCode));
+    });
+    req.on('error', reject); req.write('{"fixture":');
+    setTimeout(() => { time += 3600001; req.end('true}'); }, 20);
+  });
+  assert.equal(await result, 410); assert.equal(h.received.length, 0);
+  for (const path of ['/', '/_test/access']) {
+    const closed = await h.call(path); assert.equal(closed.status, 410);
+    assert.match(closed.body, /測試期限已結束/);
+    assert.ok(closed.body.includes(`/tree/${SOURCE}`)); assert.ok(closed.body.includes(`/blob/${SOURCE}/LICENSE`));
+    assert.doesNotMatch(closed.body, /<script|<form|<input|<button|generate-code|access-code|Open test/);
+    assert.equal(closed.headers['set-cookie'], undefined); assert.equal(closed.headers['x-tetherless-test-access'], undefined);
+  }
+  assert.equal((await h.call('/wasm/zsign-mobile.wasm')).status, 410);
+  assert.equal((await h.call('/_test/access', { method: 'POST' })).status, 410);
+  assert.equal((await h.call('/health')).status, 200);
 });

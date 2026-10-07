@@ -218,3 +218,47 @@ test('duplicate Open gestures remain single-flight and pagehide invalidates an o
   expect(h.requests.filter(request => request.method === 'POST')).toHaveLength(1);
   await assertPrivateState(page);
 });
+
+
+test('public preview opens the direct root without code, cookies or WebCrypto', async ({ browser }) => {
+  h = await createHarness(browser, { accessMode: 'public', cryptoMode: 'missing' });
+  const response = await h.page.goto(`${ORIGIN}/`);
+  expect(response.status()).toBe(200);
+  await expect(h.page.locator('#synthetic-open')).toBeVisible();
+  await expect(h.page.locator('#generate-code, #access-code, #open-test')).toHaveCount(0);
+  expect(await h.context.cookies()).toEqual([]);
+  expect(await h.page.evaluate(() => ({ random: __publicGateFixture.randomCalls, digest: __publicGateFixture.digestCalls,
+    storage: __publicGateFixture.storageAttempts, violations: __publicGateFixture.cspViolations })))
+    .toEqual({ random: 0, digest: 0, storage: [], violations: [] });
+  expect(h.requests).toEqual([{ method: 'GET', path: '/', origin: null, resourceType: 'document', hasCookie: false }]);
+  expect(h.responses).toEqual([{ method: 'GET', path: '/', status: 200, marker: null }]);
+});
+
+test('public legacy gate entry follows a real redirect without issuing a cookie or proof marker', async ({ browser }) => {
+  h = await createHarness(browser, { accessMode: 'public' });
+  await h.openGate();
+  await expect(h.page).toHaveURL(`${ORIGIN}/`);
+  await expect(h.page.locator('#synthetic-open')).toBeVisible();
+  expect(await h.context.cookies()).toEqual([]);
+  expect(h.responses).toEqual([
+    { method: 'GET', path: '/_test/access', status: 303, marker: null },
+    { method: 'GET', path: '/', status: 200, marker: null },
+  ]);
+  expect(h.requests.every(request => request.method === 'GET' && !request.hasCookie)).toBe(true);
+  expect(await h.page.evaluate(() => __publicGateFixture.randomCalls)).toBe(0);
+});
+
+test('expired public preview has a closed notice and exact source links without access controls', async ({ browser }) => {
+  h = await createHarness(browser, { accessMode: 'public' });
+  h.expire();
+  const response = await h.page.goto(`${ORIGIN}/`);
+  expect(response.status()).toBe(410);
+  await expect(h.page.locator('h1')).toContainText('測試已結束');
+  await expect(h.page.locator('script, form, input, button')).toHaveCount(0);
+  await expect(h.page.getByRole('link', { name: 'Source for this deployed version', exact: false }))
+    .toHaveAttribute('href', `https://github.com/oskuhsiu/Tetherless/tree/${'a'.repeat(40)}`);
+  await expect(h.page.getByRole('link', { name: 'GNU Affero General Public License' }))
+    .toHaveAttribute('href', `https://github.com/oskuhsiu/Tetherless/blob/${'a'.repeat(40)}/LICENSE`);
+  expect(await h.context.cookies()).toEqual([]); expect(h.upstreamRequests).toEqual([]);
+  expect(h.responses).toEqual([{ method: 'GET', path: '/', status: 410, marker: null }]);
+});

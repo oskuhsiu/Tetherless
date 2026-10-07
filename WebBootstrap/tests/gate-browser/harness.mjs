@@ -58,7 +58,7 @@ function bridge(port, path, method, headers, body) {
   });
 }
 
-export async function createHarness(browser, { configured = false, cryptoMode = 'normal' } = {}) {
+export async function createHarness(browser, { configured = false, cryptoMode = 'normal', accessMode = 'gated' } = {}) {
   const failures = [];
   const requests = [];
   const responses = [];
@@ -69,6 +69,7 @@ export async function createHarness(browser, { configured = false, cryptoMode = 
   let holdPost;
   let releasePost;
   let closing = false;
+  let proxyNow = FIXTURE_NOW;
   const upstream = http.createServer((request, response) => {
     if (request.method !== 'GET' || request.url !== '/' || request.headers.host !== new URL(ORIGIN).host ||
         request.headers.authorization || request.headers.cookie) {
@@ -85,9 +86,10 @@ export async function createHarness(browser, { configured = false, cryptoMode = 
     await close(proxy);
     configured = acceptFixture;
     const config = readConfig({ FRONTEND_ORIGIN: ORIGIN, TETHERLESS_PUBLIC_HOST: new URL(ORIGIN).host,
-      PORT: '10000', TETHERLESS_TEST_ACCESS_SHA256: configured ? PUBLIC_DIGEST : PLACEHOLDER_DIGEST,
+      PORT: '10000', TETHERLESS_PREVIEW_ACCESS_MODE: accessMode,
+      TETHERLESS_TEST_ACCESS_SHA256: accessMode === 'public' ? undefined : (configured ? PUBLIC_DIGEST : PLACEHOLDER_DIGEST),
       TETHERLESS_TEST_EXPIRES_AT: FIXTURE_EXPIRY, TETHERLESS_FRONTEND_DIR: '/public-synthetic-fixture' }, FIXTURE_NOW, SOURCE);
-    proxy = createProxy(config, { upstreamPort, now: () => FIXTURE_NOW });
+    proxy = createProxy(config, { upstreamPort, now: () => proxyNow });
     port = await listen(proxy);
   }
   await restart();
@@ -206,6 +208,7 @@ export async function createHarness(browser, { configured = false, cryptoMode = 
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.clock.install({ time: new Date(FIXTURE_NOW) });
   return { context, page, failures, requests, responses, upstreamRequests, pageErrors, restart,
+    expire() { proxyNow = Date.parse(FIXTURE_EXPIRY) + 1; },
     restartAfterNextUnlock() { restartAfterUnlock = true; },
     holdNextPost() {
       holdPost = new Promise(resolve => { releasePost = resolve; });

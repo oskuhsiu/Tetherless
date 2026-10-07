@@ -109,10 +109,34 @@ jobs:
           # Exact fixed log only: no request, header, enrollment capability or cookie.
           printf 'Tetherless bounded test service ready. Request logging is disabled.\n' > deployment-evidence/expected-lifecycle.txt
           cmp deployment-evidence/expected-lifecycle.txt deployment-evidence/container-lifecycle.txt
+      - name: Smoke the same actual image in public mode with no access digest
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEST_END=$(date -u -d '+1 hour' '+%Y-%m-%dT%H:%M:%SZ')
+          docker run --detach --name tetherless-public-offline-smoke --network none --read-only \
+            --mount "type=bind,source=$PWD/Tools/WebBootstrapService/deployment/tests,target=/verification,readonly" \
+            --env FRONTEND_ORIGIN=https://bootstrap.example.com \
+            --env TETHERLESS_PUBLIC_HOST=bootstrap.example.com \
+            --env TETHERLESS_PREVIEW_ACCESS_MODE=public \
+            --env TETHERLESS_TEST_EXPIRES_AT="$TEST_END" \
+            "$IMAGE"
+          test "$(docker inspect --format '{{.HostConfig.NetworkMode}}' tetherless-public-offline-smoke)" = none
+          test "$(docker inspect --format '{{.Image}}' tetherless-public-offline-smoke)" = "$(cat deployment-evidence/image-id.txt)"
+          docker inspect --format '{"image":{{json .Image}},"networkMode":{{json .HostConfig.NetworkMode}},"readOnly":{{json .HostConfig.ReadonlyRootfs}},"user":{{json .Config.User}}}' \
+            tetherless-public-offline-smoke > deployment-evidence/public-container-isolation.json
+          docker exec tetherless-public-offline-smoke node /verification/container-smoke.mjs \
+            2>&1 | tee deployment-evidence/public-container-smoke.txt
+          docker exec tetherless-public-offline-smoke node /app/deployment/healthcheck.mjs
+          docker stop --time 15 tetherless-public-offline-smoke
+          test "$(docker inspect --format '{{.State.ExitCode}}' tetherless-public-offline-smoke)" = 0
+          docker logs tetherless-public-offline-smoke > deployment-evidence/public-container-lifecycle.txt 2>&1
+          cmp deployment-evidence/expected-lifecycle.txt deployment-evidence/public-container-lifecycle.txt
       - name: Remove only this synthetic test container
         if: always()
         shell: bash
-        run: docker rm --force tetherless-offline-smoke 2>/dev/null || true
+        run: docker rm --force tetherless-offline-smoke tetherless-public-offline-smoke 2>/dev/null || true
       - name: Retain image identity and exact-source nonaccount verification
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -31,7 +31,9 @@ Coverage includes trusted versus scripted gestures, no automatic generation or
 submission, password-only raw-code state, fixed expiry, forbidden persistence
 and clipboard writes, unsuccessful Open and recovery after service restart,
 real redirect/cookie/readback success, lost-session readback, unavailable
-WebCrypto, duplicate actions and stale asynchronous completion. The expiry
+WebCrypto, duplicate actions and stale asynchronous completion. Public-mode cases also verify direct root access without WebCrypto or preview
+cookies, the legacy entry redirect without a grant marker, and a closed page
+with exact source links and no access controls. The expiry
 and page lifecycle interruption tests use Playwright clock control and an
 explicit synthetic pagehide event; they do not claim physical-device coverage.
 

@@ -2,7 +2,7 @@
 // Deliberately dependency-free. This perimeter never logs requests or errors.
 import http from 'node:http';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { gateCSP, gatePage } from './gate-page.mjs';
+import { gateCSP, gatePage, closedPreviewPage } from './gate-page.mjs';
 
 const COOKIE = '__Host-tetherless-test';
 const MAX_BODY = 32 * 1024;
@@ -26,8 +26,10 @@ export function readConfig(env = process.env, now = Date.now(), sourceCommit) {
   const port = Number(portText);
   if (!/^\d{4,5}$/.test(portText) || port < 1024 || port > 65535 ||
       [8787, 18012, 18013, 19099].includes(port)) fail('Invalid public PORT');
-  const digest = env.TETHERLESS_TEST_ACCESS_SHA256 ?? '';
-  if (!/^[a-f0-9]{64}$/.test(digest)) fail('A SHA256 test access digest is required');
+  const accessMode = env.TETHERLESS_PREVIEW_ACCESS_MODE === undefined ? 'gated' : env.TETHERLESS_PREVIEW_ACCESS_MODE;
+  if (!['gated', 'public'].includes(accessMode)) fail('Preview access mode must be gated or public');
+  const digest = accessMode === 'gated' ? (env.TETHERLESS_TEST_ACCESS_SHA256 ?? '') : undefined;
+  if (accessMode === 'gated' && !/^[a-f0-9]{64}$/.test(digest)) fail('A SHA256 test access digest is required');
   const expiryText = env.TETHERLESS_TEST_EXPIRES_AT ?? '';
   const expires = Date.parse(expiryText);
   if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(expiryText) ||
@@ -36,7 +38,7 @@ export function readConfig(env = process.env, now = Date.now(), sourceCommit) {
   }
   const frontend = env.TETHERLESS_FRONTEND_DIR;
   if (!frontend?.startsWith('/') || /[\x00-\x1f]/.test(frontend)) fail('An absolute frontend directory is required');
-  return { origin, host: url.host, port, digest: Buffer.from(digest, 'hex'), expires, frontend, sourceCommit };
+  return { origin, host: url.host, port, accessMode, digest: digest === undefined ? undefined : Buffer.from(digest, 'hex'), expires, frontend, sourceCommit };
 }
 function digest(value) { return createHash('sha256').update(value).digest(); }
 function headers() {
@@ -52,7 +54,8 @@ function send(res, status, error, extra = {}) {
 function gate(res, config, closed = false) {
   res.writeHead(closed ? 410 : 200, { ...headers(), 'content-type': 'text/html; charset=utf-8',
     'content-security-policy': gateCSP });
-  res.end(gatePage(config.sourceCommit, config.expires, closed));
+  res.end(config.accessMode === 'public' ? closedPreviewPage(config.sourceCommit, config.expires)
+    : gatePage(config.sourceCommit, config.expires, closed));
 }
 function filteredHeaders(input) {
   const excluded = new Set(HOP);
@@ -135,6 +138,11 @@ export function createProxy(config, { upstreamPort = 8787, now = Date.now } = {}
       return send(res, 400, 'requestRejected');
     }
     if (path === '/_test/access') {
+      if (config.accessMode === 'public') {
+        if (req.method !== 'GET') return send(res, 404, 'notFound');
+        res.writeHead(303, { ...headers(), location: '/' });
+        return res.end();
+      }
       if (req.method === 'GET') return gate(res, config);
       if (req.method !== 'POST' || req.headers.origin !== config.origin ||
           req.headers['content-type']?.split(';')[0] !== 'application/x-www-form-urlencoded') {
@@ -160,7 +168,7 @@ export function createProxy(config, { upstreamPort = 8787, now = Date.now } = {}
     }
     let authorizedUntil = config.expires;
     const callback = req.method === 'POST' && CALLBACK.test(path) && !req.headers.origin;
-    if (!health && !callback) {
+    if (config.accessMode !== 'public' && !health && !callback) {
       const cookies = (req.headers.cookie ?? '').split(';').map(x => x.trim());
       const values = cookies.filter(x => x.startsWith(`${COOKIE}=`));
       const token = values.length === 1 ? values[0].slice(COOKIE.length + 1) : '';
@@ -198,7 +206,7 @@ export function createProxy(config, { upstreamPort = 8787, now = Date.now } = {}
       // Only an authenticated successful root readback proves the gate cookie
       // survived the redirect. Never trust an upstream-supplied marker.
       delete downstream['x-tetherless-test-access'];
-      if (req.method === 'GET' && path === '/' && response.statusCode === 200 && now() < authorizedUntil) {
+      if (config.accessMode !== 'public' && req.method === 'GET' && path === '/' && response.statusCode === 200 && now() < authorizedUntil) {
         downstream['x-tetherless-test-access'] = 'granted';
       }
       // Preserve the frontend's own CSP rather than overriding its WASM policy.

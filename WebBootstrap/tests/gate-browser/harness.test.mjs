@@ -108,3 +108,19 @@ test('the harness is the sole trace owner and retains manual failure capture', a
   assert.ok(spec.includes('await current.close({ tracePath });'));
   assert.ok(spec.includes("if (tracePath) await testInfo.attach('public-fixture-trace', { path: tracePath, contentType: 'application/zip' });"));
 });
+
+
+test('public bridge exposes root without a cookie, redirects legacy entry and refuses issuance', async t => {
+  const f = await fixture(t, { accessMode: 'public' });
+  const root = await f.request('/');
+  assert.equal(root.status, 200); assert.match(root.body.toString(), /Public synthetic test opened/);
+  assert.equal(root.headers['x-tetherless-test-access'], undefined); assert.equal(root.headers['set-cookie'], undefined);
+  const legacy = await f.request('/_test/access');
+  assert.equal(legacy.status, 303); assert.equal(legacy.headers.location, '/');
+  assert.equal(legacy.headers['set-cookie'], undefined); assert.equal(legacy.body.length, 0);
+  const post = await f.open(); assert.equal(post.status, 404); assert.equal(post.headers['set-cookie'], undefined);
+  assert.deepEqual(f.h.upstreamRequests, [{ method: 'GET', path: '/' }]);
+  f.h.expire();
+  const closed = await f.request('/'); assert.equal(closed.status, 410);
+  assert.doesNotMatch(closed.body.toString(), /<script|<form|<button|<input/);
+});

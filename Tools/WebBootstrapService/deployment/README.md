@@ -11,9 +11,10 @@ A successful build or local smoke test is not live Apple or iPhone acceptance.
 40-hex commit of the exact source being built. Missing, malformed or `unrecorded`
 values fail the image build. The image retains it in `/app/build-info/source-commit.txt`
 and in its revision label. CI verifies both against its checked-out commit.
-Before login, the gate links directly to that commit's public source tree and
-LICENSE in the fixed `https://github.com/oskuhsiu/Tetherless` repository. There is
-no configurable repository URL and no `main`/`latest` source reference. A closed
+Before login, the gate and the frontend's existing linked licenses page offer
+that commit's public source tree and LICENSE in the fixed `https://github.com/oskuhsiu/Tetherless` repository.
+The licenses page is stamped at build time using the same validated `SOURCE_COMMIT`.
+There is no configurable repository URL and no `main`/`latest` source reference. A closed
 test window still offers those links while refusing account access. The image
 also includes the repository LICENSE under `/app/licenses/AGPL-3.0.txt`.
 
@@ -37,7 +38,10 @@ applicable dependency license/source obligation.
   - `TETHERLESS_FRONTEND_DIR`: `/app/frontend` in the image
   - `TETHERLESS_TEST_EXPIRES_AT`: an absolute UTC timestamp, `YYYY-MM-DDTHH:MM:SSZ`,
     in the future and at most 24 hours from process startup
-  - `TETHERLESS_TEST_ACCESS_SHA256`: lowercase SHA256 of a separate test code
+  - `TETHERLESS_PREVIEW_ACCESS_MODE`: `gated` (the default when absent) or `public`;
+    empty and unknown values fail startup
+  - `TETHERLESS_TEST_ACCESS_SHA256`: required only in `gated` mode; lowercase SHA256
+    of a separate test code. Public mode does not read or use a leftover digest.
 - The same-origin gate offers **產生測試碼**. Only the tester's explicit trusted
   button gesture invokes WebCrypto: 32 random bytes become 43 unpadded base64url
   characters, then SHA-256 is computed over the code string's UTF-8 bytes.
@@ -55,7 +59,25 @@ applicable dependency license/source obligation.
   hostname; adding another custom hostname changes Render's health-check Host
   behavior and requires deliberate origin/configuration review.
 
-### No-copy setup in the approved cloud Chrome handoff
+### Direct public preview
+
+Set `TETHERLESS_PREVIEW_ACCESS_MODE=public` only for an approved bounded public
+preview. The direct URL opens the existing frontend without a preview code or
+cookie. `GET /_test/access` redirects harmlessly to `/`; other methods return 404
+without issuing a code/cookie or forwarding. No public response carries
+`x-tetherless-test-access: granted`. Obsolete preview cookies are still stripped;
+independent Apple bearers and enrollment cookies are preserved.
+
+Only the preview-cookie requirement is removed. Host/Origin, explicit mutation
+consent, private session/enrollment authority, all quotas/body/connection/active
+limits and the fixed expiry (including its post-body recheck) remain unchanged.
+The exact-source offer stays on the frontend's linked licenses page. After
+expiry the root and legacy entry show a closed notice and fixed source/license
+links, without code-generation or access-form controls. Public visitors can
+exhaust the shared limits; this is not multi-user isolation or DDoS protection.
+Keep the approved expiry, Free plan and automatic-deploy setting unchanged.
+
+### Gated-mode no-copy setup in the approved cloud Chrome handoff
 
 1. Keep the tester on the gate page in the operator's explicitly shared cloud
    Chrome handoff. The tester presses **產生測試碼** themselves. The operator must
@@ -100,7 +122,7 @@ Cross-origin GitHub Release acquisition must continue to omit credentials.
 The proxy strips its gate cookie and all forwarded-address/authority headers
 before sending to Rust, preserving only the existing enrollment cookie.
 
-Except for exact `GET /health` and no-Origin `POST` to the existing UUIDv4
+In gated mode, except for exact `GET /health` and no-Origin `POST` to the existing UUIDv4
 `/v1/device-enrollments/<id>/callback`, requests need the test cookie. That
 callback still has the unchanged bounded CMS/challenge/nonce/expiry/replay checks;
 it cannot create an enrollment or Apple session. The test window also closes the
@@ -214,7 +236,10 @@ Local native release/HTTP tests alone do not prove that the image builds, all
 runtime libraries are present, TLS works at the hosting edge, or a deployed
 service is correctly configured. The scoped `web-bootstrap-deployment.yml` workflow
 builds this image, starts its normal entrypoint with `--network none`, and runs
-nonaccount loopback smoke using `docker exec`. It neither pushes nor deploys the
+nonaccount loopback smoke using `docker exec` in both default gated and explicit
+public mode using the same image. Public smoke has no access digest and checks
+real static/source-offer responses, Host/Origin, consent and cross-enrollment
+cookie denial. It neither pushes nor deploys the
 image. All base image manifest digests are pinned and recorded in `base-images.json`;
 Debian packages are resolved during build and their exact versions retained.
 Record the exact source commit, base-image
