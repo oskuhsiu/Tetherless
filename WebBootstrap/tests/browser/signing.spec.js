@@ -113,7 +113,10 @@ test('mobile layout keeps the default journey compact and manual signing progres
   await expect(page.locator('#install-panel')).toBeHidden();
   await expect(page.locator('#account-unavailable')).toBeVisible();
   await expect(page.locator('#release-status')).toContainText('尚未綁定');
-  await expect(page.locator('#app-source')).toHaveValue('official');
+  await expect(page.locator('#app-source')).toHaveValue('custom');
+  await expect(page.locator('#account-app-prerequisite')).toBeVisible();
+  await expect(page.locator('#ipa')).toBeVisible();
+  await expect(page.locator('#login-button')).toBeDisabled();
   const screenshot = testInfo.outputPath('mobile-bootstrap.png');
   await page.screenshot({ path: screenshot, fullPage: true });
   await testInfo.attach('mobile-bootstrap', { path: screenshot, contentType: 'image/png' });

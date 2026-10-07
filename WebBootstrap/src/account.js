@@ -1,13 +1,14 @@
 import forge from 'node-forge';
 import { inspectIpa } from './material.js';
-import { publicHttps } from './ota.js';
+import { discoverAccountService } from './account-discovery.js';
 import { tetherlessGroup } from './tetherless-identity.js';
 import { setupRegisteredDevices } from './registered-devices.js';
 import { setupDeviceEnrollment } from './device-enrollment.js';
 const $ = (id) => document.getElementById(id);
 const safeErrors = { deviceNotAvailable: '所選裝置不再可用或不屬於此 Team。請取消原申請後重新選擇；不會改成新增裝置', invalidRequest: '請求或 Team 無效，請重新確認選擇', appleAuthenticationFailed: 'Apple 登入失敗，請重新開始', expired: '登入 session 已到期，請重新登入', certificateLimit: '憑證名額不足。此服務不會自動撤銷其他憑證', busy: '原申請仍在處理中，請稍後只查詢原申請結果', profileMismatch: 'Apple profile 與 Team、裝置、App 或共享群組不符，未提供簽署資料', certificateMismatch: 'Apple 憑證與此分頁 CSR 不符', appleRequestFailed: 'Apple 請求未完成，請確認帳號狀態', authenticationFailed: 'Apple 登入失敗，請重新開始', sessionExpired: '登入 session 已到期，請重新登入', wrongState: '這次操作的狀態已改變。請先取消 session 再重新開始；不要重複建立憑證', certificateCapacity: '憑證名額不足。此服務不會自動撤銷其他憑證', provisioningUncertain: 'Apple 操作結果不確定。保留此分頁的原私鑰；此服務不會再次建立憑證', provisioningFailed: 'Apple provisioning 未完成。請檢查 Team 與裝置狀態；若結果不確定，不要重複送出' };
-export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMaterial, onState = () => {}, onInvalidate = () => {} }) {
+export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMaterial, onState = () => {}, onInvalidate = () => {}, canSubmit = () => true }) {
   let session, aborter, generation = 0, expiryTimer, busy = false, pendingProvision, serviceAvailable = false, profileAvailable = false, phase = 'checking', selectedPlan, teamIds = new Set();
+  let discovery, discoveryGeneration = 0;
   const existingRoute = () => $('device-route').value === 'existing';
   const state = (value) => { phase = value; onState(value); };
   const validUdid = () => /^(?:[0-9A-Fa-f]{40}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16})$/.test($('account-udid').value.trim());
@@ -24,7 +25,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
   const base = new URL('.', document.baseURI);
   const devices = setupDeviceEnrollment(base, { enabled: () => serviceAvailable && !existingRoute() && profileAvailable && !session && !busy, onReceived: () => { if (!session) showLogin(); } });
   $('continue-device').onclick = () => { if (!validUdid()) { $('device-details').open = true; return say('請取得或輸入有效的 iPhone UDID'); } devices.clear(); showLogin(); say('裝置資料已準備好，請登入 Apple。稍後仍須確認並授權註冊。'); };
-  window.addEventListener('pageshow', (event) => { if (event.persisted && serviceAvailable) devices.resume(); });
+  window.addEventListener('pageshow', (event) => { if (event.persisted) { if (serviceAvailable) devices.resume(); else void checkService(); } });
   const route = (path) => { const url = new URL(path.replace(/^\//, ''), base); if (url.origin !== location.origin) throw new Error('登入服務必須與此頁同源'); return url.href; };
   function headers() { return { 'Content-Type': 'application/json', ...(session ? { Authorization: `Bearer ${session.sessionToken}` } : {}) }; }
   async function request(path, options = {}) {
@@ -46,6 +47,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
   $('device-route').onchange = () => { if ($('device-route').disabled) return; clear(); };
   $('team').onchange = () => { if ($('team').disabled || pendingProvision) return; $('provision-consent').checked = false; if (existingRoute()) void registered.load(); };
   function clear({ preserveEnrollment = false, preserveDevice = false } = {}) {
+    cancelDiscovery();
     const retainedUdid = preserveDevice ? $('account-udid').value : '';
     if (preserveEnrollment) devices.pause(); else { devices.clear(); $('device-status').textContent = ''; }
     pendingProvision = undefined; selectedPlan = undefined; teamIds.clear(); registered.freeze(false); registered.clear(); onInvalidate();
@@ -91,7 +93,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
     }
   }
   $('account-form').onsubmit = async (event) => {
-    event.preventDefault(); if (!serviceAvailable || phase !== 'login' || busy || session || !$('login-consent').checked) return;
+    event.preventDefault(); if (!serviceAvailable || phase !== 'login' || busy || session || !canSubmit() || !$('login-consent').checked) return;
     busy = true; const current = ++generation; aborter = new AbortController(); $('login-button').disabled = true; $('account-form').inert = true; $('logout').hidden = false; $('device-route').disabled = true; state('authenticating'); say('正在確認安裝包…');
     try {
       const ipa = await ensureIpa(aborter.signal); if (current !== generation) return;
@@ -170,14 +172,59 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
       onMaterial({ p12, profiles, password, udid: retained.udid }, ipa);
     } catch (error) { if (current === generation) { state(pendingProvision ? 'provisionRetry' : 'authenticated'); if (!pendingProvision) { registered.freeze(false); } if (!pendingProvision) { for (const id of ['team', 'provision-consent']) $(id).disabled = false; $('device-name').disabled = existingRoute(); $('account-udid').disabled = existingRoute(); } $('provision-button').disabled = false; $('provision-button').textContent = pendingProvision ? '查詢原申請結果（保留同一私鑰）' : '同意並準備 App'; say(`${error.message}\n原私鑰與申請內容僅留在此分頁。再次按鈕只傳送相同申請以取得快取結果；不會產生另一把私鑰或自動重新申請憑證。取消、分頁關閉或 10 分鐘 session 到期後會遺失這把私鑰。`); } }
   };
-  (async () => {
-    const isPages = location.hostname === 'github.io' || location.hostname.endsWith('.github.io');
-    const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
-    if (!isPages && (location.protocol === 'https:' || local)) {
-      try { const response = await fetch(route('health'), { cache: 'no-store', credentials: 'same-origin', redirect: 'error' }); if (response.ok && response.headers.get('content-type')?.includes('application/json')) { const health = await response.json(); if (health.protocol === 1 && health.appleAuthAvailable === true) { serviceAvailable = true; profileAvailable = health.profileServiceAvailable === true; $('account-form').hidden = false; $('device-collection').hidden = true; $('account-unavailable').hidden = true; $('service-origin').textContent = location.origin; $('device-service-origin').textContent = location.origin; if (profileAvailable && devices.hasPending()) $('device-route').value = 'new'; showLogin(); devices.resume(); return; } } } catch { /* Remain closed on static/unavailable hosts. */ }
-    }
-    try { const response = await fetch(new URL('config.json', base), { credentials: 'same-origin', redirect: 'error', cache: 'no-store' }); const config = await response.json(); if (config.accountServiceUrl) { const url = new URL(publicHttps(config.accountServiceUrl)); if (url.hostname === 'github.io' || url.hostname.endsWith('.github.io')) throw new Error('Static service origin'); $('service-link').href = url.href; $('service-link').rel = 'noreferrer'; $('service-link').hidden = false; $('account-unavailable').textContent = `此頁不收集 Apple 密碼。已設定的服務位於 ${url.origin}；前往該站後仍須確認服務可用性與資料授權。`; state('external'); return; } } catch { /* A missing configuration does not enable account collection. */ }
-    $('account-unavailable').textContent = '登入服務尚未連接，此頁不收集 Apple 密碼。目前無法只用 Apple 帳號繼續；可展開進階選項，使用自己的憑證在本機簽署。'; state('unavailable');
-  })();
+  function cancelDiscovery() {
+    if (!discovery) return;
+    discoveryGeneration++; discovery.abort(); discovery = undefined;
+    $('recheck-service').hidden = false; $('recheck-service').disabled = false;
+    $('cancel-service-check').hidden = true;
+    $('account-unavailable').textContent = '已取消確認登入服務。你可以重新檢查；確認前不會收集 Apple 密碼。';
+  }
+  function discoveryUiFailure() {
+    serviceAvailable = false; profileAvailable = false; phase = 'unavailable';
+    $('account-form').hidden = true; $('device-route-choice').hidden = true; $('prelogin-device').hidden = true;
+    $('cancel-service-check').hidden = true; $('recheck-service').hidden = false; $('recheck-service').disabled = false;
+    $('account-unavailable').hidden = false;
+    $('account-unavailable').textContent = '登入介面未能完成初始化。尚未開放輸入帳號密碼，請重新載入此頁。';
+  }
+  async function checkService() {
+    // No later discovery can replace a verified origin or interrupt a session.
+    if (discovery || serviceAvailable || session || busy) return;
+    const current = ++discoveryGeneration, controller = new AbortController(); discovery = controller;
+    try {
+      $('recheck-service').hidden = false; $('recheck-service').disabled = true;
+      $('cancel-service-check').hidden = false; $('account-unavailable').hidden = false;
+      $('service-link').hidden = true; $('account-form').hidden = true;
+      $('account-unavailable').textContent = '正在確認登入服務…最多重試一次，確認前不會收集 Apple 密碼。'; state('checking');
+    } catch { controller.abort(); discovery = undefined; discoveryUiFailure(); return; }
+    let result;
+    try { result = await discoverAccountService({ base, origin: location.origin, signal: controller.signal }); }
+    catch (error) { if (controller.signal.aborted || current !== discoveryGeneration) return; result = { kind: 'internal' }; }
+    if (current !== discoveryGeneration || controller.signal.aborted || session || busy) return;
+    discovery = undefined; $('cancel-service-check').hidden = true; $('recheck-service').disabled = false;
+    // DOM/lifecycle failures are not network failures. Keep collection closed if
+    // applying a verified discovery result cannot initialize the UI.
+    try {
+      if (result.kind === 'ready') {
+        profileAvailable = result.profileAvailable;
+        $('service-origin').textContent = location.origin; $('device-service-origin').textContent = location.origin;
+        $('device-collection').hidden = true;
+        if (profileAvailable && devices.hasPending()) $('device-route').value = 'new';
+        serviceAvailable = true; showLogin(); devices.resume();
+        $('account-unavailable').hidden = true; $('recheck-service').hidden = true; return;
+      }
+      const message = result.kind === 'internal' ? '登入服務檢查未能完成初始化。請重新載入此頁。' : result.kind === 'unreachable' ? '目前無法連線到登入服務。可能是網路或服務暫時中斷；你可以重新檢查。'
+        : result.kind === 'invalid' ? '登入服務回應未通過驗證，無法確認此頁可安全登入。請聯絡服務管理者，或稍後重新檢查。'
+        : '此站尚未啟用 Apple 登入服務。請由服務管理者完成設定後重新檢查。';
+      $('account-unavailable').textContent = `${message} 此頁不收集 Apple 密碼。${result.diagnostic ? ` 檢查結果：${result.diagnostic}。` : ''}`;
+      if (result.externalUrl) {
+        const url = new URL(result.externalUrl); $('service-link').href = url.href; $('service-link').rel = 'noreferrer'; $('service-link').hidden = false;
+        $('account-unavailable').textContent += ` 已設定的服務位於 ${url.origin}；前往該站後仍須確認服務可用性與資料授權。`;
+      }
+      state(result.externalUrl ? 'external' : 'unavailable');
+    } catch { discoveryUiFailure(); }
+  }
+  $('recheck-service').onclick = () => { void checkService(); };
+  $('cancel-service-check').onclick = () => { cancelDiscovery(); showLogin(); };
+  void checkService();
   return { clear, get phase() { return phase; } };
 }

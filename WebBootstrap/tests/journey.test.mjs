@@ -17,3 +17,5 @@ test('journey: manual mode expands controls and back returns to account', () => 
   const v = journeyView({ manual: true }); assert(v.manual); assert(v.app); assert(v.signing); assert(!v.account);
   assert(journeyView({ manual: false }).account);
 });
+
+test('unavailable discovery title does not diagnose service setup', () => { assert.equal(journeyView({ accountPhase: 'unavailable' }).title, '尚未確認登入服務'); });

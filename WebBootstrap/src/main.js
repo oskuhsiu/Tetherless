@@ -2,13 +2,16 @@ import { inspectInputs, verifyEmbeddedProfiles } from './material.js';
 import { signLocally } from './signer.js';
 import { createManifest, installLink } from './ota.js';
 import { setupAccount } from './account.js';
+import { createReadDeadline } from './account-discovery.js';
 import { journeyView } from './journey.js';
 import { validateRelease, acquireRelease, verifyReleaseFile } from './release.js';
 const el = (id) => document.getElementById(id);
 let controller, generation = 0, outputUrl, output, metadata, generated, generatedIpa;
-let manual = false, accountPhase = 'checking', signing = false, officialRelease, officialIpa, releaseGeneration = 0, configReady;
+let manual = false, accountPhase = 'checking', signing = false, officialRelease, officialIpa, releaseGeneration = 0, configReady, configLoaded = false;
 const custom = () => el('app-source').value === 'custom';
+const canSubmitAccount = () => configLoaded && (custom() ? Boolean(el('ipa').files[0]) : Boolean(officialRelease));
 const selectedIpa = () => manual || custom() ? el('ipa').files[0] : officialIpa;
+const lockedPhase = () => ['authenticating', 'twoFactor', 'authenticated', 'provisioning', 'provisionRetry', 'material'].includes(accountPhase);
 function render() {
   const view = journeyView({ manual, accountPhase, signing, material: Boolean(generated), output: Boolean(output) });
   el('account-panel').hidden = !view.account;
@@ -25,7 +28,11 @@ function render() {
   for (const step of ['login', 'verify', 'install']) { if (view.step === step) el(`step-${step}`).setAttribute('aria-current', 'step'); else el(`step-${step}`).removeAttribute('aria-current'); }
   const showCustom = manual || custom();
   el('app-selection').hidden = !showCustom;
-  (manual ? el('manual-app-slot') : view.preparation ? el('guided-app-slot') : el('custom-app-slot')).append(el('app-selection'));
+  const needsOwnIpa = configLoaded && !officialRelease && !manual && !lockedPhase();
+  el('account-app-prerequisite').hidden = !needsOwnIpa;
+  el('ipa-prerequisite-status').textContent = el('ipa').files[0] ? '已選擇 IPA。登入送出前仍會檢查檔案大小、結構與 bundle IDs；檢查失敗不會傳送帳號密碼。' : '尚未選擇 IPA，登入按鈕暫不開放。';
+  (manual ? el('manual-app-slot') : view.preparation ? el('guided-app-slot') : needsOwnIpa ? el('prerequisite-app-slot') : el('custom-app-slot')).append(el('app-selection'));
+  el('login-button').disabled = accountPhase !== 'login' || !canSubmitAccount();
   el('clear').hidden = !manual && !signing && !generated && !output && !['authenticating', 'twoFactor', 'authenticated', 'provisioning', 'provisionRetry'].includes(accountPhase);
   const locked = signing || ['authenticating', 'twoFactor', 'authenticated', 'provisioning', 'provisionRetry', 'material'].includes(accountPhase);
   for (const id of ['ipa', 'app-source', 'release-file']) el(id).disabled = locked;
@@ -42,6 +49,7 @@ function invalidate() {
 }
 const account = setupAccount({
   getIpa: selectedIpa,
+  canSubmit: canSubmitAccount,
   ensureIpa: async (signal) => {
     await configReady; signal?.throwIfAborted();
     if (custom()) { if (!selectedIpa()) { el('app-options').open = true; throw new Error('請在安裝包選項中選擇你有權使用的 IPA'); } return selectedIpa(); }
@@ -110,15 +118,19 @@ async function sign() {
 }
 el('sign').onclick = sign;
 configReady = (async () => {
+  const deadline = createReadDeadline();
   try {
-    const response = await fetch(new URL('config.json', document.baseURI), { credentials: 'same-origin', redirect: 'error', cache: 'no-store' });
+    const response = await fetch(new URL('config.json', document.baseURI), { credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal: deadline.signal });
     if (!response.ok) throw new Error('版本設定無法讀取');
     const config = await response.json(); officialRelease = validateRelease(config.officialRelease);
     el('release-title').textContent = `Tetherless 官方版 · ${officialRelease.tag}`;
     el('release-status').textContent = '繼續時會從指定的 GitHub Release 取得安裝包，並核對大小與 SHA-256';
     el('release-identity').textContent = `${officialRelease.repository} · ${officialRelease.assetName}\n來源 ${officialRelease.sourceCommit}\n建置 ${officialRelease.buildRunId}（第 ${officialRelease.runAttempt} 次） · ${officialRelease.buildHeadSha}\nSHA-256 ${officialRelease.sha256}`;
     el('release-link').href = officialRelease.assetUrl; el('release-details').hidden = false;
-  } catch (error) { el('release-title').textContent = 'Tetherless 官方安裝包尚未就緒'; el('release-status').textContent = `${error.message}。不會自動使用舊版本；可在下方選擇自己的 IPA。`; }
+  } catch (error) {
+    el('release-title').textContent = 'Tetherless 官方安裝包尚未就緒'; el('release-status').textContent = `${error.message}。請先選擇自己的 IPA，再登入 Apple。`;
+    el('app-source').value = 'custom'; el('app-source').querySelector('[value="official"]').disabled = true;
+  } finally { deadline.clear(); configLoaded = true; render(); }
 })();
 render();
 function downloadText(text, filename) {

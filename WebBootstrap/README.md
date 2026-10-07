@@ -86,3 +86,34 @@ The optional OTA helper generates a manifest and `itms-services` URL for separat
 prepared registered-device Ad Hoc output and user-owned HTTPS hosting. It does not
 upload or probe a URL, and never presents free development output as a proved
 Safari first-install route. A Blob URL is a download, not an iOS installer.
+
+## Account discovery recovery
+
+Account collection remains closed until the same-origin `health` response is
+JSON with numeric protocol `1` and boolean `appleAuthAvailable: true`. Each
+read-only discovery check allows two health attempts (5 seconds each, one
+400 ms delay) for network failures/timeouts or HTTP 5xx only, followed if needed
+by one bounded 5-second `config.json` read. Other HTTP errors, invalid JSON,
+incorrect capabilities, redirects and foreign response origins do not enable
+credentials. The page reports only public origin, health path, HTTP status when
+available, and a fixed reason category, never response bodies or user data.
+Recheck and cancellation are explicit. Cancel, mode changes and pagehide fence
+stale checks; persisted pageshow can retry an interrupted check. Verified active
+sessions are not subject to later discovery or reset by recheck.
+
+If no verified official Release is configured, the account journey visibly
+selects the own-IPA route before the Apple form. No file is selected for the
+user. Submission requires a selected local IPA; selection is not validation.
+The existing complete IPA inspection, bundle bounds and consent recheck still
+run before credentials can be sent. Release configuration reading is bounded
+so a stalled read cannot leave that prerequisite hidden indefinitely.
+
+Focused tests are in `tests/account-discovery.test.mjs`, `tests/ui-state.test.mjs`
+and `tests/browser/account-discovery.spec.js`. The latter reuses the existing
+synthetic guided harness at root and project-subpath, including interrupted
+lifecycle tests. Synthetic results do not establish real Apple authentication,
+Safari behavior or physical-device acceptance, and this recovery path does not
+establish the cause of a particular user's failed discovery.
+
+The explicit manual-signing panel links to `p12-guide.html` in a separate tab.
+That static guide does not change the Apple-account route or collect any data.

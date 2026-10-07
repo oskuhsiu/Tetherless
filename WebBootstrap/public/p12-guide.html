@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="一步一步取得 Tetherless 手動簽署所需的 P12、匯出密碼與 provisioning profiles：Mac 鑰匙圈、Xcode、免費帳號限制與常見問題。">
+  <title>取得 P12 與簽署資料 · Tetherless 教學</title>
+  <link rel="stylesheet" href="./p12-guide.css">
+</head>
+<body>
+<main id="top">
+  <a class="skip" href="#choose-route">跳到適合你的準備方式</a>
+  <header><a class="brand" href="./">Tetherless <span>手動簽署教學</span></a><span class="badge">開發預覽</span></header>
+  <section class="hero" aria-labelledby="title">
+    <p class="eyebrow">進階：使用自己的 IPA／憑證</p>
+    <h1 id="title">一步一步，準備好<br>P12 與簽署資料</h1>
+    <p class="lead">最後你會有一份含私鑰的 P12、它的匯出密碼，以及與 App、憑證和 iPhone 相符的 profiles。</p>
+    <p>這是「手動簽署」的準備教學。一般 Apple 帳號流程不需要先做這些步驟；本教學也不會替你取得 IPA，或使尚未提供的官方安裝包變成可用。</p>
+    <p class="notice"><strong>先分清楚三件事：</strong>取得簽署資料、產生簽署後的 IPA、在 iPhone 成功安裝，是不同階段。完成本教學不代表已安裝；免費 Personal Team 的 Safari 首次安裝仍未經實機驗證。</p>
+  </section>
+  <nav class="card toc" aria-label="教學目錄">
+    <h2>從你目前的進度開始</h2>
+    <ol>
+      <li><a href="#choose-route">先確認帳號、電腦與需要的檔案</a></li>
+      <li><a href="#existing">已經用過 Xcode？先匯出既有 P12</a></li>
+      <li><a href="#csr">從零開始：在 Mac 建立 CSR</a></li>
+      <li><a href="#certificate">向 Apple 申請並下載憑證</a></li>
+      <li><a href="#export">把憑證與私鑰匯出成 P12</a></li>
+      <li><a href="#identifiers">準備 UDID、App IDs 與權限</a></li>
+      <li><a href="#profiles">產生並下載每個 bundle 的 profile</a></li>
+      <li><a href="#use-files">回到 Tetherless 選取檔案</a></li>
+    </ol>
+    <p><a href="#troubleshooting">遇到問題？</a> · <a href="#checklist">最後檢查清單</a></p>
+  </nav>
+  <section class="card" id="choose-route" aria-labelledby="route-title">
+    <p class="step-number">步驟 1</p><h2 id="route-title">先選對路線</h2>
+    <div class="route"><h3>有付費 Apple Developer Program 團隊</h3><p>本頁步驟 3–7 的 Developer 網站操作適用於有相應權限的付費團隊。準備一台你信任的 Mac、可登入的 Apple 帳號、要安裝的 iPhone，以及你有權使用的 IPA。Apple 的手動 App ID、裝置及 profile 建立流程通常要求 Account Holder 或 Admin；看不到選項時，先請管理員確認存取權。</p></div>
+    <div class="route" id="personal-team"><h3>只有免費 Apple 帳號／Personal Team</h3><p>請用 Mac 上的 Xcode 登入 Apple 帳號，選擇 Personal Team，為你自己的專案開啟自動簽署，連接 iPhone 後建置執行。Apple 讓 Xcode 管理這類帳號的憑證與 profiles；不要照付費網站步驟尋找你沒有的功能。</p><p>Apple 目前列出：最多 10 個 App IDs、3 台裝置，各有 7 天期限；每台裝置最多安裝 3 個 App，安裝用 profile 於核發後 7 天到期，需要重新佈署。<strong>匯出 P12 不會延長 profile 效期，也不會把免費帳號變成 Ad Hoc 發佈帳號。</strong></p><p>若 Xcode 已有可匯出的本機簽署身分，可按步驟 2 取得 P12。但要在本頁手動簽署，仍須取得與實際 IPA 每個 bundle 完全相符且有效的 profiles；別的測試專案產生的 profile 不能直接套用。無法取得相符資料時，先回到你自己的 Xcode 專案處理。</p></div>
+    <p class="source">Apple 說明：<a href="https://developer.apple.com/help/account/basics/about-your-developer-account">帳號與 Personal Team 限制</a>、<a href="https://help.apple.com/xcode/mac/current/en.lproj/dev60b6fbbc7.html">Xcode 自動簽署流程</a></p>
+    <details><summary>只有 iPhone 或 Windows，可以照做嗎？</summary><p>本教學的 CSR／匯出路線使用 macOS「鑰匙圈存取」或 Xcode，需要 Mac。Windows 沒有這兩個 Apple 工具；本頁不提供未驗證的 Windows 憑證產生器或線上轉檔服務。如果你已有合法且匹配的 P12、密碼與 profiles，可以直接用支援的瀏覽器選取它們，不必重新建立。</p><p>只有 iPhone、也沒有既有簽署資料時，無法照本頁的 Mac 步驟從零完成。可由有權管理此團隊、持有原私鑰的人，在可信任的 Mac 匯出；是否分享私鑰應由團隊決定。不要把 Apple 密碼交給陌生人代辦，也不要購買來源不明的共用憑證。</p></details>
+    <h3>先認識你會拿到的檔案</h3>
+    <dl>
+      <dt>CSR（.certSigningRequest）</dt><dd>給 Apple 簽發憑證的申請檔；私鑰留在產生 CSR 的電腦。CSR 不是 P12。</dd>
+      <dt>憑證（.cer）</dt><dd>Apple 簽發的公開憑證，不含你的私鑰。只下載 .cer、改副檔名或重新命名，都不能取得能簽署的 P12。</dd>
+      <dt>簽署身分（.p12／.pfx）與密碼</dt><dd>本頁需要一把 RSA 私鑰及與它匹配的憑證。P12 匯出密碼是你匯出時設定的密碼，不是 Apple 帳號密碼。</dd>
+      <dt>佈署描述檔（.mobileprovision）</dt><dd>授權指定 App ID、憑證、裝置與權限使用的 profile。本頁要求主 App 及每個 App extension 各一份精確匹配的 profile。</dd>
+    </dl>
+    <p class="notice">把 P12 視為可代表你簽署程式的敏感檔案。不要上傳到聊天、Issue、Git 儲存庫或線上轉檔網站；密碼也不要與 P12 放在同一則公開訊息。妥善保留原私鑰及加密備份。</p>
+  </section>
+  <section class="card" id="existing" aria-labelledby="existing-title">
+    <p class="step-number">步驟 2 · 有既有憑證就先走這條</p><h2 id="existing-title">從 Xcode 匯出 P12</h2>
+    <ol>
+      <li>在原本用來簽署的 Mac 開啟 Xcode，進入 <strong>Xcode → Settings（舊版為 Preferences）→ Accounts</strong>，選取 Apple 帳號與正確的 Team。</li>
+      <li>按 <strong>Manage Certificates</strong>。選擇尚未到期、這台 Mac 有私鑰的 Apple Development 或 Apple Distribution 憑證；類型要與稍後的 profile 相符。</li>
+      <li>按住 Control 點選該憑證，選 <strong>Export Certificate</strong>。指定檔名、儲存位置，再輸入並確認一個你自行設定的強密碼。</li>
+      <li>按 Save，確認拿到 <strong>.p12</strong>。把密碼安全存好，然後跳到<a href="#identifiers">步驟 6</a>準備 profiles。</li>
+    </ol>
+    <p>若沒有可用憑證，可以在此按「＋」建立所需類型，再匯出。先確認 Team 名額與既有使用者，<strong>不要為了通過這一步就撤銷別人的憑證</strong>。遇到 Missing Private Key 時，請看下方疑難排解；下載同一張 .cer 不會補回私鑰。</p>
+    <p class="source">Apple 說明：<a href="https://help.apple.com/xcode/mac/current/en.lproj/dev154b28f09.html">建立及匯出簽署憑證</a></p>
+  </section>
+  <section class="card" id="csr" aria-labelledby="csr-title">
+    <p class="step-number">步驟 3 · 從零建立，付費團隊路線</p><h2 id="csr-title">在你的 Mac 建立 CSR</h2>
+    <ol>
+      <li>用 Spotlight 搜尋並開啟<strong>鑰匙圈存取（Keychain Access）</strong>，不要開成「密碼」App。</li>
+      <li>從選單選 <strong>Keychain Access → Certificate Assistant → Request a Certificate from a Certificate Authority</strong>（向憑證授權單位要求憑證）。</li>
+      <li><strong>User Email Address</strong> 填你的電子郵件；<strong>Common Name</strong> 填方便辨認的名稱，例如「我的 iOS 開發金鑰」。這是金鑰識別名稱，不是 Bundle ID。</li>
+      <li><strong>CA Email Address</strong> 留空，選 <strong>Saved to disk</strong>（儲存到磁碟），按 Continue，儲存 .certSigningRequest。不要套用 Apple Pay 專用的 ECC 步驟；本頁簽署器目前要求 RSA 金鑰。</li>
+      <li>記住產生 CSR 的 Mac 與登入帳號。接下來必須將 Apple 回傳的憑證放回持有這把私鑰的鑰匙圈；不要刪除金鑰。</li>
+    </ol>
+    <p class="source">Apple 說明：<a href="https://developer.apple.com/help/account/certificates/create-a-certificate-signing-request">建立 CSR</a></p>
+  </section>
+  <section class="card" id="certificate" aria-labelledby="certificate-title">
+    <p class="step-number">步驟 4</p><h2 id="certificate-title">申請並下載 Apple 憑證</h2>
+    <ol>
+      <li>開啟 <a href="https://developer.apple.com/account/">Apple Developer 帳號</a>，登入後確認選的是你要使用的 Team。</li>
+      <li>前往 <strong>Certificates, Identifiers &amp; Profiles → Certificates → ＋</strong>。</li>
+      <li>自己開發測試：選 <strong>Apple Development</strong>，之後搭配 <strong>iOS App Development</strong> profile。付費團隊要做 Ad Hoc：選 <strong>Apple Distribution</strong>，之後搭配 <strong>Ad Hoc</strong> profile。不要選用於 Mac 軟體的 Developer ID、Apple Pay 或推播服務憑證。</li>
+      <li>按 Continue，在要求 CSR 的頁面選取步驟 3 的 .certSigningRequest，再繼續並下載 .cer。</li>
+      <li>回到產生 CSR 的同一台 Mac，雙擊 .cer 匯入鑰匙圈。接著做步驟 5，這時還沒取得 P12。</li>
+    </ol>
+    <p class="notice">Tetherless 的 Apple 帳號服務目前建立的是<strong>開發憑證</strong>，並不替你建立付費 Ad Hoc 簽署資料。手動帶入 Ad Hoc 是另一條進階路線，不能混用兩種憑證／profile。</p>
+    <p class="source">Apple 說明：<a href="https://developer.apple.com/help/account/certificates/certificates-overview/">憑證類型與保管</a>、<a href="https://developer.apple.com/help/account/provisioning-profiles/create-an-ad-hoc-provisioning-profile/">Ad Hoc 的必要條件</a></p>
+  </section>
+  <section class="card" id="export" aria-labelledby="export-title">
+    <p class="step-number">步驟 5</p><h2 id="export-title">將憑證＋私鑰匯出成 P12</h2>
+    <ol>
+      <li>在「鑰匙圈存取」選擇存放金鑰的鑰匙圈（通常是 login／登入），切到 <strong>My Certificates／我的憑證</strong>。</li>
+      <li>找到剛匯入的 Apple Development 或 Apple Distribution 憑證。展開左側箭頭，確認下面有一把<strong>私密金鑰</strong>。也核對 Team、憑證用途與到期日。</li>
+      <li>只選取這一組簽署身分，選 <strong>File → Export Items</strong>（輸出項目），或右鍵匯出。格式選 <strong>Personal Information Exchange (.p12)</strong>，儲存到你能保管的位置。</li>
+      <li>設定並確認 P12 匯出密碼。如果 macOS 再詢問鑰匙圈密碼，依系統提示解鎖；<strong>鑰匙圈密碼與剛設定的 P12 密碼可能不同</strong>。</li>
+      <li>確認檔案副檔名為 .p12，且你已安全保存密碼。本頁只接受恰好一把私鑰，請不要一次匯出整個鑰匙圈或多組身分。</li>
+    </ol>
+    <p>沒有私鑰箭頭、只有 .cer，或 .p12 選項不能選時，先停在這裡。改檔名或建立另一份 CSR 都不能還原原來的私鑰。優先回原 Mac 匯出，或從你已授權的安全備份恢復。</p>
+    <p class="source">Apple 說明：<a href="https://support.apple.com/en-ae/guide/keychain-access/kyca35961/mac">鑰匙圈項目的匯入與匯出</a>、<a href="https://help.apple.com/xcode/mac/current/en.lproj/dev154b28f09.html">缺少私鑰與簽署身分匯出</a></p>
+  </section>
+  <section class="card" id="identifiers" aria-labelledby="identifiers-title">
+    <p class="step-number">步驟 6</p><h2 id="identifiers-title">準備裝置、App IDs 與權限</h2>
+    <h3>6.1 登記要安裝的 iPhone</h3>
+    <ol>
+      <li>在 Mac 的 Xcode 開啟 <strong>Window → Devices and Simulators</strong>，連接並選擇你的 iPhone，依需要在手機上確認信任電腦，取得其 Identifier／UDID。它不是序號、IMEI 或配對檔。</li>
+      <li>在 Developer 網站的 <strong>Devices</strong> 檢查這支裝置是否已登記。已有正確記錄就沿用；沒有才按「＋」，選平台，填裝置名稱與 UDID，核對後註冊。</li>
+      <li>記下 UDID，稍後每一份 profile 都要選到這支裝置。請勿在 Issue 或聊天公開 UDID。</li>
+    </ol>
+    <p class="source">Apple 說明：<a href="https://developer.apple.com/help/account/devices/register-a-single-device">註冊裝置</a>、<a href="https://help.apple.com/xcode/mac/current/en.lproj/dev93ef696c6.html">在 Xcode／Finder 查看 UDID</a></p>
+    <h3>6.2 為主 App 與每個 extension 確認 App ID</h3>
+    <ol>
+      <li>先向 IPA 提供者取得<strong>主 App 和每個 extension 的實際 Bundle ID</strong>及必要 entitlements（權限）。若是自己的專案，在各 target 的 Signing &amp; Capabilities 檢查。不要拿範例 ID 代填。</li>
+      <li>在同一 Team 的 <strong>Identifiers → ＋ → App IDs</strong> 建立所需項目，選 <strong>Explicit</strong>，填入完全相同的 Bundle ID；已有匹配項目則檢查後沿用。</li>
+      <li>為每個 target 啟用實際需要且你的團隊有權使用的 capabilities。主 App 與 extension 若需要 App Groups，先註冊對應 group，再將它指派到各 App ID。修改 capabilities 後，重新產生 profiles。</li>
+    </ol>
+    <p>本頁保留 IPA 原本的 Bundle IDs，<strong>不支援 wildcard profile，也不會替你重新命名 App</strong>。若 ID 被其他團隊占用，或你沒有所需權限，請回到自己的原始碼專案調整後重建；不能靠換 P12 繞過。</p>
+    <p>例如一個 IPA 含主 App、Widget、備份 extension，便需要三個相符 App IDs 與三份 profiles，不是將主 App 的 profile 選三次。Tetherless 的實際 IDs 以安裝包為準；本頁對支援的 Tetherless bundles 另外要求每份 profile 都包含 <code>group.&lt;主 App 的 Bundle ID&gt;</code> 這個共用 App Group。</p>
+    <p class="source">Apple 說明：<a href="https://developer.apple.com/help/account/identifiers/register-an-app-id/">註冊 App ID</a>、<a href="https://developer.apple.com/help/account/identifiers/register-an-app-group/">註冊 App Group</a>、<a href="https://developer.apple.com/help/account/identifiers/enable-app-capabilities/">設定 capabilities 並更新 profiles</a></p>
+  </section>
+  <section class="card" id="profiles" aria-labelledby="profiles-title">
+    <p class="step-number">步驟 7</p><h2 id="profiles-title">下載 .mobileprovision</h2>
+    <ol>
+      <li>在 Developer 網站開啟 <strong>Profiles → ＋</strong>。</li>
+      <li>用 Apple Development 憑證時，選 <strong>Development → iOS App Development</strong>。用 Apple Distribution 做付費 Ad Hoc 時，選 <strong>Distribution → Ad Hoc</strong>。<strong>不要選 App Store Connect</strong>：本頁要求 profile 列出已註冊裝置。</li>
+      <li>選擇主 App 的精確 App ID，按 Continue。</li>
+      <li>選擇<strong>剛才匯入 P12 的那張憑證</strong>。同名或同 Team 不代表同一張憑證；請用用途、到期日及憑證詳細資訊比對。</li>
+      <li>勾選步驟 6 的 iPhone，按 Continue。</li>
+      <li>填容易辨認的 profile 名稱，按 Generate，再按 Download。保留下載的 .mobileprovision。</li>
+      <li>對每個 App extension 重複以上操作，改選該 extension 的 App ID，仍使用同一 Team、同一張 P12 憑證及同一支 iPhone。</li>
+    </ol>
+    <p>到期日以<strong>實際憑證與 profile</strong>為準，不要假設一定能用一年。profile 失效、裝置清單或權限變更後，需重新產生、下載，並重新簽署；只修改網站設定，不會更新舊檔案。Xcode 自動管理的 profiles 不一定出現在 Developer 網站清單中。</p>
+    <details id="xcode-profiles"><summary>Xcode 自動管理／免費 Personal Team：從自己的建置結果取得 profile</summary>
+      <p>此方式限你已用正確 Team、Bundle IDs 與目標 iPhone 成功簽署的自己的專案，不會為任意下載的 IPA 補齊權限。</p>
+      <ol>
+        <li>在 Xcode 選實體 iPhone 作為目的裝置，完成建置；不要用 Simulator 產物。</li>
+        <li>在專案導覽的 Products 找到主 App，Control 點選 → Show in Finder。在 Finder 對 .app 選「顯示套件內容」。</li>
+        <li>將根目錄的 <code>embedded.mobileprovision</code> 複製到私人準備資料夾，可改成易辨認的名稱（保留 .mobileprovision 副檔名），不要移動或改寫原 App 內容。</li>
+        <li>若有 extensions，進入主 App 內的 <code>PlugIns</code>，對每個 .appex 顯示套件內容，各複製其 embedded.mobileprovision，使用不同檔名。</li>
+        <li>確認這些 profiles 對應你匯出的 P12、實際 IPA 的 Bundle IDs 與目標裝置，且仍有效，再做步驟 8。找不到 profile 時先檢查 Xcode 的實機簽署結果，不要從不相關 App 複製替代。</li>
+      </ol>
+      <p class="source">Apple 參考：<a href="https://developer.apple.com/library/archive/technotes/tn2319/">TN2319：檢查建置產物中的 embedded.mobileprovision（封存技術文件）</a>。這只是取得既有檔案，不會延長免費 profile 的 7 天效期。</p>
+    </details>
+    <p class="source">Apple 說明：<a href="https://developer.apple.com/help/account/provisioning-profiles/create-a-development-provisioning-profile/">開發 profile</a>、<a href="https://developer.apple.com/help/account/provisioning-profiles/create-an-ad-hoc-provisioning-profile/">Ad Hoc profile</a>、<a href="https://developer.apple.com/help/account/provisioning-profiles/edit-download-or-delete-profiles/">更新與下載 profiles</a></p>
+  </section>
+  <section class="card" id="use-files" aria-labelledby="use-title">
+    <p class="step-number">步驟 8</p><h2 id="use-title">回到 Tetherless，選取準備好的資料</h2>
+    <ol>
+      <li>若要在 iPhone 操作，使用你信任的安全方式將 IPA、P12 與 profiles 傳到自己的「檔案」App；密碼分開保管。避免放在共用資料夾。</li>
+      <li><a href="./" target="_blank" rel="noopener noreferrer">開啟 Tetherless 首頁（新分頁）</a>，選 <strong>進階：使用自己的 IPA／憑證</strong>。保留本教學分頁以便對照。</li>
+      <li>在 <strong>選擇你有權使用的 IPA</strong> 選安裝包（最多 150 MiB）。不要上傳從 App Store 取得、仍受 DRM 保護的安裝包；本頁不提供解密或 DRM 移除，也不承諾所有 IPA 都能簽署。</li>
+      <li>在 <strong>自己的 P12／PFX 憑證</strong> 選剛匯出的 .p12；在 <strong>P12 密碼</strong> 輸入匯出時設定的密碼。</li>
+      <li>在 <strong>Provisioning profiles（可複選）</strong> 一次選取主 App 與所有 extensions 的 .mobileprovision。本頁上限為 20 份，每份及 P12 各不超過 2 MiB；每個 bundle 恰好一份，不要加多餘或重複檔案。</li>
+      <li>在選填的 <strong>iPhone UDID</strong> 填目標 iPhone 的 UDID，讓本頁核對每份 profile 是否包含它。留白只是不做這項比對，並不免除 Apple 的裝置授權要求。</li>
+      <li>確認你有權使用 IPA 與簽署資料，勾選確認後按 <strong>檢查並簽署 IPA</strong>。保持分頁開啟；手機記憶體不足也可能失敗。</li>
+      <li>成功後選 <strong>下載簽署後的 IPA</strong>。本頁會檢查輸出中每個 bundle 內嵌的是對應的 profile；成功只代表檔案已產生，還要依首頁的安裝指引完成後續。</li>
+    </ol>
+    <p class="notice"><strong>資料範圍：</strong>手動簽署的 IPA、P12、私鑰、密碼與 profiles 在目前瀏覽器分頁／worker 處理，不會自動上傳。本頁教學不收集檔案。Apple 帳號登入是另一套流程，請另外閱讀它的資料傳送同意說明；不要把手動簽署的隱私說明套用到登入服務。</p>
+    <p>本頁僅做支援格式、期限及部分資料一致性檢查，不是完整 Apple 憑證鏈驗證或安全審查。App 的所有 entitlements 是否可用、iOS 安裝和啟動，仍須另外驗證。Safari 不能直接安裝「檔案」App 裡的 IPA；付費 Ad Hoc OTA 也需要符合條件的 profiles 與你自己的 HTTPS 託管。</p>
+    <p>完成後可按首頁「清除這次資料」並關閉簽署分頁。這不會撤銷 Apple 憑證，也不會刪除你已下載或備份的檔案；瀏覽器無法保證立即抹除所有記憶體副本。</p>
+  </section>
+  <section class="card" id="troubleshooting" aria-labelledby="trouble-title">
+    <h2 id="trouble-title">卡住時，先檢查這裡</h2>
+    <details><summary>只有 .cer，沒有私鑰／無法選 .p12</summary><p>回到產生 CSR 或 Xcode 簽署身分的原 Mac、原登入帳號，在「我的憑證」檢查是否有私鑰。若私鑰在另一台有權使用的 Mac，從那裡匯出；只有 .cer 或 CSR 不能還原原私鑰。沒有備份時，需依團隊權限重新建立金鑰與憑證，再更新所有相關 profiles。不要自行撤銷既有憑證。</p></details>
+    <details><summary>Export Items 灰色，或選到了很多金鑰</summary><p>確認「登入」鑰匙圈已解鎖，切到「我的憑證」，只選一組可匯出的憑證與私鑰。部分選取項目不能匯出時，整個選單可能停用。也可改用步驟 2 的 Xcode Export Certificate。雲端管理的身分不等同這台 Mac 持有可匯出私鑰。</p></details>
+    <details><summary>P12 could not be opened／密碼錯誤</summary><p>輸入 P12 匯出密碼，不是 Apple 密碼或 Mac 登入密碼；檢查全形字元、多餘空白及檔案是否完整。若確認密碼正確仍無法開啟，可能是容器／加密格式不受目前 runtime 支援，可從原 Mac 重新匯出單一簽署身分再試。不要移除密碼或交給線上轉檔網站。</p></details>
+    <details><summary>憑證不在 profile 裡／RSA key 或憑證不匹配</summary><p>確認 P12 恰好含一把 RSA 私鑰及匹配憑證。回 Developer 網站編輯或重建 profile，選取這張憑證，再重新下載全部相關 profiles；同 Team 的另一張憑證不算匹配。若在不同行程建立了 CSR，須找到該 .cer 原本對應的私鑰。</p></details>
+    <details><summary>Profile 沒有這支 iPhone 的 UDID</summary><p>檢查是否誤填序號或選錯裝置。正確 UDID 登記後，重新產生每份 profile 並勾選目標裝置，再重新下載。只在網站新增裝置，舊 profile 不會自動包含它；不要靠清空 UDID 欄位規避檢查。</p></details>
+    <details><summary>Missing a unique exact profile／wildcard 不支援</summary><p>依錯誤指出的 Bundle ID，補上該 App 或 extension 的精確 profile。每個 bundle 一份，移除重複和多餘檔案；用明確 App ID 取代 wildcard。主 App 的 profile 不能拿來代替 extension 的 profile。</p></details>
+    <details><summary>Team、App Groups 或其他 entitlements 不符</summary><p>所有 profiles 必須來自同一 Team；App Group 必須同時符合 IPA 與各 App ID 的設定。修改 capabilities 後重新下載 profiles，再重新簽署。無權使用的能力不能靠勾選任意選項獲得；本頁通過檢查也不代表所有能力已完整驗證。</p></details>
+    <details><summary>憑證／profile 到期，或 Apple 名額已滿</summary><p>檢查 Mac／iPhone 的正常日期設定與實際有效期限，不要修改時鐘假裝仍有效。向團隊管理員確認現有身分、名額及更新方案；重建資料後重新簽署。不要為了騰出空間自行撤銷憑證，可能影響其他 App、同事或已安裝裝置。</p></details>
+    <details><summary>簽署成功，卻還是不能安裝</summary><p>簽署、安裝與啟動是不同驗證。確認裝置、profile 類型、效期、entitlements 與相容的 iOS 版本。依系統要求親自完成信任或 Developer Mode 確認；不要把付費 Ad Hoc 的安裝方法套用到免費 Personal Team。回到首頁看目前的安裝界線，先保留原 App，避免資料遺失。</p></details>
+    <p class="source">Apple 參考：<a href="https://support.apple.com/en-ae/guide/keychain-access/kyca35961/mac">不能匯出的項目</a>、<a href="https://developer.apple.com/help/account/provisioning-profiles/edit-download-or-delete-profiles/">更新 profiles</a></p>
+  </section>
+  <section class="card" id="checklist" aria-labelledby="checklist-title">
+    <h2 id="checklist-title">開始簽署前，最後核對</h2>
+    <ul class="checklist">
+      <li>有權使用這個 IPA、憑證與 Team；檔案不是受 DRM 保護的 App Store 安裝包</li>
+      <li>P12 內恰好一把 RSA 私鑰與對應、尚未到期的憑證</li>
+      <li>知道自己設定的 P12 匯出密碼</li>
+      <li>主 App 與每個 extension 各有一份精確 profile，沒有 wildcard、重複或多餘項目</li>
+      <li>所有 profiles 都是同一 Team、含這張憑證、目標 UDID，且尚未到期</li>
+      <li>Bundle IDs、App Groups 與所需權限符合實際 IPA</li>
+      <li>已分清楚開發／Personal Team 與付費 Ad Hoc；沒有用 App Store 或企業全裝置 profile</li>
+      <li>檔案與密碼已安全保管；沒有公開貼出私鑰或憑證包</li>
+      <li>知道下載簽署 IPA 不代表安裝或啟動成功</li>
+    </ul>
+    <a class="button" href="./" target="_blank" rel="noopener noreferrer">回到首頁選取資料（新分頁）</a>
+    <p class="hint">在首頁選「進階：使用自己的 IPA／憑證」。若本教學由簽署頁另開，回到原分頁可保留原本已選的檔案。</p>
+  </section>
+  <footer><p><a class="back-top" href="#top">回到頁首</a> · <a href="./licenses.html">授權與驗證界線</a></p><p>Apple 官方文件核對日期：2026-10-07。介面名稱可能隨 macOS、Xcode 與帳號權限不同；以 Apple 當下顯示為準。</p><p>Tetherless 獨立開源開發預覽。本頁不會要求你提供密碼、私鑰或配對檔。</p></footer>
+</main>
+</body>
+</html>
