@@ -1,7 +1,7 @@
 {
   "apple_manifest_sha256": "bd8715881c47d4f554747f66b449dbfeddf0e2a5e426154ccc8f4c0c32e81332",
   "apple_profile_sha256": "384bbd1554e0148c7d8289b6d3a214dd82819a580c8d418ded55ff06b219c27f",
-  "apple_recipe_index_sha256": "46ae3782cd76dd01529102953c9617bcc07e9c8443e3183115f5a978833e3e1a",
+  "apple_recipe_index_sha256": "32a1bb3d473437b1e53f5fd62b815f8b3f13856dc01b0d9b89c377021a3b8341",
   "composition_manifest_sha256": "e63484590a8bdff3235fd58aa7d99ddca33bea69003cc474c7f6dfc271890312",
   "configurations": [
     "Debug",
@@ -134,7 +134,7 @@
   "retained_producer": {
     "mode": "explicit-runtime-inputs",
     "workflow_path": ".github/workflows/pairing-components.yml",
-    "workflow_sha256": "a7b18dfb1fc5e9a63179677ea2b91c786f2c60e5280222a7ba6ec06f7539525d"
+    "workflow_sha256": "d5ca0b4d71bcc76d82ffd88df643246b9f7637ddeb4d72acba33b7055f1e687d"
   },
   "reviewed_promotion_support": {
     "review_sha256": "66f1779d8c2ff071c7f94efc65133c19ab23c30b57f9a7f83153dc2ae197acdf",
