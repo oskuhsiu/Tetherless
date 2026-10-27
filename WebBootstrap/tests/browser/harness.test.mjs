@@ -42,6 +42,8 @@ test('preview mounts identical bytes at root/subpath, correct MIME, no fallback 
       assert.equal(wasm.headers['Content-Type'], 'application/wasm');
       assert.equal((await staticResponse(prefix, 'HEAD', root)).body, '');
       assert.equal((await staticResponse(`${prefix}missing.js`, 'GET', root)).status, 404);
+      const redirect = await staticResponse(`${prefix}__discovery_redirect_fixture__`, 'GET', root);
+      assert.equal(redirect.status, 302); assert.equal(redirect.headers.Location, 'https://foreign.example/health');
       assert.equal((await staticResponse(`${prefix}health`, 'GET', root)).status, 404);
       assert.equal((await staticResponse(`${prefix}v1/sessions`, 'POST', root)).status, 405);
     }

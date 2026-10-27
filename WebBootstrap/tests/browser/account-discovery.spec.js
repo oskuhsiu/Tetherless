@@ -43,7 +43,8 @@ for (const [name, response, expected] of [
 });
 test('service discovery: a redirect never follows an alternate endpoint or reveals credentials', async ({ page, context, baseURL, guided }) => {
   let attempts = 0;
-  await context.route(new URL('health', baseURL).href, async route => { attempts++; await route.fulfill({ status: 302, headers: { location: 'https://foreign.example/health' } }); });
+  await context.route(new URL('health', baseURL).href, async route => { attempts++; // WebKit cannot synthesize redirects with route.fulfill; use a real local HTTP redirect.
+    await route.continue({ url: new URL('__discovery_redirect_fixture__', baseURL).href }); });
   await page.goto('.'); await expect(page.locator('#account-unavailable')).toContainText('重新導向');
   await expect(page.locator('#recheck-service')).toBeEnabled(); await assertClosed(page, guided); expect(attempts).toBe(1); expect(guided.blocked).toEqual([]);
 });
