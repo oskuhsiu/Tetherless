@@ -1,5 +1,21 @@
 # Tetherless development status
 
+## IPA picker compatibility — 2026-10-27
+
+Both IPA file inputs now omit the OS file-type filter: iOS providers may not
+classify `.ipa` as ZIP, leaving it greyed out. This is a probable compatibility
+repair, not yet verified in the owner's native iPhone picker. Content-based
+archive/size checks and pinned Release SHA-256 checks remain unchanged. The UI
+explains that Actions artifacts are not configured Releases: use the extracted
+`.ipa`, not the outer artifact ZIP. No Release or Actions integration is added.
+
+Local verification: 134 web unit tests and production build passed; independent
+review found no blocking issues. Native Swift checks could not run (Swift absent);
+Integration ran 504 tests with 7 missing-swiftc errors and 49 skips. Browser
+execution requires the pinned CI browser runtime, absent locally. Exact-commit CI
+remains required before integration. Real iPhone selection and Apple acceptance
+remain separate, pending evidence.
+
 ## Discovery transport investigation — 2026-10-27
 
 The reported browser fetch failure is **not yet attributed to a specific cause**.

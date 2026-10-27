@@ -128,7 +128,7 @@ configReady = (async () => {
     el('release-identity').textContent = `${officialRelease.repository} · ${officialRelease.assetName}\n來源 ${officialRelease.sourceCommit}\n建置 ${officialRelease.buildRunId}（第 ${officialRelease.runAttempt} 次） · ${officialRelease.buildHeadSha}\nSHA-256 ${officialRelease.sha256}`;
     el('release-link').href = officialRelease.assetUrl; el('release-details').hidden = false;
   } catch (error) {
-    el('release-title').textContent = 'Tetherless 官方安裝包尚未就緒'; el('release-status').textContent = `${error.message}。請先選擇自己的 IPA，再登入 Apple。`;
+    el('release-title').textContent = 'Tetherless 官方安裝包尚未就緒'; el('release-status').textContent = `${error.message}。此選項只接受已綁定的 GitHub Release，不會自動列出 Actions 建置產物。已有 Actions 的 IPA？請使用「我自己的 IPA」選取已下載並解壓的 .ipa，再登入 Apple。`;
     el('app-source').value = 'custom'; el('app-source').querySelector('[value="official"]').disabled = true;
   } finally { deadline.clear(); configLoaded = true; render(); }
 })();

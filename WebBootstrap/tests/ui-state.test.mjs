@@ -276,3 +276,20 @@ test('DOM mock: UI initialization errors stay closed and are never mislabeled as
     assert(e.$('account-form').hidden); assert(!e.$('account-unavailable').textContent.includes('無法連線')); assert.equal(account.phase, 'unavailable'); assert(!e.$('recheck-service').disabled);
   } finally { e.dispose(); }
 });
+
+// No accept filter: iOS file providers may not map .ipa to application/zip.
+// DOM selection does not prove the native iOS picker; real-device acceptance remains separate.
+test('DOM mock: both IPA pickers allow unknown provider types and explain Actions vs Releases', async () => {
+  const e = await environment();
+  try {
+    for (const id of ['ipa', 'release-file']) {
+      assert.equal(e.$(id).type, 'file');
+      assert.equal(e.$(id).hasAttribute('accept'), false);
+    }
+    assert(e.$('app-source').querySelector('[value="official"]').disabled);
+    assert.equal(e.$('app-source').value, 'custom');
+    assert(e.$('release-status').textContent.includes('不會自動列出 Actions'));
+    assert(e.$('app-selection').textContent.includes('不是外層 ZIP'));
+    assert(e.$('login-button').disabled);
+  } finally { e.dispose(); }
+});
