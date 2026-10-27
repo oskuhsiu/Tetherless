@@ -1,0 +1,53 @@
+{
+  "baseline_commit": "b7f9a59276402347c53491539498fc022d4f3840",
+  "before_sha256": {
+    "Integration/Dependencies/idevice/helper-test-profile.json": "e5408d4c26875c796047b1dfc58fa2d46e5ea38d78f61d87f3cec3e3f223018d",
+    "Integration/Dependencies/idevice/overlay/ffi/src/staged_pairing.rs": "27cb432e982e8bc5b61eb7849a614385098adb195c33631a38e7576cffcdcdd7",
+    "Integration/Dependencies/idevice/source-lock.json": "1eb853a7ecbf77dccd3a692549a9a8e137b569bc95d283e876242bc1b258b376"
+  },
+  "changed_files": {
+    "Integration/Dependencies/idevice/helper-test-profile.json": "f0198213de5859aa8550fb6de175a49cfda9040c15c29fba8a8a604f79cfd77d",
+    "Integration/Dependencies/idevice/overlay/ffi/src/staged_pairing.rs": "e827e5a464782009f4be7ab5557fecc449fe266836a3851bd1cbc97fa5637933",
+    "Integration/Dependencies/idevice/source-lock.json": "9352c4601afa296fdd4b40c36a68a98d612b7a5d9bd8cdf86abe72270de830cd"
+  },
+  "compiler_evidence": {
+    "error": "E0283",
+    "job_id": 111884330705,
+    "run_id": 37345923482,
+    "rust_tests_executed": 0,
+    "sites": [
+      "ffi/src/staged_pairing.rs:481",
+      "ffi/src/staged_pairing.rs:498"
+    ]
+  },
+  "independent_review": {
+    "all_six_overlay_hashes_verified": true,
+    "native_execution": "pending parent CI",
+    "production_prefix_and_assertions_identical": true,
+    "reviewed_checkpoint_sha256": "cd9b2eca5bfecd0a59d45f157417926bc6419b175515a9dc4d9f22680a7fe98a",
+    "reviewer": "review_bounded_pairing_helpers",
+    "status": "approved; no blocking finding within three-file fixture-typing scope"
+  },
+  "scan": {
+    "ambiguous_fixture_dictionary_array_sites_corrected": 2,
+    "other_same_pattern_sites": 0,
+    "published_rust_overlays": 6,
+    "rsd_overlays_unchanged": true
+  },
+  "schema": 1,
+  "scope": "Four explicit String keys in two existing plist::Dictionary test fixture arrays; no production, assertion, filtering or build-policy changes",
+  "verification": {
+    "expected_linux_case_volume_skipped": 1,
+    "local_portable_total": 134,
+    "native_filters_unchanged": {
+      "bounded_rsd_tests": 25,
+      "staged_pairing::": 18
+    },
+    "only_four_key_expressions_changed": true,
+    "passed": 133,
+    "production_prefix_identical": true,
+    "rust_execution": "pending parent CI",
+    "staged_files": 487,
+    "verified_pinned_source_blobs": 486
+  }
+}

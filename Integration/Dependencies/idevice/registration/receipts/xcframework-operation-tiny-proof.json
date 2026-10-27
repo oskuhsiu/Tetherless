@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "verified_at": "2026-10-06T01:26:30Z",
+  "source": "7476bde6280c8fec042cf7d12c7fcf4bca68fc31",
+  "run_id": 37399037692,
+  "job_id": 112061790073,
+  "job_conclusion": "success",
+  "artifact_id": 11384548223,
+  "artifact_sha256": "6d39721c9a532fe4fc52dd92d77a56bddcf2dacff70ba48d3dad542c61238421",
+  "safe_zip_entries": 54,
+  "verified_source_inputs": 11,
+  "portable_tests": 25,
+  "completed_joined_commands": 5,
+  "operation_sha256": "98df3ef86806a707fb898dd9e59ff0a3612b330a91522d4995b793360ed0f044",
+  "unchanged_supervisor_sha256": "7724f6c3eb7d624f49a2651b30f1d6e6bb2c47d356449cd495fad28b2dd144e4",
+  "packaging_status": {
+    "cleanup": {
+      "direct_child_reaped": true,
+      "empty_evidence": "killpg_ESRCH",
+      "group_empty": true,
+      "last_group_probe": {
+        "errno": 3,
+        "state": "empty"
+      },
+      "last_unknown_errno": null,
+      "signal_errors": [],
+      "signals": [],
+      "unknown_probe_count": 0
+    },
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "-I",
+      "/Users/runner/work/Tetherless/Tetherless/Integration/packaging-diagnostic/xcframework_operation.py",
+      "/Users/runner/work/Tetherless/Tetherless/.packaging-work/iphoneos/libfixture.a",
+      "/Users/runner/work/Tetherless/Tetherless/.packaging-work/iphoneos/headers",
+      "/Users/runner/work/Tetherless/Tetherless/.packaging-work/iphonesimulator/libfixture.a",
+      "/Users/runner/work/Tetherless/Tetherless/.packaging-work/iphonesimulator/headers",
+      "/Users/runner/work/Tetherless/Tetherless/.packaging-work/Fixture.xcframework"
+    ],
+    "elapsed_seconds": 4.043305250000003,
+    "error_type": null,
+    "interrupted_by": null,
+    "kill_join_seconds": 5.0,
+    "log_bytes": 456,
+    "max_log_bytes": 1048576,
+    "outcome": "success",
+    "output_bytes_over_limit_observed": 0,
+    "output_complete": true,
+    "output_truncated": false,
+    "pid": 24757,
+    "post_exit_last_unknown_errno": null,
+    "post_exit_unknown_probe_count": 0,
+    "process_group": 24757,
+    "returncode": 0,
+    "schema": 1,
+    "stop_reason": null,
+    "summary_tail_bytes": 131072,
+    "term_grace_seconds": 5.0,
+    "timeout_seconds": 30
+  },
+  "packaging_log_sha256": "261365aa4eee18cf7c7562672dbd9e75ebb60c54a0d0e9af7ae6e6b0d1233f3d",
+  "packaging_status_sha256": "05dca4c871f5e3dc6f9ac4972f1048d8c824d27db11e4c21c2cdd4d051693929",
+  "operation_events": [
+    {
+      "child_pid": 24758,
+      "event": "started",
+      "pid": 24757
+    },
+    {
+      "child_pid": 24758,
+      "child_returncode": 0,
+      "event": "child_reaped",
+      "pid": 24757
+    },
+    {
+      "child_pid": 24758,
+      "child_returncode": 0,
+      "event": "group_drained",
+      "pid": 24757,
+      "tail_observed": true
+    }
+  ],
+  "observer_joined": true,
+  "observer_errors": [],
+  "tiny_package_validation": {
+    "identifiers": [
+      "ios-arm64",
+      "ios-arm64-simulator"
+    ],
+    "copied_archives_and_headers_match": true,
+    "schema": 1,
+    "supervisor_outcome": "success",
+    "natural_group_drain": true,
+    "accepted_idevice_artifact": false
+  },
+  "limits": [
+    "Tiny archives only; no IDevice artifact accepted",
+    "Both copied archive/header identities checked by reviewed runtime harness; binary bytes intentionally not uploaded",
+    "Production recipe promotion and complete native rebuild remain required"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "source": "https://github.com/AntonP29/SylvaSigner",
+  "commit": "f7127d6857a6aaa919b7430ef73baa262fe28070",
+  "runtime": "mobile-native",
+  "zsign_commit": "28a6421",
+  "openssl_version": "3.5.7",
+  "emscripten_version": "6.0.0",
+  "independently_rebuilt": false,
+  "files": {
+    "public/wasm/zsign-mobile.wasm": "6487f181de6cf1cdfaf4e7497bb6c177fb95235a3e72f11ae57695452c0b4090",
+    "public/wasm/zsign-mobile.js": "80b2981105961ad3e9469986b1b59a735554d92afbca40a0c675987337f997d7"
+  }
+}

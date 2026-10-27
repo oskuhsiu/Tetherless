@@ -1,0 +1,45 @@
+name: Standalone document picker runtime comparison
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'Diagnostics/document-picker-runtime/**'
+      - '.github/workflows/document-picker-runtime.yml'
+permissions:
+  contents: read
+concurrency:
+  group: document-picker-runtime-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  same-host-comparison:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Check standalone contracts before native execution
+        run: |
+          mkdir -p .generated
+          python3 -m unittest discover -s Diagnostics/document-picker-runtime/tests -v \
+            > .generated/document-picker-runtime-portable.log 2>&1
+      - name: Compare both exact installed runtimes with one signed build
+        run: python3 Diagnostics/document-picker-runtime/run.py run
+      - name: Shut down only the separately owned diagnostic devices
+        if: always()
+        run: python3 Diagnostics/document-picker-runtime/run.py cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: document-picker-runtime-${{ github.sha }}
+          path: |
+            .generated/document-picker-runtime-portable.log
+            .generated/document-picker-runtime/evidence
+            .generated/document-picker-runtime/producer
+            .generated/document-picker-runtime/Derived/Build/Products
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

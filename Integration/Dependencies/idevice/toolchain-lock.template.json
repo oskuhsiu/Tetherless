@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "rust_release": "1.98.1",
+  "developer_dir": "/Applications/Xcode_26.3.app/Contents/Developer",
+  "source_date_epoch": 1789830833,
+  "executables": {
+    "cargo": {
+      "path": null,
+      "sha256": null
+    },
+    "rustc": {
+      "path": null,
+      "sha256": null
+    },
+    "cmake": {
+      "path": null,
+      "sha256": null
+    },
+    "ninja": {
+      "path": null,
+      "sha256": null
+    }
+  },
+  "observations": {
+    "rustc": null,
+    "cargo": null,
+    "cmake": null,
+    "ninja": null,
+    "xcode": null,
+    "clang": null,
+    "macos_version": null,
+    "macos_build": null,
+    "sdk_iphoneos_version": null,
+    "sdk_iphoneos_build": null,
+    "sdk_iphonesimulator_version": null,
+    "sdk_iphonesimulator_build": null,
+    "sdk_macosx_version": null,
+    "sdk_macosx_build": null,
+    "swiftc": null
+  }
+}

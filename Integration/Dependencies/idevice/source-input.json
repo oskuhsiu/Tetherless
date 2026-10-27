@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "repository": "SideStore/idevice",
+  "commit": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+  "git_tree": "5df506b11db33b97d3b963e3be3f095729a409da",
+  "verified_blob_count": 486,
+  "verified_blob_bytes": 3646249,
+  "archive": {
+    "filename": "tetherless-idevice-pinned-source.tar",
+    "sha256": "2ceadeee2cd42f89732da917a7fe953764f375a65f46f6a314abc57a6b4c7cf0",
+    "bytes": 4024320,
+    "format": "uncompressed POSIX tar",
+    "included_in_recipe": false
+  },
+  "materialization": "Read-only GitHub connector blob retrieval at exact pinned Git blob IDs; every blob verified before writing",
+  "source_symlinks": {
+    "idevice/README.md": "../README.md"
+  },
+  "excluded_gitlinks": [
+    {
+      "path": "cpp/plist_ffi",
+      "commit": "66e6e6362b58bc361725c3e1b0a34af498aa2b3a",
+      "initialized": false
+    }
+  ],
+  "verification": "apply_patch.py --source DIRECTORY --verify-only; this verifies pristine upstream source only and does not approve or apply the composite patch"
+}

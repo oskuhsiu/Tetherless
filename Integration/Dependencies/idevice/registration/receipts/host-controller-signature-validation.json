@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "finished_utc": "2026-10-05T20:08:49.603928+00:00",
+  "scope": "Portable source/provenance/patch checks and independent synthetic Python crypto vectors only",
+  "command": "python3 tetherless-host-controller-signature-candidate/verify_candidate.py",
+  "passed_python_checks": 11,
+  "source_manifest_sha256": "a4b8e30b2a83e2dca1122221021b3a44be8647dfe239cb1c139bc60437dcc3a9",
+  "source_review_receipt_sha256": "f1c14acb97cf95e5f3153358dab5b7011805947a9146b571081732e30e91c062",
+  "patch_sha256": "81245bcb2dce452709648fcdea946e906afafff2ab2e6104c0b808f9efcd4f34",
+  "log_sha256": "bde552fcc89e15f5480fb3c3cb06a00d0a6a1864f66b230fd92ba00c99ca2b4f",
+  "python_cryptography_version": "50.0.0",
+  "native_tests_executed": 0,
+  "rust_compilation_executed": false,
+  "apple_build_executed": false,
+  "physical_device_execution": false,
+  "external_writes": false
+}

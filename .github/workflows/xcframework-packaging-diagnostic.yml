@@ -1,0 +1,73 @@
+name: Owned XCFramework packaging diagnostic
+on:
+  push:
+    branches: [verify/staged-pairing-native]
+    paths:
+      - '.github/workflows/xcframework-packaging-diagnostic.yml'
+      - 'Integration/packaging-diagnostic/**'
+permissions:
+  contents: read
+concurrency:
+  group: xcframework-packaging-diagnostic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  owned-packaging:
+    if: github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 18
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Retain diagnostic source context before any test
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          test ! -e .packaging-evidence
+          mkdir .packaging-evidence
+          python3 - <<'PY'
+          import hashlib, json, os, platform
+          from pathlib import Path
+          paths = [str(path) for path in Path('Integration/packaging-diagnostic').rglob('*')
+                   if path.is_file() and '__pycache__' not in path.parts]
+          paths += ['.github/workflows/xcframework-packaging-diagnostic.yml',
+                    'Integration/Dependencies/idevice/bounded_process.py',
+                    'Integration/Dependencies/idevice/apply_patch.py',
+                    'Integration/verify_pairing_composition.py']
+          Path('.packaging-evidence/run-context.json').write_text(json.dumps({
+              'commit': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': platform.platform(),
+              'developer_dir': os.environ['DEVELOPER_DIR'],
+              'source_sha256': {path: hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in paths},
+              'accepted_idevice_artifact': False, 'rust_rebuild': False,
+              'purpose': 'One isolated packaging attempt; attribute only observed owned process identities'
+          }, indent=2) + '\n')
+          PY
+      - name: Verify portable discriminator contracts
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s Integration/packaging-diagnostic/tests -v \
+            2>&1 | tee .packaging-evidence/tests.log
+      - name: Run one tiny-archive packaging attempt
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          python3 Integration/packaging-diagnostic/run_diagnostic.py \
+            --repo-root . --work-dir .packaging-work --output .packaging-evidence/diagnostic \
+            2>&1 | tee .packaging-evidence/diagnostic.log
+      - name: Preserve owned-process evidence without binaries
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 2
+        with:
+          name: xcframework-packaging-diagnostic-${{ github.sha }}-${{ github.run_attempt }}
+          path: .packaging-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

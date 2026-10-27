@@ -1,0 +1,11 @@
+# Backup deletion ownership
+
+This reviewed increment covers the pipeline `RemoveBackupDataOperation` and the main-app `FileManager.deleteBackup(for:)` used by the existing Delete Backup UI. Both acquire or borrow the existing NativeMutationGate before resolving their single backup target and retain ownership through actual coordinated deletion.
+
+The pipeline uses a serial coordination accessor and a synchronized task/operation cancellation flag. Continuation completion is queued after accessor return; cancellation never releases the lease while filesystem work remains active. The main-app helper uses synchronous `.forDeleting` coordination, deletes the coordinator-authorized URL and propagates coordinator/filesystem/cancellation errors through the existing UI error path. Missing paths preserve their previous no-op behavior. A cancellation observed after deletion does not imply rollback.
+
+Exact SideStore 0dd743f preimages: operation `0ee77641720c5c5592a123f727608a2888bbbfce`; main-app FileManager extension `c65acfdb39a5b17225a5155cdb35d2321153f186`. Both complete source hashes and anchors are validated before either output is written. The transform runs after maintenance and error privacy; those stages leave these two inputs unchanged. The shared helper used by other build targets is not changed, and future direct callers require review.
+
+The tests include the original upstream source fixtures with notices, transformed full-operation/helper compilation, real ProcessLease/MutationScope ownership, callback/file-service doubles, and real temporary-directory deletion. They cover busy admission, task/Progress cancellation, in-flight cancellation, coordinator/delete failures, accessor-return ordering, authorized URLs, nesting, inherited child claims and absent paths. Eleven portable checks passed; two Swift-backed checks remain pending native execution. This does not establish Apple's file-coordination service or physical device behavior.
+
+No new lock file, lock unlink, broad cleanup enumeration, background lifetime, credential operation or silent error suppression is added. Other local profile/database/diagnostic mutators and broad temporary-directory cleanup remain separate open lifecycle boundaries.

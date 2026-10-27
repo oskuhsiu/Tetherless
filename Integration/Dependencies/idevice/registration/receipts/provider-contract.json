@@ -1,0 +1,50 @@
+{
+  "actual_input_staging": {
+    "header_counts": [
+      143,
+      144,
+      144
+    ],
+    "input_bytes": 40506667,
+    "input_count": 443,
+    "native_execution": false,
+    "path": "ACTUAL_INPUT_STAGING.json",
+    "sha256": "2b073283bbc53d13e44994b96218b2095ba13ff927101c95e1e93e3f5b060f64",
+    "targets": [
+      "aarch64-apple-darwin",
+      "aarch64-apple-ios",
+      "aarch64-apple-ios-sim"
+    ]
+  },
+  "changed_files": {
+    "Integration/Dependencies/idevice/split-provider/README.md": "cb590bdbc077effb08ca68ffd94f13d69cefc8e5a43e7c58dbcddeee149447a8",
+    "Integration/Dependencies/idevice/split-provider/header_probe.c": "f283a867e964ed606652ba596b543fed4828fe60b31e094583e7da7e768a2cc4",
+    "Integration/Dependencies/idevice/split-provider/provider_inputs.py": "6d2f604d4076b619987fd336b7e56c38b4dc63ba9d6d417edc647cca44f2e9ec",
+    "Integration/Dependencies/idevice/split-provider/target-inputs.json": "20ee6e1e873cc8f6f83bf42b97e8760569a70ff95818d570a45e3966d63a9935",
+    "Integration/Dependencies/idevice/split-provider/tests/test_provider_inputs.py": "84be09f29a93fc07bb52f5192187959c0359988aedb20b668b1c7d4c8b5d591c"
+  },
+  "existing_input_contract_sha256": "20ee6e1e873cc8f6f83bf42b97e8760569a70ff95818d570a45e3966d63a9935",
+  "independent_review": {
+    "actual_targets_reaudited": 3,
+    "independent_controlled_tests_passed": 32,
+    "native_execution": false,
+    "receipt": "/workspace/scratch/30ad10c9f5dc/tetherless-openssl-registry-review/SPLIT_PROVIDER_ADAPTER_REVIEW_98612cb9.md",
+    "receipt_sha256": "b447621b745d4c40bce999ec1893f0b37fe1ee489ba34fbd8a4de809b5069889",
+    "reviewed_checkpoint_sha256": "98612cb9d61c0710149e95cb017b8c122e2a3a9b252c0e52752dc87ae8026465",
+    "reviewer": "review_pinned_openssl_route",
+    "status": "no blocking source finding in disabled input adapter; all reported findings resolved"
+  },
+  "portable_tests_passed": 32,
+  "remaining_evidence": [
+    "parent-owned native header compilation",
+    "actual selected openssl-sys build output",
+    "resolved feature graph",
+    "full consumer single-provider final link",
+    "native provider and PSK runtime behavior",
+    "Apple compatibility",
+    "product integration approval"
+  ],
+  "schema": 1,
+  "scope": "Disabled exact split-provider input preparation and output evidence contract; no compiler/native execution, default source profile or app changes",
+  "superseded_review_checkpoint_sha256": "f39218ce59064a00961302a2f5d856fcea01c77807d44409f719e7f1004c281a"
+}

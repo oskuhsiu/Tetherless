@@ -1,0 +1,60 @@
+name: Owned signing test app (not Tetherless)
+on:
+  push:
+    branches: [develop, verify/staged-pairing-native]
+    paths:
+      - 'Tools/WebSigningTestApp/**'
+      - '.github/workflows/web-signing-test-app.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: owned-signing-test-app-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  unsigned-signing-fixture:
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        timeout-minutes: 3
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Check portable fixture and packaging contracts
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          test ! -e "$RUNNER_TEMP/web-signing-test-portable.log"
+          python3 -m unittest discover -s Tools/WebSigningTestApp/tests -v \
+            2>&1 | tee "$RUNNER_TEMP/web-signing-test-portable.log"
+      - name: Build exactly one unsigned arm64 UIKit fixture and retain provenance
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          python3 Tools/WebSigningTestApp/build.py \
+            --repository "$GITHUB_WORKSPACE" \
+            --output "$RUNNER_TEMP/web-signing-test-app"
+      - name: Preserve successful unsigned fixture and source only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 2
+        with:
+          name: owned-signing-test-app-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/web-signing-test-app/complete/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve portable test and native inspection evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        timeout-minutes: 2
+        with:
+          name: owned-signing-test-evidence-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/web-signing-test-portable.log
+            ${{ runner.temp }}/web-signing-test-app/evidence/
+          if-no-files-found: error
+          retention-days: 14

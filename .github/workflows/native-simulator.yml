@@ -1,0 +1,158 @@
+name: Native simulator launch
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'Sources/**'
+      - 'Integration/**'
+      - 'Packages/**'
+      - 'Vendor/**'
+      - '.github/workflows/native-simulator.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-simulator-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  whole-app-launch:
+    name: ${{ matrix.coverage }}
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      # The unresolved normal-runtime selection must not cancel the separate
+      # production coverage on the verified delivery runtime (or vice versa).
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: ios-26-2
+            coverage: Normal full product (iOS 26.2)
+          - configuration: ios-18-6
+            coverage: Supplemental full product (iOS 18.6)
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Select toolchain and allocate an isolated unbooted simulator
+        run: |
+          python3 Integration/simulator_environment.py allocate --configuration "${{ matrix.configuration }}"
+      - name: Prepare the same production integration
+        run: python3 Integration/prepare.py
+      - name: Build complete app for Simulator (no Apple account)
+        run: |
+          xcodebuild build \
+            -project .generated/SideStore/AltStore.xcodeproj \
+            -scheme SideStore -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath .generated/SimulatorDerived \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            ORG_IDENTIFIER=com.SideStore > native-simulator-build.log 2>&1
+      - name: Verify actual simulator signature and Keychain identity
+        run: |
+          python3 Integration/simulator_signing.py \
+            .generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app \
+            --team XYZ0123456 --output native-simulator-signing.json
+      - name: Boot the isolated simulator only after compilation
+        run: python3 Integration/simulator_smoke.py prepare --simulator "$SIMULATOR_ID"
+      - name: Install and launch the complete app in a fresh simulator
+        run: |
+          python3 Integration/simulator_smoke.py launch --simulator "$SIMULATOR_ID" \
+            --app .generated/SimulatorDerived/Build/Products/Debug-iphonesimulator/SideStore.app
+      - name: Install isolated public-document source for the actual picker
+        id: document_fixture
+        run: python3 Integration/document_fixture_app.py
+      - name: Add UI-only test target without changing production sources
+        run: python3 Integration/prepare_ui_tests.py .generated/SideStore
+      - name: Record owned picker clock baseline
+        id: picker_baseline
+        run: python3 Integration/simulator_environment.py begin-picker-timing
+      - name: Exercise first setup and local navigation in the real app
+        id: product_ui
+        run: |
+          xcodebuild test \
+            -project .generated/SideStore/AltStore.xcodeproj \
+            -scheme TetherlessUITests -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath .generated/SimulatorDerived \
+            -resultBundlePath native-ui.xcresult \
+            -parallel-testing-enabled NO \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            ORG_IDENTIFIER=com.SideStore > native-ui.log 2>&1
+      - name: Verify the selected invalid document was not modified
+        if: ${{ always() && steps.document_fixture.outcome == 'success' }}
+        run: python3 Integration/ui_document_fixture.py verify
+      - name: Collect owned picker service timing
+        if: ${{ always() && steps.picker_baseline.outcome == 'success' && steps.product_ui.outcome != 'skipped' }}
+        run: python3 Integration/simulator_environment.py collect-picker-timing
+      - name: Record installation and file-provider services on failure
+        if: failure()
+        run: python3 Integration/simulator_environment.py diagnose
+      - name: Retain app stdout and crash reports from the actual test result
+        if: always()
+        run: |
+          if [ -d native-ui.xcresult ]; then
+            xcrun xcresulttool export diagnostics --path native-ui.xcresult --output-path .generated/ui-diagnostics
+            python3 Integration/retain_ui_diagnostics.py .generated/ui-diagnostics native-ui-diagnostics
+          fi
+      - name: Export actual UI screenshots
+        if: always()
+        run: |
+          if [ -d native-ui.xcresult ]; then
+            xcrun xcresulttool export attachments --path native-ui.xcresult --output-path native-ui-attachments
+          fi
+      - name: Correlate explicit picker clocks without mapping video timestamps
+        if: ${{ always() && steps.picker_baseline.outcome == 'success' && steps.product_ui.outcome != 'skipped' }}
+        run: |
+          python3 Integration/retain_ui_diagnostics.py native-picker-timing native-ui-diagnostics \
+            --correlate-picker native-ui-attachments --timing-report native-picker-timing/correlation.json
+      - name: Summarize actual compiler diagnostics
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['native-simulator-build.log', 'native-ui.log']:
+              path=Path(name)
+              if path.exists():
+                  lines=path.read_text(errors='replace').splitlines()
+                  selected=[line for line in lines if any(key in line for key in ['error:', 'BUILD SUCCEEDED', 'BUILD FAILED', 'TEST SUCCEEDED', 'TEST FAILED', 'Executed ', ' failed '])]
+                  print(name, '\n'.join(selected[-80:] if selected else lines[-40:]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-launch-${{ matrix.configuration }}-${{ github.sha }}
+          path: |
+            native-picker-timing
+            native-simulator-environment
+            native-simulator-owner.json
+            native-ui-document-fixture.json
+            native-document-fixture-build.log
+            native-document-fixture-signing.json
+            native-simulator-health
+            native-simulator-signing.json
+            native-ui.log
+            native-ui-diagnostics
+            native-ui.xcresult
+            native-ui-attachments
+            native-simulator-build.log
+            native-simulator-launch.log
+            native-simulator-devices.json
+            native-launch-evidence.json
+            native-first-launch.png
+            native-screenshot.log
+            native-simulator-prepare.log
+            native-simulator-install.log
+            native-simulator-home.png
+          if-no-files-found: error
+          retention-days: 14
+      - name: Shut down only the simulator created by this job
+        if: always()
+        run: python3 Integration/simulator_environment.py shutdown

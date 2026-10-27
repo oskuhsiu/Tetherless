@@ -1,0 +1,134 @@
+name: Native integration build
+on:
+  push:
+    paths:
+      - 'Sources/**'
+      - 'Integration/**'
+      - 'Packages/**'
+      - 'Vendor/**'
+      - '.gitmodules'
+      - '.github/workflows/native.yml'
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unsigned-build:
+    # Dedicated helper branch does not build the app; develop and PR acceptance stay unchanged.
+    if: github.ref != 'refs/heads/verify/staged-pairing-native'
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Select newest installed stable Xcode
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          choices = []
+          for p in Path('/Applications').glob('Xcode*.app'):
+              m = re.fullmatch(r'Xcode_(\d+(?:\.\d+)*)\.app', p.name)
+              if m:
+                  choices.append((tuple(map(int, m[1].split('.'))), p))
+          if choices:
+              subprocess.run(['sudo', 'xcode-select', '-s', str(max(choices)[1] / 'Contents/Developer')], check=True)
+          PY
+          xcodebuild -version
+          swift --version
+      - name: Patch transformation tests
+        run: python3 -m unittest discover -s Integration/tests -v
+      - name: Verify pins and prepare native sources
+        run: python3 Integration/prepare.py
+      - name: Execute prepared source contracts (no skipped tests)
+        run: python3 Integration/run_prepared_contract_tests.py
+      - name: Preserve bounded prepared review inputs (all file extensions)
+        run: |
+          python3 Integration/delivery_candidate.py \
+            --prepared .generated/SideStore \
+            --output native-review-source.tar.gz \
+            --commit "${{ github.sha }}"
+      - name: Compile unsigned iOS app (not device validation)
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+        run: |
+          xcodebuild build \
+            -project .generated/SideStore/AltStore.xcodeproj \
+            -scheme SideStore \
+            -configuration "$CONFIGURATION" \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath .generated/DerivedData \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM=XYZ0123456 \
+            ORG_IDENTIFIER=com.SideStore > native-build.log 2>&1
+      - name: Summarize native compiler diagnostics
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('native-build.log')
+          if p.exists():
+              lines = p.read_text(errors='replace').splitlines()
+              indices = set()
+              for i, line in enumerate(lines):
+                  if 'error:' in line or 'BUILD SUCCEEDED' in line or 'BUILD FAILED' in line:
+                      indices.update(range(max(0, i-1), min(len(lines), i+5)))
+              for i in sorted(indices)[:300]:
+                  print(lines[i])
+              if not indices:
+                  print('\n'.join(lines[-50:]))
+          PY
+      - name: Inspect packaged pairing APIs (read-only evidence)
+        id: pairing_api_surface
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          python3 Integration/inspect_pairing_api.py \
+            --artifacts-root .generated/DerivedData/SourcePackages/artifacts \
+            --output "artifacts/pairing-api-${{ matrix.configuration }}.json"
+      - name: Compile and link packaged pairing declarations (never execute)
+        id: pairing_link_surface
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 16
+        run: |
+          python3 Integration/probe_pairing_link.py \
+            --artifacts-root .generated/DerivedData/SourcePackages/artifacts \
+            --output-root "artifacts/pairing-link-${{ matrix.configuration }}"
+      - name: Package unsigned candidate with byte inventory (release gates stay open)
+        env:
+          CONFIGURATION: ${{ matrix.configuration }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          python3 Integration/package_unsigned.py \
+            --app ".generated/DerivedData/Build/Products/$CONFIGURATION-iphoneos/SideStore.app" \
+            --output "artifacts/$CONFIGURATION" \
+            --commit "$SOURCE_COMMIT" --configuration "$CONFIGURATION" \
+            --repository . --prepared .generated/SideStore \
+            --source-packages .generated/DerivedData/SourcePackages
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-${{ matrix.configuration }}-${{ github.sha }}
+          path: |
+            artifacts/
+            native-build.log
+            native-review-source.tar.gz
+            native-review-source.tar.gz.json
+            .generated/PreparedContractInputs/
+            .generated/SideStore/TETHERLESS_PREPARATION.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

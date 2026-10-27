@@ -1,0 +1,24 @@
+{
+  "contentType": "text/plain",
+  "etag": "\"894d-55a62eb645dcd\"",
+  "finalURL": "https://www.gnu.org/licenses/gpl-3.0.txt",
+  "httpStatus": 200,
+  "lastModified": "Sat, 30 Sep 2017 07:16:26 GMT",
+  "licenseTextCopyright": "Copyright (C) 2007 Free Software Foundation, Inc.",
+  "licenseTextIdentity": "GNU General Public License, version 3, 29 June 2007",
+  "preservation": "Raw HTTPS response body saved unchanged; no normalization or appended notice",
+  "relatedSource": {
+    "component": "SideSign",
+    "evidenceBasis": "Pinned README bytes retained and independently hash-verified by the earlier source review; GPLv3 declaration reconfirmed from those bytes",
+    "readmeGitBlobSHA1": "d9d7da2730a01c92b5a4b4c9b6bbf80f78ffbe53",
+    "readmeSHA256": "03c60faa5ec141da4421aec821d326bb2b85fc4292035fedd7fe3baa99b085a6",
+    "readmeURL": "https://github.com/SideStore/SideSign/blob/6b68651697f99791ef85404b7aea1891a26a285d/README.md",
+    "revision": "6b68651697f99791ef85404b7aea1891a26a285d"
+  },
+  "retrievedOnUTC": "2026-10-05",
+  "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+  "size": 35149,
+  "storedFile": "LICENSE-GPL-3.0.txt",
+  "url": "https://www.gnu.org/licenses/gpl-3.0.txt",
+  "verificationScope": "HTTP status, official final URL, complete-text markers, byte count and local SHA-256 checked; no independent digital signature or external publisher digest was supplied"
+}

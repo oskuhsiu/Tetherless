@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "reviewer": "review_composite_stack_repair",
+  "reviewed_at_utc": "2026-10-05T19:51:26.119581+00:00",
+  "scope": "Independent source and portable review of staged acquisition future-storage/lifetime repair only; no native execution, publication, profile or resource admission review",
+  "verdict": "No source-level blocking defect found. Candidate is suitable for the first narrow acquisition-only native rerun; compilation, actual layout sizes and repaired runtime acceptance remain pending.",
+  "candidate_sha256": "3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89",
+  "baseline_sha256": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d",
+  "source_hashes": [
+    {
+      "path": "tetherless-contributory-acquisition/Integration/Dependencies/idevice/overlay/ffi/src/staged_acquisition.rs",
+      "sha256": "f52cc40cf75a28a6fa48238d9decdb20d822b3bed8e83f553b9a186f5387730d"
+    },
+    {
+      "path": "tetherless-acquisition-stack-repair/Integration/Dependencies/idevice/overlay/ffi/src/staged_acquisition.rs",
+      "sha256": "3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89"
+    },
+    {
+      "path": "tetherless-helper-plist-key-types-delta/Integration/Dependencies/idevice/overlay/ffi/src/staged_pairing.rs",
+      "sha256": "e827e5a464782009f4be7ab5557fecc449fe266836a3851bd1cbc97fa5637933"
+    },
+    {
+      "path": "tetherless-component-verification/37334149741/retained/review-sources/jktcp-0.1.7/src/adapter.rs",
+      "sha256": "12399d17b16b349ee6aae88afdf2877e64df58e8b5a63328522e5030f2c37197"
+    },
+    {
+      "path": "tetherless-component-verification/37334149741/retained/review-sources/jktcp-0.1.7/src/stream.rs",
+      "sha256": "ae4607aa71e3604af9b2191f838056f256de1e4b64113d8312a974a048e42d8c"
+    },
+    {
+      "path": "tetherless-component-verification/37334149741/retained/review-sources/jktcp-0.1.7/src/lib.rs",
+      "sha256": "28b2c5efcbf0a4626f072f96df51322a12ea04d9c24e5ce882ea96c4660837cc"
+    },
+    {
+      "path": "tetherless-acquisition-stack-repair/stack-storage.patch",
+      "sha256": "26c0c1a613eeb5692c20f80f147d2dbd6314871b95c18544818426a9cb16f461"
+    },
+    {
+      "path": "tetherless-acquisition-stack-repair/repair-receipt.json",
+      "sha256": "2bb6b71abc3e4876390c814705e665ef9b7ca83bc7dd3d3b5b85d35840cf2554"
+    },
+    {
+      "path": "tetherless-acquisition-stack-repair/STACK_STORAGE_REVIEW.md",
+      "sha256": "a9fcaae0d56b5984ddbc72878d193131257d49f62a585c7a947176e5b457727a"
+    },
+    {
+      "path": "tetherless-acquisition-stack-repair/test_stack_storage_sources.py",
+      "sha256": "159fbd56cf93fb335f972bdf4f251cc795cc85855f203652438cce22822090a0"
+    },
+    {
+      "path": "tetherless-acquisition-stack-independent-review/portable-checks.txt",
+      "sha256": "99474e84aa8b262c0fd980ef9aefbe6a5b93170c75195c49cd0fa6d3a4bf3f1e"
+    },
+    {
+      "path": "tetherless-component-verification/1366ace/acquisition-only-1366ace/profile-work/completed/03-idevice-ffi.txt",
+      "sha256": "1064a7999d32ca05be7e9f224f81cf4571d8e3d17dbdf7244cc00fa596a4b61c"
+    }
+  ],
+  "portable_checks": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 tetherless-acquisition-stack-repair/test_stack_storage_sources.py",
+    "passed": 19,
+    "retained_checks": 12,
+    "added_checks": 7,
+    "log": "/workspace/scratch/30ad10c9f5dc/tetherless-acquisition-stack-independent-review/portable-checks.txt",
+    "log_sha256": "99474e84aa8b262c0fd980ef9aefbe6a5b93170c75195c49cd0fa6d3a4bf3f1e"
+  },
+  "patch_reproduction": {
+    "method": "Applied authored patch to an isolated temporary baseline copy and required byte equality to the frozen candidate",
+    "passed": true,
+    "output": "patching file Integration/Dependencies/idevice/overlay/ffi/src/staged_acquisition.rs"
+  },
+  "test_preservation": {
+    "staged_acquisition_baseline": 9,
+    "staged_acquisition_candidate": 11,
+    "unchanged_old_tests_and_assertions": true,
+    "suffix_from_two_sockets_stalled_in_real_tls_sha256": "0c004a6b27bbbe45d36a2c79fe52578ee578072fd405db487043e9f1887bad39",
+    "added_tests": [
+      "composite_future_storage_stays_bounded_without_constructing_it",
+      "heap_owned_adapter_drops_transport_synchronously"
+    ],
+    "aggregate_counts_using_parent_baselines": {
+      "acquisition_before": 72,
+      "acquisition_after": 74,
+      "combined_before": 92,
+      "combined_after": 94
+    },
+    "aggregate_count_limit": "Only the direct 9 to 11 source count was independently recounted here. Aggregate baselines were supplied by the parent; these are authored, not executed, counts."
+  },
+  "source_findings": [
+    "The isolated synchronous #[inline(never)] helper returns Box<Adapter>; Adapter owns the same boxed raw transport and its 65536-byte array is no longer inline in the outer future state. No claim of placement construction or stack-free initialization is warranted.",
+    "The four Box::pin calls occur at the existing RP verification, TLS/CDTunnel, RSD and challenge await sites. They preserve concrete future types and borrowed lifetimes without adding Send/static requirements, type erasure, tasks or threads. At most one of those four added phase boxes is live at a time.",
+    "idevice::ReadWrite supplies the AsyncRead/AsyncWrite/Unpin/Send/Sync/Debug bounds also required by the pinned jktcp blanket implementation. The helper static bound matches the existing acquisition transport bound. &mut Box<Adapter> deref-coerces to &mut Adapter for both AdapterStream::connect calls.",
+    "The borrowed RP record and RSD/challenge streams stay live across their boxed awaits; each completed await temporary drops at its statement before the next mutable operation. Existing stream.close and explicit drop(stream) statements are unchanged.",
+    "Cancellation and timeout still drop the operation in run_controlled before Control::finish. Dropping a Pin<Box<Future>> synchronously destroys its captured state. Dropping Box<Adapter> synchronously drops the raw owner; packet drain and adapter Arc owners both remain within the operation. No detached work or asynchronous Drop is added.",
+    "Success still drops Adapter, flushes final_drain under the existing deadline, drops final_drain, then drops rpc before the outer operation returns. Control::finish retains the unchanged atomic cancellation/completion linearization point, including cancellation during operation destruction.",
+    "Removing only the four pin wrappers, constructor call substitution and added explanatory comment reproduces the previous protocol body exactly. C ABI, parse/endpoint/path rules, transport limits, timeouts, no-fallback behavior, crypto, error mappings and control-selection order are unchanged.",
+    "The layout helper discards an uncalled FnOnce factory and calls size_of::<F>(). Its empty arguments do not bypass a future type: production resolves acquire_and_validate and its concrete TcpStream connector, while injected, controlled and joined cases resolve the PendingIo types. The panic connector cannot be executed by this helper. It measures by-value future state only, not total stack frames or the exact capture size of every fixture wrapper.",
+    "The direct adapter drop test exercises the same new constructor and requires exactly one synchronous synthetic transport drop. It does not prove remote close or native stack adequacy before CI executes it."
+  ],
+  "remaining_stack_and_layout_limits": [
+    "Adapter::new initializes a 65536-byte array. Box::new may use one or more fixed-size constructor/move temporaries; #[inline(never)] isolates the synchronous helper but provides no measured total stack ceiling.",
+    "LimitedIo::poll_read retains an unchanged 16384-byte synchronous local buffer on every raw read. It is not embedded across an async await and is not covered by size_of::<Future>().",
+    "PacketWriteIo::new uses Box::new([0; 16000]); boxed storage is stable afterward, but construction may use a stack temporary.",
+    "The boxed RSD phase includes Http2Client::next_frame with a 16384-byte array retained over read.await. CDTunnel has a 4096-byte response array; borrowed validation uses 4096-byte plist buffers plus bounded request/AFC arrays. Their phase factories/poll calls can still consume bounded stack even though they no longer enlarge the outer stored future.",
+    "Pinned jktcp AdapterStream connect/close/poll paths borrow the Adapter instead of copying its 65536-byte array; packet payloads/cache collections are Vec/Arc/HashMap-backed. No second comparably large inline Adapter owner was found in the inspected relevant path.",
+    "Unoptimized native frame construction, nested polling, external library frames and target-specific compiler layout remain unmeasured. Passing the layout guard alone would not establish the stack-overflow repair."
+  ],
+  "failed_evidence": {
+    "implementation": "1366ace",
+    "run_id": "37362664851",
+    "job_id": "111940739025",
+    "artifact_id": "11367742807",
+    "artifact_sha256_supplied_by_parent": "11a0607172253922998ff9346aad0c69027c325f9c8d7744450d9e3033d14601",
+    "observed_log": "Successful Rust test compilation; running 9 tests; named composite cancellation/timeout test stack overflow; SIGABRT. No measured crash instruction/stack trace and no complete staged test result."
+  },
+  "native_first_rerun": [
+    "Parent first propagates exactly candidate 3057cc162efc267d3e8e3dee323141822adf789f226fed17292b4098ac1c5d89 coherently into acquisition-dependent source/profile artifacts with the unchanged current helper and pinned OpenSSL/header/features.",
+    "Use the narrow acquisition-only native job. Compile the candidate and capture all four numeric type-layout values with the layout test diagnostics visible; actual values must satisfy the 16384-byte ceiling.",
+    "Require the unchanged composite_acquisition_joins_rp_socket_on_cancel_and_timeout fixture and full staged_acquisition filter to complete successfully: 11 tests, none ignored or skipped, unchanged default stack settings, no RUST_MIN_STACK or assertion reduction.",
+    "Require the existing TLS join, contributory rejection and adapter transport-drop checks as part of that result; do not infer remaining acquisition suites or aggregate counts from the type guard or earlier helper/RSD/host greens.",
+    "The optional baseline-layout-only diagnostic is separate and intentionally expected to fail its size bound. It is not part of the final candidate or an acceptance replacement."
+  ],
+  "performed": {
+    "local_rust_swift_xcode": false,
+    "native_compilation": false,
+    "native_runtime": false,
+    "measured_future_bytes": false,
+    "external_writes": false,
+    "publication_or_ci_dispatch": false,
+    "frozen_source_modified": false,
+    "scope_expanded": false
+  }
+}

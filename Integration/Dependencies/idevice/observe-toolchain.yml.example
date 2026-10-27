@@ -1,0 +1,42 @@
+# Proposal only: not under .github/workflows and never dispatched by this tooling.
+# The integration owner must review/move this file before running it.
+name: Observe idevice candidate toolchain
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      RUSTUP_AUTO_INSTALL: '0'
+    steps:
+      # Same immutable Action pins as the existing Tetherless workflows.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Verify prerequisites and prepare the exact official Rust candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          test -d "$DEVELOPER_DIR"
+          command -v rustup
+          command -v cmake
+          command -v ninja
+          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+          rustup --version
+          # Use the existing official rustup only. No curl installer, moving stable,
+          # global default change, third-party toolchain Action or cargo install.
+          rustup toolchain install 1.98.1 --profile minimal --no-self-update \
+            --target aarch64-apple-ios,aarch64-apple-ios-sim
+      - name: Record installed binary hashes and exact Xcode SDK observations
+        run: |
+          python3 Integration/Dependencies/idevice/record_toolchain.py \
+            --output idevice-toolchain-lock.observed.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: idevice-toolchain-observation
+          path: idevice-toolchain-lock.observed.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,29 @@
+[package]
+name = "tetherless-web-bootstrap-service"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "AGPL-3.0-only"
+
+[dependencies]
+axum = "0.8.6"
+base64 = "0.22.1"
+isideload = { git = "https://github.com/nab138/isideload", rev = "dd442588370060b8776b1276a1acd717b6668b26", default-features = false, features = ["install", "tokio-mt"] }
+rootcause = "0.12.0"
+openssl = "0.10.75"
+plist = "1.8"
+rsa = "0.9.10"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = { version = "0.10.9", features = ["oid"] }
+subtle = "2.6.1"
+tokio = { version = "1.49", features = ["macros", "rt-multi-thread", "sync", "time", "net", "signal"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+tower-http = { version = "0.6.6", features = ["cors", "set-header", "fs"] }
+uuid = { version = "1.20", features = ["v4"] }
+x509-cert = { version = "0.2.5", features = ["pem"] }
+zeroize = "1.8.2"
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }

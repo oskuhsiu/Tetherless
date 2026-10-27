@@ -1,0 +1,5 @@
+/target/
+/.toolchain/
+# Do not add Apple credentials, tokens, private keys, anisette identities or logs.
+*.log
+.env

@@ -1,0 +1,30 @@
+{
+  "root": {
+    "repository": "SideStore/libimobiledevice-xcframework",
+    "commit": "0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a",
+    "tree": "d50c503a89061c6f6f996d6ac49755b8072ad559",
+    "committed_at": "2026-08-26T09:45:42Z",
+    "url": "https://github.com/SideStore/libimobiledevice-xcframework/commit/0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a"
+  },
+  "glue": {
+    "repository": "libimobiledevice/libimobiledevice-glue",
+    "commit": "da770a7687f35fbb981db4d7b47b1b032cd5c2c7",
+    "tree": "2ebf641f9994b6c9e9a899e470bb3271b173c086",
+    "committed_at": "2025-11-24T00:29:57Z",
+    "url": "https://github.com/libimobiledevice/libimobiledevice-glue/commit/da770a7687f35fbb981db4d7b47b1b032cd5c2c7"
+  },
+  "plist": {
+    "repository": "libimobiledevice/libplist",
+    "commit": "32428abacb909988e8e960a8845a6430b17b6a60",
+    "tree": "cf1d49ba8560c9c2458a1f35bc191ede793347c5",
+    "committed_at": "2026-05-22T22:52:53Z",
+    "url": "https://github.com/libimobiledevice/libplist/commit/32428abacb909988e8e960a8845a6430b17b6a60"
+  },
+  "usbmuxd": {
+    "repository": "libimobiledevice/libusbmuxd",
+    "commit": "93eb168bf6b07472d17781328c21df0c60300524",
+    "tree": "495e76e874c7e46dd4f0b03681e85edf89e20680",
+    "committed_at": "2025-09-07T22:15:01Z",
+    "url": "https://github.com/libimobiledevice/libusbmuxd/commit/93eb168bf6b07472d17781328c21df0c60300524"
+  }
+}

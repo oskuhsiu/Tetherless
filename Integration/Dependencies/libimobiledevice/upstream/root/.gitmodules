@@ -1,0 +1,9 @@
+[submodule "Dependencies/libplist"]
+	path = Dependencies/libplist
+	url = https://github.com/libimobiledevice/libplist
+[submodule "Dependencies/libimobiledevice-glue"]
+	path = Dependencies/libimobiledevice-glue
+	url = https://github.com/libimobiledevice/libimobiledevice-glue
+[submodule "Dependencies/libusbmuxd"]
+	path = Dependencies/libusbmuxd
+	url = https://github.com/libimobiledevice/libusbmuxd

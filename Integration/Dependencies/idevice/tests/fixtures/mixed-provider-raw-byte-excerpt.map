@@ -1,0 +1,1571 @@
+# Path: /Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/mixed_provider-c-probe
+# Arch: arm64
+# Object files:
+[  2] /Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/target/aarch64-apple-ios/release/libidevice_ffi.a(idevice_ffi-37eafb59ba3b8ac5.idevice_ffi.2f174c7cb5c7c3c3-cgu.0.rcgu.o)
+[115] /Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/target/aarch64-apple-ios/release/libidevice_ffi.a(f8e4fd781484bd36-bcm.o)
+[175] /Users/runner/work/Tetherless/Tetherless/.proof/apple-producer-work/aarch64-apple-ios/target/aarch64-apple-ios/release/libidevice_ffi.a(4696e3d2cc941c84-voprf.o)
+[732] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(idevice.o)
+[733] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(service.o)
+[734] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(property_list_service.o)
+[735] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(device_link_service.o)
+[736] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(lockdown.o)
+[737] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(lockdown-cu.o)
+[738] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(afc.o)
+[739] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(file_relay.o)
+[740] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(notification_proxy.o)
+[741] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(installation_proxy.o)
+[742] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sbservices.o)
+[743] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(mobile_image_mounter.o)
+[744] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(screenshotr.o)
+[745] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(mobilesync.o)
+[746] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(mobilebackup.o)
+[747] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(house_arrest.o)
+[748] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(mobilebackup2.o)
+[749] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(misagent.o)
+[750] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(restore.o)
+[751] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(diagnostics_relay.o)
+[752] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(heartbeat.o)
+[753] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(debugserver.o)
+[754] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(webinspector.o)
+[755] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(mobileactivation.o)
+[756] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(preboard.o)
+[757] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(companion_proxy.o)
+[758] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(reverse_proxy.o)
+[759] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(syslog_relay.o)
+[760] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(ostrace.o)
+[761] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(bt_packet_logger.o)
+[762] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(debug.o)
+[763] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(userpref.o)
+[764] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(add_scalar.o)
+[765] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(fe.o)
+[766] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(ge.o)
+[767] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(key_exchange.o)
+[768] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(keypair.o)
+[769] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sc.o)
+[770] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(seed.o)
+[771] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sha512.o)
+[772] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sign.o)
+[773] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(verify.o)
+[774] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(cstr.o)
+[775] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(srp.o)
+[776] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(srp6a_sha512_client.o)
+[777] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(t_conv.o)
+[778] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(t_math.o)
+[779] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(t_misc.o)
+[780] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(t_sha.o)
+[781] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(t_truerand.o)
+[782] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(base64.o)
+[783] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(bytearray.o)
+[784] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(hashtable.o)
+[785] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(ptrarray.o)
+[786] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(time64.o)
+[787] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(common.o)
+[788] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(xplist.o)
+[789] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(bplist.o)
+[790] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(jsmn.o)
+[791] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(jplist.o)
+[792] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(oplist.o)
+[793] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(out-default.o)
+[794] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(out-plutil.o)
+[795] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(out-limd.o)
+[796] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(plist.o)
+[797] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(node.o)
+[798] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(node_list.o)
+[799] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(glue.o)
+[800] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(socket.o)
+[801] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(thread.o)
+[802] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(utils.o)
+[803] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(nskeyedarchive.o)
+[804] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(collection.o)
+[805] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(termcolors.o)
+[806] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(cbuf.o)
+[807] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(opack.o)
+[808] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(tlv.o)
+[809] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sha1.o)
+[810] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sha256.o)
+[811] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(sha512.o)
+[812] /Users/runner/work/Tetherless/Tetherless/.proof/retained-c-provider/product/libimobiledevice.xcframework/ios-arm64/libimobiledevice.a(libusbmuxd.o)
+# Sections:
+# Address	Size    	Segment	Section
+0x100004000	0x003BBE80	__TEXT	__text
+0x1003BFE80	0x00001098	__TEXT	__stubs
+0x1003C0F18	0x00000010	__TEXT	__init_offsets
+0x1003C1000	0x000AA250	__TEXT	__const
+0x10046B250	0x00001410	__TEXT	__gcc_except_tab
+0x10046C660	0x00026DAB	__TEXT	__cstring
+0x10049340C	0x0000B3D8	__TEXT	__unwind_info
+0x10049E7E8	0x0000C298	__TEXT	__eh_frame
+0x1004AC000	0x00000B48	__DATA_CONST	__got
+0x1004ACB48	0x0006CAD8	__DATA_CONST	__const
+0x10051C000	0x00004614	__DATA	__data
+0x100520618	0x00000270	__DATA	__thread_vars
+0x100520888	0x00000108	__DATA	__thread_data
+0x100520990	0x00000240	__DATA	__thread_bss
+0x100520C00	0x0000BD98	__DATA	__bss
+0x10052C998	0x00000100	__DATA	__common
+# Symbols:
+# Address	Size    	File  Name
+0x100280360	0x00000028	[115] _fe_invert
+0x100280388	0x00000210	[115] _fe_tobytes
+0x100280598	0x00000054	[115] _fe_isnegative
+0x10028088C	0x0000005C	[115] _fe_frombytes
+0x100280984	0x00000104	[115] _fe_sub
+0x100280B6C	0x000000E8	[115] _fe_add
+0x100280C54	0x0000006C	[115] _fe_isnonzero
+0x100280CC0	0x000000B8	[115] _fe_neg
+0x10028128C	0x000000B0	[115] _ge_madd
+0x1002815FC	0x00000050	[115] _ge_p3_dbl
+0x10028164C	0x000000B8	[115] _ge_p2_dbl
+0x100282350	0x00000040	[115] _fe_cswap
+0x1002826B0	0x0000004C	[115] _ge_p3_tobytes
+0x1002A32A8	0x00000034	[115] _fe_cmov
+0x1002A3464	0x0000002C	[115] _sha1_init
+0x1002A3490	0x0000001C	[115] _sha1_update
+0x1002A34AC	0x00000010	[115] _sha1_final
+0x1002A34BC	0x00000008	[115] _sha224_init
+0x1002A34C4	0x0000001C	[115] _sha224_update
+0x1002A34E0	0x00000020	[115] _sha224_final
+0x1002A3500	0x00000008	[115] _sha256_init
+0x1002A3508	0x0000001C	[115] _sha256_update
+0x1002A3524	0x00000020	[115] _sha256_final
+0x1002A3544	0x00000008	[115] _sha384_init
+0x1002A354C	0x00000018	[115] _sha384_update
+0x1002A3564	0x00000020	[115] _sha384_final
+0x1002A3584	0x00000008	[115] _sha512_init
+0x1002A358C	0x00000018	[115] _sha512_update
+0x1002A35A4	0x00000020	[115] _sha512_final
+0x10036ED60	0x0000000C	[732] _libimobiledevice_version
+0x10036ED6C	0x000000C4	[732] _idevice_events_subscribe
+0x10036EECC	0x000000AC	[732] _idevice_events_unsubscribe
+0x10036EF78	0x00000138	[732] _idevice_event_subscribe
+0x10036F0B0	0x00000090	[732] _idevice_event_unsubscribe
+0x10036F140	0x000001CC	[732] _idevice_get_device_list_extended
+0x10036F30C	0x0000005C	[732] _idevice_device_list_extended_free
+0x10036F368	0x0000011C	[732] _idevice_get_device_list
+0x10036F484	0x00000044	[732] _idevice_device_list_free
+0x10036F4C8	0x00000004	[732] _idevice_set_debug_level
+0x10036F4CC	0x00000168	[732] _idevice_new_with_options
+0x10036F634	0x00000008	[732] _idevice_new
+0x10036F63C	0x00000048	[732] _idevice_free
+0x10036F684	0x000002DC	[732] _idevice_connect
+0x10036F960	0x000000BC	[732] _idevice_disconnect
+0x10036FA1C	0x00000008	[732] _idevice_connection_disable_ssl
+0x10036FA24	0x000001B4	[732] _idevice_connection_send
+0x10036FD04	0x000001A8	[732] _idevice_connection_receive_timeout
+0x100370094	0x0000010C	[732] _idevice_connection_receive
+0x1003702DC	0x00000074	[732] _idevice_connection_get_fd
+0x100370350	0x00000020	[732] _idevice_get_handle
+0x100370370	0x00000044	[732] _idevice_get_udid
+0x1003703B4	0x00000060	[732] _idevice_get_device_version
+0x100370414	0x0000042C	[732] _idevice_connection_enable_ssl
+0x100370914	0x000000E4	[732] _idevice_connection_disable_bypass_ssl
+0x1003709F8	0x00000028	[732] _idevice_strerror
+0x100370D60	0x000000B8	[733] _service_client_new
+0x100370E18	0x00000048	[733] _service_enable_ssl
+0x100370E60	0x000001D0	[733] _service_client_factory_start_service
+0x100371030	0x0000007C	[733] _service_client_free
+0x1003710AC	0x00000124	[733] _service_send
+0x1003711D0	0x000000F0	[733] _service_receive_with_timeout
+0x1003712C0	0x000000F4	[733] _service_receive
+0x1003713B4	0x0000004C	[733] _service_disable_ssl
+0x100371400	0x00000048	[733] _service_disable_bypass_ssl
+0x100371448	0x0000002C	[733] _service_get_connection
+0x100371474	0x000000DC	[734] _property_list_service_client_new
+0x100371550	0x0000007C	[734] _property_list_service_client_free
+0x1003715CC	0x00000008	[734] _property_list_service_send_xml_plist
+0x1003717C4	0x00000008	[734] _property_list_service_send_binary_plist
+0x1003717CC	0x00000004	[734] _property_list_service_receive_plist_with_timeout
+0x100371B84	0x00000008	[734] _property_list_service_receive_plist
+0x100371B8C	0x00000048	[734] _property_list_service_enable_ssl
+0x100371BD4	0x00000048	[734] _property_list_service_disable_ssl
+0x100371C1C	0x0000002C	[734] _property_list_service_get_service_client
+0x100371C48	0x000000AC	[735] _device_link_service_client_new
+0x100371D08	0x0000005C	[735] _device_link_service_client_free
+0x100371D64	0x00000328	[735] _device_link_service_version_exchange
+0x100372168	0x000000AC	[735] _device_link_service_disconnect
+0x100372214	0x000000A4	[735] _device_link_service_send_ping
+0x1003722B8	0x000000C8	[735] _device_link_service_send_process_message
+0x100372380	0x000000BC	[735] _device_link_service_receive_message
+0x10037243C	0x0000016C	[735] _device_link_service_receive_process_message
+0x1003725A8	0x00000038	[735] _device_link_service_send
+0x1003725E0	0x00000044	[735] _device_link_service_receive
+0x100372624	0x0000018C	[736] _lockdown_check_result
+0x100372CF8	0x000001E8	[736] _lockdownd_stop_session
+0x100372EE0	0x00000048	[736] _lockdownd_send
+0x100372F28	0x00000054	[736] _lockdownd_receive
+0x100372F7C	0x00000090	[736] _lockdownd_client_free
+0x10037300C	0x00000048	[736] _lockdownd_client_set_label
+0x100373054	0x00000258	[736] _lockdownd_query_type
+0x1003732AC	0x00000278	[736] _lockdownd_get_value
+0x100373524	0x000002DC	[736] _lockdownd_set_value
+0x100373800	0x00000220	[736] _lockdownd_remove_value
+0x100373A20	0x0000007C	[736] _lockdownd_get_device_udid
+0x100373A9C	0x0000007C	[736] _lockdownd_get_device_name
+0x100373B18	0x00000370	[736] _lockdownd_client_new
+0x100373E88	0x0000038C	[736] _lockdownd_client_new_with_handshake
+0x100374214	0x00000078	[736] _lockdownd_pair
+0x10037428C	0x00000014	[736] _lockdownd_validate_pair
+0x1003742A0	0x00000358	[736] _lockdownd_start_session
+0x100374DB4	0x00000014	[736] _lockdownd_pair_with_options
+0x100374DC8	0x00000014	[736] _lockdownd_unpair
+0x100374DDC	0x00000138	[736] _lockdownd_enter_recovery
+0x100374F14	0x00000160	[736] _lockdownd_goodbye
+0x100375074	0x0000000C	[736] _lockdownd_start_service
+0x1003754E4	0x0000000C	[736] _lockdownd_start_service_with_escrow_bag
+0x1003754F0	0x0000019C	[736] _lockdownd_activate
+0x10037568C	0x00000160	[736] _lockdownd_deactivate
+0x1003757EC	0x00000200	[736] _lockdownd_get_sync_data_classes
+0x1003759EC	0x00000048	[736] _lockdownd_data_classes_free
+0x100375A34	0x00000038	[736] _lockdownd_service_descriptor_free
+0x100375A6C	0x0000027C	[736] _lockdownd_strerror
+0x100375CE8	0x00000F84	[737] _lockdownd_cu_pairing_create
+0x100376E74	0x00000450	[737] _lockdownd_cu_send_request_and_get_reply
+0x1003773A8	0x00000140	[737] _lockdownd_get_value_cu
+0x1003774E8	0x000002A4	[737] _lockdownd_pair_cu
+0x10037778C	0x000000A4	[738] _afc_client_new_with_service_client
+0x100377830	0x000000E8	[738] _afc_client_new
+0x100377918	0x00000044	[738] _afc_client_start_service
+0x10037795C	0x00000078	[738] _afc_client_free
+0x1003779D4	0x00000234	[738] _afc_read_directory
+0x1003788A8	0x00000340	[738] _afc_get_device_info
+0x100378BE8	0x00000164	[738] _afc_get_device_info_plist
+0x100378E48	0x000000D8	[738] _afc_get_device_info_key
+0x100378F20	0x000001CC	[738] _afc_remove_path
+0x1003790EC	0x000001E8	[738] _afc_rename_path
+0x1003792D4	0x000001C4	[738] _afc_make_directory
+0x100379498	0x000003AC	[738] _afc_get_file_info
+0x100379844	0x000001DC	[738] _afc_get_file_info_plist
+0x100379A20	0x0000029C	[738] _afc_file_open
+0x100379CBC	0x00000250	[738] _afc_file_read
+0x100379F0C	0x00000188	[738] _afc_file_write
+0x10037A094	0x00000134	[738] _afc_file_close
+0x10037A1C8	0x0000015C	[738] _afc_file_lock
+0x10037A324	0x00000120	[738] _afc_file_seek
+0x10037A444	0x00000134	[738] _afc_file_tell
+0x10037A578	0x00000114	[738] _afc_file_truncate
+0x10037A68C	0x000001E0	[738] _afc_truncate
+0x10037A86C	0x00000264	[738] _afc_make_link
+0x10037AAD0	0x000001E0	[738] _afc_set_file_time
+0x10037ACB0	0x000001C4	[738] _afc_remove_path_and_contents
+0x10037AE74	0x0000004C	[738] _afc_dictionary_free
+0x10037AEC0	0x00000024	[738] _afc_strerror
+0x10037AF08	0x00000090	[739] _file_relay_client_new
+0x10037AF98	0x00000044	[739] _file_relay_client_start_service
+0x10037AFDC	0x00000050	[739] _file_relay_client_free
+0x10037B02C	0x00000390	[739] _file_relay_request_sources_timeout
+0x10037B3BC	0x00000008	[739] _file_relay_request_sources
+0x10037B3C4	0x00000088	[740] _np_client_new
+0x10037B44C	0x00000044	[740] _np_client_start_service
+0x10037B490	0x00000190	[740] _np_client_free
+0x10037B620	0x0000012C	[740] _np_post_notification
+0x10037B74C	0x0000009C	[740] _np_observe_notification
+0x10037B8A4	0x000000B4	[740] _np_observe_notifications
+0x10037B958	0x000002FC	[740] _np_notifier
+0x10037BC54	0x00000154	[740] _np_set_notify_callback
+0x10037BDA8	0x00000084	[741] _instproxy_client_new
+0x10037BE2C	0x00000044	[741] _instproxy_client_start_service
+0x10037BE70	0x00000088	[741] _instproxy_client_free
+0x10037BEF8	0x000000C0	[741] _instproxy_browse_with_callback
+0x10037C174	0x000000E4	[741] _instproxy_browse
+0x10037C38C	0x0000016C	[741] _instproxy_lookup
+0x10037C530	0x000000CC	[741] _instproxy_install
+0x10037C5FC	0x000000CC	[741] _instproxy_upgrade
+0x10037C6C8	0x000000CC	[741] _instproxy_uninstall
+0x10037C794	0x000000A0	[741] _instproxy_lookup_archives
+0x10037C834	0x000000CC	[741] _instproxy_archive
+0x10037C900	0x000000CC	[741] _instproxy_restore
+0x10037C9CC	0x000000CC	[741] _instproxy_remove_archive
+0x10037CA98	0x00000120	[741] _instproxy_check_capabilities_match
+0x10037CBB8	0x00000B94	[741] _instproxy_status_get_error
+0x10037D74C	0x00000044	[741] _instproxy_status_get_name
+0x10037D790	0x0000004C	[741] _instproxy_status_get_percent_complete
+0x10037D7DC	0x000000F0	[741] _instproxy_status_get_current_list
+0x10037D8CC	0x00000044	[741] _instproxy_command_get_name
+0x10037D910	0x00000004	[741] _instproxy_client_options_new
+0x10037D914	0x00000154	[741] _instproxy_client_options_add
+0x10037DA68	0x00000094	[741] _instproxy_client_options_set_return_attributes
+0x10037DAFC	0x0000000C	[741] _instproxy_client_options_free
+0x10037DB08	0x00000230	[741] _instproxy_client_get_path_for_bundle_identifier
+0x10037E144	0x00000084	[742] _sbservices_client_new
+0x10037E1C8	0x00000044	[742] _sbservices_client_start_service
+0x10037E20C	0x00000068	[742] _sbservices_client_free
+0x10037E274	0x0000019C	[742] _sbservices_get_icon_state
+0x10037E410	0x00000184	[742] _sbservices_set_icon_state
+0x10037E594	0x000001B4	[742] _sbservices_get_icon_pngdata
+0x10037E748	0x00000184	[742] _sbservices_get_interface_orientation
+0x10037E8CC	0x00000190	[742] _sbservices_get_home_screen_wallpaper_pngdata
+0x10037EA5C	0x00000084	[743] _mobile_image_mounter_new
+0x10037EAE0	0x00000044	[743] _mobile_image_mounter_start_service
+0x10037EB24	0x0000004C	[743] _mobile_image_mounter_free
+0x10037EB70	0x00000148	[743] _mobile_image_mounter_lookup_image
+0x10037ECB8	0x0000036C	[743] _mobile_image_mounter_upload_image
+0x10037F190	0x000001D8	[743] _mobile_image_mounter_mount_image_with_options
+0x10037F368	0x0000000C	[743] _mobile_image_mounter_mount_image
+0x10037F374	0x000001F0	[743] _mobile_image_mounter_unmount_image
+0x10037F564	0x00000154	[743] _mobile_image_mounter_hangup
+0x10037F6B8	0x00000124	[743] _mobile_image_mounter_query_developer_mode_status
+0x10037F7DC	0x000001B0	[743] _mobile_image_mounter_query_nonce
+0x10037F98C	0x00000194	[743] _mobile_image_mounter_query_personalization_identifiers
+0x10037FB20	0x00000204	[743] _mobile_image_mounter_query_personalization_manifest
+0x10037FD24	0x00000130	[743] _mobile_image_mounter_roll_personalization_nonce
+0x10037FE54	0x00000130	[743] _mobile_image_mounter_roll_cryptex_nonce
+0x10037FF84	0x00000148	[744] _screenshotr_client_new
+0x1003800CC	0x00000068	[744] _screenshotr_client_free
+0x100380134	0x00000044	[744] _screenshotr_client_start_service
+0x100380178	0x00000214	[744] _screenshotr_take_screenshot
+0x10038038C	0x00000154	[745] _mobilesync_client_new
+0x1003804F4	0x0000006C	[745] _mobilesync_client_free
+0x100380560	0x00000044	[745] _mobilesync_client_start_service
+0x1003805A4	0x00000034	[745] _mobilesync_receive
+0x1003805D8	0x00000038	[745] _mobilesync_send
+0x100380610	0x00000340	[745] _mobilesync_start
+0x100380950	0x00000164	[745] _mobilesync_finish
+0x100380AB4	0x0000000C	[745] _mobilesync_get_all_records_from_device
+0x100380B74	0x0000000C	[745] _mobilesync_get_changes_from_device
+0x100380B80	0x000001CC	[745] _mobilesync_receive_changes
+0x100380D4C	0x000001D8	[745] _mobilesync_clear_all_records_on_device
+0x100380F24	0x000000B8	[745] _mobilesync_acknowledge_changes_from_device
+0x100380FDC	0x00000180	[745] _mobilesync_ready_to_send_changes_from_computer
+0x10038115C	0x0000016C	[745] _mobilesync_send_changes
+0x1003812C8	0x0000019C	[745] _mobilesync_remap_identifiers
+0x100381464	0x000000D0	[745] _mobilesync_cancel
+0x100381534	0x00000080	[745] _mobilesync_anchors_new
+0x1003815B4	0x0000003C	[745] _mobilesync_anchors_free
+0x1003815F0	0x00000004	[745] _mobilesync_actions_new
+0x1003815F4	0x00000120	[745] _mobilesync_actions_add
+0x100381714	0x0000000C	[745] _mobilesync_actions_free
+0x100381720	0x0000014C	[746] _mobilebackup_client_new
+0x10038186C	0x00000084	[746] _mobilebackup_client_free
+0x1003818F0	0x00000044	[746] _mobilebackup_client_start_service
+0x100381934	0x00000034	[746] _mobilebackup_receive
+0x100381968	0x00000038	[746] _mobilebackup_send
+0x1003819A0	0x000002C4	[746] _mobilebackup_request_backup
+0x100381F38	0x00000010	[746] _mobilebackup_send_backup_file_received
+0x100381F48	0x000002B8	[746] _mobilebackup_request_restore
+0x100382200	0x00000010	[746] _mobilebackup_receive_restore_file_received
+0x100382210	0x00000010	[746] _mobilebackup_receive_restore_application_received
+0x100382220	0x00000208	[746] _mobilebackup_send_restore_complete
+0x100382428	0x00000088	[746] _mobilebackup_send_error
+0x1003824B0	0x00000084	[747] _house_arrest_client_new
+0x100382534	0x00000044	[747] _house_arrest_client_start_service
+0x100382578	0x00000050	[747] _house_arrest_client_free
+0x1003825C8	0x000000D0	[747] _house_arrest_send_request
+0x100382698	0x0000013C	[747] _house_arrest_send_command
+0x1003827D4	0x000000C0	[747] _house_arrest_get_result
+0x100382894	0x0000005C	[747] _afc_client_new_from_house_arrest_client
+0x1003828F0	0x0000014C	[748] _mobilebackup2_client_new
+0x100382A3C	0x00000084	[748] _mobilebackup2_client_free
+0x100382AC0	0x00000044	[748] _mobilebackup2_client_start_service
+0x100382B04	0x00000188	[748] _mobilebackup2_send_message
+0x100382C8C	0x00000028	[748] _mobilebackup2_receive_message
+0x100382CB4	0x000000D0	[748] _mobilebackup2_send_raw
+0x100382D84	0x000000B4	[748] _mobilebackup2_receive_raw
+0x100382E38	0x000002A0	[748] _mobilebackup2_version_exchange
+0x1003830D8	0x0000016C	[748] _mobilebackup2_send_request
+0x100383244	0x00000104	[748] _mobilebackup2_send_status_response
+0x100383348	0x00000084	[749] _misagent_client_new
+0x1003833CC	0x00000044	[749] _misagent_client_start_service
+0x100383410	0x0000004C	[749] _misagent_client_free
+0x10038345C	0x00000210	[749] _misagent_install
+0x100383708	0x00000240	[749] _misagent_copy
+0x100383948	0x00000240	[749] _misagent_copy_all
+0x100383B88	0x00000240	[749] _misagent_remove
+0x100383DC8	0x00000014	[749] _misagent_get_status_code
+0x100383DDC	0x000000A4	[750] _restored_client_free
+0x100383E80	0x0000022C	[750] _restored_goodbye
+0x1003840AC	0x00000048	[750] _restored_client_set_label
+0x1003840F4	0x00000054	[750] _restored_receive
+0x100384148	0x00000048	[750] _restored_send
+0x100384190	0x00000240	[750] _restored_query_type
+0x1003843D0	0x000001AC	[750] _restored_query_value
+0x10038457C	0x00000074	[750] _restored_get_value
+0x1003845F0	0x0000019C	[750] _restored_client_new
+0x10038478C	0x00000134	[750] _restored_start_restore
+0x1003848C0	0x00000180	[750] _restored_reboot
+0x100384A40	0x00000090	[751] _diagnostics_relay_client_new
+0x100384AD0	0x00000044	[751] _diagnostics_relay_client_start_service
+0x100384B14	0x00000050	[751] _diagnostics_relay_client_free
+0x100384B64	0x000000F8	[751] _diagnostics_relay_goodbye
+0x100384D68	0x000000D8	[751] _diagnostics_relay_sleep
+0x100384E40	0x00000010	[751] _diagnostics_relay_restart
+0x100384FAC	0x00000010	[751] _diagnostics_relay_shutdown
+0x100384FBC	0x00000144	[751] _diagnostics_relay_request_diagnostics
+0x100385100	0x00000160	[751] _diagnostics_relay_query_mobilegestalt
+0x100385260	0x00000180	[751] _diagnostics_relay_query_ioregistry_entry
+0x1003853E0	0x00000120	[751] _diagnostics_relay_query_ioregistry_plane
+0x100385500	0x00000160	[752] _heartbeat_client_new
+0x100385660	0x00000044	[752] _heartbeat_client_start_service
+0x1003856A4	0x0000007C	[752] _heartbeat_client_free
+0x100385720	0x000000C4	[752] _heartbeat_send
+0x1003857E4	0x00000008	[752] _heartbeat_receive
+0x1003857EC	0x000000E0	[752] _heartbeat_receive_with_timeout
+0x1003858CC	0x000001B8	[753] _debugserver_client_new
+0x100385A84	0x000000A8	[753] _debugserver_client_start_service
+0x100385B2C	0x0000007C	[753] _debugserver_client_free
+0x100385BA8	0x000000F8	[753] _debugserver_client_send
+0x100385CA0	0x00000110	[753] _debugserver_client_receive_with_timeout
+0x100385DB0	0x000001EC	[753] _debugserver_client_receive
+0x100385F9C	0x000000AC	[753] _debugserver_command_new
+0x100386048	0x00000080	[753] _debugserver_command_free
+0x1003860C8	0x000000AC	[753] _debugserver_encode_string
+0x100386174	0x000001D4	[753] _debugserver_decode_string
+0x100386348	0x0000006C	[753] _debugserver_client_set_ack_mode
+0x1003863B4	0x0000006C	[753] _debugserver_client_set_receive_params
+0x100386420	0x000005EC	[753] _debugserver_client_receive_response
+0x100386C3C	0x000005A8	[753] _debugserver_client_send_command
+0x1003871E4	0x000000D8	[753] _debugserver_client_set_environment_hex_encoded
+0x1003872BC	0x000002CC	[753] _debugserver_client_set_argv
+0x100387588	0x0000013C	[754] _webinspector_client_new
+0x1003876C4	0x00000044	[754] _webinspector_client_start_service
+0x100387708	0x0000005C	[754] _webinspector_client_free
+0x100387764	0x000001D4	[754] _webinspector_send
+0x100387938	0x00000008	[754] _webinspector_receive
+0x100387940	0x00000270	[754] _webinspector_receive_with_timeout
+0x100387BB0	0x00000090	[755] _mobileactivation_client_new
+0x100387C40	0x00000044	[755] _mobileactivation_client_start_service
+0x100387C84	0x00000050	[755] _mobileactivation_client_free
+0x100387CD4	0x000000E0	[755] _mobileactivation_get_activation_state
+0x100387DB4	0x000000FC	[755] _mobileactivation_create_activation_session_info
+0x100387EB0	0x000000E0	[755] _mobileactivation_create_activation_info
+0x100387F90	0x00000168	[755] _mobileactivation_create_activation_info_with_session
+0x1003880F8	0x000000AC	[755] _mobileactivation_activate
+0x1003881A4	0x00000130	[755] _mobileactivation_activate_with_session
+0x100388430	0x00000094	[755] _mobileactivation_deactivate
+0x1003884C4	0x00000160	[756] _preboard_client_new
+0x100388624	0x00000044	[756] _preboard_client_start_service
+0x100388668	0x000000BC	[756] _preboard_client_free
+0x100388724	0x000000A4	[756] _preboard_send
+0x1003887C8	0x000000D0	[756] _preboard_receive_with_timeout
+0x100388898	0x000000D4	[756] _preboard_receive
+0x10038896C	0x00000178	[756] _preboard_create_stashbag
+0x100388AE4	0x00000178	[756] _preboard_commit_stashbag
+0x100388DA0	0x00000160	[757] _companion_proxy_client_new
+0x100388F00	0x00000044	[757] _companion_proxy_client_start_service
+0x100388F44	0x000000BC	[757] _companion_proxy_client_free
+0x100389000	0x000000A4	[757] _companion_proxy_send
+0x1003890A4	0x000000D4	[757] _companion_proxy_receive
+0x100389178	0x00000220	[757] _companion_proxy_get_device_registry
+0x100389398	0x000000B0	[757] _companion_proxy_start_listening_for_devices
+0x1003895F8	0x00000064	[757] _companion_proxy_stop_listening_for_devices
+0x10038965C	0x0000025C	[757] _companion_proxy_get_value_from_registry
+0x1003898B8	0x00000260	[757] _companion_proxy_start_forwarding_service_port
+0x100389B18	0x000001CC	[757] _companion_proxy_stop_forwarding_service_port
+0x100389CE4	0x000003EC	[758] _reverse_proxy_client_start_proxy
+0x10038A0D0	0x0000003C	[758] _reverse_proxy_send
+0x10038A168	0x0000025C	[758] _reverse_proxy_send_plist
+0x10038A3C4	0x00000008	[758] _reverse_proxy_receive_plist
+0x10038A3CC	0x00000048	[758] _reverse_proxy_receive
+0x10038A658	0x00000088	[758] _reverse_proxy_client_create_with_service
+0x10038A828	0x00000060	[758] _reverse_proxy_client_create_with_port
+0x10038A888	0x000000B4	[758] _reverse_proxy_client_free
+0x10038A93C	0x0000000C	[758] _reverse_proxy_get_type
+0x10038A948	0x0000000C	[758] _reverse_proxy_client_set_status_callback
+0x10038A954	0x0000000C	[758] _reverse_proxy_client_set_log_callback
+0x10038A960	0x0000000C	[758] _reverse_proxy_client_set_data_callback
+0x10038A96C	0x00000044	[758] _reverse_proxy_receive_with_timeout
+0x10038A9B0	0x0000023C	[758] _reverse_proxy_receive_plist_with_timeout
+0x10038B738	0x0000017C	[759] _syslog_relay_client_new
+0x10038B8B4	0x00000044	[759] _syslog_relay_client_start_service
+0x10038B8F8	0x0000009C	[759] _syslog_relay_client_free
+0x10038B994	0x00000044	[759] _syslog_relay_stop_capture
+0x10038B9D8	0x000000E0	[759] _syslog_relay_receive
+0x10038BAB8	0x000000DC	[759] _syslog_relay_receive_with_timeout
+0x10038BB94	0x00000154	[759] _syslog_relay_worker
+0x10038BCE8	0x000000B8	[759] _syslog_relay_start_capture
+0x10038BDA0	0x000000BC	[759] _syslog_relay_start_capture_raw
+0x10038BE5C	0x0000017C	[760] _ostrace_client_new
+0x10038BFD8	0x00000044	[760] _ostrace_client_start_service
+0x10038C01C	0x0000009C	[760] _ostrace_client_free
+0x10038C0B8	0x00000044	[760] _ostrace_stop_activity
+0x10038C0FC	0x0000029C	[760] _ostrace_worker
+0x10038C398	0x000001F0	[760] _ostrace_start_activity
+0x10038C9B8	0x00000124	[760] _ostrace_get_pid_list
+0x10038CADC	0x00000364	[760] _ostrace_create_archive
+0x10038CE40	0x00000184	[761] _bt_packet_logger_client_new
+0x10038CFC4	0x00000044	[761] _bt_packet_logger_client_start_service
+0x10038D008	0x0000009C	[761] _bt_packet_logger_client_free
+0x10038D0A4	0x00000044	[761] _bt_packet_logger_stop_capture
+0x10038D0E8	0x000000DC	[761] _bt_packet_logger_receive_with_timeout
+0x10038D1C4	0x000002B4	[761] _bt_packet_logger_worker
+0x10038D478	0x000000B8	[761] _bt_packet_logger_start_capture
+0x10038D530	0x0000000C	[762] _internal_set_debug_level
+0x10038D53C	0x00000128	[762] _debug_info_real
+0x10038D664	0x00000570	[762] _debug_buffer
+0x10038DBD4	0x00000068	[762] _debug_buffer_to_file
+0x10038DC3C	0x000000B0	[762] _debug_plist_real
+0x10038DCEC	0x000000E0	[763] _userpref_get_config_dir
+0x10038DDCC	0x0000009C	[763] _userpref_read_system_buid
+0x10038DE68	0x00000198	[763] _userpref_get_paired_udids
+0x10038E000	0x00000070	[763] _userpref_save_pair_record
+0x10038E070	0x000000D0	[763] _userpref_read_pair_record
+0x10038E140	0x00000020	[763] _userpref_delete_pair_record
+0x10038E160	0x00000ABC	[763] _pair_record_generate_keys_and_certs
+0x10038EC1C	0x00000050	[763] _pair_record_set_item_from_key_data
+0x10038EC6C	0x00000010	[763] _pair_record_import_key_with_name
+0x10038EC7C	0x000000B4	[763] _pair_record_get_item_as_key_data
+0x10038ED30	0x00000010	[763] _pair_record_import_crt_with_name
+0x10038ED40	0x0000004C	[763] _pair_record_get_host_id
+0x10038ED8C	0x0000003C	[763] _pair_record_set_host_id
+0x10038EDC8	0x00000160	[764] _ed25519_add_scalar
+0x10038EF28	0x00000010	[765] _fe_0
+0x10038EF38	0x0000001C	[765] _fe_1
+0x10038EF54	0x00000028	[765] _fe_add
+0x10038EF7C	0x00000030	[765] _fe_cmov
+0x10038EFAC	0x0000005C	[765] _fe_cswap
+0x10038F008	0x00000014	[765] _fe_copy
+0x10038F01C	0x000001A4	[765] _fe_frombytes
+0x10038F1C0	0x0000085C	[765] _fe_invert
+0x10038FA1C	0x00000250	[765] _fe_sq
+0x10038FC6C	0x00000394	[765] _fe_mul
+0x100390000	0x00000058	[765] _fe_isnegative
+0x100390058	0x00000190	[765] _fe_tobytes
+0x1003901E8	0x00000080	[765] _fe_isnonzero
+0x100390268	0x00000120	[765] _fe_mul121666
+0x100390388	0x00000020	[765] _fe_neg
+0x1003903A8	0x00000840	[765] _fe_pow22523
+0x100390BE8	0x00000260	[765] _fe_sq2
+0x100390E48	0x00000028	[765] _fe_sub
+0x100390E70	0x0000010C	[766] _ge_add
+0x100390F7C	0x00000E40	[766] _ge_double_scalarmult_vartime
+0x100391DBC	0x00000058	[766] _ge_p3_to_cached
+0x100391E14	0x00000100	[766] _ge_p3_dbl
+0x100391F14	0x00000054	[766] _ge_p1p1_to_p3
+0x100391F68	0x0000002C	[766] _ge_p2_0
+0x100391F94	0x000000CC	[766] _ge_p2_dbl
+0x100392060	0x0000010C	[766] _ge_sub
+0x10039216C	0x000000FC	[766] _ge_madd
+0x100392268	0x000000FC	[766] _ge_msub
+0x100392364	0x00000044	[766] _ge_p1p1_to_p2
+0x1003923A8	0x000001BC	[766] _ge_frombytes_negate_vartime
+0x100392564	0x00000034	[766] _ge_p3_0
+0x100392598	0x00000038	[766] _ge_p3_to_p2
+0x1003925D0	0x000000A0	[766] _ge_p3_tobytes
+0x100392670	0x000006A4	[766] _ge_scalarmult_base
+0x100392FD8	0x000000A0	[766] _ge_tobytes
+0x100393078	0x0000029C	[767] _ed25519_key_exchange
+0x100393314	0x0000006C	[768] _ed25519_create_keypair
+0x100393380	0x0000061C	[769] _sc_reduce
+0x10039399C	0x00000BD0	[769] _sc_muladd
+0x10039456C	0x00000068	[770] _ed25519_create_seed
+0x1003945D4	0x0000004C	[771] _tetherless_c_ed25519_sha512_init
+0x100394620	0x00000130	[771] _tetherless_c_ed25519_sha512_update
+0x100394B2C	0x00000354	[771] _tetherless_c_ed25519_sha512_final
+0x100394E80	0x000001B4	[771] _tetherless_c_ed25519_sha512
+0x100395034	0x00000124	[772] _ed25519_sign
+0x100395158	0x0000013C	[773] _ed25519_verify
+0x100395294	0x00000030	[774] _cstr_new
+0x1003952C4	0x00000050	[774] _cstr_dup
+0x100395314	0x00000108	[774] _cstr_setn
+0x10039541C	0x00000060	[774] _cstr_create
+0x10039547C	0x0000005C	[774] _cstr_createn
+0x1003954D8	0x00000010	[774] _cstr_use
+0x1003954E8	0x00000054	[774] _cstr_clear_free
+0x10039553C	0x0000004C	[774] _cstr_free
+0x100395588	0x0000003C	[774] _cstr_empty
+0x1003955C4	0x00000010	[774] _cstr_copy
+0x1003955D4	0x00000034	[774] _cstr_set
+0x100395608	0x00000140	[774] _cstr_set_length
+0x100395748	0x00000034	[774] _cstr_append
+0x10039577C	0x0000010C	[774] _cstr_appendn
+0x100395888	0x00000010	[774] _cstr_append_str
+0x100395898	0x00000038	[775] _SRP_initialize_library
+0x1003958D0	0x0000002C	[775] _SRP_finalize_library
+0x1003958FC	0x00000010	[775] _SRP_set_modulus_min_bits
+0x10039590C	0x0000000C	[775] _SRP_get_modulus_min_bits
+0x100395918	0x00000010	[775] _SRP_set_secret_bits_cb
+0x100395928	0x0000000C	[775] _SRP_get_secret_bits
+0x100395934	0x00000084	[775] _SRP_new
+0x1003959B8	0x000000D8	[775] _SRP_free
+0x100395A90	0x0000000C	[775] _SRP_set_client_param_verify_cb
+0x100395A9C	0x0000001C	[775] _SRP_set_username
+0x100395AB8	0x0000001C	[775] _SRP_set_user_raw
+0x100395AD4	0x00000140	[775] _SRP_set_params
+0x100395C14	0x0000000C	[775] _SRP_set_authenticator
+0x100395C20	0x0000004C	[775] _SRP_set_auth_password
+0x100395C6C	0x0000000C	[775] _SRP_set_auth_password_raw
+0x100395C78	0x0000000C	[775] _SRP_gen_pub
+0x100395C84	0x0000001C	[775] _SRP_add_ex_data
+0x100395CA0	0x0000000C	[775] _SRP_compute_key
+0x100395CAC	0x0000000C	[775] _SRP_verify
+0x100395CB8	0x0000000C	[775] _SRP_respond
+0x100395CC4	0x0000001C	[775] _SRP_use_engine
+0x100395CE8	0x0000000C	[776] _SRP6a_sha512_client_method
+0x100396604	0x000000F4	[777] _t_fromhex
+0x1003966F8	0x000000C8	[777] _t_tohex
+0x1003967C0	0x000000D8	[777] _t_tohexcstr
+0x100396898	0x000001CC	[777] _t_fromb64
+0x100396A64	0x00000060	[777] _t_cstrfromb64
+0x100396AC4	0x00000178	[777] _t_tob64
+0x100396C3C	0x000001B8	[777] _t_tob64cstr
+0x100396DF4	0x00000034	[778] _BigIntegerFromInt
+0x100396E28	0x00000044	[778] _BigIntegerFromBytes
+0x100396E6C	0x00000004	[778] _BigIntegerToBytes
+0x100396E70	0x0000006C	[778] _BigIntegerToCstr
+0x100396EDC	0x00000004	[778] _BigIntegerBitLen
+0x100396EE0	0x00000088	[778] _BigIntegerToCstrEx
+0x100396F68	0x00000038	[778] _BigIntegerToHex
+0x100396FA0	0x0000013C	[778] _BigIntegerToString
+0x1003970DC	0x00000018	[778] _BigIntegerModInt
+0x1003970F4	0x0000003C	[778] _BigIntegerDivInt
+0x100397130	0x0000005C	[778] _BigIntegerCmpInt
+0x10039718C	0x00000018	[778] _BigIntegerFree
+0x1003971A4	0x00000004	[778] _BigIntegerCmp
+0x1003971A8	0x00000018	[778] _BigIntegerLShift
+0x1003971C0	0x00000018	[778] _BigIntegerAdd
+0x1003971D8	0x0000003C	[778] _BigIntegerAddInt
+0x100397214	0x00000018	[778] _BigIntegerSub
+0x10039722C	0x0000003C	[778] _BigIntegerSubInt
+0x100397268	0x00000074	[778] _BigIntegerMul
+0x1003972DC	0x0000003C	[778] _BigIntegerMulInt
+0x100397318	0x0000008C	[778] _BigIntegerMod
+0x1003973A4	0x00000088	[778] _BigIntegerModMul
+0x10039742C	0x000000E0	[778] _BigIntegerModExp
+0x10039750C	0x00000054	[778] _BigIntegerCheckPrime
+0x100397560	0x00000018	[778] _BigIntegerClearFree
+0x100397578	0x00000004	[778] _BigIntegerCtxNew
+0x10039757C	0x0000001C	[778] _BigIntegerCtxFree
+0x100397598	0x0000007C	[778] _BigIntegerModAccelNew
+0x100397614	0x0000001C	[778] _BigIntegerModAccelFree
+0x100397630	0x00000008	[778] _BigIntegerInitialize
+0x100397638	0x00000008	[778] _BigIntegerFinalize
+0x100397640	0x00000008	[778] _BigIntegerReleaseEngine
+0x100397648	0x00000008	[778] _BigIntegerUseEngine
+0x100397650	0x00000004	[779] _t_stronginitrand
+0x1003978FC	0x00000040	[779] _t_random
+0x10039793C	0x000002A4	[779] _t_sessionkey
+0x100397BE0	0x000000F8	[779] _t_mgf1
+0x100397CD8	0x00000034	[780] _SHA1Init_openssl
+0x100397D0C	0x0000000C	[780] _SHA1Update_openssl
+0x100397D18	0x00000030	[780] _SHA1Final_openssl
+0x100397D48	0x00000034	[780] _SHA512Init_openssl
+0x100397D7C	0x0000000C	[780] _SHA512Update_openssl
+0x100397D88	0x00000030	[780] _SHA512Final_openssl
+0x100397DB8	0x00000040	[781] _raw_truerand
+0x100397EE0	0x0000007C	[781] _raw_n_truerand
+0x100397FE4	0x000000EC	[782] _base64encode
+0x1003980D0	0x00000178	[782] _base64decode
+0x100398248	0x00000050	[783] _byte_array_new
+0x100398298	0x00000030	[783] _byte_array_new_for_stream
+0x1003982C8	0x00000038	[783] _byte_array_free
+0x100398300	0x00000060	[783] _byte_array_grow
+0x100398360	0x000000B4	[783] _byte_array_append
+0x100398414	0x00000058	[784] _hash_table_new
+0x10039846C	0x00000084	[784] _hash_table_destroy
+0x1003984F0	0x000000A0	[784] _hash_table_insert
+0x100398590	0x00000084	[784] _hash_table_lookup
+0x100398614	0x000000D8	[784] _hash_table_remove
+0x1003986EC	0x00000058	[785] _ptr_array_new
+0x100398744	0x00000038	[785] _ptr_array_free
+0x10039877C	0x000000A4	[785] _ptr_array_insert
+0x100398820	0x0000007C	[785] _ptr_array_add
+0x10039889C	0x00000078	[785] _ptr_array_remove
+0x100398914	0x00000024	[785] _ptr_array_set
+0x100398938	0x00000030	[785] _ptr_array_index
+0x100398968	0x00000008	[785] _ptr_array_size
+0x100398970	0x00000274	[786] _timegm64
+0x100398BE4	0x00000034	[786] _copy_tm_to_TM64
+0x100398C18	0x00000034	[786] _copy_TM64_to_tm
+0x100398C4C	0x00000454	[786] _mktime64
+0x1003990A0	0x00000004	[786] _timelocal64
+0x1003990A4	0x000005A0	[786] _gmtime64_r
+0x100399820	0x000002BC	[786] _localtime64_r
+0x100399ADC	0x000000B8	[786] _asctime64_r
+0x100399B94	0x000000AC	[786] _ctime64_r
+0x100399C40	0x00000118	[787] _dtostr
+0x100399D58	0x00000054	[787] _num_digits_i
+0x100399DAC	0x00000044	[787] _num_digits_u
+0x100399DF0	0x00000060	[787] _plist_real_to_time64
+0x100399E50	0x00000004	[788] _plist_xml_init
+0x100399E54	0x00000004	[788] _plist_xml_deinit
+0x100399E58	0x00000004	[788] _plist_xml_set_debug
+0x100399E5C	0x00000170	[788] _plist_to_xml
+0x10039A93C	0x000012AC	[788] _plist_from_xml
+0x10039CAB8	0x00000004	[789] _plist_bin_init
+0x10039CABC	0x00000004	[789] _plist_bin_deinit
+0x10039CAC0	0x00000004	[789] _plist_bin_set_debug
+0x10039CAC4	0x0000018C	[789] _plist_from_bin
+0x10039D674	0x00000FB4	[789] _plist_to_bin
+0x10039E9CC	0x000003D4	[790] _jsmn_parse
+0x10039EDA0	0x00000010	[790] _jsmn_init
+0x10039EDB0	0x00000004	[791] _plist_json_init
+0x10039EDB4	0x00000004	[791] _plist_json_deinit
+0x10039EDB8	0x00000004	[791] _plist_json_set_debug
+0x10039EDBC	0x0000000C	[791] _plist_to_json
+0x10039EDC8	0x00000180	[791] _plist_to_json_with_options
+0x10039F630	0x000001FC	[791] _plist_from_json
+0x1003A0824	0x00000004	[792] _plist_ostep_init
+0x1003A0828	0x00000004	[792] _plist_ostep_deinit
+0x1003A082C	0x00000004	[792] _plist_ostep_set_debug
+0x1003A0830	0x0000000C	[792] _plist_to_openstep
+0x1003A083C	0x00000158	[792] _plist_to_openstep_with_options
+0x1003A10C8	0x000000F8	[792] _plist_from_openstep
+0x1003A282C	0x0000018C	[793] _plist_write_to_string_default
+0x1003A29B8	0x000000F4	[793] _plist_write_to_stream_default
+0x1003A3740	0x0000019C	[794] _plist_write_to_string_plutil
+0x1003A38DC	0x000000B0	[794] _plist_write_to_stream_plutil
+0x1003A4624	0x00000184	[795] _plist_write_to_string_limd
+0x1003A47A8	0x000000F0	[795] _plist_write_to_stream_limd
+0x1003A50F4	0x00000034	[796] _plist_is_binary
+0x1003A5128	0x000002C0	[796] _plist_from_memory
+0x1003A53E8	0x00000120	[796] _plist_read_from_file
+0x1003A5508	0x0000000C	[796] _plist_new_node
+0x1003A5514	0x0000000C	[796] _plist_get_data
+0x1003A5520	0x0000000C	[796] _plist_new_plist_data
+0x1003A552C	0x0000002C	[796] _plist_free_data
+0x1003A5604	0x00000038	[796] _plist_new_dict
+0x1003A563C	0x00000038	[796] _plist_new_array
+0x1003A5674	0x0000007C	[796] _plist_new_string
+0x1003A56F0	0x0000004C	[796] _plist_new_bool
+0x1003A573C	0x00000060	[796] _plist_new_uint
+0x1003A579C	0x00000050	[796] _plist_new_int
+0x1003A57EC	0x00000050	[796] _plist_new_uid
+0x1003A583C	0x00000054	[796] _plist_new_real
+0x1003A5890	0x00000088	[796] _plist_new_data
+0x1003A5918	0x00000074	[796] _plist_new_date
+0x1003A598C	0x00000064	[796] _plist_new_unix_date
+0x1003A59F0	0x00000038	[796] _plist_new_null
+0x1003A5A28	0x0000006C	[796] _plist_free
+0x1003A5B00	0x0000000C	[796] _plist_mem_free
+0x1003A5B0C	0x000002E4	[796] _plist_copy
+0x1003A5DF0	0x00000024	[796] _plist_array_get_size
+0x1003A5E14	0x0000001C	[796] _plist_get_node_type
+0x1003A5E30	0x00000044	[796] _plist_array_get_item
+0x1003A5E74	0x00000030	[796] _plist_array_get_item_index
+0x1003A5EA4	0x0000000C	[796] _plist_get_parent
+0x1003A5EB0	0x000001B0	[796] _plist_array_set_item
+0x1003A6148	0x00000124	[796] _plist_array_append_item
+0x1003A626C	0x00000140	[796] _plist_array_insert_item
+0x1003A63AC	0x0000012C	[796] _plist_array_remove_item
+0x1003A64D8	0x000000C0	[796] _plist_array_item_remove
+0x1003A6598	0x00000068	[796] _plist_array_new_iter
+0x1003A6600	0x00000058	[796] _plist_array_next_item
+0x1003A6658	0x00000004	[796] _plist_array_free_iter
+0x1003A665C	0x00000038	[796] _plist_dict_get_size
+0x1003A6694	0x00000068	[796] _plist_dict_new_iter
+0x1003A66FC	0x0000011C	[796] _plist_dict_next_item
+0x1003A6818	0x00000074	[796] _plist_get_key_val
+0x1003A688C	0x00000004	[796] _plist_dict_free_iter
+0x1003A6890	0x00000098	[796] _plist_dict_get_item_key
+0x1003A6928	0x0000002C	[796] _plist_dict_item_get_key
+0x1003A6954	0x00000108	[796] _plist_dict_get_item
+0x1003A6A5C	0x00000340	[796] _plist_dict_set_item
+0x1003A6E18	0x00000124	[796] _plist_dict_remove_item
+0x1003A6F3C	0x00000144	[796] _plist_dict_merge
+0x1003A7080	0x0000015C	[796] _plist_dict_get_bool
+0x1003A71DC	0x00000058	[796] _plist_get_bool_val
+0x1003A7234	0x00000064	[796] _plist_get_uint_val
+0x1003A7298	0x00000034	[796] _plist_get_string_ptr
+0x1003A72CC	0x0000003C	[796] _plist_get_data_ptr
+0x1003A7308	0x000000E0	[796] _plist_dict_get_int
+0x1003A73E8	0x00000064	[796] _plist_get_int_val
+0x1003A744C	0x000000E0	[796] _plist_dict_get_uint
+0x1003A752C	0x00000060	[796] _plist_dict_copy_item
+0x1003A758C	0x000000AC	[796] _plist_dict_copy_bool
+0x1003A7638	0x000000B0	[796] _plist_dict_copy_int
+0x1003A76E8	0x000000C0	[796] _plist_dict_copy_uint
+0x1003A77A8	0x00000074	[796] _plist_dict_copy_data
+0x1003A781C	0x00000074	[796] _plist_dict_copy_string
+0x1003A7890	0x000000F4	[796] _plist_access_pathv
+0x1003A7984	0x000000F8	[796] _plist_access_path
+0x1003A7BA4	0x00000074	[796] _plist_get_string_val
+0x1003A7C18	0x0000005C	[796] _plist_get_uid_val
+0x1003A7C74	0x0000005C	[796] _plist_get_real_val
+0x1003A7CD0	0x00000048	[796] _plist_get_data_val
+0x1003A7D18	0x00000070	[796] _plist_get_date_val
+0x1003A7D88	0x00000050	[796] _plist_get_unix_date_val
+0x1003A7DD8	0x00000114	[796] _plist_data_compare
+0x1003A7EEC	0x00000018	[796] _plist_compare_node_value
+0x1003A7F04	0x0000009C	[796] _plist_set_key_val
+0x1003A7FA0	0x00000078	[796] _plist_set_string_val
+0x1003A8018	0x00000060	[796] _plist_set_bool_val
+0x1003A8078	0x0000006C	[796] _plist_set_uint_val
+0x1003A80E4	0x00000060	[796] _plist_set_int_val
+0x1003A8144	0x00000060	[796] _plist_set_uid_val
+0x1003A81A4	0x00000064	[796] _plist_set_real_val
+0x1003A8208	0x00000088	[796] _plist_set_data_val
+0x1003A8290	0x0000008C	[796] _plist_set_date_val
+0x1003A831C	0x0000007C	[796] _plist_set_unix_date_val
+0x1003A8398	0x00000044	[796] _plist_bool_val_is_true
+0x1003A83DC	0x00000038	[796] _plist_int_val_is_negative
+0x1003A8414	0x00000054	[796] _plist_int_val_compare
+0x1003A8468	0x00000054	[796] _plist_uint_val_compare
+0x1003A84BC	0x00000050	[796] _plist_uid_val_compare
+0x1003A850C	0x000000C0	[796] _plist_real_val_compare
+0x1003A85CC	0x00000088	[796] _plist_date_val_compare
+0x1003A8654	0x00000060	[796] _plist_unix_date_val_compare
+0x1003A86B4	0x00000028	[796] _plist_string_val_compare
+0x1003A86DC	0x00000028	[796] _plist_string_val_compare_with_size
+0x1003A8704	0x00000040	[796] _plist_string_val_contains
+0x1003A8744	0x00000028	[796] _plist_key_val_compare
+0x1003A876C	0x00000028	[796] _plist_key_val_compare_with_size
+0x1003A8794	0x00000040	[796] _plist_key_val_contains
+0x1003A87D4	0x00000040	[796] _plist_data_val_compare
+0x1003A8814	0x00000034	[796] _plist_data_val_compare_with_size
+0x1003A8848	0x00000048	[796] _plist_data_val_contains
+0x1003A8890	0x00000034	[796] _plist_set_debug
+0x1003A88C4	0x000001A4	[796] _plist_sort
+0x1003A8A68	0x0000006C	[796] _plist_write_to_string
+0x1003A8AD4	0x0000014C	[796] _plist_write_to_stream
+0x1003A8C20	0x0000008C	[796] _plist_write_to_file
+0x1003A8CAC	0x00000020	[796] _plist_print
+0x1003A8CCC	0x0000000C	[796] _libplist_version
+0x1003A9054	0x00000060	[797] _node_destroy
+0x1003A90B4	0x00000068	[797] _node_create
+0x1003A911C	0x000001BC	[797] _node_attach
+0x1003A92D8	0x00000084	[797] _node_detach
+0x1003A935C	0x000001D4	[797] _node_insert
+0x1003A9530	0x00000008	[797] _node_debug
+0x1003A95F0	0x0000000C	[797] _node_n_children
+0x1003A95FC	0x0000003C	[797] _node_nth_child
+0x1003A9638	0x0000001C	[797] _node_first_child
+0x1003A9654	0x0000000C	[797] _node_next_sibling
+0x1003A9660	0x0000000C	[797] _node_prev_sibling
+0x1003A966C	0x0000005C	[797] _node_child_position
+0x1003A96C8	0x000000D8	[797] _node_copy_deep
+0x1003A97A0	0x00000004	[798] _node_list_destroy
+0x1003A97A4	0x0000000C	[798] _node_list_create
+0x1003A97B0	0x0000003C	[798] _node_list_add
+0x1003A97EC	0x000000A8	[798] _node_list_insert
+0x1003A9894	0x0000006C	[798] _node_list_remove
+0x1003A9914	0x0000000C	[799] _libimobiledevice_glue_version
+0x1003A9920	0x00000034	[800] _socket_init
+0x1003A9954	0x0000000C	[800] _socket_set_verbose
+0x1003A9960	0x00000078	[800] _socket_addr_to_string
+0x1003A99D8	0x000001D0	[800] _socket_create_unix
+0x1003A9BA8	0x00000004	[800] _socket_close
+0x1003A9BAC	0x00000480	[800] _socket_connect_unix
+0x1003AA02C	0x000002C8	[800] _socket_create
+0x1003AA2F4	0x000000D8	[800] _get_primary_mac_address
+0x1003AA3CC	0x000007E8	[800] _socket_connect_addr
+0x1003AABB4	0x000004D8	[800] _socket_connect
+0x1003AB08C	0x000001F0	[800] _socket_check_fd
+0x1003AB27C	0x00000058	[800] _socket_accept
+0x1003AB2D4	0x00000004	[800] _socket_shutdown
+0x1003AB2D8	0x000000D0	[800] _socket_receive
+0x1003AB3A8	0x000000D4	[800] _socket_receive_timeout
+0x1003AB47C	0x000000D0	[800] _socket_peek
+0x1003AB54C	0x00000074	[800] _socket_send
+0x1003AB5C0	0x0000009C	[800] _socket_get_socket_port
+0x1003AB65C	0x00000010	[801] _thread_new
+0x1003AB66C	0x00000004	[801] _thread_detach
+0x1003AB670	0x00000004	[801] _thread_free
+0x1003AB674	0x00000008	[801] _thread_join
+0x1003AB67C	0x00000024	[801] _thread_alive
+0x1003AB6A0	0x00000004	[801] _thread_cancel
+0x1003AB6A4	0x00000008	[801] _mutex_init
+0x1003AB6AC	0x00000004	[801] _mutex_destroy
+0x1003AB6B0	0x00000004	[801] _mutex_lock
+0x1003AB6B4	0x00000004	[801] _mutex_unlock
+0x1003AB6B8	0x00000004	[801] _thread_once
+0x1003AB6BC	0x00000008	[801] _cond_init
+0x1003AB6C4	0x00000004	[801] _cond_destroy
+0x1003AB6C8	0x00000004	[801] _cond_signal
+0x1003AB6CC	0x00000004	[801] _cond_wait
+0x1003AB6D0	0x000000AC	[801] _cond_wait_timeout
+0x1003AB77C	0x000000C8	[802] _string_concat
+0x1003AB844	0x000000F4	[802] _string_append
+0x1003AB938	0x000000DC	[802] _string_build_path
+0x1003ABA14	0x00000130	[802] _string_format_size
+0x1003ABB44	0x00000050	[802] _string_toupper
+0x1003ABB94	0x000000B4	[802] _generate_uuid
+0x1003ABC48	0x000000F4	[802] _buffer_read_from_filename
+0x1003ABD3C	0x00000094	[802] _buffer_write_to_filename
+0x1003ABDD0	0x000000A4	[803] _nskeyedarchive_new
+0x1003ABE74	0x00000038	[803] _nskeyedarchive_free
+0x1003ABEAC	0x00000088	[803] _nskeyedarchive_set_top_ref_key_name
+0x1003ABF34	0x00000068	[803] _nskeyedarchive_get_objects
+0x1003ABF9C	0x000000BC	[803] _nskeyedarchive_get_object_by_uid
+0x1003AC058	0x000000D0	[803] _nskeyedarchive_get_class_by_uid
+0x1003AC128	0x000000A4	[803] _nskeyedarchive_append_object
+0x1003AC1CC	0x00000090	[803] _nskeyedarchive_append_class
+0x1003AC378	0x0000010C	[803] _nskeyedarchive_add_top_class_uid
+0x1003AC484	0x000000B0	[803] _nskeyedarchive_add_top_class
+0x1003AC534	0x00000098	[803] _nskeyedarchive_nsarray_append_item
+0x1003AC5CC	0x00000070	[803] _nskeyedarchive_get_class_property
+0x1003AD008	0x00000114	[803] _nskeyedarchive_nsdictionary_add_item
+0x1003AD144	0x000005A8	[803] _nskeyedarchive_append_class_type_v
+0x1003AD6EC	0x00000060	[803] _nskeyedarchive_set_class_property
+0x1003ADC70	0x00000090	[803] _nskeyedarchive_append_class_type
+0x1003ADD00	0x000002E4	[803] _nskeyedarchive_merge_object
+0x1003ADFE4	0x00000040	[803] _nskeyedarchive_print
+0x1003AE024	0x00000008	[803] _nskeyedarchive_get_plist_ref
+0x1003AE02C	0x00000318	[803] _nskeyedarchive_new_from_plist
+0x1003AE344	0x00000144	[803] _nskeyedarchive_new_from_data
+0x1003AE488	0x00000134	[803] _nskeyedarchive_get_class_uid
+0x1003AE5BC	0x0000016C	[803] _nskeyedarchive_get_classname
+0x1003AE728	0x00000184	[803] _nskeyedarchive_get_class_uint64_property
+0x1003AE8AC	0x00000054	[803] _nskeyedarchive_get_class_int_property
+0x1003AE900	0x0000014C	[803] _nskeyedarchive_get_class_string_property
+0x1003AEA4C	0x0000002C	[803] _nskeyedarchive_to_plist
+0x1003AEDE8	0x0000003C	[804] _collection_init
+0x1003AEE24	0x0000002C	[804] _collection_free
+0x1003AEE50	0x000000A0	[804] _collection_add
+0x1003AEEF0	0x00000088	[804] _collection_remove
+0x1003AEF78	0x000000AC	[804] _collection_count
+0x1003AF024	0x00000054	[804] _collection_copy
+0x1003AF078	0x00000050	[805] _term_colors_init
+0x1003AF0C8	0x0000000C	[805] _term_colors_set_enabled
+0x1003AF0D4	0x000001DC	[805] _cvfprintf
+0x1003AF2B0	0x00000028	[805] _cfprintf
+0x1003AF2D8	0x00000038	[805] _cprintf
+0x1003AF310	0x00000040	[806] _char_buf_new
+0x1003AF350	0x00000034	[806] _char_buf_free
+0x1003AF384	0x000000D8	[806] _char_buf_append
+0x1003AF45C	0x00000074	[807] _opack_encode_from_plist
+0x1003AFACC	0x00000064	[807] _opack_decode_to_plist
+0x1003B00B4	0x00000040	[808] _tlv_buf_new
+0x1003B00F4	0x00000034	[808] _tlv_buf_free
+0x1003B0128	0x000001F8	[808] _tlv_buf_append
+0x1003B0320	0x0000003C	[808] _tlv_get_data_ptr
+0x1003B035C	0x000000A8	[808] _tlv_data_get_uint
+0x1003B0404	0x0000006C	[808] _tlv_data_get_uint8
+0x1003B0470	0x00000100	[808] _tlv_data_copy_data
+0x1003B0570	0x00000038	[809] _sha1_init
+0x1003B05A8	0x00000130	[809] _sha1_update
+0x1003B13E0	0x00000208	[809] _sha1_final
+0x1003B15E8	0x00000198	[809] _sha1
+0x1003B1780	0x00000040	[810] _sha256_init
+0x1003B17C0	0x00000130	[810] _sha256_update
+0x1003B1AEC	0x000001A8	[810] _sha256_final
+0x1003B1C94	0x000001A0	[810] _sha256
+0x1003B1E34	0x00000040	[810] _sha224_init
+0x1003B1E74	0x00000130	[810] _sha224_update
+0x1003B1FA4	0x00000004	[810] _sha224_final
+0x1003B1FA8	0x000001A0	[810] _sha224
+0x1003B2148	0x00000054	[811] _sha512_init
+0x1003B219C	0x00000130	[811] _sha512_update
+0x1003B26A8	0x00000164	[811] _sha512_final
+0x1003B280C	0x000001BC	[811] _sha512
+0x1003B29C8	0x00000054	[811] _sha384_init
+0x1003B2A1C	0x00000130	[811] _sha384_update
+0x1003B2B4C	0x00000004	[811] _sha384_final
+0x1003B2B50	0x000001BC	[811] _sha384
+0x1003B2D0C	0x00000298	[812] _usbmuxd_events_subscribe
+0x1003B3958	0x000001E8	[812] _usbmuxd_events_unsubscribe
+0x1003B3B40	0x00000058	[812] _usbmuxd_subscribe
+0x1003B3B98	0x00000028	[812] _usbmuxd_unsubscribe
+0x1003B3BC0	0x000005F8	[812] _usbmuxd_get_device_list
+0x1003B4E10	0x00000020	[812] _usbmuxd_device_list_free
+0x1003B4E30	0x00000170	[812] _usbmuxd_get_device_by_udid
+0x1003B4FA0	0x000002D0	[812] _usbmuxd_get_device
+0x1003B5270	0x000002E4	[812] _usbmuxd_connect
+0x1003B5554	0x00000004	[812] _usbmuxd_disconnect
+0x1003B5558	0x00000128	[812] _usbmuxd_send
+0x1003B5680	0x00000038	[812] _usbmuxd_recv_timeout
+0x1003B56B8	0x0000003C	[812] _usbmuxd_recv
+0x1003B56F4	0x000001E0	[812] _usbmuxd_read_buid
+0x1003B58D4	0x00000238	[812] _usbmuxd_read_pair_record
+0x1003B5C00	0x000001DC	[812] _usbmuxd_save_pair_record_with_device_id
+0x1003B5DDC	0x00000010	[812] _usbmuxd_save_pair_record
+0x1003B5DEC	0x00000224	[812] _usbmuxd_delete_pair_record
+0x1003B6010	0x00000004	[812] _libusbmuxd_set_use_inotify
+0x1003B6014	0x0000000C	[812] _libusbmuxd_set_debug_level
+0x1003B6020	0x0000000C	[812] _libusbmuxd_version
+0x10046C7AA	0x00000005	[  2] literal string: ¿.¿
+0x10046C7AF	0x00000022	[  2] literal string: TXT property key ¿\r is not ASCII
+0x10046C7D1	0x00000045	[  2] literal string: TXT property '¿\r' has length ¿$ bytes, exceeding the 255-byte limit
+0x10046C816	0x00000022	[  2] literal string: TXT property key ¿\r contains '='
+0x10046CA89	0x0000001B	[  2] literal string: send_rppairing payload: ¿
+0x10046CAC0	0x00000028	[  2] literal string: Connecting to RSD service ¿\t on port ¿
+0x10046CBE6	0x00000017	[  2] literal string: file service reply: ¿
+0x10046CBFD	0x0000002B	[  2] literal string: (make_channel: unexpected reply payload: ¿
+0x10046CC94	0x00000017	[  2] literal string: Image send failure: ¿
+0x10046CCAB	0x00000027	[  2] literal string: $Received bad response to SendBytes: ¿
+0x10046CCD2	0x00000039	[  2] literal string: \"Device didn't contain a manifest: ¿, fetching from TSS
+0x10046CD0B	0x0000001C	[  2] literal string: File info kvs not empty: ¿
+0x10046CDC0	0x00000019	[  2] literal string: CDTunnel established: ¿
+0x10046CDD9	0x00000022	[  2] literal string: TLS Alert: level=¿ desc=¿ (¿)
+0x10046CDFB	0x00000017	[  2] literal string: Using cipher suite: ¿
+0x10046CE12	0x0000001A	[  2] literal string: Got handshake msg type ¿
+0x10046CE2C	0x0000001E	[  2] literal string: Expected handshake, got ct=¿
+0x10046CE4A	0x0000002B	[  2] literal string:  TLS Alert after Finished: level=¿ desc=¿
+0x10046CE75	0x0000002C	[  2] literal string: Unexpected record type ¿ during handshake
+0x10046CF24	0x0000001D	[  2] literal string: SRP process_reply failed: ¿
+0x10046CF41	0x00000024	[  2] literal string: !Failed to decrypt pair-setup M5: ¿
+0x10046CF65	0x0000000F	[  2] literal string: TLS tunnel: ¿
+0x10046CF8D	0x00000033	[  2] literal string: 0Received unexpected message type during listen: ¿
+0x10046CFC0	0x00000030	[  2] literal string: -Failed to convert props into usbmuxd device: ¿
+0x10046D008	0x0000000B	[  2] literal string: accept: ¿
+0x10046D074	0x0000002C	[  2] literal string: )missing createListener.port in response: ¿
+0x10046D0A0	0x00000030	[  2] literal string: Received message for stream ID ¿\r not in cache
+0x10046D136	0x00000010	[  2] literal string: \rmDNS daemon: ¿
+0x10046D146	0x00000016	[  2] literal string: mDNS service info: ¿
+0x10046D15C	0x00000012	[  2] literal string: mDNS register: ¿
+0x10046D16E	0x00000009	[  2] literal string: bind: ¿
+0x10046D177	0x0000000C	[  2] literal string: \tconnect: ¿
+0x10046D183	0x00000013	[  2] literal string: tunnel service: ¿
+0x10046D196	0x00000010	[  2] literal string: \rRSD connect: ¿
+0x10046D1C2	0x0000000D	[  2] literal string: \n127.0.0.1:¿
+0x10046D1CF	0x0000001E	[  2] literal string: invalid TLS server name `¿`
+0x10046D1ED	0x00000021	[  2] literal string: SRP verifier creation failed: ¿
+0x10046D20E	0x00000017	[  2] literal string: Server auth failed: ¿
+0x10046D225	0x00000013	[  2] literal string: ciphertext len: ¿
+0x10046D238	0x0000001D	[  2] literal string: Chacha encryption failed: ¿
+0x10046D255	0x0000001C	[  2] literal string: Decrypted plaintext TLV: ¿
+0x10046D271	0x00000018	[  2] literal string: Sending TSS request: ¿
+0x10046D29C	0x00000018	[  2] literal string: Apple responded with ¿
+0x10046D2B4	0x00000029	[  2] literal string: &TSS responded with non-success value: ¿
+0x10046D2DD	0x00000033	[  2] literal string: .TSS server responded with non-success status (¿)
+0x10046D326	0x0000001D	[  2] literal string: Failed to flush. Error: ¿\n
+0x10046D360	0x00000025	[  2] literal string: Got data frame for ¿ with ¿ bytes
+0x10046D385	0x0000002E	[  2] literal string: +Device reset finished file transfer stream ¿
+0x10046D3B3	0x00000028	[  2] literal string: %XPC response did not have an output: ¿
+0x10046D495	0x00000021	[  2] literal string: Unknown notificaton key: ¿ = ¿
+0x10046D4B6	0x0000001D	[  2] literal string: Failed to decode archive: ¿
+0x10046D4D3	0x00000018	[  2] literal string: Non-array aux value: ¿
+0x10046D4EB	0x00000025	[  2] literal string: \"Expected application data, got ct=¿
+0x10046D534	0x00000007	[  2] literal string: $¿#¿
+0x10046D53B	0x00000013	[  2] literal string: Sending packet: ¿
+0x10046D54E	0x00000009	[  2] literal string: ,¿,¿,
+0x10046D74B	0x0000002B	[  2] literal string: [¿] RemoteServer reader exiting: ¿ (¿)
+0x10046D776	0x0000004B	[  2] literal string: /Queueing unhandled incoming message on channel ¿ expects_reply=¿ data=¿
+0x10046D7C1	0x00000029	[  2] literal string: &Received message for unknown channel: ¿
+0x10046D7EA	0x00000024	[  2] literal string: !Incoming message handler failed: ¿
+0x10046D80E	0x00000030	[  2] literal string: -Failed to auto-ack handled incoming message: ¿
+0x10046D83E	0x0000002A	[  2] literal string: 'Failed to reply from incoming handler: ¿
+0x10046D868	0x00000032	[  2] literal string: Remote requested channel ¿ with identifier '¿'
+0x10046D89A	0x00000031	[  2] literal string: .Failed to decode incoming channel identifier: ¿
+0x10046D8CB	0x0000001C	[  2] literal string: Remote cancelled channel ¿
+0x10046D8E7	0x00000033	[  2] literal string: 0Failed to decode incoming channel cancellation: ¿
+0x10046D91A	0x00000021	[  2] literal string: Received remote capabilities: ¿
+0x10046D93B	0x00000029	[  2] literal string: &Failed to decode remote capabilities: ¿
+0x10046D964	0x00000034	[  2] literal string: &Failed to initialize incoming channel ¿ ('¿'): ¿
+0x10046D998	0x00000033	[  2] literal string: 0Failed to acknowledge incoming channel request: ¿
+0x10046D9CB	0x00000013	[  2] literal string: Received plist: ¿
+0x10046D9DE	0x00000035	[  2] literal string: 2Error is not a string or integer from read_plist: ¿
+0x10046DA13	0x00000012	[  2] literal string: Sending plist: ¿
+0x10046DA25	0x0000001C	[  2] literal string: \nfollowing ¿\r redirect to ¿
+0x10046DA41	0x0000001A	[  2] literal string: too many redirects (>¿)
+0x10046DA5B	0x0000001B	[  2] literal string: \rhouse_arrest ¿\t failed: ¿
+0x10046DAA2	0x0000001E	[  2] literal string: Device info kvs not empty: ¿
+0x10046DAC0	0x00000021	[  2] literal string: unexpected heartbeat Command: ¿
+0x10046DB34	0x00000024	[  2] literal string: !Could not parse signal response: ¿
+0x10046DB58	0x0000001E	[  2] literal string: Failed to parse app entry: ¿
+0x10046DB76	0x00000020	[  2] literal string: Could not parse appIconInfo: ¿
+0x10046DC14	0x00000013	[  2] literal string: idevice-¿.local.
+0x10046DC42	0x00000013	[  2] literal string: could not send: ¿
+0x10046DD26	0x00000016	[  2] literal string: ¿ ¿ (¿ body bytes)
+0x10046DDEA	0x0000003D	[  2] literal string: +Connecting to DiagnosticsService: provider ¿\r, handshake: ¿
+0x10046DF6C	0x00000016	[  2] literal string: Received RemoteXPC ¿
+0x10046DF82	0x00000026	[  2] literal string: recv_rppairing (¿ bytes) payload: ¿
+0x10046DFA8	0x0000003D	[  2] literal string: ,Unable to format the following event. Name: ¿\n; Fields: ¿\n
+0x10046DFE5	0x00000071	[  2] literal string: k[tracing-subscriber] Unable to write an \"event formatting error\" to the Writer for this Subscriber! Error: ¿\n\n
+0x10046E056	0x0000005E	[  2] literal string: X[tracing-subscriber] Unable to write an event to the Writer for this Subscriber! Error: ¿\n\n
+0x10046E286	0x00000026	[  2] literal string: #Unsupported socket address family: ¿
+0x10046E385	0x00000034	[  2] literal string: TLS decrypt failed (ct=¿, seq=¿, body_len=¿): ¿
+0x10046E3B9	0x00000010	[  2] literal string: \rTLS decrypt: ¿
+0x10046E41D	0x0000004A	[  2] literal string: E[tracing-subscriber] Unable to format the following event, ignoring: ¿\n
+0x10046E4B2	0x0000001F	[  2] literal string: invalid length ¿, expected ¿
+0x10046E4D1	0x0000001B	[  2] literal string: Adapter connect failed: ¿
+0x10046E4EC	0x00000018	[  2] literal string: Adapter recv failed: ¿
+0x10046E504	0x00000018	[  2] literal string: Adapter send failed: ¿
+0x10046E52F	0x00000043	[  2] literal string: *Unable to convert BUID string to CString: ¿. Null interior byte.
+0x10046E572	0x00000018	[  2] literal string: Invalid address set: ¿
+0x10046E58A	0x0000001A	[  2] literal string: Invalid arguments: ¿, ¿
+0x10046E5A4	0x00000021	[  2] literal string: failed to encode TXT records: ¿
+0x10046E5C5	0x00000019	[  2] literal string: Invalid label string: ¿
+0x10046E5DE	0x00000018	[  2] literal string: Invalid UDID string: ¿
+0x10046E664	0x00000032	[  2] literal string: insertion index (is ¿) should be <= len (is ¿)
+0x10046E696	0x00000033	[  2] literal string: swap_remove index (is ¿) should be < len (is ¿)
+0x10046E6C9	0x0000002F	[  2] literal string: removal index (is ¿) should be < len (is ¿)
+0x10046E6F8	0x00000033	[  2] literal string: `at` split index (is ¿) should be <= len (is ¿)
+0x10046E774	0x0000001D	[  2] literal string: feature not supported: '¿'
+0x10046E791	0x0000001E	[  2] literal string: compression not supported: ¿
+0x10046E7AF	0x0000002F	[  2] literal string: ,host attribute compatibility not supported: ¿
+0x10046E7DE	0x0000004B	[  2] literal string: Hattempted to write a ZIP file with force_no_zip64 when ZIP64 is needed: ¿
+0x10046E829	0x00000042	[  2] literal string: %extra field size was indicated to be ¿\n but only ¿\r bytes remain
+0x10046E86B	0x00000029	[  2] literal string: &an upstream reader returned an error: ¿
+0x10046E8DA	0x0000001F	[  2] literal string: Digest algorithm not found: ¿
+0x10046EA56	0x00000052	[  2] literal string: Ointernal error: entered unreachable code: Unreachable agreement algorithm nid: ¿
+0x10046EAA8	0x00000008	[  2] literal string: { ¿ }
+0x10046EEE8	0x00000017	[  2] literal string: ¿18446744073709551616
+0x10046F040	0x00000052	[  2] literal string: start byte index ¿& is not a char boundary; it is inside ¿ (bytes ¿ of string)
+0x10046F092	0x00000050	[  2] literal string: end byte index ¿& is not a char boundary; it is inside ¿ (bytes ¿ of string)
+0x10046F0E2	0x0000003B	[  2] literal string: end byte index ¿' is out of bounds for string of length ¿
+0x10046F11D	0x00000027	[  2] literal string: byte range starts at ¿\r but ends at ¿
+0x10046F144	0x0000003D	[  2] literal string: start byte index ¿' is out of bounds for string of length ¿
+0x10046F1CF	0x00000037	[  2] literal string:  index out of bounds: the len is ¿ but the index is ¿
+0x10046F206	0x00000037	[  2] literal string: assertion `left ¿ right` failed\n  left: ¿\t\n right: ¿
+0x10046F23D	0x0000003B	[  2] literal string: assertion `left ¿ right` failed: ¿\t\n  left: ¿\t\n right: ¿
+0x10046F278	0x00000037	[  2] literal string: range end index ¿\" out of range for slice of length ¿
+0x10046F2AF	0x00000028	[  2] literal string: slice index starts at ¿\r but ends at ¿
+0x10046F2D7	0x00000039	[  2] literal string: range start index ¿\" out of range for slice of length ¿
+0x10046F488	0x00000058	[  2] literal string: &copy_from_slice: source slice length (¿+) does not match destination slice length (¿)
+0x10046F5CB	0x00000011	[  2] literal string: ¿ (os error ¿)
+0x10046F687	0x0000000B	[  2] literal string: ¿.¿.¿.¿
+0x10046F692	0x00000008	[  2] literal string: [¿]:¿
+0x10046F69A	0x0000000B	[  2] literal string: [¿%¿]:¿
+0x10046F6A5	0x0000000D	[  2] literal string: ¿ (1 << ¿)
+0x10046F6B2	0x00000031	[  2] literal string: invalid utf-8 sequence of ¿ bytes from index ¿
+0x10046F6E3	0x0000002D	[  2] literal string: *incomplete utf-8 byte sequence from index ¿
+0x10046F710	0x0000000A	[  2] literal string: ::ffff:¿
+0x10046F80B	0x0000001E	[  2] literal string: ¿\t must be ¿ bytes in length
+0x10046F8E5	0x0000003D	[  2] literal string: !GenericArray::from_iter received ¿ elements but expected ¿
+0x10046F922	0x0000000D	[  2] literal string: \nOS Error: ¿
+0x10046F92F	0x00000012	[  2] literal string: Unknown Error: ¿
+0x10046FB93	0x00000023	[  2] literal string: Connecting to device ¿\t on port ¿
+0x10046FBD1	0x0000000E	[  2] literal string: Writing ¿/¿
+0x10046FBDF	0x00000027	[  2] literal string: unexpected EOF while reading ¿ bytes
+0x10046FC7E	0x0000001D	[  2] literal string: Reading ¿ bytes from muxer
+0x10046FC9B	0x00000014	[  2] literal string: Read from muxer: ¿
+0x10046FCAF	0x0000001B	[  2] literal string: Getting pair record for ¿
+0x10046FD2D	0x0000000F	[  2] literal string: afc header: ¿
+0x10046FD3C	0x0000000D	[  2] literal string: \nRecv afc: ¿
+0x10046FD5D	0x0000001F	[  2] literal string: malformed HTTP status line: ¿
+0x10046FD7C	0x00000015	[  2] literal string: \rinvalid URL `¿`: ¿
+0x10046FD91	0x00000041	[  2] literal string: >failed to parse OPACK info payload from pair record response: ¿
+0x10046FDD2	0x0000002A	[  2] literal string: 'invalid UTF-8 string in OPACK payload: ¿
+0x10046FDFC	0x0000003C	[  2] literal string: OPACK back-reference ¿ out of range, only ¿\r objects seen
+0x10046FE38	0x00000010	[  2] literal string: \rCBC decrypt: ¿
+0x10046FE88	0x00000022	[  2] literal string: Failed to set crypto provider: ¿
+0x10046FEE6	0x00000039	[  2] literal string: 6Unable to convert raw pairing file into pairing file: ¿
+0x10046FF1F	0x00000030	[  2] literal string: -Unable to convert bytes to raw pairing file: ¿
+0x10046FF4F	0x00000020	[  2] literal string: Manifest item ¿ isn't trusted
+0x10046FF6F	0x00000026	[  2] literal string: Manifest item ¿ didn't contain Info
+0x10046FF95	0x00000026	[  2] literal string: Manifest item ¿ wasn't a dictionary
+0x10046FFBB	0x00000045	[  2] literal string: Binvalid altIRK length in peer device info: expected 16 bytes, got ¿
+0x1004700AF	0x0000000D	[  2] literal string: \nBody_len: ¿
+0x1004700BC	0x0000002C	[  2] literal string: Body length is ¿, but received bytes is ¿
+0x1004700FF	0x00000015	[  2] literal string: -----BEGIN ¿-----\n
+0x100470114	0x00000012	[  2] literal string: \t-----END ¿-----
+0x100470139	0x00000011	[  2] literal string: Unhandled key ¿
+0x10047014A	0x0000000A	[  2] literal string: ¿://¿/¿
+0x100470154	0x00000009	[  2] literal string: ¿://¿¿¿
+0x10047015D	0x00000004	[  2] literal string: /¿
+0x100470161	0x0000002D	[  2] literal string: missing data field `¿` in peer device info
+0x10047018E	0x0000002F	[  2] literal string: missing string field `¿` in peer device info
+0x1004701DF	0x00000032	[  2] literal string: /unexpected trailing bytes after OPACK payload: ¿
+0x100470237	0x00000031	[  2] literal string: &unexpected pair-setup state: expected ¿, got ¿
+0x100470268	0x00000022	[  2] literal string: device returned pairing error: ¿
+0x1004702F1	0x00000010	[  2] literal string: \rUnknown TLV: ¿
+0x100470301	0x00000015	[  2] literal string: Pairing rejected: ¿
+0x100470316	0x0000001C	[  2] literal string: unknown http frame type: ¿
+0x100470332	0x0000001E	[  2] literal string: unknown http setting type: ¿
+0x100470350	0x00000015	[  2] literal string: unknown XPC type: ¿
+0x100470365	0x0000001C	[  2] literal string: go away packet received: ¿
+0x100470381	0x00000023	[  2] literal string:  request missing required field: ¿
+0x1004703A4	0x00000029	[  2] literal string: &request field had an unexpected type: ¿
+0x1004703CD	0x00000027	[  2] literal string: $unknown or unsupported MessageType: ¿
+0x1004703F4	0x0000001D	[  2] literal string: device returned an error: ¿
+0x100470411	0x0000002D	[  2] literal string: (device response missing required field `¿`
+0x10047043E	0x0000003C	[  2] literal string: device response field `¿!` had an unexpected type or shape
+0x10047047A	0x00000021	[  2] literal string: media negotiation blob error: ¿
+0x10047049B	0x0000003D	[  2] literal string: touchscreen report has ¿\" contacts; at most 5 are supported
+0x1004704D8	0x00000031	[  2] literal string: touchscreen contact identity ¿ is outside 0..5
+0x100470509	0x0000002F	[  2] literal string: touchscreen contact identity ¿ is duplicated
+0x100470538	0x00000015	[  2] literal string: invalid argument: ¿
+0x10047054D	0x0000001B	[  2] literal string: Unknown aux value type: ¿
+0x100470568	0x00000014	[  2] literal string: unknown channel: ¿
+0x10047057C	0x00000026	[  2] literal string: #invalid XCTest runner environment: ¿
+0x10047061F	0x00000028	[  2] literal string: %installation proxy operation failed: ¿
+0x100470647	0x0000001E	[  2] literal string: malformed package archive: ¿
+0x100470665	0x0000001F	[  2] literal string: \nArray(len=¿, first_bytes=¿)
+0x100470684	0x00000009	[  2] literal string: U32(¿)
+0x10047068D	0x00000009	[  2] literal string: I64(¿)
+0x100470696	0x0000000C	[  2] literal string: Double(¿)
+0x1004706A2	0x00000039	[  2] literal string: XPCMessage { flags: [¿], message_id: ¿, message: ¿ }
+0x1004706F6	0x00000014	[  2] literal string: Connection type: ¿
+0x10047075B	0x00000026	[  2] literal string: not enough bytes, expected ¿, got ¿
+0x100470781	0x00000018	[  2] literal string: HTTP request failed: ¿
+0x100470799	0x00000024	[  2] literal string: !unexpected response from device: ¿
+0x1004707BD	0x00000029	[  2] literal string: unknown error `¿` returned from device
+0x1004707E6	0x0000002E	[  2] literal string: #buffer passed is too small - needs ¿, got ¿
+0x100470814	0x0000000E	[  2] literal string: afc error: ¿
+0x100470822	0x00000024	[  2] literal string: !Application verification failed: ¿
+0x100470846	0x00000049	[  2] literal string: Cerror: AFC file descriptor dropped without calling .close().await (¿)\n
+0x1004708EA	0x00000014	[  2] literal string: missing field `¿`
+0x1004708FE	0x00000016	[  2] literal string: duplicate field `¿`
+0x100470A9A	0x00000033	[  2] literal string: hp=¿ timed out after ¿ retransmissions; closing
+0x100470ACD	0x00000022	[  2] literal string: retransmitting ¿ bytes for hp=¿
+0x100470AEF	0x00000026	[  2] literal string: out-of-order seq=¿\n expected=¿ hp=¿
+0x100470B15	0x00000028	[  2] literal string: duplicate data seq=¿\n expected=¿ hp=¿
+0x100470B3D	0x00000014	[  2] literal string: keep-alive on hp=¿
+0x100470B51	0x0000002C	[  2] literal string: )packet received on errored connection hp=¿
+0x100470B7D	0x0000000D	[  2] literal string: \nRST on hp=¿
+0x100470B8A	0x00000016	[  2] literal string: psh ¿\r bytes on hp=¿
+0x100470BA0	0x0000001F	[  2] literal string: retransmitting SYN for port ¿
+0x100470C94	0x00000044	[  2] literal string: /buf.len() must fit in remaining(); buf.len() = ¿, remaining() = ¿
+0x100470CD8	0x0000001E	[  2] literal string: udp ¿ bytes -> local port ¿
+0x100470D41	0x0000000C	[  2] literal string: \tpoll psh ¿
+0x100470DE7	0x0000003F	[  2] literal string: .reregistering event source with poller: token=¿, interests=¿
+0x100470E85	0x0000001A	[  2] literal string: found active record ¿ ¿
+0x100470EE7	0x00000022	[  2] literal string: insert record ¿ into probe of ¿
+0x100470F09	0x0000002B	[  2] literal string: found existing record ¿ in probe of '¿'
+0x100470F7A	0x00000014	[  2] literal string: add_answer push: ¿
+0x100470F8E	0x0000001A	[  2] literal string: add_additional_answer: ¿
+0x100470FA8	0x00000010	[  2] literal string: \rnew probe of ¿
+0x100470FB8	0x00000017	[  2] literal string: evict expired ADDR: ¿
+0x100471014	0x0000001C	[  2] literal string: removing PTR on intf ¿: ¿
+0x100471030	0x0000000C	[  2] literal string: Some(\"¿\")
+0x10047103C	0x00000015	[  2] literal string: FLUSH one record: ¿
+0x100471051	0x00000022	[  2] literal string: expired PTR: domain:¿\t record: ¿
+0x100471073	0x0000002B	[  2] literal string:  removing ADDR on disabled intf: ¿ host ¿
+0x10047109E	0x0000002C	[  2] literal string: )failed to create signal_sock for daemon: ¿
+0x1004710CA	0x00000030	[  2] literal string: -failed to set nonblocking for signal socket: ¿
+0x1004710FA	0x0000001E	[  2] literal string: failed to create mio Poll: ¿
+0x100471118	0x00000023	[  2] literal string:  thread builder failed to spawn: ¿
+0x10047113B	0x00000023	[  2] literal string:  failed to get signal sock addr: ¿
+0x10047115E	0x00000029	[  2] literal string: signal socket send_to ¿ (¿\n) failed: ¿
+0x100471187	0x0000002B	[  2] literal string: (Failed to create socket to send signal: ¿
+0x1004711FC	0x0000001E	[  2] literal string: notify_monitors: try_send: ¿
+0x10047121A	0x00000022	[  2] literal string: conflict handler: new probe of ¿
+0x10047123C	0x00000032	[  2] literal string: found conflict name: '¿\n' record: ¿: ¿ PEER: ¿
+0x10047126E	0x00000024	[  2] literal string: !failed to set multicast loop v4: ¿
+0x100471292	0x00000024	[  2] literal string: !failed to set multicast loop v6: ¿
+0x1004712B6	0x00000025	[  2] literal string: \"set set_multicast_ttl_v4 on addr: ¿
+0x1004712DB	0x0000001E	[  2] literal string: set set_multicast_hops_v6: ¿
+0x1004712F9	0x00000019	[  2] literal string: read_name: from_utf8: ¿
+0x100471312	0x00000019	[  2] literal string: create socket failed: ¿
+0x10047132B	0x00000013	[  2] literal string: set O_NONBLOCK: ¿
+0x10047133E	0x0000001D	[  2] literal string: socket bind to ¿\t failed: ¿
+0x10047135B	0x00000019	[  2] literal string: set ReuseAddr failed: ¿
+0x100471374	0x00000028	[  2] literal string: !PKT join multicast group on addr ¿: ¿
+0x1004713DB	0x0000002F	[  2] literal string: skipping unsupported address ¿\r for service ¿
+0x10047140A	0x00000056	[  2] literal string: matching inserted address ¿\t on intf ¿: passes_link_local=¿, interface_supported=¿
+0x100471460	0x0000001E	[  2] literal string: add_or_update: not for us: ¿
+0x10047147E	0x00000017	[  2] literal string: expired SRV for ¿: ¿
+0x100471495	0x0000002E	[  2] literal string: +exit: failed to send response of shutdown: ¿
+0x1004714C3	0x00000017	[  2] literal string: Unexpected command: ¿
+0x1004714DA	0x00000021	[  2] literal string: Invalid incoming DNS message: ¿
+0x1004714FB	0x00000037	[  2] literal string: handle_read: dropping ¿ packet on intf ¿ (disabled)
+0x100471532	0x00000039	[  2] literal string: 6handle_read: no interface found for pktinfo if_index: ¿
+0x10047156B	0x00000021	[  2] literal string: listening socket read failed: ¿
+0x10047158C	0x0000002F	[  2] literal string: ,handle_read: socket not available for token ¿
+0x1004715BB	0x0000001E	[  2] literal string: handle_read: unknown token ¿
+0x1004715D9	0x0000001F	[  2] literal string: exec_command: ¿ repeating: ¿
+0x1004715F8	0x00000020	[  2] literal string: unregister service ¿ repeat ¿
+0x100471618	0x00000022	[  2] literal string: register-resend service: ¿ on ¿
+0x10047163A	0x0000001A	[  2] literal string: Failed to send status: ¿
+0x100471654	0x0000001B	[  2] literal string: Failed to send options: ¿
+0x10047166F	0x00000017	[  2] literal string: unexpected command: ¿
+0x100471686	0x0000001C	[  2] literal string: sending response on intf ¿
+0x1004716A2	0x00000039	[  2] literal string: 6Cannot find valid addrs for TYPE_SRV response on intf ¿
+0x1004716DB	0x00000033	[  2] literal string: Cannot find valid addrs for ¿ response on intf ¿
+0x10047170E	0x00000027	[  2] literal string: $answer was not added for meta-query ¿
+0x100471735	0x00000029	[  2] literal string: &handle_query: no intf found for index ¿
+0x10047175E	0x00000021	[  2] literal string: missing dns registry for intf ¿
+0x10047177F	0x0000002F	[  2] literal string: ,handle_query: socket not available for intf ¿
+0x1004717AE	0x00000024	[  2] literal string: add_interface: socket_config ¿: ¿
+0x1004717D2	0x0000002C	[  2] literal string: add_interface: interface ¿ already exists
+0x1004717FE	0x0000002F	[  2] literal string: add_interface: socket_config ¿: ¿\n. Skipped.
+0x10047182D	0x00000019	[  2] literal string: add new interface ¿: ¿
+0x100471846	0x0000001A	[  2] literal string: Announce service ¿ on ¿
+0x100471860	0x00000027	[  2] literal string: $add_interface: cannot find if_index ¿
+0x100471887	0x0000004C	[  2] literal string: 1add_interface: no socket available for interface ¿ with addr ¿\n. Skipped.
+0x1004718D3	0x00000015	[  2] literal string: add known answer: ¿
+0x1004718E8	0x00000028	[  2] literal string: %calling listener with service found: ¿
+0x100471910	0x00000025	[  2] literal string: \"sending out probing of questions: ¿
+0x100471935	0x00000023	[  2] literal string: wake up: announce service ¿ on ¿
+0x100471958	0x0000001E	[  2] literal string: service ¿ already announced
+0x100471976	0x00000033	[  2] literal string: check_ip_changes: ¿\r deleted ips ¿ deleted intfs
+0x1004719A9	0x00000017	[  2] literal string: leave multicast for ¿
+0x1004719C0	0x00000026	[  2] literal string: leave multicast group for addr ¿: ¿
+0x1004719E6	0x00000027	[  2] literal string:  leave multicast group for IPv6: ¿: ¿
+0x100471A0D	0x00000040	[  2] literal string: check_ip_changes: interface ¿ (¿) no longer exists, removing
+0x100471A4D	0x0000003E	[  2] literal string: conflict handler: answer addr ¿ not in the subnet of intf ¿
+0x100471A8B	0x00000030	[  2] literal string: insert record with new name '¿' ¿ into probe
+0x100471ABB	0x0000002C	[  2] literal string: )handle_response: no intf found for index ¿
+0x100471AE7	0x00000015	[  2] literal string: enable_interface: ¿
+0x100471AFC	0x0000001C	[  2] literal string: instance name ¿\n not valid
+0x100471B18	0x0000001E	[  2] literal string: check_service_name_length: ¿
+0x100471B36	0x00000014	[  2] literal string: register service ¿
+0x100471B4A	0x00000016	[  2] literal string: disable_interface: ¿
+0x100471B60	0x00000018	[  2] literal string: signal socket recvd: ¿
+0x100471B78	0x00000024	[  2] literal string: del_interface_addr: ¿ (¿) addr ¿
+0x100471B9C	0x0000002A	[  2] literal string: 'del_interface_addr: removing interface ¿
+0x100471BC6	0x0000002C	[  2] literal string: del_interface_addr: interface ¿\n not found
+0x100471BF2	0x00000014	[  2] literal string: Adding subdomain ¿
+0x100471C06	0x00000019	[  2] literal string: ¿ on ¿\r interfaces [¿]
+0x100471C1F	0x00000033	[  2] literal string: Failed to send SearchStarted(¿)(repeating:¿): ¿
+0x100471C52	0x0000001A	[  2] literal string: SearchStopped sent for ¿
+0x100471C6C	0x00000021	[  2] literal string: Failed to send SearchStopped: ¿
+0x100471C8D	0x0000001B	[  2] literal string: event received with key ¿
+0x100471CA8	0x0000002E	[  2] literal string: +failed to modify poller for signal socket: ¿
+0x100471CD6	0x00000022	[  2] literal string: modify poller for IPv4 socket: ¿
+0x100471CF8	0x00000022	[  2] literal string: modify poller for IPv6 socket: ¿
+0x100471D1A	0x00000042	[  2] literal string: ;notify_service_removal: sent ServiceRemoved to listener of ¿: ¿
+0x100471D5C	0x00000019	[  2] literal string: Failed to send event: ¿
+0x100471D75	0x00000028	[  2] literal string: %unregister: cannot find such service ¿
+0x100471D9D	0x00000028	[  2] literal string: %unregister: failed to send response: ¿
+0x100471DC5	0x00000022	[  2] literal string: Resolved service is not valid: ¿
+0x100471DE7	0x00000020	[  2] literal string: Resolved service from cache: ¿
+0x100471E07	0x00000016	[  2] literal string: sent service found ¿
+0x100471E1D	0x0000001A	[  2] literal string: sent service resolved: ¿
+0x100471E37	0x00000024	[  2] literal string: !failed to send service resolved: ¿
+0x100471E5B	0x00000021	[  2] literal string: failed to send service found: ¿
+0x100471E7C	0x0000002D	[  2] literal string: *Error while resolving service from cache: ¿
+0x100471EA9	0x00000022	[  2] literal string: sending refresh query for PTR: ¿
+0x100471ECB	0x0000002C	[  2] literal string: )sending refresh queries for A and AAAA:  ¿
+0x100471EF7	0x0000001E	[  2] literal string: sending refresh query for: ¿
+0x100471F15	0x0000001B	[  2] literal string: Failed to send metrics: ¿
+0x100471F30	0x00000027	[  2] literal string: $StopBrowse: cannot find querier for ¿
+0x100471F57	0x00000023	[  2] literal string:  StopBrowse: removed queryer for ¿
+0x100471F7A	0x0000002A	[  2] literal string: 'StopBrowse: removed retransmission for ¿
+0x100471FA4	0x0000002C	[  2] literal string: )failed to send hostname addresses found: ¿
+0x100471FD0	0x00000026	[  2] literal string: #resolve_updated_instances: removed ¿
+0x100471FF6	0x0000002A	[  2] literal string: 'resolve_updated_instances: from cache: ¿
+0x100472020	0x0000001C	[  2] literal string: call queriers to resolve ¿
+0x10047203C	0x0000001F	[  2] literal string: Announce service IPv4 ¿ on ¿
+0x10047205B	0x0000001F	[  2] literal string: Announce service IPv6 ¿ on ¿
+0x10047207A	0x00000030	[  2] literal string: ty_domain: ¿ found subtype ¿ for instance: ¿
+0x1004720AA	0x00000021	[  2] literal string: Addr expired or expires soon: ¿
+0x1004720CB	0x00000022	[  2] literal string: resend: announce service ¿ on ¿
+0x1004720ED	0x00000026	[  2] literal string: #announce: cannot find such service ¿
+0x100472113	0x0000000E	[  2] literal string: ¿\n on addrs ¿
+0x100472121	0x00000034	[  2] literal string: Failed to send ResolveStarted(¿)(repeating:¿): ¿
+0x100472155	0x00000019	[  2] literal string: UnregisterResend from ¿
+0x10047216E	0x00000024	[  2] literal string: !StopResolve: removed queryer for ¿
+0x100472192	0x0000002B	[  2] literal string: (StopResolve: removed retransmission for ¿
+0x1004721BD	0x00000026	[  2] literal string: #failed to create IPv4 MyUdpSocket: ¿
+0x1004721E3	0x00000021	[  2] literal string: failed to create IPv4 socket: ¿
+0x100472204	0x00000026	[  2] literal string: #failed to create IPv6 MyUdpSocket: ¿
+0x10047222A	0x00000021	[  2] literal string: failed to create IPv6 socket: ¿
+0x10047224B	0x0000002C	[  2] literal string: failed to join multicast: ¿: ¿\n. Skipped.
+0x100472277	0x0000003D	[  2] literal string: \"no socket available for interface ¿ with addr ¿\n. Skipped.
+0x1004722B4	0x0000002E	[  2] literal string: +failed to add signal socket to the poller: ¿
+0x1004722E2	0x00000023	[  2] literal string:  failed to register ipv4 socket: ¿
+0x100472305	0x00000023	[  2] literal string:  failed to register ipv6 socket: ¿
+0x100472328	0x00000022	[  2] literal string: failed to select from sockets: ¿
+0x10047234A	0x0000002B	[  2] literal string: \nrun: send ¿ service removal to listeners
+0x100472375	0x00000021	[  2] literal string: hostname resolver timeout for ¿
+0x100472396	0x00000031	[  2] literal string: .Stopping hostname resolution during shutdown: ¿
+0x1004723C7	0x0000004A	[  2] literal string: GFailed to send HostnameResolutionEvent::SearchStopped during shutdown: ¿
+0x100472411	0x00000024	[  2] literal string: !Stopping browse during shutdown: ¿
+0x100472435	0x00000031	[  2] literal string: .Failed to send SearchStopped during shutdown: ¿
+0x100472466	0x0000002A	[  2] literal string: 'Unregistering service during shutdown: ¿
+0x100472490	0x0000001E	[  2] literal string: ¿ qtype ¿ is due to refresh
+0x1004724AE	0x00000032	[  2] literal string: \rtiebreaking '¿!': LOST, will wait for one second
+0x1004724E0	0x00000015	[  2] literal string: \rtiebreaking '¿': ¿
+0x1004724F5	0x00000039	[  2] literal string: insert record ¿ with new hostname ¿ into probe for: ¿
+0x10047252E	0x00000020	[  2] literal string: answer was not added for msg ¿
+0x10047254E	0x0000001B	[  2] literal string: No addrs on LAN of intf ¿
+0x100472569	0x0000004B	[  2] literal string: read_header: id ¿, ¿ questions ¿\t answers ¿\r authorities ¿ additionals
+0x1004725B4	0x0000002D	[  2] literal string: #DNS incoming: header is too short: ¿ bytes
+0x1004725E1	0x00000013	[  2] literal string: read_questions: ¿
+0x1004725F4	0x00000030	[  2] literal string: DNS incoming: question idx ¿ qtype unknown: ¿
+0x100472624	0x0000002C	[  2] literal string: DNS incoming: question idx ¿ too short: ¿
+0x100472650	0x00000014	[  2] literal string: read_rr_records: ¿
+0x100472664	0x00000029	[  2] literal string: Unsupported DNS record type: ¿ name: ¿
+0x10047268D	0x00000056	[  2] literal string: 4read_rr_records: decode offset error for RData type ¿\t offset: ¿ expected offset: ¿
+0x1004726E3	0x00000036	[  2] literal string: RR ¿ RDATA length ¿ is invalid: remain data len: ¿
+0x100472719	0x00000038	[  2] literal string: read_others: RR '¿' is too short after name: ¿ bytes
+0x100472751	0x00000030	[  2] literal string: -NSEC block length must be in the range 1-32: ¿
+0x100472781	0x0000002A	[  2] literal string: NSEC block overflow: ¿ over RData len ¿
+0x1004727AB	0x0000001F	[  2] literal string: NSEC block number is not 0: ¿
+0x1004727CA	0x0000003C	[  2] literal string: DnsIncoming is too short: ¿ at NSEC Type Bit Map offset ¿
+0x100472806	0x0000001F	[  2] literal string: read_u16: slice len is only ¿
+0x100472825	0x0000002C	[  2] literal string: read_name: ending ¿ exceeds data length ¿
+0x100472851	0x0000004B	[  2] literal string: \"Invalid name compression: pointer ¿$ must be less than the start offset ¿
+0x10047289C	0x00000024	[  2] literal string: !read_name: u16 slice len is only ¿
+0x1004728C0	0x00000033	[  2] literal string: read_name: offset: ¿\n data len ¿. DnsIncoming: ¿
+0x1004728F3	0x00000026	[  2] literal string: #ERROR: convert to String from key: ¿
+0x100472919	0x00000072	[  2] literal string: AERROR: DNS TXT: size given for property is out of range. (offset=¿\t, length=¿\r, offset_end=¿, record length=¿)
+0x10047298B	0x00000029	[  2] literal string: &failed to convert to String from key: ¿
+0x1004729B4	0x0000008E	[  2] literal string: ]DNS TXT record contains invalid data: Size given for property would be out of range. (offset=¿\t, length=¿\r, offset_end=¿, record length=¿)
+0x100472A42	0x00000039	[  2] literal string: 6SO_REUSEPORT is not supported, continuing without it: ¿
+0x100472A7B	0x00000016	[  2] literal string: new socket bind to ¿
+0x100472A91	0x00000007	[  2] literal string: ¿ (2)
+0x100472A98	0x00000025	[  2] literal string: \"Hostname must end with '.local.': ¿
+0x100472ABD	0x00000005	[  2] literal string: ¿-2
+0x100472AC2	0x00000005	[  2] literal string: ¿-¿
+0x100472AC7	0x0000002C	[  2] literal string: \rsent unicast ¿ bytes on interface ¿ to ¿
+0x100472AF3	0x00000028	[  2] literal string: Failed to send unicast to ¿ via ¿: ¿
+0x100472B1B	0x0000001D	[  2] literal string: Drop over-sized packet (¿)
+0x100472B38	0x00000025	[  2] literal string: prepare to announce service ¿ on ¿
+0x100472B5D	0x0000003C	[  2] literal string: prepare_announce (ipv4: ¿): no valid addrs on interface ¿
+0x100472B99	0x00000033	[  2] literal string: \tsent out ¿ bytes on interface ¿ (idx ¿) addr ¿
+0x100472BCC	0x00000020	[  2] literal string: Failed to send to ¿ via ¿: ¿
+0x100472BEC	0x00000040	[  2] literal string: \rmDNS service ¿/ must end with '._tcp.local.' or '._udp.local.'
+0x100472C2C	0x00000026	[  2] literal string: join multicast group V4 on ¿ addr ¿
+0x100472C52	0x00000034	[  2] literal string: join multicast group V6 on ¿ addr ¿ with index ¿
+0x100472C86	0x0000004A	[  2] literal string: \nprobe of '¿' finished: move ¿ records to active. (¿ waiting services)
+0x100472CD0	0x00000016	[  2] literal string: Name change event: ¿
+0x100472CE6	0x0000003F	[  2] literal string: send ¿: ¿ questions ¿\t answers ¿\r authorities ¿ additional
+0x100472D25	0x00000045	[  2] literal string: >send_dns_outgoing: failed to set multicast interface for IPv4 ¿: ¿
+0x100472D6A	0x00000045	[  2] literal string: >send_dns_outgoing: failed to set multicast interface for IPv6 ¿: ¿
+0x100472DAF	0x00000029	[  2] literal string: Service name length must be <= ¿ bytes
+0x100472DD8	0x00000026	[  2] literal string: #Service type name cannot be empty: ¿
+0x100472DFE	0x00000026	[  2] literal string: #parsing of ip addr failed, reason: ¿
+0x100472E24	0x00000022	[  2] literal string: TxtProperty {key: \"¿\", val: ¿}
+0x100472E46	0x0000002D	[  2] literal string: \npriority: ¿\n, weight: ¿, port: ¿, host: ¿
+0x100472E73	0x00000021	[  2] literal string: DnsTxt { record: ¿, text: ¿ }
+0x100472E94	0x00000010	[  2] literal string: cpu: ¿, os: ¿
+0x100472EA4	0x0000001C	[  2] literal string: Writing HInfo: cpu ¿ os ¿
+0x100472EC0	0x00000025	[  2] literal string: \rnext_domain: ¿, type_bitmap len: ¿
+0x100472FD2	0x00000008	[  2] literal string: 48;5;¿
+0x100472FDA	0x0000000E	[  2] literal string: 48;2;¿;¿;¿
+0x100472FE8	0x00000008	[  2] literal string: 38;5;¿
+0x100472FF0	0x0000000E	[  2] literal string: 38;2;¿;¿;¿
+0x1004731C8	0x0000000B	[  2] literal string: ¿ ¿ ¿ ¿
+0x100473417	0x00000016	[  2] literal string: unknown error code ¿
+0x10047342D	0x0000000A	[  2] literal string: :lib(¿)
+0x100473437	0x0000000B	[  2] literal string: :func(¿)
+0x100473442	0x0000000D	[  2] literal string: :reason(¿)
+0x10047344F	0x0000000A	[  2] literal string: :¿:¿:¿
+0x1004735F7	0x00000008	[  2] literal string: ¿ (¿)
+0x1004735FF	0x0000000A	[  2] literal string: offset ¿
+0x100473BFF	0x0000001F	[  2] literal string: invalid value: ¿, expected ¿
+0x100473C1E	0x00000022	[  2] literal string: unknown variant `¿`, expected ¿
+0x100473E1C	0x00000003	[  2] literal string: ¿¿
+0x100473E1F	0x00000007	[  2] literal string: ¿¿: ¿
+0x100473E26	0x00000006	[  2] literal string: ¿: ¿
+0x100473E6D	0x0000000A	[  2] literal string: [\n¿\n¿]
+0x100473E77	0x0000000A	[  2] literal string: {\n¿\n¿}
+0x100473E81	0x00000012	[  2] literal string: Data(¿ Len: ¿)
+0x100473E93	0x00000015	[  2] literal string: Data(¿\t... Len: ¿)
+0x100473EA8	0x0000000A	[  2] literal string: Date(¿)
+0x100473EB2	0x00000006	[  2] literal string: \"¿\"
+0x100473EB8	0x00000008	[  2] literal string: {\n¿\n}
+0x100473EC0	0x00000005	[  2] literal string: ¿/¿
+0x100474068	0x00000023	[  2] literal string:  could not initialize ThreadRng: ¿
+0x10047410F	0x0000000A	[  2] literal string: Error: ¿
+0x100474485	0x0000003F	[  2] literal string: <max number of byte-based equivalent classes is 256, but got ¿
+0x10047461D	0x00000045	[  2] literal string: Bcannot create iterator for StateID when number of elements exceed ¿
+0x1004746B4	0x00000047	[  2] literal string: Dcannot create iterator for PatternID when number of elements exceed ¿
+0x1004746FB	0x00000020	[  2] literal string: accelerator already contains ¿
+0x10047471B	0x0000003B	[  2] literal string: ¿8 is both a start and a match state, which is not allowed
+0x1004747FA	0x0000002B	[  2] literal string: ¿ exceeds capacity of ¿ when inserting ¿
+0x100474825	0x00000025	[  2] literal string: \"sparse set capacity cannot exceed ¿
+0x10047484A	0x00000016	[  2] literal string: invalid pattern ID ¿
+0x100474860	0x00000018	[  2] literal string: invalid 'id1' state: ¿
+0x100474878	0x00000018	[  2] literal string: invalid 'id2' state: ¿
+0x100474935	0x00000040	[  2] literal string: attempted to compile ¿& patterns, which exceeds the limit of ¿
+0x100474975	0x00000042	[  2] literal string: attempted to compile ¿( NFA states, which exceeds the limit of ¿
+0x1004749B7	0x00000037	[  2] literal string: 4heap usage during NFA compilation exceeded limit of ¿
+0x1004749EE	0x0000003E	[  2] literal string: capture group index ¿& is invalid (too big or discontinuous)
+0x100474A2C	0x00000035	[  2] literal string:  failed to create PatternID from ¿, which exceeds ¿
+0x100474A61	0x0000002C	[  2] literal string: )too many patterns to build capture info: ¿
+0x100474A8D	0x00000040	[  2] literal string: \"too many capture groups (at least ¿) were found for pattern ¿
+0x100474ACD	0x00000079	[  2] literal string: &no capturing groups found for pattern ¿O (either all patterns have zero groups or all patterns have at least one group)
+0x100474B46	0x00000051	[  2] literal string: -first capture group (at index 0) for pattern ¿  has a name (it must be unnamed)
+0x100474B97	0x00000037	[  2] literal string: duplicate capture group name '¿' found for pattern ¿
+0x100474BCE	0x00000027	[  2] literal string: $unsupported regex feature for DFAs: ¿
+0x100474BF5	0x00000029	[  2] literal string: &number of DFA states exceeds limit of ¿
+0x100474C1E	0x00000044	[  2] literal string: Acompiling DFA with start states exceeds pattern pattern limit of ¿
+0x100474C62	0x0000004A	[  2] literal string: Gcompiling DFA with total patterns in all match states exceeds limit of ¿
+0x100474CAC	0x00000036	[  2] literal string: DFA exceeded size limit of ¿ during determinization
+0x100474CE2	0x0000002A	[  2] literal string: 'determinization exceeded size limit of ¿
+0x100474DE9	0x0000001B	[  2] literal string: expected char at offset ¿
+0x100474EDB	0x00000045	[  2] literal string: Binternal error: entered unreachable code: invalid encoded length: ¿
+0x100474F6D	0x0000002C	[  2] literal string: )tried to unwrap expr from HirFrame, got: ¿
+0x100474FE7	0x0000002D	[  2] literal string: *tried to unwrap group from HirFrame, got: ¿
+0x100475014	0x00000032	[  2] literal string: /tried to unwrap repetition from HirFrame, got: ¿
+0x100475046	0x00000032	[  2] literal string: /tried to unwrap byte class from HirFrame, got: ¿
+0x100475078	0x00000035	[  2] literal string: 2tried to unwrap Unicode class from HirFrame, got: ¿
+0x1004750AD	0x00000030	[  2] literal string: -tried to unwrap alt pipe from HirFrame, got: ¿
+0x1004750DD	0x00000028	[  2] literal string: #expected valid Perl class but got '¿'
+0x1004751D9	0x00000036	[  2] literal string: 1exceeded the maximum number of capturing groups (¿)
+0x10047520F	0x0000003F	[  2] literal string: :exceed the maximum number of nested parentheses/brackets (¿)
+0x10047524E	0x0000000E	[  2] literal string: Span(¿, ¿)
+0x10047525C	0x0000000A	[  2] literal string: error: ¿
+0x100475266	0x00000004	[  2] literal string: ¿\n
+0x10047526A	0x00000034	[  2] literal string: on line ¿\t (column ¿) through line ¿\t (column ¿)
+0x10047529E	0x0000001F	[  2] literal string: Position(o: ¿, l: ¿, c: ¿)
+0x1004752BD	0x00000005	[  2] literal string: 0x¿
+0x1004752ED	0x00000078	[  2] literal string: 9internal error: entered unreachable code: str::from_utf8(¿) = ¿\" was expected to have 1 char, but ¿ chars were found
+0x1004758F2	0x00000024	[  2] literal string: !failed to parse RSA private key: ¿
+0x1004760C8	0x00000028	[  2] literal string: %failed to parse Ed25519 private key: ¿
+0x1004760F0	0x0000002F	[  2] literal string: %illegal write_vectored return value (¿ > ¿)
+0x100476237	0x00000002	[  2] literal string: 
+0x100476239	0x0000000D	[  2] literal string: \t*ÜHÜ˜\r
+0x100476246	0x0000000D	[  2] literal string: \t*ÜHÜ˜\r
+0x100476253	0x0000000D	[  2] literal string: \t*ÜHÜ˜\r
+0x100476260	0x0000000D	[  2] literal string: \t*ÜHÜ˜\r\r
+0x100476354	0x0000000C	[  2] literal string: (¿ roots)
+0x100476360	0x0000006A	[  2] literal string: 'certificate expired: verification time ¿, (UNIX), but certificate is not valid after ¿ (¿\r seconds ago)
+0x1004763CA	0x00000077	[  2] literal string: -certificate not valid yet: verification time ¿- (UNIX), but certificate is not valid before ¿ (¿ seconds in future)
+0x100476441	0x00000072	[  2] literal string: 7certificate revocation list expired: verification time ¿$ (UNIX), but CRL is not valid after ¿ (¿\r seconds ago)
+0x1004764B3	0x00000031	[  2] literal string: certificate not valid for name ¿; certificate 
+0x1004764E4	0x00000015	[  2] literal string: is only valid for ¿
+0x1004764F9	0x00000007	[  2] literal string:  or ¿
+0x100476500	0x0000003F	[  2] literal string: 2certificate does not allow extended key usage for ¿\t, allows 
+0x1004765E5	0x00000036	[  2] literal string: !received unexpected message: got ¿ when expecting ¿
+0x10047661B	0x00000040	[  2] literal string: +received unexpected handshake message: got ¿ when expecting ¿
+0x10047665B	0x00000023	[  2] literal string:  encrypted client hello failure: ¿
+0x10047667E	0x00000024	[  2] literal string: !received corrupt message of type ¿
+0x1004766A2	0x00000019	[  2] literal string: peer is incompatible: ¿
+0x1004766BB	0x00000014	[  2] literal string: peer misbehaved: ¿
+0x1004766CF	0x00000019	[  2] literal string: received fatal alert: ¿
+0x1004766E8	0x0000001D	[  2] literal string: invalid peer certificate: ¿
+0x100476705	0x00000028	[  2] literal string: %invalid certificate revocation list: ¿
+0x10047672D	0x00000015	[  2] literal string: unexpected error: ¿
+0x100476742	0x0000001F	[  2] literal string: keys may not be consistent: ¿
+0x100476761	0x00000010	[  2] literal string: \rother error: ¿
+0x10047689C	0x0000000E	[  2] literal string: \tboolean `¿`
+0x1004768AA	0x0000000E	[  2] literal string: \tinteger `¿`
+0x1004768B8	0x00000010	[  2] literal string: character `¿`
+0x1004768C8	0x0000000A	[  2] literal string: string ¿
+0x100476918	0x00000006	[  2] literal string: `¿`
+0x10047691E	0x0000000E	[  2] literal string: `¿` or `¿`
+0x100476A52	0x0000000A	[  2] literal string: Bool(¿)
+0x100476A5C	0x0000000C	[  2] literal string: String(¿)
+0x100476A68	0x0000000C	[  2] literal string: Number(¿)
+0x100476A74	0x00000017	[  2] literal string: ¿\t at line ¿ column ¿
+0x100476A8B	0x00000021	[  2] literal string: Error(¿, line: ¿\n, column: ¿)
+0x100476AAC	0x0000001E	[  2] literal string: invalid type: ¿, expected ¿
+0x100476ACA	0x00000015	[  2] literal string: floating point `¿`
+0x100476BB2	0x0000002A	[  2] literal string: 'Attempted to register forbidden signal ¿
+0x100476C2B	0x0000000A	[  2] literal string: Some(¿)
+0x100476E5D	0x0000001A	[  2] literal string: failed printing to ¿: ¿
+0x100476F16	0x00000027	[  2] literal string: \t\nthread '¿' (¿) panicked at ¿:\n¿\n
+0x100476F8A	0x00000025	[  2] literal string:       [... omitted ¿ frame¿ ...]\n
+0x100477335	0x0000001A	[  2] literal string: failed to join thread: ¿
+0x100477527	0x00000004	[  2] literal string: :¿
+0x1004775EF	0x00000027	[  2] literal string: memory allocation of ¿ bytes failed\n
+0x100477616	0x00000060	[  2] literal string: memory allocation of ¿G bytes failed\nskipping backtrace printing to avoid potential recursion\n
+0x100477676	0x00000022	[  2] literal string: aborting due to panic at ¿:\n¿\n
+0x100477698	0x00000047	[  2] literal string: panicked at ¿:\n¿3\nthread panicked while processing panic. aborting.\n
+0x100477744	0x00000005	[  2] literal string: .¿¿
+0x100477749	0x0000004B	[  2] literal string: Hcannot access a Thread Local Storage value during or after destruction: ¿
+0x100477A17	0x00000029	[  2] literal string: &failed to lookup address information: ¿
+0x100477A40	0x00000019	[  2] literal string: failed to lock mutex: ¿
+0x100477B15	0x00000008	[  2] literal string: ¿:¿:¿
+0x100477B1D	0x0000000E	[  2] literal string: ¿ (pathname)
+0x100477B2B	0x00000025	[  2] literal string: \"unexpected error during closedir: ¿
+0x100477C82	0x00000028	[  2] literal string: queue is not full; tail = ¿\t; head = ¿
+0x100477D43	0x0000003D	[  2] literal string: ,registering event source with poller: token=¿, interests=¿
+0x100477E24	0x00000021	[  2] literal string: OS can't spawn worker thread: ¿
+0x1004781AF	0x00000029	[  2] literal string: \"¿\" must be usize, error: ¿\t, value: ¿
+0x1004782F3	0x0000002F	[  2] literal string: *cannot add more than MAX_PERMITS permits (¿)
+0x100478322	0x0000003E	[  2] literal string: number of added permits (¿) would overflow MAX_PERMITS (¿)
+0x10047850D	0x0000001A	[  2] literal string: Bad read on self-pipe: ¿
+0x100478648	0x00000031	[  2] literal string: .unexpected error when polling the I/O driver: ¿
+0x1004786C4	0x00000015	[  2] literal string: \tcurrent: ¿, sub: ¿
+0x1004786D9	0x00000014	[  2] literal string: elapsed=¿; when=¿
+0x1004789CE	0x00000024	[  2] literal string: !inconsistent park_timeout state: ¿
+0x1004789F2	0x00000025	[  2] literal string: \"inconsistent park state; actual = ¿
+0x100478A17	0x0000002A	[  2] literal string: 'inconsistent state in unpark; actual = ¿
+0x100478A41	0x0000000C	[  2] literal string: \tactual = ¿
+0x100478ADC	0x0000002D	[  2] literal string: *inconsistent park_timeout state; actual = ¿
+0x100478B9F	0x0000001F	[  2] literal string: Refusing to register signal ¿
+0x100478BBE	0x00000019	[  2] literal string: \"¿\" cannot be set to 0
+0x100478BD7	0x00000026	[  2] literal string: \"¿ \" must be valid unicode, error: ¿
+0x100478D22	0x00000010	[  2] literal string: \rtimer error: ¿
+0x100478F61	0x0000003E	[  2] literal string: 9Failed to send shutdown signal to logging worker. Error: ¿\n
+0x100479077	0x00000010	[  2] literal string: Identifier(¿)
+0x100479087	0x00000005	[  2] literal string: ¿:¿
+0x1004793C5	0x0000002D	[  2] literal string: *internal error: entered unreachable code: ¿
+0x10047948D	0x00000014	[  2] literal string: \nignoring `¿`: ¿\n
+0x1004794A1	0x00000004	[  2] literal string: ¿ 
+0x1004794ED	0x00000066	[  2] literal string: creating a new thread ID (¿A) would exceed the maximum number of thread ID bits specified in ¿ (¿)
+0x100479706	0x00000058	[  2] literal string: AThread count overflowed the configured max count. Thread index = ¿, max threads = ¿.
+0x100479903	0x00000004	[  2] literal string: +¿
+0x100479907	0x00000030	[  2] literal string: tried to clone a span (¿) that already closed
+0x100479937	0x00000035	[  2] literal string: tried to drop a ref to ¿, but no such span exists!
+0x10047996C	0x00000004	[  2] literal string: ¿¿¿
+0x100479970	0x00000005	[  2] literal string: ¿¿ 
+0x100479975	0x00000008	[  2] literal string: ¿¿:¿ 
+0x10047997D	0x00000008	[  2] literal string: \u{¿}
+0x100479985	0x00000008	[  2] literal string: ¿ ¿¿¿¿
+0x1004799D9	0x00000019	[  2] literal string: invalid field filter: ¿
+0x1004799F2	0x0000001D	[  2] literal string: invalid filter directive: ¿
+0x100479A58	0x00000019	[  2] literal string: invalid field name `¿`
+0x100479AB5	0x0000002D	[  2] literal string: *could not retrieve random bytes for uuid: ¿
+0x100479E18	0x00000002	[  2] literal string: ¿
+0x100479FB0	0x0000000F	[  2] literal string: \tDnsName(\"¿\")
+0x100479FBF	0x0000000F	[  2] literal string: \nIpAddress(¿)
+0x100479FCE	0x00000021	[  2] literal string: UniformResourceIdentifier(\"¿\")
+0x100486BE0	0x00000021	[175] literal string: HashToGroup-OPRFV1--P384-SHA384
+0x100486C01	0x00000022	[175] literal string: HashToScalar-OPRFV1--P384-SHA384
+0x1005205F8	0x00000010	[812] _listener_init_once
+0x10052CA58	0x00000040	[812] _listener_mutex

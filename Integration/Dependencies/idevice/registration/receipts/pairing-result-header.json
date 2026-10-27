@@ -1,0 +1,24 @@
+{
+  "adapted_build_rs_sha256": "86c02e14c2dc7ec9e492de85cf5e079d01f87f97976c0ba78f1a1d358ebe5382",
+  "consumer_activation": false,
+  "dependency_or_lock_changed": false,
+  "existing_probe_or_bridge_changed": false,
+  "failure": {
+    "artifact_id": 11376074991,
+    "artifact_zip_sha256": "a3847bda08b0a8e1b8a44e6be85752567c42ee68efb4ea2110d26bbfed06e7b7",
+    "commit": "bdb4d45c717a2a661d5a8814b6b6d18d5f88e0a3",
+    "job_id": 112012726136,
+    "retained_log": "header-abi-evidence/failed-host-swift-import.txt",
+    "retained_log_sha256": "4dc95377e665ade4f87e8251262c2d43ac9e96cf191e1d0bdc406c30ed448d16",
+    "run_id": 37384014669,
+    "whole_generated_header_retained_in_failed_artifact": false
+  },
+  "generator_source_provenance": "upstream/registry-build/cbindgen-0.29.2/enum-generation-provenance.json",
+  "generator_source_provenance_sha256": "ce405f5ba9e239a907297f9df2a94527c8c59c531abed1d7d300c39924410b35",
+  "native_import_link_verified": false,
+  "original_build_rs_sha256": "4ed0afafbed97141a713f0a0ca6d2d2b78d79c7020342de20768856bc2a8310f",
+  "purpose": "Apple-only cbindgen configuration for two additive uint32 result types",
+  "rust_representation_or_discriminants_changed": false,
+  "scalar_declarations_sha256": "d9067c1343c078fc208221330f65f13afdbaeeb50aff7dc3e14ad64d284f6450",
+  "schema": 1
+}

@@ -1,0 +1,667 @@
+{
+  "baseline": "3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+  "reviewDate": "2026-10-05",
+  "status": "candidate-incomplete",
+  "components": [
+    {
+      "id": "tetherless",
+      "name": "Tetherless",
+      "repository": "https://github.com/oskuhsiu/Tetherless",
+      "revision": "3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+      "sourceURL": "https://github.com/oskuhsiu/Tetherless/tree/3dd8641e84698b97f96d53a6c53ed8c6ca4675bd",
+      "licenseDeclared": "AGPL-3.0-only",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "application-source",
+      "evidence": "212-file baseline and independent GitHub tree",
+      "scope": "product",
+      "comment": "Original code declared AGPL-3.0-only. No standalone root LICENSE in baseline; upstream license retained only after submodule initialization."
+    },
+    {
+      "id": "sidestore",
+      "name": "SideStore",
+      "repository": "https://github.com/SideStore/SideStore",
+      "revision": "0dd743f75afc358b0ba4a002feb5f19474492371",
+      "sourceURL": "https://github.com/SideStore/SideStore/tree/0dd743f75afc358b0ba4a002feb5f19474492371",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "gitlink-source",
+      "scope": "product",
+      "declaredLicenseText": "AGPLv3",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "comment": "Modified by deterministic Tetherless transformations; original notices must remain. SideBackup is built from this source and packaged by its build phase."
+    },
+    {
+      "id": "sidesign",
+      "name": "SideSign",
+      "repository": "https://github.com/SideStore/SideSign",
+      "revision": "6b68651697f99791ef85404b7aea1891a26a285d",
+      "sourceURL": "https://github.com/SideStore/SideSign/tree/6b68651697f99791ef85404b7aea1891a26a285d",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "gitlink-source",
+      "scope": "product",
+      "declaredLicenseText": "GPLv3 in README; no LICENSE in complete pinned tree",
+      "licenseFiles": [],
+      "comment": "Primary signing/authentication library. Missing full license file is a notice-packaging gap; README grant is not MIT and is not absence of any license statement."
+    },
+    {
+      "id": "minimuxer",
+      "name": "Minimuxer",
+      "repository": "https://github.com/SideStore/minimuxer",
+      "revision": "12be70dc2627307a16bfd2dc7a009080d5bec909",
+      "sourceURL": "https://github.com/SideStore/minimuxer/tree/12be70dc2627307a16bfd2dc7a009080d5bec909",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "gitlink-source",
+      "scope": "product",
+      "declaredLicenseText": "AGPLv3",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "comment": "Contains local Common and DeviceGateway packages; both IDevice and libimobiledevice gateways are unconditionally declared dependencies."
+    },
+    {
+      "id": "anisettekit",
+      "name": "AnisetteKit",
+      "repository": "https://github.com/mahee96/AnisetteKit",
+      "revision": "db8b41022697b6c19be8a5f01a1ce834145a2a26",
+      "sourceURL": "https://github.com/mahee96/AnisetteKit/tree/db8b41022697b6c19be8a5f01a1ce834145a2a26",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "branch": "main",
+        "revision": "db8b41022697b6c19be8a5f01a1ce834145a2a26"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "declaredLicenseText": "AGPLv3; LICENSE application notice says version 3 or later; README adds App Store prohibition and distribution commentary",
+      "comment": "Retain LICENSE and README terms. Do not silently reduce to MIT or assert that all README restrictions are standard AGPL terms."
+    },
+    {
+      "id": "codesignkit",
+      "name": "CodeSignKit",
+      "repository": "https://github.com/mahee96/CodeSignKit",
+      "revision": "d0c67710fda9a2646b9e829cb2cf443892728371",
+      "sourceURL": "https://github.com/mahee96/CodeSignKit/tree/d0c67710fda9a2646b9e829cb2cf443892728371",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "branch": "main",
+        "revision": "d0c67710fda9a2646b9e829cb2cf443892728371"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "declaredLicenseText": "AGPLv3; LICENSE application notice says version 3 or later; README adds App Store prohibition and distribution commentary",
+      "comment": "Retain LICENSE and README terms. Do not silently reduce to MIT or assert that all README restrictions are standard AGPL terms."
+    },
+    {
+      "id": "gsacryptokit",
+      "name": "GSACryptoKit",
+      "repository": "https://github.com/mahee96/GSACryptoKit",
+      "revision": "eae2590eaf17fe98ce9c76b3ec2bd42b780eb123",
+      "sourceURL": "https://github.com/mahee96/GSACryptoKit/tree/eae2590eaf17fe98ce9c76b3ec2bd42b780eb123",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "branch": "main",
+        "revision": "eae2590eaf17fe98ce9c76b3ec2bd42b780eb123"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "declaredLicenseText": "AGPLv3; LICENSE application notice says version 3 or later; README adds App Store prohibition and distribution commentary",
+      "comment": "Retain LICENSE and README terms. Do not silently reduce to MIT or assert that all README restrictions are standard AGPL terms."
+    },
+    {
+      "id": "keychainaccess",
+      "name": "KeychainAccess",
+      "repository": "https://github.com/kishikawakatsumi/KeychainAccess",
+      "revision": "e0c7eebc5a4465a3c4680764f26b7a61f567cdaf",
+      "sourceURL": "https://github.com/kishikawakatsumi/KeychainAccess/tree/e0c7eebc5a4465a3c4680764f26b7a61f567cdaf",
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "branch": "master",
+        "revision": "e0c7eebc5a4465a3c4680764f26b7a61f567cdaf"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ]
+    },
+    {
+      "id": "libdeflate",
+      "name": "libdeflate",
+      "repository": "https://github.com/SideStore/libdeflate",
+      "revision": "da6c7dae03b78dc71af973664575e4209786fbfe",
+      "sourceURL": "https://github.com/SideStore/libdeflate/tree/da6c7dae03b78dc71af973664575e4209786fbfe",
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "branch": "master",
+        "revision": "da6c7dae03b78dc71af973664575e4209786fbfe"
+      },
+      "licenseFiles": [
+        "COPYING"
+      ]
+    },
+    {
+      "id": "markdownkit",
+      "name": "MarkdownKit",
+      "repository": "https://github.com/bmoliveira/MarkdownKit",
+      "revision": "39ea7a3fc7e65bcafe55152592b834859be574a5",
+      "sourceURL": "https://github.com/bmoliveira/MarkdownKit/tree/39ea7a3fc7e65bcafe55152592b834859be574a5",
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "39ea7a3fc7e65bcafe55152592b834859be574a5",
+        "version": "1.7.3"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ]
+    },
+    {
+      "id": "nuke",
+      "name": "Nuke",
+      "repository": "https://github.com/kean/Nuke",
+      "revision": "30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+      "sourceURL": "https://github.com/kean/Nuke/tree/30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+        "version": "13.2.0"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ]
+    },
+    {
+      "id": "remotepairingkit",
+      "name": "RemotePairingKit",
+      "repository": "https://github.com/mahee96/RemotePairingKit",
+      "revision": "e3f70d16c0c551540a533a39d540e78e5b0a60a8",
+      "sourceURL": "https://github.com/mahee96/RemotePairingKit/tree/e3f70d16c0c551540a533a39d540e78e5b0a60a8",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "branch": "main",
+        "revision": "e3f70d16c0c551540a533a39d540e78e5b0a60a8"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "declaredLicenseText": "AGPLv3; named LICENSE application notice says version 3 or later",
+      "comment": "Required by alternative LibimobiledeviceGateway, not default IDevice gateway; remove only with graph and route changes."
+    },
+    {
+      "id": "semanticversion",
+      "name": "SemanticVersion",
+      "repository": "https://github.com/SwiftPackageIndex/SemanticVersion",
+      "revision": "ea8eea9d89842a29af1b8e6c7677f1c86e72fa42",
+      "sourceURL": "https://github.com/SwiftPackageIndex/SemanticVersion/tree/ea8eea9d89842a29af1b8e6c7677f1c86e72fa42",
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "ea8eea9d89842a29af1b8e6c7677f1c86e72fa42",
+        "version": "0.4.0"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ]
+    },
+    {
+      "id": "starscream",
+      "name": "Starscream",
+      "repository": "https://github.com/daltoniam/Starscream",
+      "revision": "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+      "sourceURL": "https://github.com/daltoniam/Starscream/tree/c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+        "version": "4.0.8"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "comment": "swift-nio-zlib-support is Linux-conditional and not in the locked native iOS graph."
+    },
+    {
+      "id": "swift-asn1",
+      "name": "swift-asn1",
+      "repository": "https://github.com/apple/swift-asn1",
+      "revision": "9f542610331815e29cc3821d3b6f488db8715517",
+      "sourceURL": "https://github.com/apple/swift-asn1/tree/9f542610331815e29cc3821d3b6f488db8715517",
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "9f542610331815e29cc3821d3b6f488db8715517",
+        "version": "1.6.0"
+      },
+      "licenseFiles": [
+        "NOTICE.txt",
+        "LICENSE.txt"
+      ]
+    },
+    {
+      "id": "swift-crypto",
+      "name": "swift-crypto",
+      "repository": "https://github.com/apple/swift-crypto",
+      "revision": "bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+      "sourceURL": "https://github.com/apple/swift-crypto/tree/bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "bb4ba815dab96d4edc1e0b86d7b9acf9ff973a84",
+        "version": "4.3.1"
+      },
+      "licenseFiles": [
+        "NOTICE.txt",
+        "LICENSE.txt"
+      ],
+      "comment": "CryptoExtras pulls in vendored BoringSSL on Apple platforms; Crypto alone using system CryptoKit does not remove that dependency. CXKCP and test vectors exist in source but final iOS reachability needs actual build graph."
+    },
+    {
+      "id": "zipfoundation",
+      "name": "ZIPFoundation",
+      "repository": "https://github.com/weichsel/ZIPFoundation",
+      "revision": "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+      "sourceURL": "https://github.com/weichsel/ZIPFoundation/tree/22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "swift-package-source",
+      "scope": "product",
+      "lockState": {
+        "revision": "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+        "version": "0.9.20"
+      },
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "comment": "Compression is used where available on Apple platforms; CZLib is conditional for other platforms."
+    },
+    {
+      "id": "emproxy",
+      "name": "EMProxy",
+      "repository": "https://github.com/SideStore/em_proxy",
+      "revision": "6e117e140ca7cff4ff106bdefa18147552a0e592",
+      "sourceURL": "https://github.com/SideStore/em_proxy/tree/6e117e140ca7cff4ff106bdefa18147552a0e592",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "prebuilt-xcframework",
+      "scope": "conditional runtime route, unconditional linked package target",
+      "version": "v0.9.3",
+      "declaredLicenseText": "AGPLv3",
+      "artifactURL": "https://github.com/SideStore/em_proxy/releases/download/v0.9.3/EMProxy.xcframework.zip",
+      "expectedSHA256": "3998789c38d09b55e488d46e31897affc7bbcb9c244d7a9d5b2d5cf6afd916c3",
+      "assetID": 530642433,
+      "size": 32752945,
+      "provenance": {
+        "manifestMatchesReleaseDigest": true,
+        "releaseCommitVerifiedByGitHub": true,
+        "actualArchiveBytesRead": false,
+        "independentRebuildVerified": false,
+        "artifactAttestationVerified": false,
+        "conclusion": "Publisher-channel source/release consistency only; not independent binary provenance"
+      }
+    },
+    {
+      "id": "idevice-binary",
+      "name": "IDevice",
+      "repository": "https://github.com/SideStore/idevice",
+      "revision": "3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+      "sourceURL": "https://github.com/SideStore/idevice/tree/3e55c8486b2057e40c1f74aaaa1155c82341cf76",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "prebuilt-xcframework",
+      "scope": "default profile/readback/install/pairing gateway",
+      "version": "v0.1.68-ss-3e55c84",
+      "declaredLicenseText": "MIT plus Rust/native dependencies",
+      "artifactURL": "https://github.com/SideStore/idevice/releases/download/v0.1.68-ss-3e55c84/idevice-xcframework-v0.1.68-ss-3e55c84.zip",
+      "expectedSHA256": "445702d53942597deb4cdec2c4122d16a3f4ac124ce26cd75b68dab3dad92416",
+      "assetID": 575001923,
+      "size": 26932638,
+      "provenance": {
+        "manifestMatchesReleaseDigest": true,
+        "releaseCommitVerifiedByGitHub": true,
+        "actualArchiveBytesRead": false,
+        "independentRebuildVerified": false,
+        "artifactAttestationVerified": false,
+        "conclusion": "Publisher-channel source/release consistency only; not independent binary provenance"
+      }
+    },
+    {
+      "id": "libimobiledevice-binary",
+      "name": "libimobiledevice XCFramework",
+      "repository": "https://github.com/SideStore/libimobiledevice-xcframework",
+      "revision": "0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a",
+      "sourceURL": "https://github.com/SideStore/libimobiledevice-xcframework/tree/0f88f7bbd1aa9713d8c8c2255df31f2b25ff9d8a",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "prebuilt-xcframework",
+      "scope": "alternative profile/readback/install gateway, currently reachable through persisted settings",
+      "version": "1.4.0-ss-0f88f7b",
+      "declaredLicenseText": "LGPL-2.1 library family plus component notices",
+      "artifactURL": "https://github.com/SideStore/libimobiledevice-xcframework/releases/download/1.4.0-ss-0f88f7b/libimobiledevice.xcframework.zip",
+      "expectedSHA256": "7ccbdd56b074807461fc43d2e32ba92f20df2501a6c14cf9f64a917e7f3fe6e7",
+      "assetID": 530610608,
+      "size": 2994598,
+      "provenance": {
+        "manifestMatchesReleaseDigest": true,
+        "releaseCommitVerifiedByGitHub": true,
+        "actualArchiveBytesRead": false,
+        "independentRebuildVerified": false,
+        "artifactAttestationVerified": false,
+        "conclusion": "Publisher-channel source/release consistency only; not independent binary provenance"
+      }
+    },
+    {
+      "id": "unicorn-binary",
+      "name": "Unicorn",
+      "repository": "https://github.com/mahee96/unicorn",
+      "revision": "a53ddc9ac6d65b24936d4a37917333fcd816cfd0",
+      "sourceURL": "https://github.com/mahee96/unicorn/tree/a53ddc9ac6d65b24936d4a37917333fcd816cfd0",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "prebuilt-xcframework",
+      "scope": "essential iOS on-device Anisette execution",
+      "version": "2.1.4-xcf-a53ddc9",
+      "declaredLicenseText": "GPLv2 declaration; GPL/LGPL/BSD/MIT file grants; exact v3 combination permission unresolved",
+      "artifactURL": "https://github.com/mahee96/unicorn/releases/download/2.1.4-xcf-a53ddc9/Unicorn.xcframework.zip",
+      "expectedSHA256": "52e4ac9e2d704c4941adc2c381df8706aabf673dc843611a90b33ad349d562db",
+      "assetID": 572633926,
+      "size": 9064475,
+      "provenance": {
+        "manifestMatchesReleaseDigest": true,
+        "releaseCommitVerifiedByGitHub": true,
+        "actualArchiveBytesRead": false,
+        "independentRebuildVerified": false,
+        "artifactAttestationVerified": false,
+        "conclusion": "Publisher-channel source/release consistency only; not independent binary provenance"
+      }
+    },
+    {
+      "id": "openssl-binary",
+      "name": "OpenSSL Apple XCFramework",
+      "repository": "https://github.com/krzyzanowskim/OpenSSL",
+      "revision": "fdc9231384f37f053dffe058fd6dfc6c5072dae5",
+      "sourceURL": "https://github.com/krzyzanowskim/OpenSSL/tree/fdc9231384f37f053dffe058fd6dfc6c5072dae5",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "prebuilt-xcframework",
+      "scope": "RemotePairingKit runtime and libimobiledevice static aggregation; CodeSignKit/GSACryptoKit references are test-only",
+      "version": "3.6.2000",
+      "declaredLicenseText": "Apache-2.0 for OpenSSL 3.6.2; preserve additional bundled notices",
+      "artifactURL": "https://github.com/krzyzanowskim/OpenSSL/releases/download/3.6.2000/OpenSSL.xcframework.zip",
+      "expectedSHA256": "37846a8bd302cb2443eff47f1045ab844d0cd40bf82cc6159cfad9aa5c3eff9e",
+      "assetID": 426003225,
+      "size": 45431584,
+      "provenance": {
+        "manifestMatchesReleaseDigest": true,
+        "releaseCommitVerifiedByGitHub": true,
+        "actualArchiveBytesRead": false,
+        "independentRebuildVerified": false,
+        "artifactAttestationVerified": false,
+        "conclusion": "Publisher-channel source/release consistency only; not independent binary provenance"
+      }
+    },
+    {
+      "id": "libplist",
+      "name": "libplist",
+      "repository": "https://github.com/libimobiledevice/libplist",
+      "revision": "32428abacb909988e8e960a8845a6430b17b6a60",
+      "sourceURL": "https://github.com/libimobiledevice/libplist/tree/32428abacb909988e8e960a8845a6430b17b6a60",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "binary-source-gitlink",
+      "scope": "libimobiledevice static build",
+      "declaredLicenseText": "LGPL-2.1 library declaration; preserve per-file notices and applicable relinking/source obligations"
+    },
+    {
+      "id": "libusbmuxd",
+      "name": "libusbmuxd",
+      "repository": "https://github.com/libimobiledevice/libusbmuxd",
+      "revision": "93eb168bf6b07472d17781328c21df0c60300524",
+      "sourceURL": "https://github.com/libimobiledevice/libusbmuxd/tree/93eb168bf6b07472d17781328c21df0c60300524",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "binary-source-gitlink",
+      "scope": "libimobiledevice static build",
+      "declaredLicenseText": "LGPL-2.1 library declaration; preserve per-file notices and applicable relinking/source obligations"
+    },
+    {
+      "id": "libimobiledevice-glue",
+      "name": "libimobiledevice-glue",
+      "repository": "https://github.com/libimobiledevice/libimobiledevice-glue",
+      "revision": "da770a7687f35fbb981db4d7b47b1b032cd5c2c7",
+      "sourceURL": "https://github.com/libimobiledevice/libimobiledevice-glue/tree/da770a7687f35fbb981db4d7b47b1b032cd5c2c7",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "binary-source-gitlink",
+      "scope": "libimobiledevice static build",
+      "declaredLicenseText": "LGPL-2.1 library declaration; preserve per-file notices and applicable relinking/source obligations"
+    },
+    {
+      "id": "boringssl",
+      "name": "BoringSSL vendored by swift-crypto",
+      "repository": "https://github.com/google/boringssl",
+      "revision": "0226f30467f540a3f62ef48d453f93927da199b6",
+      "sourceURL": "https://github.com/google/boringssl/tree/0226f30467f540a3f62ef48d453f93927da199b6",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "vendored-source",
+      "scope": "CryptoExtras runtime",
+      "declaredLicenseText": "Apache-2.0 plus LICENSE section Other licenses",
+      "comment": "Source attribution hash is recorded in swift-crypto Package.swift and Sources/CCryptoBoringSSL/hash.txt. Preserve complete original LICENSE and per-file notices; exact compiled subset not yet scanned."
+    },
+    {
+      "id": "openssl-source",
+      "name": "OpenSSL 3.6.2",
+      "repository": "https://github.com/openssl/openssl",
+      "revision": "fe686e15d84334b284f883118ed92f64b409b3aa",
+      "sourceURL": "https://github.com/openssl/openssl/tree/fe686e15d84334b284f883118ed92f64b409b3aa",
+      "licenseDeclared": "Apache-2.0",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "binary-source-candidate",
+      "scope": "OpenSSL framework",
+      "comment": "Release tag openssl-3.6.2 resolves through annotated tag f800a53185a76d633d469607937c3c55383f0fff; GitHub reports unknown_key for its signature. This does not authenticate prebuilt framework source-to-binary correspondence."
+    },
+    {
+      "id": "ed25519-vendored",
+      "name": "ed25519 subset",
+      "repository": "https://github.com/orlp/ed25519",
+      "revision": "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4",
+      "sourceURL": "https://github.com/orlp/ed25519/tree/7fa6712ef5d581a6981ec2b08ee623314cd1d1c4",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "vendored-source-attribution",
+      "scope": "libimobiledevice",
+      "declaredLicenseText": "zlib-style notice collected from pinned vendor path",
+      "comment": "Original revision attributed in pinned 3rd_party/README.md; modified compiled input is inside pinned libimobiledevice tree."
+    },
+    {
+      "id": "srp6a-vendored",
+      "name": "libsrp6a-sha512 subset",
+      "repository": "https://github.com/secure-remote-password/stanford-srp",
+      "revision": "587900d32777348f98477cb25123d5761fbe3725",
+      "sourceURL": "https://github.com/secure-remote-password/stanford-srp/tree/587900d32777348f98477cb25123d5761fbe3725",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "vendored-source-attribution",
+      "scope": "libimobiledevice",
+      "declaredLicenseText": "Stanford SRP BSD-style full notice collected",
+      "comment": "Adapted SHA512 client subset; preserve complete notice and attribution; not flattened into MIT."
+    },
+    {
+      "id": "plist-ffi-gitlink",
+      "name": "plist_ffi C++ example gitlink",
+      "repository": "https://github.com/jkcoxson/plist_ffi",
+      "revision": "66e6e6362b58bc361725c3e1b0a34af498aa2b3a",
+      "sourceURL": "https://github.com/jkcoxson/plist_ffi/tree/66e6e6362b58bc361725c3e1b0a34af498aa2b3a",
+      "licenseDeclared": "MIT",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "binary-producer-example-gitlink",
+      "scope": "not proven linked",
+      "comment": "IDevice Cargo.lock separately pins registry plist_ffi 0.1.6. This C++ example gitlink is not evidence that the registry package contains identical source."
+    },
+    {
+      "id": "adi-core",
+      "name": "libCoreADI.so",
+      "kind": "runtime-executable-input",
+      "scope": "essential on-device Anisette",
+      "sourceURL": "NOASSERTION",
+      "revision": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "comment": "Apple-proprietary provenance/rights unresolved. Not bundled in Tetherless source; acquired at runtime. No package digest or per-file digest independently verified."
+    },
+    {
+      "id": "adi-storeservices",
+      "name": "libstoreservicescore.so",
+      "kind": "runtime-executable-input",
+      "scope": "essential on-device Anisette",
+      "sourceURL": "NOASSERTION",
+      "revision": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "comment": "Apple-proprietary provenance/rights unresolved. Third-party ODA hash and locally sealed receipt do not authenticate publisher."
+    }
+  ],
+  "dependencies": {
+    "tetherless": [
+      "sidestore",
+      "zipfoundation"
+    ],
+    "sidestore": [
+      "sidesign",
+      "minimuxer",
+      "keychainaccess",
+      "markdownkit",
+      "nuke",
+      "semanticversion",
+      "starscream",
+      "codesignkit"
+    ],
+    "sidesign": [
+      "anisettekit",
+      "codesignkit",
+      "gsacryptokit",
+      "libdeflate",
+      "swift-crypto"
+    ],
+    "minimuxer": [
+      "emproxy",
+      "idevice-binary",
+      "libimobiledevice-binary",
+      "remotepairingkit",
+      "zipfoundation"
+    ],
+    "anisettekit": [
+      "unicorn-binary",
+      "adi-core",
+      "adi-storeservices"
+    ],
+    "codesignkit": [
+      "swift-crypto",
+      "swift-asn1"
+    ],
+    "gsacryptokit": [
+      "swift-crypto"
+    ],
+    "remotepairingkit": [
+      "openssl-binary"
+    ],
+    "swift-crypto": [
+      "swift-asn1",
+      "boringssl"
+    ],
+    "libimobiledevice-binary": [
+      "libplist",
+      "libusbmuxd",
+      "libimobiledevice-glue",
+      "ed25519-vendored",
+      "srp6a-vendored",
+      "openssl-binary"
+    ],
+    "openssl-binary": [
+      "openssl-source"
+    ]
+  },
+  "referencesExcludedFromProduct": [
+    {
+      "id": "localdevvpn",
+      "name": "LocalDevVPN external helper",
+      "repository": "https://github.com/jkcoxson/LocalDevVPN",
+      "revision": "af3fd697803ada4ac2b8d518358f5ab0a534844c",
+      "sourceURL": "https://github.com/jkcoxson/LocalDevVPN/tree/af3fd697803ada4ac2b8d518358f5ab0a534844c",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "external-helper-reference",
+      "scope": "separately installed; not product code",
+      "declaredLicenseText": "Custom StosVPN license, attribution and anti-rebranding clause",
+      "comment": "Current reference snapshot, NOT a Tetherless pin. Retain original name and direct official installation route; do not repackage."
+    },
+    {
+      "id": "stikpair",
+      "name": "StikPair reference only",
+      "repository": "https://github.com/StikDebug/StikPair",
+      "revision": "d9661c505130a7b710225fb8ed61128527b46c7e",
+      "sourceURL": "https://github.com/StikDebug/StikPair/tree/d9661c505130a7b710225fb8ed61128527b46c7e",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "research-reference",
+      "scope": "not observed in package graph",
+      "declaredLicenseText": "Custom MIT Non-Commercial",
+      "comment": "No copying as MIT. Existing indirect inspiration is not proof of copied code; no automated upstream contribution."
+    },
+    {
+      "id": "omnisette-reference",
+      "name": "omnisette-server reference only",
+      "repository": "https://github.com/SideStore/omnisette-server",
+      "revision": "243933525a0d7204d6a117b074ee2c97b2da67d9",
+      "sourceURL": "https://github.com/SideStore/omnisette-server/tree/243933525a0d7204d6a117b074ee2c97b2da67d9",
+      "licenseDeclared": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "kind": "research-reference",
+      "scope": "not a daily service dependency",
+      "comment": "README points to Apple CDN APK as acquisition candidate; not a redistribution grant."
+    }
+  ],
+  "coverageLimits": [
+    "No final artifact scan or link map",
+    "Five archive bytes not downloaded",
+    "No independent rebuild/attestation",
+    "Exact Cargo target/feature graph and per-crate license texts pending",
+    "Unicorn built-file license compatibility unresolved",
+    "ADI origin bytes, signer trust anchor and rights evidence unresolved"
+  ]
+}

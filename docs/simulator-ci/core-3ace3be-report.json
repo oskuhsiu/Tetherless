@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "runID": 37351051292,
+  "runAttempt": 1,
+  "jobID": 111901677965,
+  "sourceCommit": "3ace3be97eddb164fca7372ef946aaadc00c3371",
+  "outcome": "failed",
+  "firstFailureStage": "ui",
+  "firstFailureStep": 4,
+  "observations": [
+    {
+      "number": 1,
+      "stage": "environment",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 2,
+      "stage": "prepare",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 3,
+      "stage": "environment",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 4,
+      "stage": "ui",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "number": 5,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 6,
+      "stage": "evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 12,
+      "stage": "cleanup",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "number": 13,
+      "stage": "cleanup",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "smoke": null,
+  "symptomCode": "unclassified",
+  "symptomSource": "agent-selected-after-reading-evidence-not-inferred",
+  "failureFingerprint": "9f602c6c02d637d1af18c8d9d1c4357e2eff9ec838da29e78b05c4b5d177525a",
+  "sameFailureAsPrevious": false,
+  "nextAction": "inspect-test-log-xcresult-and-app-lifecycle-not-boot",
+  "automaticRetryAllowed": false,
+  "rootCauseInferred": false,
+  "productAccepted": false,
+  "reportSHA256": "309e2d4737dd1666e251f59ff4fb88ba33c5ca9920d853dc94556bd34e46e350"
+}

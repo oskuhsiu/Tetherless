@@ -1,0 +1,360 @@
+{
+  "formulae": [
+    {
+      "name": "m4",
+      "full_name": "m4",
+      "tap": "homebrew/core",
+      "oldnames": [],
+      "aliases": [],
+      "versioned_formulae": [],
+      "desc": "Macro processing language",
+      "license": "GPL-3.0-or-later",
+      "homepage": "https://www.gnu.org/software/m4/",
+      "versions": {
+        "stable": "1.4.21",
+        "head": null,
+        "bottle": true
+      },
+      "urls": {
+        "stable": {
+          "url": "https://ftpmirror.gnu.org/m4/m4-1.4.21.tar.xz",
+          "tag": null,
+          "revision": null,
+          "using": null,
+          "checksum": "f25c6ab51548a73a75558742fb031e0625d6485fe5f9155949d6486a2408ab66"
+        }
+      },
+      "patches": [],
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": null,
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "bottle": {
+        "stable": {
+          "rebuild": 0,
+          "root_url": "https://ghcr.io/v2/homebrew/core",
+          "files": {
+            "arm64_sequoia": {
+              "cellar": ":any_skip_relocation",
+              "url": "https://ghcr.io/v2/homebrew/core/m4/blobs/sha256:80f871ba39104ef553d5a15e2c70639c69dd4fb76568842f5dc1ef451918c6a8",
+              "sha256": "80f871ba39104ef553d5a15e2c70639c69dd4fb76568842f5dc1ef451918c6a8"
+            }
+          }
+        }
+      },
+      "pour_bottle_only_if": null,
+      "keg_only": true,
+      "keg_only_reason": {
+        "reason": ":provided_by_macos",
+        "explanation": ""
+      },
+      "options": [],
+      "build_dependencies": [],
+      "dependencies": [],
+      "test_dependencies": [],
+      "recommended_dependencies": [],
+      "optional_dependencies": [],
+      "uses_from_macos": [],
+      "uses_from_macos_bounds": [],
+      "requirements": [],
+      "conflicts_with": [],
+      "conflicts_with_reasons": [],
+      "link_overwrite": [],
+      "caveats": null,
+      "installed": [],
+      "linked_keg": null,
+      "pinned": false,
+      "outdated": false,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": false,
+      "disable_date": null,
+      "disable_reason": null,
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": null,
+      "post_install_steps": [],
+      "post_install_defined": false,
+      "service": null,
+      "tap_git_head": "3d9c275a416ad6c4f5c012565a82553637381333",
+      "ruby_source_path": "Formula/m/m4.rb",
+      "ruby_source_checksum": {
+        "sha256": "4f77735ee9b10e73b569387e86f8c456c3d50d253d70325543dba1d6aba24675"
+      }
+    },
+    {
+      "name": "autoconf",
+      "full_name": "autoconf",
+      "tap": "homebrew/core",
+      "oldnames": [],
+      "aliases": [
+        "autoconf@2.73"
+      ],
+      "versioned_formulae": [],
+      "desc": "Automatic configure script builder",
+      "license": "GPL-3.0-or-later AND (GPL-3.0-or-later WITH Autoconf-exception-3.0)",
+      "homepage": "https://www.gnu.org/software/autoconf/",
+      "versions": {
+        "stable": "2.73",
+        "head": null,
+        "bottle": true
+      },
+      "urls": {
+        "stable": {
+          "url": "https://ftpmirror.gnu.org/autoconf/autoconf-2.73.tar.gz",
+          "tag": null,
+          "revision": null,
+          "using": null,
+          "checksum": "259ddfa3bddc799cfb81489cc0f17dfdf1bd6d1505dda53c0f45ff60d6a4f9a7"
+        }
+      },
+      "patches": [],
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": null,
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "bottle": {
+        "stable": {
+          "rebuild": 0,
+          "root_url": "https://ghcr.io/v2/homebrew/core",
+          "files": {
+            "arm64_sequoia": {
+              "cellar": ":any_skip_relocation",
+              "url": "https://ghcr.io/v2/homebrew/core/autoconf/blobs/sha256:bc785e044f4bec3efa3e9875f154905dad8a249e6e57d2a3ab0250eebdc866e8",
+              "sha256": "bc785e044f4bec3efa3e9875f154905dad8a249e6e57d2a3ab0250eebdc866e8"
+            }
+          }
+        }
+      },
+      "pour_bottle_only_if": null,
+      "keg_only": false,
+      "keg_only_reason": null,
+      "options": [],
+      "build_dependencies": [],
+      "dependencies": [
+        "m4"
+      ],
+      "test_dependencies": [],
+      "recommended_dependencies": [],
+      "optional_dependencies": [],
+      "uses_from_macos": [
+        "perl"
+      ],
+      "uses_from_macos_bounds": [
+        {}
+      ],
+      "requirements": [],
+      "conflicts_with": [],
+      "conflicts_with_reasons": [],
+      "link_overwrite": [],
+      "caveats": null,
+      "installed": [],
+      "linked_keg": null,
+      "pinned": false,
+      "outdated": false,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": false,
+      "disable_date": null,
+      "disable_reason": null,
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": null,
+      "post_install_steps": [],
+      "post_install_defined": false,
+      "service": null,
+      "tap_git_head": "3d9c275a416ad6c4f5c012565a82553637381333",
+      "ruby_source_path": "Formula/a/autoconf.rb",
+      "ruby_source_checksum": {
+        "sha256": "cab75402095f9a65be6a5d3fc11a2f7a6a7fdf04189abee37bfc1c6e5adff499"
+      }
+    },
+    {
+      "name": "automake",
+      "full_name": "automake",
+      "tap": "homebrew/core",
+      "oldnames": [],
+      "aliases": [],
+      "versioned_formulae": [],
+      "desc": "Tool for generating GNU Standards-compliant Makefiles",
+      "license": "GPL-2.0-or-later",
+      "homepage": "https://www.gnu.org/software/automake/",
+      "versions": {
+        "stable": "1.19",
+        "head": null,
+        "bottle": true
+      },
+      "urls": {
+        "stable": {
+          "url": "https://ftpmirror.gnu.org/automake/automake-1.19.tar.xz",
+          "tag": null,
+          "revision": null,
+          "using": null,
+          "checksum": "e3e2c2e3abf37898138db5b6c1d1dc35c9160c5978be7947d2c741705251d445"
+        }
+      },
+      "patches": [],
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": null,
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "bottle": {
+        "stable": {
+          "rebuild": 0,
+          "root_url": "https://ghcr.io/v2/homebrew/core",
+          "files": {
+            "arm64_sequoia": {
+              "cellar": ":any_skip_relocation",
+              "url": "https://ghcr.io/v2/homebrew/core/automake/blobs/sha256:23c091faee8dac047b0670d8c10da030bf104610fc064b904407de1a1ff8f437",
+              "sha256": "23c091faee8dac047b0670d8c10da030bf104610fc064b904407de1a1ff8f437"
+            }
+          }
+        }
+      },
+      "pour_bottle_only_if": null,
+      "keg_only": false,
+      "keg_only_reason": null,
+      "options": [],
+      "build_dependencies": [],
+      "dependencies": [
+        "autoconf"
+      ],
+      "test_dependencies": [],
+      "recommended_dependencies": [],
+      "optional_dependencies": [],
+      "uses_from_macos": [],
+      "uses_from_macos_bounds": [],
+      "requirements": [],
+      "conflicts_with": [],
+      "conflicts_with_reasons": [],
+      "link_overwrite": [],
+      "caveats": null,
+      "installed": [],
+      "linked_keg": null,
+      "pinned": false,
+      "outdated": false,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": false,
+      "disable_date": null,
+      "disable_reason": null,
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": null,
+      "post_install_steps": [],
+      "post_install_defined": false,
+      "service": null,
+      "tap_git_head": "3d9c275a416ad6c4f5c012565a82553637381333",
+      "ruby_source_path": "Formula/a/automake.rb",
+      "ruby_source_checksum": {
+        "sha256": "706ee509ee3d3a4bc05999b0695f0998cddedeb7d534699bf721ebb0ee4ec487"
+      }
+    },
+    {
+      "name": "libtool",
+      "full_name": "libtool",
+      "tap": "homebrew/core",
+      "oldnames": [],
+      "aliases": [],
+      "versioned_formulae": [],
+      "desc": "Generic library support script",
+      "license": "GPL-2.0-or-later",
+      "homepage": "https://www.gnu.org/software/libtool/",
+      "versions": {
+        "stable": "2.6.2",
+        "head": null,
+        "bottle": true
+      },
+      "urls": {
+        "stable": {
+          "url": "https://ftpmirror.gnu.org/libtool/libtool-2.6.2.tar.xz",
+          "tag": null,
+          "revision": null,
+          "using": null,
+          "checksum": "2ef1067c16c97db930fd740cc9bc3d3ba9a583804ae5ac42cc3e8719e49e191e"
+        }
+      },
+      "patches": [],
+      "revision": 0,
+      "version_scheme": 0,
+      "compatibility_version": null,
+      "autobump": true,
+      "no_autobump_message": null,
+      "skip_livecheck": false,
+      "bottle": {
+        "stable": {
+          "rebuild": 0,
+          "root_url": "https://ghcr.io/v2/homebrew/core",
+          "files": {
+            "arm64_sequoia": {
+              "cellar": ":any",
+              "url": "https://ghcr.io/v2/homebrew/core/libtool/blobs/sha256:86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410",
+              "sha256": "86f6495e08630095d0a0a4a8be76d8ba0350985a55ec13fb43a73f5473d2a410"
+            }
+          }
+        }
+      },
+      "pour_bottle_only_if": null,
+      "keg_only": false,
+      "keg_only_reason": null,
+      "options": [],
+      "build_dependencies": [],
+      "dependencies": [
+        "m4"
+      ],
+      "test_dependencies": [],
+      "recommended_dependencies": [],
+      "optional_dependencies": [],
+      "uses_from_macos": [],
+      "uses_from_macos_bounds": [],
+      "requirements": [],
+      "conflicts_with": [],
+      "conflicts_with_reasons": [],
+      "link_overwrite": [],
+      "caveats": "All commands have been installed with the prefix \"g\".\nIf you need to use these commands with their normal names, you\ncan add a \"gnubin\" directory to your PATH from your bashrc like:\n  PATH=\"$HOMEBREW_PREFIX/opt/libtool/libexec/gnubin:$PATH\"\n",
+      "installed": [],
+      "linked_keg": null,
+      "pinned": false,
+      "outdated": false,
+      "deprecated": false,
+      "deprecation_date": null,
+      "deprecation_reason": null,
+      "deprecation_replacement_formula": null,
+      "deprecation_replacement_cask": null,
+      "deprecate_args": null,
+      "disabled": false,
+      "disable_date": null,
+      "disable_reason": null,
+      "disable_replacement_formula": null,
+      "disable_replacement_cask": null,
+      "disable_args": null,
+      "post_install_steps": [],
+      "post_install_defined": false,
+      "service": null,
+      "tap_git_head": "3d9c275a416ad6c4f5c012565a82553637381333",
+      "ruby_source_path": "Formula/lib/libtool.rb",
+      "ruby_source_checksum": {
+        "sha256": "5513e09178e3dccafd9cbb3e24c1af5c4aee5d40769256a3963ef8b234c35a39"
+      }
+    }
+  ],
+  "casks": []
+}

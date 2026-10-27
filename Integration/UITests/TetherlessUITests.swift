@@ -1,0 +1,365 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+import XCTest
+
+/// Runs against the complete, unmodified production app in a fresh Simulator.
+/// No account, pairing record, successful backend fixture or private swizzle.
+final class TetherlessUITests: XCTestCase {
+    @MainActor func testFirstSetupAndLocalNavigation() throws {
+        continueAfterFailure = false
+        // A distinct, ordinary document source: the product is never seeded.
+        // Create inside the Simulator after Xcode has finished installing apps,
+        // using NSFileCoordinator rather than host-side container writes.
+        let documents = XCUIApplication(bundleIdentifier: "org.tetherless.testdocuments")
+        documents.launch()
+        XCTAssertTrue(documents.staticTexts["fixture.documentReady"].waitForExistence(timeout: 10),
+                      "The actual external document source did not create its invalid plist")
+        XCTAssertFalse(documents.staticTexts["fixture.documentFailed"].exists)
+        capture(documents, "00-external-document-created")
+        documents.terminate()
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        addUIInterruptionMonitor(withDescription: "Notification permission") { alert in
+            let deny = alert.buttons["Don’t Allow"]
+            if deny.exists { deny.tap(); return true }
+            return false
+        }
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deny = springboard.alerts.buttons["Don’t Allow"]
+        if deny.waitForExistence(timeout: 8) { deny.tap() }
+        let title = app.staticTexts["onboarding.title"]
+        XCTAssertTrue(title.waitForExistence(timeout: 20), "Expected the actual first-launch onboarding")
+        XCTAssertEqual(title.label, "Welcome to Tetherless")
+        assertStartupHasNoFailure(app)
+        capture(app, "01-welcome")
+        app.buttons["onboarding.next"].tap()
+        XCTAssertTrue(app.buttons["onboarding.importPairing"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled, "A fresh simulator has no pairing")
+        assertPairingObservedMissing(app)
+        // Two separate real picker presentations. A blank picker is still a
+        // test failure; do not replace its system Cancel with an app-owned button.
+        for attempt in 1...2 {
+            // Clock samples stay in memory until the SAME existing wait ends.
+            // No attachment IO, additional AX query or action can warm the picker.
+            let beforeTap = attempt == 1 ? pickerClock(.beforeFirstPickerTap) : nil
+            app.buttons["onboarding.importPairing"].tap()
+            let cancelImport = app.buttons["Cancel"].firstMatch
+            let waitStart = attempt == 1 ? pickerClock(.firstCancelWaitStart) : nil
+            let cancelAppeared = cancelImport.waitForExistence(timeout: 10)
+            let waitEnd = attempt == 1 ? pickerClock(.firstCancelWaitEnd, found: cancelAppeared) : nil
+            if let beforeTap, let waitStart, let waitEnd {
+                attachPickerClocks([beforeTap, waitStart, waitEnd])
+            }
+            XCTAssertTrue(cancelAppeared, "System picker did not load on presentation \(attempt)")
+            XCTAssertTrue(cancelImport.isHittable)
+            capture(app, "01-picker-\(attempt)")
+            cancelImport.tap()
+            let choose = app.buttons["onboarding.importPairing"]
+            XCTAssertTrue(choose.waitForExistence(timeout: 5))
+            XCTAssertTrue(choose.isEnabled, "Dismissed picker must release its request")
+            XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+            XCTAssertEqual(app.staticTexts["onboarding.status"].label,
+                           "Import cancelled. Existing pairing was retained.")
+        }
+        // Select a real, deliberately invalid plist through the system picker.
+        // The isolated fixture creates only this public document, never a fake pairing/account or
+        // a backend result. Production coordination/parser/storage handles it.
+        app.buttons["onboarding.importPairing"].tap()
+        let browse = app.buttons["Browse"].firstMatch
+        XCTAssertTrue(browse.waitForExistence(timeout: 10)); browse.tap()
+        tapDocumentItem("On My iPhone", in: app)
+        tapDocumentItem("Tetherless Test Documents", in: app, documentCell: true)
+        tapDocumentItem("Tetherless-Invalid-Pairing.plist", in: app, documentCell: true)
+        let rejected = app.staticTexts["onboarding.status"]
+        // Keep the original outcome deadline. A visible file or a tap is not
+        // proof that UIKit delivered a selection to the app.
+        let outcomeAppeared = rejected.waitForExistence(timeout: 10)
+        let pickerStillVisible = app.otherElements["Browse View (Picker)"].exists
+        capture(app, "01-after-file-activation")
+        if !outcomeAppeared || pickerStillVisible {
+            // Freeze and retain the original failure BEFORE the independent
+            // control. Its result cannot extend the product deadline or retry
+            // the product, and the original assertions below still fail.
+            capture(app, "product-failure-before-control")
+            inspectIndependentPickerControl(after: app, documents: documents)
+        }
+        XCTAssertTrue(outcomeAppeared, "No import outcome; system picker visible: \(pickerStillVisible)")
+        XCTAssertFalse(pickerStillVisible, "The real system picker must dismiss before import")
+        XCTAssertTrue(rejected.label.hasPrefix("The operation did not complete."), rejected.label)
+        // A generic IO/storage failure is not evidence of parser rejection.
+        // The actual selected-import catch exposes only this closed category.
+        XCTAssertEqual(rejected.value as? String, "pairing/invalidContent",
+                       "The real pairing parser must reject the selected public fixture")
+        assertPairingObservedMissing(app)
+        XCTAssertTrue(app.buttons["onboarding.importPairing"].isEnabled)
+        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+        capture(app, "01-invalid-pairing-rejected")
+        // Kill/relaunch mid-wizard: persist navigation, not fake prerequisites.
+        app.terminate(); app.launch()
+        XCTAssertTrue(title.waitForExistence(timeout: 15))
+        assertStartupHasNoFailure(app)
+        XCTAssertEqual(title.label, "Device pairing")
+        assertPairingObservedMissing(app)
+        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled)
+        capture(app, "01b-resumed-pairing")
+        app.buttons["onboarding.later"].tap()
+        XCTAssertTrue(app.buttons["onboarding.openVPN"].waitForExistence(timeout: 5))
+        app.buttons["onboarding.next"].tap()
+        XCTAssertTrue(app.buttons["onboarding.signIn"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["onboarding.next"].isEnabled, "No account was supplied")
+        capture(app, "02-account-needed")
+        app.buttons["onboarding.later"].tap()
+        let consent = app.switches["onboarding.allowUnattended"]
+        XCTAssertTrue(consent.waitForExistence(timeout: 5))
+        XCTAssertEqual(consent.value as? String, "0", "Consent must not be silently enabled")
+        XCTAssertTrue(app.buttons["onboarding.openShortcuts"].exists)
+        capture(app, "03-automation-consent")
+        app.buttons["onboarding.next"].tap()
+        let readiness = app.staticTexts["onboarding.readiness"]
+        XCTAssertTrue(readiness.waitForExistence(timeout: 5))
+        XCTAssertEqual(readiness.label, "Setup is not finished", app.staticTexts["onboarding.readinessDetail"].label)
+        XCTAssertFalse(app.staticTexts["You're All Set!"].exists)
+        capture(app, "04-review-incomplete")
+        app.buttons["onboarding.back"].tap()
+        XCTAssertTrue(consent.waitForExistence(timeout: 5))
+        XCTAssertEqual(consent.value as? String, "0")
+        app.buttons["onboarding.next"].tap()
+        assertStartupHasNoFailure(app)
+        app.buttons["onboarding.finish"].tap()
+        dismissPairingPrompt(app)
+        let renewal = app.tabBars.buttons["Auto Renewal"]
+        XCTAssertTrue(renewal.waitForExistence(timeout: 15), "Dismissed wizard must lead to the real app")
+        renewal.tap()
+        let setup = app.buttons["renewal.openSetup"]
+        XCTAssertTrue(revealRenewalControl(setup, in: app))
+        setup.tap()
+        XCTAssertTrue(app.tabBars.buttons["Settings"].isSelected)
+        renewal.tap()
+        let install = app.buttons["Install or manage an IPA"]
+        XCTAssertTrue(revealRenewalControl(install, in: app)); install.tap()
+        XCTAssertTrue(app.tabBars.buttons["My Apps"].isSelected)
+        renewal.tap()
+        let resume = app.buttons["renewal.resumeSetup"]
+        XCTAssertTrue(revealRenewalControl(resume, in: app))
+        resume.tap()
+        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertEqual(title.label, "Review setup")
+        XCTAssertEqual(app.staticTexts["onboarding.readiness"].label, "Setup is not finished", app.staticTexts["onboarding.readinessDetail"].label)
+        app.buttons["onboarding.back"].tap()
+        XCTAssertTrue(consent.waitForExistence(timeout: 5))
+        XCTAssertEqual(consent.value as? String, "0")
+        app.buttons["onboarding.next"].tap()
+        app.buttons["onboarding.finish"].tap()
+        XCTAssertTrue(renewal.waitForExistence(timeout: 10))
+        capture(app, "05-auto-renewal")
+        // A real relaunch must retain wizard dismissal without silently granting
+        // consent or fabricating an observed successful background renewal.
+        app.terminate(); app.launch()
+        dismissPairingPrompt(app)
+        XCTAssertTrue(renewal.waitForExistence(timeout: 15),
+                      "Relaunch must load the real shared database, not remain on Starting")
+        XCTAssertFalse(app.alerts["App Group Container Inaccessible"].exists)
+        renewal.tap()
+        XCTAssertFalse(title.exists)
+        let enabled = app.switches["renewal.allowUnattended"]
+        XCTAssertTrue(revealRenewalControl(enabled, in: app))
+        XCTAssertEqual(enabled.value as? String, "0")
+        capture(app, "06-relaunch-database-ready")
+        let recovery = app.buttons["recovery.open"]
+        XCTAssertTrue(revealRenewalControl(recovery, in: app)); recovery.tap()
+        XCTAssertTrue(app.navigationBars["Certificate recovery"].waitForExistence(timeout: 5))
+        let recoveryStatus = app.staticTexts["recovery.status"]
+        XCTAssertTrue(recoveryStatus.waitForExistence(timeout: 5))
+        XCTAssertEqual(recoveryStatus.label, "Sign in to inspect requests for this account.")
+        for identifier in ["recovery.check", "recovery.save", "recovery.submit", "recovery.discard"] {
+            let control = app.buttons[identifier]
+            XCTAssertTrue(revealRecoveryControl(control, in: app), identifier)
+            XCTAssertFalse(control.isEnabled, "No account or pending request may be fabricated")
+        }
+        capture(app, "07-certificate-recovery-signed-out")
+        app.navigationBars["Certificate recovery"].buttons.firstMatch.tap()
+        XCTAssertTrue(revealRenewalControl(enabled, in: app))
+        XCTAssertEqual(enabled.value as? String, "0")
+    }
+    /// On a fresh install, verify a completed protected-store observation.
+    /// A disabled Continue alone also covers unreadable/not-yet-checked state.
+    /// This is absence evidence, not retention of an existing valid pairing.
+    @MainActor private func assertPairingObservedMissing(_ app: XCUIApplication) {
+        XCTAssertTrue(app.staticTexts["Protected pairing record: missing"].waitForExistence(timeout: 5),
+                      "The protected pairing store must be observed missing, not unavailable or unchecked")
+        XCTAssertFalse(app.staticTexts["Protected pairing record: unavailable"].exists)
+        XCTAssertFalse(app.staticTexts["Protected pairing record: present"].exists)
+    }
+
+    /// Failure-only diagnostic, not an alternative way to pass this test. The
+    /// original outcome/visibility have already been captured and are immutable.
+    /// Never warm the provider before testing the product or retry its selection.
+    @MainActor private func inspectIndependentPickerControl(after product: XCUIApplication,
+                                                           documents: XCUIApplication) {
+        product.terminate()
+        defer { documents.terminate() }
+        documents.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        documents.launch()
+        guard documents.staticTexts["fixture.documentReady"].waitForExistence(timeout: 10),
+              !documents.staticTexts["fixture.documentFailed"].exists else {
+            capture(documents, "control-source-unavailable"); return
+        }
+        let open = documents.buttons["fixture.openControl"]
+        guard open.waitForExistence(timeout: 5), open.isEnabled, open.isHittable else {
+            capture(documents, "control-button-unavailable"); return
+        }
+        open.tap()
+        let browse = documents.buttons["Browse"].firstMatch
+        guard browse.waitForExistence(timeout: 10), browse.isHittable else {
+            capture(documents, "control-picker-unavailable"); return
+        }
+        browse.tap()
+        func tapOnce(_ name: String, cells: Bool) -> Bool {
+            let stem = (name as NSString).deletingPathExtension
+            let match = NSPredicate(format: "label == %@ OR label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+                                    name, stem, name + ",", stem + ",")
+            let items = cells ? documents.cells : documents.descendants(matching: .any)
+            let item = items.matching(match).firstMatch
+            guard item.waitForExistence(timeout: 10), item.isEnabled, item.isHittable else { return false }
+            item.tap()
+            return true
+        }
+        guard tapOnce("On My iPhone", cells: false),
+              tapOnce("Tetherless Test Documents", cells: true),
+              tapOnce("Tetherless-Invalid-Pairing.plist", cells: true) else {
+            capture(documents, "control-document-unreachable"); return
+        }
+        let status = documents.staticTexts["fixture.controlOutcome"]
+        let predicate = NSPredicate(format: "exists == true AND label IN %@", ["selectedFileURL", "invalidSelection", "cancelled"])
+        let observed = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: status)], timeout: 10)
+        let pickerVisible = documents.otherElements["Browse View (Picker)"].exists
+        let allowed = ["idle", "waiting", "selectedFileURL", "invalidSelection", "cancelled"]
+        let result = status.exists && allowed.contains(status.label) ? status.label : "not-visible"
+        let observation = XCTAttachment(string: "controlWaitCompleted=\(observed == .completed); controlOutcome=\(result); pickerVisible=\(pickerVisible); productAccepted=false")
+        observation.name = "independent-picker-control-result"
+        observation.lifetime = .keepAlways
+        add(observation)
+        capture(documents, "independent-picker-control-after-selection")
+        // Deferred source-app termination also runs on an incomplete probe.
+        // The already captured original product failure is never retried.
+    }
+
+    @MainActor private func tapDocumentItem(_ name: String, in app: XCUIApplication,
+                                            documentCell: Bool = false) {
+        let stem = (name as NSString).deletingPathExtension
+        let match = NSPredicate(format: "label == %@ OR label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+                                name, stem, name + ",", stem + ",")
+        // The presenting wizard also has a hidden "Tetherless" title. Files
+        // and folders must be document cells, not an arbitrary same-label text.
+        let items = documentCell ? app.cells : app.descendants(matching: .any)
+        let item = items.matching(match).firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "Missing system document item: \(name)")
+        XCTAssertTrue(item.isHittable, item.debugDescription)
+        XCTAssertTrue(item.isEnabled, "System document item is disabled: \(name)")
+        // Activate the actual document cell. Its preview Image is a decorative
+        // descendant that the observed system picker does not expose as hittable.
+        // Lifecycle markers identify delivery/dismissal; do not guess another
+        // child target, retap, or infer selection just because the cell exists.
+        if documentCell { capture(app, "document-before-activation") }
+        item.tap()
+    }
+
+    /// SwiftUI Form virtualizes offscreen rows. Waiting for an absent row
+    /// cannot reveal it on the SE-sized test device: scroll the actual Form,
+    /// then require the exact control to exist and be hittable before tapping.
+    /// Return-scroll positions vary when switching tabs, so search both ways
+    /// with a hard bound. Never tap a coordinate or silently skip an assertion.
+    @MainActor private func revealRenewalControl(_ element: XCUIElement,
+                                                 in app: XCUIApplication) -> Bool {
+        guard app.tabBars.buttons["Auto Renewal"].isSelected,
+              app.navigationBars["Auto Renewal"].waitForExistence(timeout: 5) else {
+            capture(app, "failure-wrong-renewal-screen")
+            return false
+        }
+        let form = app.collectionViews.firstMatch
+        guard form.waitForExistence(timeout: 5) else {
+            capture(app, "failure-missing-renewal-form")
+            return false
+        }
+        if element.exists && element.isHittable { return true }
+        for scrollDown in [false, true] {
+            for _ in 0..<6 {
+                // On a compact screen, a known row can be behind the tab bar.
+                // Follow its actual geometry instead of swiping past it and
+                // continuing all the way to the opposite end of the Form.
+                let top = app.navigationBars["Auto Renewal"].frame.maxY
+                let bottom = app.tabBars.firstMatch.frame.minY
+                if element.exists && element.frame.maxY > bottom {
+                    form.swipeUp(velocity: .slow)
+                } else if element.exists && element.frame.minY < top {
+                    form.swipeDown(velocity: .slow)
+                } else if scrollDown { form.swipeDown(velocity: .slow) }
+                else { form.swipeUp(velocity: .slow) }
+                if element.exists && element.isHittable { return true }
+            }
+        }
+        capture(app, "failure-unreachable-renewal-control")
+        return false
+    }
+    @MainActor private func revealRecoveryControl(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        guard app.navigationBars["Certificate recovery"].exists else { return false }
+        let form = app.collectionViews.firstMatch
+        guard form.waitForExistence(timeout: 5) else { return false }
+        // These controls must be disabled. Visibility, not tappability, is what
+        // the test needs to inspect; no coordinate action is used.
+        func visible() -> Bool { element.exists && !element.frame.isEmpty && element.frame.intersects(form.frame) }
+        if visible() { return true }
+        for down in [false, true] {
+            for _ in 0..<6 {
+                if down { form.swipeDown() } else { form.swipeUp() }
+                if visible() { return true }
+            }
+        }
+        capture(app, "failure-missing-recovery-control")
+        return false
+    }
+
+    @MainActor private func assertStartupHasNoFailure(_ app: XCUIApplication) {
+        // XCTest's default interruption handler can press Retry on an unknown
+        // alert. Assert first so a fatal database error is never hidden by that.
+        let startup = app.alerts["App Group Container Inaccessible"]
+        XCTAssertFalse(startup.exists, startup.debugDescription)
+    }
+    @MainActor private func dismissPairingPrompt(_ app: XCUIApplication) {
+        let prompt = app.alerts["Pairing File"]
+        if prompt.waitForExistence(timeout: 5) { prompt.buttons["Cancel"].tap() }
+    }
+    private enum PickerClockEvent: String {
+        case beforeFirstPickerTap, firstCancelWaitStart, firstCancelWaitEnd
+    }
+    private struct PickerClock: Encodable {
+        let schemaVersion = 1
+        let source = "uiTest"
+        let event: String
+        let processID: Int
+        let monotonicBeforeUS: UInt64
+        let unixTimeUS: UInt64
+        let monotonicAfterUS: UInt64
+        let found: Bool?
+    }
+    private func pickerClock(_ event: PickerClockEvent, found: Bool? = nil) -> PickerClock? {
+        let before = ProcessInfo.processInfo.systemUptime * 1_000_000
+        let wall = Date().timeIntervalSince1970 * 1_000_000
+        let after = ProcessInfo.processInfo.systemUptime * 1_000_000
+        guard [before, wall, after].allSatisfy({ $0.isFinite && $0 >= 0 && $0 < 9_007_199_254_740_992 }) else { return nil }
+        return PickerClock(event: event.rawValue, processID: Int(ProcessInfo.processInfo.processIdentifier),
+                           monotonicBeforeUS: UInt64(before), unixTimeUS: UInt64(wall), monotonicAfterUS: UInt64(after), found: found)
+    }
+    private func attachPickerClocks(_ clocks: [PickerClock]) {
+        guard let data = try? JSONEncoder().encode(clocks), data.count <= 4096 else { return }
+        let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+        attachment.name = "picker-clock-first-presentation"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor private func capture(_ app: XCUIApplication, _ name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+    }
+}

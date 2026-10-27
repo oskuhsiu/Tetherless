@@ -1,0 +1,871 @@
+"""NEW portable boundary fixtures authored after loss of the former tests.
+
+Provider receipt fixtures retain genuine producer bytes. The surrounding artifact
+and command receipts are synthetic. No native tool,
+downloaded source, binary parser, signing path, or device operation is executed.
+These tests establish Python rejection/copy boundaries, not Apple acceptance.
+"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+import plistlib
+import shutil
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(HERE))
+import prepare_binding as binding
+import read_runtime_producer as runtime
+
+PROVIDER_FIXTURE_ROOT = HERE / "tests/fixtures/apple-provider-9ee2ccc"
+PROVIDER_FIXTURE_HASHES = {
+    "aarch64-apple-ios": "bfd9eaf44fc2394aa2de10f38dfc2c5700d42386d135d6d865518e68e023f1d7",
+    "aarch64-apple-ios-sim": "7fa4315280cfa457a0e3285e6867cca06060f61ab0462e81162c7c9f9e8e2b3a",
+}
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def git_blob(data):
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+
+
+def put(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return sha(data)
+
+
+def put_json(path, value):
+    return put(path, (json.dumps(value, indent=2, sort_keys=True) + "\n").encode())
+
+
+def success():
+    return {"outcome": "success", "returncode": 0, "output_complete": True,
+            "output_truncated": False,
+            "cleanup": {"direct_child_reaped": True, "group_empty": True}}
+
+
+def actual_provider_receipt(target):
+    """Load genuine producer bytes; only the surrounding unit-test artifact is synthetic."""
+    raw = (PROVIDER_FIXTURE_ROOT / (target + ".json")).read_bytes()
+    if sha(raw) != PROVIDER_FIXTURE_HASHES[target]:
+        raise AssertionError("genuine Apple provider receipt fixture changed")
+    return json.loads(raw)
+
+
+def synthetic_reader():
+    """Retained-only text fixture; no executable path exists or is executed."""
+    root = "/synthetic/official-rust-1.98.1"
+    value = {"schema": 1, "contract": dict(binding.rust_symbol_reader.CONTRACT), "sysroot": root}
+    for key, relative in (("rustc", "/bin/rustc"),
+            ("llvm_nm", "/lib/rustlib/aarch64-apple-darwin/bin/llvm-nm"),
+            ("component_manifest", "/lib/rustlib/manifest-llvm-tools-preview-aarch64-apple-darwin"),
+            ("installed_components", "/lib/rustlib/components")):
+        value[key] = {"path": root + relative, "sha256": sha(("synthetic " + key).encode())}
+    value["rustc"]["version"] = "rustc 1.98.1 (synthetic fixture)\nrelease: 1.98.1\nhost: aarch64-apple-darwin\nLLVM version: 22.1.8"
+    value["llvm_nm"]["version"] = "llvm-nm, compatible with GNU nm\nLLVM (http://llvm.org/):\n  LLVM version 22.1.8-rust-1.98.1-stable\n  Optimized build."
+    return value
+
+
+def synthetic_map(c_archive, c_symbols, rust_archive, rust_symbols):
+    """Ordinary linker-map syntax with fake absolute owners; never native evidence."""
+    objects = [f"[ 1] {c_archive}(ed-sha512.o)", f"[ 2] {c_archive}(glue-sha512.o)",
+               f"[ 3] {c_archive}(c-fixture.o)", f"[ 4] {rust_archive}(rust-fixture.o)"]
+    rows = []
+    for symbol in sorted(c_symbols):
+        owner = 1 if symbol in binding.retained_c_provider.ED else 2 if symbol in binding.retained_c_provider.GLUE else 3
+        rows.append(f"0x1000 0x10 [ {owner}] {symbol}")
+    rows += [f"0x2000 0x10 [ 4] {symbol}" for symbol in sorted(rust_symbols)]
+    return "# Object files:\n" + "\n".join(objects) + "\n# Sections:\n0x1000 0x100 __TEXT __text\n# Symbols:\n" + "\n".join(rows) + "\n"
+
+
+def synthetic_visibility_evidence(evidence, row, recipe_lock_sha256, archives, *, emit_scans=True):
+    """Complete synthetic byte/command lineage; never execute native payloads."""
+    reader = row["symbol_reader"]
+    root = evidence / "linkage-observation"
+    context = {"source_manifest_sha256": sha(binding.canonical_json(row["source_manifest"])),
+               "recipe_lock_sha256": recipe_lock_sha256}
+    inputs = {"schema": 2, "target": row["target"]["rust"], "diagnostic_only": False,
+              "ownership_acceptance_changed": True, "native_payloads_executed": False,
+              "archive_byte_limit_each": 256 * 1024 * 1024,
+              "archives": {role: dict(identity, canonical_source=identity["source"], retained=role + "-staticlib.a")
+                           for role, identity in archives.items()},
+              "symbol_reader": reader, "observation_flags": ["--defined-only", "--format=darwin", "--print-file-name", "--quiet"],
+              "source_context": context}
+    put_json(root / "inputs.json", inputs)
+    operations = []
+    for role in ("rust", "c"):
+        name = role + "-defined-members.txt"
+        symbols = (evidence / ("04-" + role + "-export-symbols.txt")).read_text().splitlines()
+        lines = []
+        for symbol in symbols:
+            member = ("ed-sha512.o" if symbol in binding.retained_c_provider.ED else
+                      "glue-sha512.o" if symbol in binding.retained_c_provider.GLUE else "c-fixture.o") if role == "c" else "rust-fixture.o"
+            lines.append(archives[role]["source"] + ":" + member + ": 0000000000001000 (__TEXT,__text) external " + symbol)
+        if emit_scans:
+            put(root / name, ("\n".join(lines) + "\n").encode())
+        command = [reader["llvm_nm"]["path"], *inputs["observation_flags"], archives[role]["source"]]
+        operations.append((root / name, command, ()))
+    for role in ("rust", "c"):
+        operations.append((evidence / ("04-" + role + "-export-symbols.txt"),
+                           binding.rust_symbol_reader.scan_command(reader, archives[role]["source"]), ()))
+    for probe in row["link_probes"]:
+        name = "05-link-" + probe["group"] + "-" + probe["language"]
+        path = evidence / (name + ".txt")
+        if not path.exists():
+            put(path, b"synthetic successful command output\n")
+        maps = (evidence / (name + ".map"),) if probe["group"] == "mixed_provider" else ()
+        operations.append((path, probe["command"], maps))
+    before = {role: {key: {field: identity[field] for field in ("sha256", "bytes")}
+                    for key in ("source", "retained")} for role, identity in archives.items()}
+    for index, (path, command, maps) in enumerate(operations, 1):
+        status = dict(success(), schema=1, command=command, stop_reason=None,
+                      log_bytes=len(path.read_bytes()), max_log_bytes=32 * 1024 * 1024,
+                      output_bytes_over_limit_observed=0)
+        status_path = path.with_name(path.name + ".status.json")
+        put_json(status_path, status)
+        def source_path(item):
+            return row["work"] + ("/linkage-observation/" if item.parent == root else "/completed/") + item.name
+        outputs = {item.name: {"path": source_path(item), "sha256": sha(item.read_bytes()), "bytes": len(item.read_bytes())}
+                   for item in (path, status_path, *maps)}
+        put_json(root / (f"{index:02d}-" + path.stem + ".json"), {
+            "schema": 1, "diagnostic_only": False, "command": command, "log": source_path(path),
+            "command_completed": True, "inputs_unchanged": True, "before": before, "after": before,
+            "outputs": outputs, "retention_errors": []})
+    def read(name, limit):
+        raw = (evidence / name).read_bytes()
+        if len(raw) > limit:
+            raise ValueError("synthetic evidence exceeds byte bound")
+        return raw
+    return binding.symbol_visibility.load_evidence(read, target=row["target"]["rust"], reader=reader,
+        archives=archives, context=context, links=row["link_probes"])
+
+
+class DiagnosticFixture:
+    """Synthetic owned files, retaining the real contract's source/path roles."""
+
+    def __init__(self, root, artifact=None):
+        self.root = Path(root)
+        self.repository = self.root / "repository"
+        self.here = self.repository / "Integration/pairing-ios-diagnostic"
+        self.prepared = self.root / "prepared"
+        self.output = self.root / "bound"
+        self.artifact = Path(artifact) if artifact else self.root / "apple-artifact"
+        self.contract = copy.deepcopy(json.loads((HERE / "input-contract.json").read_text()))
+        self.contract["gateway"]["local_c_binary_path"] = "TetherlessDiagnosticArtifacts/libimobiledevice.xcframework"
+        self.c_targets = {}
+        self.recipe = self.repository / "Integration/Dependencies/idevice"
+        for selected in (self.contract["prepared_composition_sources"],
+                         self.contract["prepared_support_sources"]):
+            for name, item in selected.items():
+                # Source bodies are opaque fixture bytes; runtime uses only identities.
+                data = ("// synthetic opaque source: " + name + "\n").encode()
+                item["sha256"] = put(self.prepared / name, data)
+                put(self.repository / item["source_path"], data)
+        gate = (HERE.parent / self.contract["preparation_gate"]["path"]).read_bytes()
+        if sha(gate) != self.contract["preparation_gate"]["sha256"]:
+            raise AssertionError("reviewed gate identity changed before fixture construction")
+        put(self.here.parent / self.contract["preparation_gate"]["path"], gate)
+        sentinel = (HERE / "PairingCompositionCompileSentinel.swift").read_bytes()
+        self.contract["sentinel"]["sha256"] = put(self.here / "PairingCompositionCompileSentinel.swift", sentinel)
+        put(self.prepared / binding.PROJECT_PATH, (HERE / "upstream/SideStore-project.pbxproj").read_bytes())
+        gateway = (HERE / "upstream/DeviceGateway-Package.swift").read_bytes()
+        if (sha(gateway) != self.contract["gateway"]["sha256"]
+                or git_blob(gateway) != self.contract["gateway"]["git_blob"]):
+            raise AssertionError("reviewed gateway preimage changed")
+        put(self.prepared / self.contract["gateway"]["prepared_path"], gateway)
+        put(self.prepared / "Dependencies/minimuxer/DeviceGateway/idevice/IdeviceGateway.swift",
+            (HERE / "tests/fixtures/namespace_gateway/IdeviceGateway.privacy-prepared.swift").read_bytes())
+        index = {"marker.py": put(self.recipe / "marker.py", b"# synthetic native recipe identity\n")}
+        self.contract["apple_recipe_index_sha256"] = put_json(self.recipe / "apple-recipe-files.json", index)
+        workflow = self.contract["retained_producer"]["workflow_path"]
+        self.contract["retained_producer"]["workflow_sha256"] = put(
+            self.repository / workflow, b"# synthetic retained producer workflow identity\n")
+        self.receipt = {"profile_sha256": self.contract["apple_profile_sha256"],
+                        "recipe_lock_sha256": self.contract["apple_recipe_index_sha256"],
+                        "toolchain_lock_sha256": sha(b"synthetic toolchain lock"),
+                        "framework_provider_bundled": False, "ios_binaries_executed": False,
+                        "mixed_c_provider_link_probes_only": True, "mixed_c_provider_embedded_in_IDevice": False,
+                        "consumer_or_product_activation": False, "targets": [], "files": {}}
+        self.receipt["retained_c_handoff_sha256"] = put_json(self.artifact / binding.C_ROOT / "handoff.json",
+            {"synthetic_boundary_fixture": True, "native_evidence": False})
+        libraries = []
+        for target, identifier, variant in (("aarch64-apple-ios", "ios-arm64", ""),
+                                             ("aarch64-apple-ios-sim", "ios-arm64-simulator", "simulator")):
+            prefix = "IDevice.xcframework/" + identifier + "/"
+            # Deliberately not native archive bytes; validation must remain opaque.
+            archive = b"synthetic opaque archive for " + target.encode() + b"\n"
+            baseline = b"/* synthetic retained baseline, not generated C */\n"
+            scoped = b"/* synthetic retained scoped header, not generated C */\n"
+            final = scoped + b"/* synthetic retained plist append */\n"
+            row = {"target": {"rust": target, "sdk": "iphonesimulator" if variant else "iphoneos"},
+                   "library_sha256": put(self.artifact / (prefix + "libidevice_ffi.a"), archive),
+                   "header_sha256": put(self.artifact / (prefix + "Headers/idevice.h"), final),
+                   "provider_receipt": actual_provider_receipt(target),
+                   "production_features": {"synthetic_peer_selected": False},
+                   "header_probe_linked_or_executed": False,
+                   "toolchain_observations": {key: "synthetic retained " + key for key in
+                       ("xcode", "clang", "swiftc", "sdk_iphoneos_version", "sdk_iphoneos_build", "sdk_iphonesimulator_version", "sdk_iphonesimulator_build")},
+                   "link_probes": [{"group": group, "language": language,
+                       "command": ["synthetic-" + language, "-Wl,-u,_synthetic_" + group],
+                       "output_sha256": sha((target + group + language).encode()), "executed": False}
+                       for group in ("pairing", "host", "result_constants", "mixed_provider") for language in ("c", "swift")]}
+            put(self.artifact / (prefix + "Headers/module.modulemap"), b"module IDevice { header \"idevice.h\" export * }\n")
+            library = {"LibraryIdentifier": identifier, "LibraryPath": "libidevice_ffi.a",
+                       "HeadersPath": "Headers", "SupportedPlatform": "ios", "SupportedArchitectures": ["arm64"]}
+            if variant:
+                library["SupportedPlatformVariant"] = variant
+            libraries.append(library)
+            evidence = self.artifact / "provenance" / target
+            checked = {"schema": 1, "baseline_sha256": sha(baseline), "scoped_sha256": sha(scoped),
+                       "declarations_sha256": self.contract["result_header_contract"]["declarations_sha256"],
+                       "unrelated_nonempty_lines_identical": True, "blank_item_separators_ignored": True,
+                       "native_import_or_link_established_by_this_check": False,
+                       "final_header_sha256": sha(final), "cpp_header_identical": True}
+            row["result_header_contract"] = checked
+            row["mixed_provider"] = {
+                "library_sha256": sha(b"controlled opaque C provider fixture\n"),
+                "header_sha256": sha(b"/* controlled opaque C plist header */\n"),
+                "module_map_sha256": sha(b'module libimobiledevice [system] { header "../plist/plist.h" export * }\n')}
+            namespace = binding.ffi_namespace.load_contract(expected_sha256=self.contract["ffi_namespace_sha256"])
+            namespaced = binding.ffi_namespace.public_header(final, namespace)
+            row["header_namespace"] = {"schema": 1, "contract_sha256": self.contract["ffi_namespace_sha256"],
+                "generated_header_sha256": sha(final), "public_header_sha256": sha(namespaced),
+                "function_signatures_preserved": True, "parser_behavior_changed": False, "old_symbol_aliases_emitted": False}
+            put_json(evidence / "ffi-header-namespace.json", row["header_namespace"])
+            put(evidence / "namespaced-idevice.h", namespaced)
+            rust_symbols = "\n".join(sorted({"_" + name for name in namespace["expected_target_exports"][target]["after"]}
+                | {"_tetherless_pairing_host_prepare", "_tetherless_pairing_validate_staged"})) + "\n"
+            c_symbols = "\n".join(sorted(binding.retained_c_provider.REQUIRED_C
+                | binding.retained_c_provider.ED | binding.retained_c_provider.GLUE)) + "\n"
+            c_base = "libimobiledevice.xcframework/" + identifier
+            headers = {"plist/plist.h": b"/* controlled opaque C plist header */\n",
+                       "libimobiledevice/module.modulemap": b'module libimobiledevice [system] { header "../plist/plist.h" export * }\n',
+                       "libimobiledevice/afc.h": b"/* controlled opaque extra public C header */\n"}
+            inventory = {name: {"sha256": put(self.artifact / binding.C_ROOT / "product" / c_base / "Headers" / name, data),
+                                 "bytes": len(data)} for name, data in headers.items()}
+            put(self.artifact / binding.C_ROOT / "product" / c_base / "libimobiledevice.a", b"controlled opaque C provider fixture\n")
+            mixed = dict(row["mixed_provider"], archive_sha256=sha(b"synthetic outer C archive"),
+                receipt_sha256=sha(b"synthetic C receipt"), handoff_sha256=self.receipt["retained_c_handoff_sha256"],
+                header_inventory=inventory, symbols=c_symbols.splitlines(), target=target,
+                provider_identity=binding.retained_c_provider.provider_identity(row["provider_receipt"]),
+                source_commit="c" * 40, system_frameworks=["CoreFoundation", "SystemConfiguration"],
+                library_relative=c_base + "/libimobiledevice.a", headers_relative=c_base + "/Headers",
+                sdk=row["target"]["sdk"], sdk_version=row["toolchain_observations"]["sdk_" + row["target"]["sdk"] + "_version"],
+                sdk_build=row["toolchain_observations"]["sdk_" + row["target"]["sdk"] + "_build"],
+                xcode=row["toolchain_observations"]["xcode"], binary_format_inspected=False)
+            self.c_targets[target] = copy.deepcopy(mixed)
+            row["mixed_provider"] = dict(mixed, headers="/synthetic/provider/" + target + "/Headers")
+            row["c_export_contract"] = binding.retained_c_provider.check_symbols(c_symbols, mixed["symbols"])
+            row["retained_c_handoff_sha256"] = self.receipt["retained_c_handoff_sha256"]
+            put_json(evidence / "retained-c-export-contract.json", row["c_export_contract"])
+            row["export_namespace"] = binding.mixed_provider.check_symbols(rust_symbols, namespace, target)
+            row["export_namespace"].update(binding.mixed_provider.check_mixed_symbols(rust_symbols, c_symbols))
+            row["export_namespace"]["contract_sha256"] = self.contract["ffi_namespace_sha256"]
+            put_json(evidence / "ffi-export-namespace.json", row["export_namespace"])
+            reader = synthetic_reader()
+            row["symbol_reader"] = reader
+            row["toolchain_observations"]["rustc"] = reader["rustc"]["version"]
+            row["library"] = "/synthetic/producer/" + target + "/libidevice_ffi.a"
+            row["mixed_provider"]["library"] = "/synthetic/provider/" + target + "/libimobiledevice.a"
+            put_json(evidence / "symbol-reader.json", reader)
+            self.receipt["toolchain_lock_sha256"] = put_json(self.artifact / "provenance/toolchain-lock.json", {
+                "symbol_reader": reader, "observations": {"rustc": reader["rustc"]["version"]},
+                "executables": {"rustc": {key: reader["rustc"][key] for key in ("path", "sha256")}}})
+            for name, text, command in (
+                    ("04-rust-export-symbols.txt", rust_symbols, binding.rust_symbol_reader.scan_command(reader, row["library"])),
+                    ("04-c-export-symbols.txt", c_symbols, binding.rust_symbol_reader.scan_command(reader, row["mixed_provider"]["library"])),
+                    ("toolchain-symbol-rustc.txt", reader["rustc"]["version"], [reader["rustc"]["path"], "--version", "--verbose"]),
+                    ("toolchain-symbol-sysroot.txt", reader["sysroot"], [reader["rustc"]["path"], "--print", "sysroot"]),
+                    ("toolchain-llvm-nm.txt", reader["llvm_nm"]["version"], [reader["llvm_nm"]["path"], "--version"])):
+                put(evidence / name, text.encode())
+                put_json(evidence / (name + ".status.json"), dict(success(), command=command))
+            put_json(evidence / "mixed-provider-input-audit.json", {"original_inputs_unchanged": True})
+            put_json(evidence / "pairing-result-header-check.json", checked)
+            retained = {"schema": 1, "per_file_byte_limit": self.contract["result_header_contract"]["per_file_byte_limit"], "files": {}}
+            for name, data in (("ffi/idevice.cbindgen-baseline.h", baseline),
+                               ("ffi/idevice.cbindgen-scoped.h", scoped), ("ffi/idevice.h", final),
+                               ("cpp/include/idevice.h", final)):
+                retained["files"][name] = {"status": "retained", "bytes": len(data),
+                    "sha256": put(evidence / "generated-headers" / name, data)}
+            put_json(evidence / "generated-header-retention.json", retained)
+            for probe in row["link_probes"]:
+                if probe["group"] == "mixed_provider":
+                    probe["link_map_sha256"] = put(evidence / ("05-link-mixed_provider-" + probe["language"] + ".map"),
+                        synthetic_map(row["mixed_provider"]["library"], c_symbols.splitlines(),
+                                      row["library"], rust_symbols.splitlines()).encode())
+                    probe["ownership"] = binding.retained_c_provider.link_ownership(
+                        (evidence / ("05-link-mixed_provider-" + probe["language"] + ".map")).read_bytes(),
+                        row["mixed_provider"]["library"], mixed["symbols"], row["library"],
+                        {"_" + name for name in namespace["expected_target_exports"][target]["after"]})
+                    put_json(evidence / ("05-link-mixed_provider-" + probe["language"] + "-ownership.json"), probe["ownership"])
+                put_json(evidence / ("05-link-" + probe["group"] + "-" + probe["language"] + ".txt.status.json"), success())
+            row["work"] = "/synthetic/producer/" + target
+            row["source_manifest"] = {"schema": 1, "files": {"synthetic.rs": sha(b"opaque fixture source")}}
+            self.receipt["targets"].append(row)
+            self.refresh_visibility(len(self.receipt["targets"]) - 1)
+        put(self.artifact / "IDevice.xcframework/Info.plist", plistlib.dumps({"AvailableLibraries": libraries}))
+        c_libraries = [dict(item, LibraryPath="libimobiledevice.a") for item in libraries]
+        put(self.artifact / binding.C_PRODUCT / "Info.plist", plistlib.dumps({"AvailableLibraries": c_libraries}))
+        self.refresh(inventory=True)
+        self.write_contract()
+
+    def refresh_visibility(self, target_index=0, *, emit_scans=True, recompute_ownership=True):
+        row = self.receipt["targets"][target_index]
+        target = row["target"]["rust"]
+        identifier = "ios-arm64-simulator" if target.endswith("-sim") else "ios-arm64"
+        rust_path = self.artifact / "IDevice.xcframework" / identifier / "libidevice_ffi.a"
+        c_path = self.artifact / binding.C_ROOT / "product" / row["mixed_provider"]["library_relative"]
+        archives = {"rust": {"source": row["library"], "sha256": row["library_sha256"], "bytes": rust_path.stat().st_size},
+                    "c": {"source": row["mixed_provider"]["library"], "sha256": row["mixed_provider"]["library_sha256"], "bytes": c_path.stat().st_size}}
+        visibility = synthetic_visibility_evidence(self.artifact / "provenance" / target, row,
+            self.receipt["recipe_lock_sha256"], archives, emit_scans=emit_scans)
+        if recompute_ownership:
+            namespace = binding.ffi_namespace.load_contract(expected_sha256=self.contract["ffi_namespace_sha256"])
+            for probe in row["link_probes"]:
+                if probe["group"] == "mixed_provider":
+                    name = "05-link-mixed_provider-" + probe["language"]
+                    raw = self.evidence(name + ".map", target_index).read_bytes()
+                    probe["ownership"] = binding.retained_c_provider.link_ownership(raw, row["mixed_provider"]["library"],
+                        row["mixed_provider"]["symbols"], row["library"],
+                        {"_" + symbol for symbol in namespace["expected_target_exports"][target]["after"]}, visibility=visibility)
+                    put_json(self.evidence(name + "-ownership.json", target_index), probe["ownership"])
+        return visibility
+
+    def write_contract(self):
+        put_json(self.here / "input-contract.json", self.contract)
+
+    def refresh(self, inventory=False):
+        if inventory:
+            self.receipt["files"] = {p.relative_to(self.artifact).as_posix(): binding.file_hash(p)
+                for p in sorted(self.artifact.rglob("*")) if p.is_file() and p.name != "apple-build-evidence.json"}
+        self.receipt["retained_c_provider_files"] = {name.removeprefix(binding.C_ROOT + "/"): value
+            for name, value in self.receipt["files"].items() if name.startswith(binding.C_ROOT + "/")}
+        self.receipt_hash = put_json(self.artifact / "apple-build-evidence.json", self.receipt)
+        return self.receipt_hash
+
+    def evidence(self, name, target=0):
+        return self.artifact / "provenance" / self.receipt["targets"][target]["target"]["rust"] / name
+
+    def mock_retained(self):
+        # This fixture predates the nested C verifier and tests the surrounding
+        # copy/handoff boundary. Its synthetic bytes never pretend to be a C
+        # Actions artifact. Full nested validation has a separate helper suite.
+        def verified(root, target, *, expected_handoff_sha256, selection_path=None):
+            if (expected_handoff_sha256 != self.receipt["retained_c_handoff_sha256"]
+                    or binding.file_hash(root / "handoff.json") != expected_handoff_sha256):
+                raise ValueError("synthetic C boundary handoff hash differs")
+            value = copy.deepcopy(self.c_targets[target["rust"]])
+            value.update(library=str(root / "product" / value["library_relative"]),
+                         headers=str(root / "product" / value["headers_relative"]))
+            return value
+        return patch.object(binding.retained_c_provider, "verify", side_effect=verified)
+
+    def artifact_inputs(self):
+        with self.mock_retained():
+            return binding.artifact_inputs(self.artifact, self.receipt_hash, self.contract)
+
+
+class DiagnosticBindingTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="new-diagnostic-fixtures-")
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.fixture = DiagnosticFixture(self.root)
+
+    def reject_artifact(self):
+        with self.assertRaises((ValueError, KeyError, OSError)):
+            self.fixture.artifact_inputs()
+
+    def test_synthetic_two_slice_six_probe_metadata_is_accepted_without_execution(self):
+        result = self.fixture.artifact_inputs()
+        self.assertEqual(len(result["targets"]), 2)
+        self.assertTrue(all(len(row["link_probes"]) == 8 for row in result["targets"].values()))
+        self.assertFalse(result["binary_format_inspected"])
+        self.assertEqual(set(result["device_slice"]), {"archive", "header", "module_map"})
+
+    def test_symbol_reader_identity_and_scan_commands_fail_closed(self):
+        for name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt", "toolchain-llvm-nm.txt"):
+            path = self.fixture.evidence(name + ".status.json")
+            original = path.read_bytes()
+            for change in (lambda row: row.update(command=["/usr/bin/xcrun", "nm", "ignored"]),
+                           lambda row: row.update(output_complete=False),
+                           lambda row: row.update(returncode=1),
+                           lambda row: row["cleanup"].update(group_empty=False)):
+                with self.subTest(name=name):
+                    value = json.loads(original); change(value); put_json(path, value)
+                    self.fixture.refresh(inventory=True)
+                    self.reject_artifact()
+            path.write_bytes(original)
+            self.fixture.refresh(inventory=True)
+        path = self.fixture.evidence("symbol-reader.json")
+        value = json.loads(path.read_bytes())
+        value["llvm_nm"]["sha256"] = "0" * 64
+        put_json(path, value)
+        self.fixture.receipt["targets"][0]["symbol_reader"] = value
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_old_artifact_without_reader_contract_is_rejected(self):
+        self.fixture.receipt["targets"][0].pop("symbol_reader")
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_partial_export_scan_is_rejected_even_with_all_382_names(self):
+        path = self.fixture.evidence("04-rust-export-symbols.txt")
+        self.assertEqual(sum(line.startswith("_tetherless_native_") for line in path.read_text().splitlines()), 382)
+        status = self.fixture.evidence("04-rust-export-symbols.txt.status.json")
+        row = json.loads(status.read_bytes()); row.update(returncode=1, output_complete=False)
+        put_json(status, row); self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_genuine_provider_receipt_bytes_match_retained_provenance(self):
+        provenance = json.loads((PROVIDER_FIXTURE_ROOT / "provenance.json").read_bytes())
+        self.assertEqual(provenance["artifact_sha256"], "c90f04e44019e67e551dca9708e9e958729ca475094aa6eefbd8e42d638f0a77")
+        self.assertEqual(provenance["apple_receipt_sha256"], "24227e8480687b027f8c1a0e9d665af4e89844bf5c3ebb0d241fb3e6b58a5cc0")
+        self.assertEqual(provenance["source_commit"], "9ee2ccc9bd3519053781087acde54d4b4ee43236")
+        self.assertEqual(provenance["run_id"], 37400684000)
+        self.assertEqual(provenance["artifact_id"], 11385154393)
+        for row in self.fixture.receipt["targets"]:
+            target = row["target"]["rust"]
+            data = (PROVIDER_FIXTURE_ROOT / (target + ".json")).read_bytes()
+            recorded = provenance["files"][target + ".json"]
+            self.assertEqual(recorded["sha256"], sha(data))
+            self.assertEqual(recorded["bytes"], len(data))
+            self.assertEqual(row["provider_receipt"], json.loads(data))
+            self.assertEqual(row["provider_receipt"]["kind"], "apple-framework-consumer")
+
+    def test_other_provider_kinds_are_rejected_on_each_target(self):
+        for row in self.fixture.receipt["targets"]:
+            original = copy.deepcopy(row["provider_receipt"])
+            for kind in ("apple-framework", "host-static", "", None, "apple-framework-consumer-extra"):
+                with self.subTest(target=row["target"]["rust"], kind=kind):
+                    row["provider_receipt"]["kind"] = kind
+                    self.fixture.refresh()
+                    self.reject_artifact()
+            row["provider_receipt"] = original
+            self.fixture.refresh()
+
+    def test_frozen_contract_has_fourteen_compiler_and_one_opaque_support_sources(self):
+        contract = json.loads((HERE / "input-contract.json").read_text())
+        self.assertEqual(len(contract["prepared_composition_sources"]), 14)
+        self.assertEqual(list(contract["prepared_support_sources"]), ["SideStore/Core/Pairing/PairingFileManager.swift"])
+        self.assertEqual(contract["preparation_gate"]["sha256"], "9ddf28114d14bd99353ef4219e3043e85a2f22ea9429c85d1f887674bceebd68")
+        self.assertFalse(contract["native_prerequisite_cleared"])
+        self.assertFalse(contract["consumer_or_product_activation"])
+
+    def test_external_apple_receipt_hash_is_mandatory(self):
+        with self.assertRaises(ValueError):
+            binding.artifact_inputs(self.fixture.artifact, "0" * 64, self.fixture.contract)
+
+    def test_legacy_unisolated_producer_is_not_accepted(self):
+        self.fixture.receipt.pop("mixed_c_provider_link_probes_only")
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_old_export_alias_or_cross_provider_overlap_is_rejected(self):
+        for filename, symbol in (("04-rust-export-symbols.txt", "_plist_free"),
+                                 ("04-c-export-symbols.txt", "_tetherless_native_plist_free")):
+            path = self.fixture.evidence(filename)
+            original = path.read_bytes()
+            with self.subTest(filename=filename):
+                path.write_bytes(original + symbol.encode() + b"\n")
+                self.fixture.refresh(inventory=True)
+                self.reject_artifact()
+            path.write_bytes(original)
+            self.fixture.refresh(inventory=True)
+
+    def test_forged_or_missing_header_namespace_and_link_map_are_rejected(self):
+        for filename in ("ffi-header-namespace.json", "namespaced-idevice.h", "05-link-mixed_provider-swift.map"):
+            path = self.fixture.evidence(filename)
+            original = path.read_bytes()
+            with self.subTest(filename=filename):
+                path.write_bytes(b"changed namespace evidence\n")
+                self.fixture.refresh(inventory=True)
+                self.reject_artifact()
+            path.write_bytes(original)
+            self.fixture.refresh(inventory=True)
+
+    def test_missing_slice_is_rejected(self):
+        self.fixture.receipt["targets"].pop()
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_duplicate_slice_is_rejected(self):
+        self.fixture.receipt["targets"][1] = copy.deepcopy(self.fixture.receipt["targets"][0])
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_missing_result_constants_probe_is_rejected(self):
+        self.fixture.receipt["targets"][0]["link_probes"].pop()
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_duplicate_probe_cannot_replace_required_probe(self):
+        probes = self.fixture.receipt["targets"][0]["link_probes"]
+        probes[-1] = copy.deepcopy(probes[0])
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_executed_link_probe_is_rejected(self):
+        self.fixture.receipt["targets"][1]["link_probes"][0]["executed"] = True
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_provider_archive_is_rejected(self):
+        self.fixture.receipt["targets"][0]["provider_receipt"]["native_libraries"] = ["unapproved.a"]
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_provider_empty_openssl_setting_must_be_present(self):
+        self.fixture.receipt["targets"][0]["provider_receipt"]["environment"].clear()
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_missing_toolchain_observation_is_rejected(self):
+        self.fixture.receipt["targets"][0]["toolchain_observations"].pop("sdk_iphoneos_build")
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_synthetic_peer_feature_is_rejected(self):
+        self.fixture.receipt["targets"][0]["production_features"]["synthetic_peer_selected"] = True
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_activation_claim_is_rejected(self):
+        self.fixture.receipt["consumer_or_product_activation"] = True
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_header_check_receipt_mutation_is_rejected(self):
+        put_json(self.fixture.evidence("pairing-result-header-check.json"), {"schema": 1})
+        self.reject_artifact()
+
+    def test_header_comparison_flags_cannot_be_reauthenticated_as_success(self):
+        checked = self.fixture.receipt["targets"][0]["result_header_contract"]
+        checked["unrelated_nonempty_lines_identical"] = False
+        put_json(self.fixture.evidence("pairing-result-header-check.json"), checked)
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_changed_result_declaration_pin_is_rejected(self):
+        checked = self.fixture.receipt["targets"][0]["result_header_contract"]
+        checked["declarations_sha256"] = "0" * 64
+        put_json(self.fixture.evidence("pairing-result-header-check.json"), checked)
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_missing_retained_baseline_is_rejected(self):
+        self.fixture.evidence("generated-headers/ffi/idevice.cbindgen-baseline.h").unlink()
+        self.reject_artifact()
+
+    def test_changed_retained_scoped_bytes_are_rejected(self):
+        put(self.fixture.evidence("generated-headers/ffi/idevice.cbindgen-scoped.h"), b"changed opaque bytes")
+        self.reject_artifact()
+
+    def test_copied_header_must_match_final_header(self):
+        put(self.fixture.evidence("generated-headers/cpp/include/idevice.h"), b"changed copied opaque bytes")
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_unexpected_retention_entry_is_rejected(self):
+        path = self.fixture.evidence("generated-header-retention.json")
+        retained = json.loads(path.read_text())
+        retained["files"]["ffi/unexpected.h"] = {"status": "missing"}
+        put_json(path, retained)
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_retained_header_byte_count_must_be_exact_integer(self):
+        path = self.fixture.evidence("generated-header-retention.json")
+        retained = json.loads(path.read_text())
+        retained["files"]["ffi/idevice.h"]["bytes"] = True
+        put_json(path, retained)
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_header_receipt_cannot_omit_raw_file_inventory(self):
+        key = next(name for name in self.fixture.receipt["files"] if "cbindgen-baseline" in name)
+        del self.fixture.receipt["files"][key]
+        self.fixture.refresh()
+        self.reject_artifact()
+
+    def test_missing_force_link_success_receipt_is_rejected(self):
+        self.fixture.evidence("05-link-result_constants-swift.txt.status.json").unlink()
+        self.reject_artifact()
+
+    def test_incomplete_force_link_cleanup_is_rejected(self):
+        status = success()
+        status["cleanup"]["group_empty"] = False
+        put_json(self.fixture.evidence("05-link-result_constants-c.txt.status.json"), status)
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_changed_opaque_archive_is_rejected(self):
+        put(self.fixture.artifact / "IDevice.xcframework/ios-arm64/libidevice_ffi.a", b"changed")
+        self.reject_artifact()
+
+    def test_uninventoried_framework_file_is_rejected(self):
+        put(self.fixture.artifact / "IDevice.xcframework/unexpected", b"extra")
+        self.reject_artifact()
+
+    def test_framework_symlink_is_rejected(self):
+        (self.fixture.artifact / "IDevice.xcframework/alias").symlink_to("Info.plist")
+        self.reject_artifact()
+
+    def test_wrong_architecture_metadata_is_rejected(self):
+        path = self.fixture.artifact / "IDevice.xcframework/Info.plist"
+        info = plistlib.loads(path.read_bytes())
+        info["AvailableLibraries"][0]["SupportedArchitectures"] = ["x86_64"]
+        put(path, plistlib.dumps(info))
+        self.fixture.refresh(inventory=True)
+        self.reject_artifact()
+
+    def test_prepared_support_source_is_checked_as_opaque_identity(self):
+        name = next(iter(self.fixture.contract["prepared_support_sources"]))
+        put(self.fixture.prepared / name, b"changed opaque manager support")
+        with self.assertRaisesRegex(ValueError, "composition/support"):
+            binding.composition_inputs(self.fixture.prepared, self.fixture.contract)
+
+    def test_gateway_patch_requires_exact_reviewed_preimage(self):
+        with self.assertRaisesRegex(ValueError, "preimage"):
+            binding.patched_gateway(b"// changed", self.fixture.contract)
+
+    def test_current_recipe_file_change_is_rejected(self):
+        put(self.fixture.recipe / "marker.py", b"# changed")
+        with self.assertRaisesRegex(ValueError, "recipe source"):
+            binding.verify_recipe_inputs(self.fixture.recipe, self.fixture.contract)
+
+
+class OwnedBindingCopyTests(unittest.TestCase):
+    def setUp(self):
+        from test_native_handoff import NativeHandoffFixture
+        temporary = tempfile.TemporaryDirectory(prefix="new-binding-copy-")
+        self.addCleanup(temporary.cleanup)
+        # The binding passes canonical owned paths to copytree. Keep this fresh
+        # fixture's mutation hooks on the same paths when its parent is aliased.
+        self.fixture = NativeHandoffFixture(Path(temporary.name).resolve(strict=True))
+
+    def test_handoff_success_allows_only_owned_diagnostic_postimages(self):
+        f = self.fixture.fixture
+        before = {p.relative_to(f.prepared): p.read_bytes() for p in f.prepared.rglob("*") if p.is_file()}
+        result = self.fixture.bind()
+        self.assertEqual(before, {p.relative_to(f.prepared): p.read_bytes() for p in f.prepared.rglob("*") if p.is_file()})
+        self.assertFalse(result["consumer_or_product_activation"])
+        self.assertFalse(result["native_or_app_build_executed"])
+        self.assertFalse(result["runtime_capability_gates_changed"])
+        self.assertEqual(len(result["source_inputs"]), 18)
+        self.assertIn(binding.PROJECT_PATH, result["source_inputs"])
+        self.assertNotEqual(result["source_inputs"][binding.PROJECT_PATH], result["bound_files"][binding.PROJECT_PATH])
+        self.assertTrue((f.output / "TETHERLESS_PAIRING_DIAGNOSTIC_BINDING.json").is_file())
+        gateway = (f.output / f.contract["gateway"]["prepared_path"]).read_text()
+        self.assertIn('path: "TetherlessDiagnosticArtifacts/IDevice.xcframework"', gateway)
+        self.assertNotIn(binding.OLD_TARGET, gateway)
+        self.assertEqual(gateway.encode(), binding.patched_gateway(
+            before[Path(f.contract["gateway"]["prepared_path"])], f.contract))
+        support = next(iter(f.contract["prepared_support_sources"]))
+        self.assertEqual((f.output / support).read_bytes(), before[Path(support)])
+        self.assertEqual(binding.digest((f.output / binding.GATEWAY_PATH).read_bytes()),
+                         "33cf02fbaf234a43e983dc590a5cf54fcaf24328e7e107593614dc2a20a6c08f")
+
+    def test_changed_rust_gateway_cannot_be_adapted_or_copied(self):
+        f = self.fixture.fixture
+        path = f.prepared / binding.GATEWAY_PATH
+        path.write_bytes(path.read_bytes() + b"\n// changed gateway\n")
+        with patch.object(binding.shutil, "copytree") as copytree:
+            with self.assertRaises(ValueError):
+                self.fixture.bind()
+            copytree.assert_not_called()
+        self.assertFalse(f.output.exists())
+
+    def test_missing_handoff_never_starts_copy(self):
+        f = self.fixture.fixture
+        with patch.object(binding, "HERE", f.here), patch.object(binding.shutil, "copytree") as copytree:
+            with self.assertRaises(ValueError):
+                binding.bind(f.prepared, f.artifact, f.receipt_hash, f.output, native_recipe=self.fixture.recipe)
+            copytree.assert_not_called()
+        self.assertFalse(f.output.exists())
+
+    def test_failed_prerequisite_never_starts_copy(self):
+        self.fixture.context["needs"]["native-proofs"] = "failure"
+        self.fixture.refresh()
+        with patch.object(binding.shutil, "copytree") as copytree:
+            with self.assertRaises(ValueError):
+                self.fixture.bind()
+            copytree.assert_not_called()
+        self.assertFalse(self.fixture.fixture.output.exists())
+
+    def test_preexisting_output_is_rejected(self):
+        self.fixture.fixture.output.mkdir()
+        with self.assertRaisesRegex(ValueError, "fresh and separate"):
+            self.fixture.bind()
+
+    def test_output_nested_in_prepared_source_is_rejected(self):
+        self.fixture.fixture.output = self.fixture.fixture.prepared / "nested"
+        with self.assertRaisesRegex(ValueError, "fresh and separate"):
+            self.fixture.bind()
+
+    def test_changed_sentinel_is_rejected_before_copy(self):
+        put(self.fixture.fixture.here / "PairingCompositionCompileSentinel.swift", b"// changed")
+        with patch.object(binding.shutil, "copytree") as copytree:
+            with self.assertRaisesRegex(ValueError, "sentinel changed"):
+                self.fixture.bind()
+            copytree.assert_not_called()
+
+    def assert_copy_mutation_rejected(self, mutation, message=None):
+        original = shutil.copytree
+        f = self.fixture.fixture
+        def copy_then_change(source, destination, *args, **kwargs):
+            result = original(source, destination, *args, **kwargs)
+            if Path(source) == f.prepared:
+                mutation()
+            return result
+        with patch.object(binding.shutil, "copytree", side_effect=copy_then_change):
+            with self.assertRaises((ValueError, OSError, KeyError)):
+                self.fixture.bind()
+        self.assertFalse((f.output / "TETHERLESS_PAIRING_DIAGNOSTIC_BINDING.json").exists())
+
+    def test_prepared_support_change_during_copy_is_rejected(self):
+        f = self.fixture.fixture
+        name = next(iter(f.contract["prepared_support_sources"]))
+        self.assert_copy_mutation_rejected(lambda: put(f.prepared / name, b"changed opaque support"))
+
+    def test_native_provider_change_during_copy_is_rejected(self):
+        f = self.fixture.fixture
+        def mutate():
+            f.receipt["targets"][0]["provider_receipt"]["native_libraries"] = ["changed"]
+            f.refresh()
+        self.assert_copy_mutation_rejected(mutate)
+
+    def test_gate_change_during_copy_is_rejected(self):
+        f = self.fixture.fixture
+        self.assert_copy_mutation_rejected(lambda: put(f.here.parent / "pairing_safety.py", b"changed opaque gate"))
+
+    def test_current_recipe_change_during_copy_is_rejected(self):
+        self.assert_copy_mutation_rejected(lambda: put(self.fixture.recipe / "marker.py", b"# changed"))
+
+    def test_handoff_change_during_copy_is_rejected(self):
+        self.assert_copy_mutation_rejected(lambda: put(self.fixture.path, b"{}\n"))
+
+
+class ReservedBindingOutputsTests(unittest.TestCase):
+    def test_copied_artifact_parent_symlink_cannot_receive_outside_writes(self):
+        from test_native_handoff import NativeHandoffFixture
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = NativeHandoffFixture(root / "fixture")
+            outside = root / "outside"
+            outside.mkdir()
+            marker = outside / "untouched.txt"
+            marker.write_bytes(b"controlled outside bytes")
+            parent = fixture.fixture.prepared / "Dependencies/minimuxer/DeviceGateway/TetherlessDiagnosticArtifacts"
+            parent.symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "output parent"):
+                fixture.bind()
+            self.assertEqual(list(outside.iterdir()), [marker])
+            self.assertEqual(marker.read_bytes(), b"controlled outside bytes")
+            self.assertFalse(fixture.fixture.output.exists())
+
+    def test_reserved_binding_receipt_symlink_or_regular_file_is_never_overwritten(self):
+        from test_native_handoff import NativeHandoffFixture
+        for kind in ("symlink", "regular"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = NativeHandoffFixture(root / "fixture")
+                outside = root / "outside.json"
+                outside.write_bytes(b"controlled outside bytes")
+                receipt = fixture.fixture.prepared / "TETHERLESS_PAIRING_DIAGNOSTIC_BINDING.json"
+                if kind == "symlink":
+                    receipt.symlink_to(outside)
+                else:
+                    receipt.write_bytes(b"existing receipt")
+                with self.assertRaisesRegex(ValueError, "output already exists"):
+                    fixture.bind()
+                self.assertEqual(outside.read_bytes(), b"controlled outside bytes")
+                self.assertFalse(fixture.fixture.output.exists())
+
+
+class ClosedRuntimeTemplateTests(unittest.TestCase):
+    def check_context_files(self, here):
+        with self.assertRaises(ValueError):
+            runtime.read_context(here / "runtime-producer.template.json")
+        selection = here / "runtime-producer.json"
+        if selection.exists() or selection.is_symlink():
+            # A separately authorized runtime selection may be checked in.
+            # Schema validity is distinct from the caller's API authentication.
+            values = runtime.read_context(selection)
+            self.assertEqual(set(values), set(runtime.FIELDS.values()))
+
+    def test_checked_in_runtime_template_is_closed(self):
+        self.check_context_files(HERE)
+
+    def test_context_directory_accepts_absent_or_schema_valid_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            put(root / "runtime-producer.template.json", (HERE / "runtime-producer.template.json").read_bytes())
+            self.check_context_files(root)
+            put_json(root / "runtime-producer.json", {"schema": 1, "producer_run_id": 456,
+                     "producer_source_commit": "a" * 40, "producer_run_attempt": 1})
+            self.check_context_files(root)
+
+    def test_context_directory_rejects_malformed_present_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            put(root / "runtime-producer.template.json", (HERE / "runtime-producer.template.json").read_bytes())
+            put_json(root / "runtime-producer.json", {"schema": 1, "producer_run_id": 456,
+                     "producer_source_commit": "a" * 40, "producer_run_attempt": True})
+            with self.assertRaisesRegex(ValueError, "positive integers"):
+                self.check_context_files(root)
+
+    def test_invalid_runtime_context_emits_no_partial_environment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            context, output = root / "context.json", root / "environment"
+            put_json(context, {"schema": 1, "producer_run_id": 456,
+                     "producer_source_commit": "a" * 40, "producer_run_attempt": True})
+            put(output, b"UNCHANGED=1\n")
+            with self.assertRaises(ValueError):
+                runtime.emit_context(context, output)
+            self.assertEqual(output.read_bytes(), b"UNCHANGED=1\n")
+
+
+class TemporaryBindingFixtureRootTests(unittest.TestCase):
+    def test_owned_temporary_parent_alias_preserves_copy_mutation_checks(self):
+        methods = (
+            "test_handoff_success_allows_only_owned_diagnostic_postimages",
+            "test_current_recipe_change_during_copy_is_rejected",
+            "test_gate_change_during_copy_is_rejected",
+            "test_handoff_change_during_copy_is_rejected",
+            "test_native_provider_change_during_copy_is_rejected",
+            "test_prepared_support_change_during_copy_is_rejected",
+        )
+        with tempfile.TemporaryDirectory(prefix="binding alias regression ") as directory:
+            root = Path(directory).resolve(strict=True)
+            physical = root / "physical"
+            physical.mkdir()
+            alias = root / "alias"
+            alias.symlink_to(physical, target_is_directory=True)
+            self.assertTrue(alias.is_symlink())
+            self.assertTrue(alias.samefile(physical))
+            with patch.object(tempfile, "tempdir", str(alias)):
+                for method in methods:
+                    with self.subTest(method=method):
+                        result = unittest.TestResult()
+                        OwnedBindingCopyTests(method).run(result)
+                        self.assertEqual(result.testsRun, 1)
+                        self.assertEqual(result.skipped, [])
+                        self.assertEqual(result.errors, [])
+                        self.assertEqual(result.failures, [])
+
+
+if __name__ == "__main__":
+    unittest.main()

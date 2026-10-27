@@ -1,0 +1,20 @@
+{
+  "archive_sha256": "35ed070b06d9f2fdd7e816ef784fb07b09672f2acf37527f810dbedf450b7769",
+  "files": {
+    ".cargo_vcs_info.json": "2dba35d6c98da477110bb220acdd91357acc645bff14aeb4638d67524f444189",
+    "Cargo.lock": "a8eb8e93279bfdf1f01ed5427c0d81dbab68ac330178fef1d364af4b31e0d13a",
+    "Cargo.toml": "cc2de02f8e7aed76975ba2874cde3c77cdd0da40616e4dafc5eb8d12764099c6",
+    "Cargo.toml.orig": "a718539caaf68b9bc442715a6a8aee76d273e0854701bd48df838f73efd902d5",
+    "build.rs": "3f113baab2c64102e29141a0e66743151aeaaee6404d64971bb5f664853b0819"
+  },
+  "requested_absent": [
+    "COPYING",
+    "LICENSE",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "LICENSE.txt",
+    "NOTICE",
+    "cbindgen.toml",
+    "plist.h"
+  ]
+}

@@ -1,0 +1,378 @@
+{
+  "packages": [
+    {
+      "componentID": "cargo:async-compression@0.4.41",
+      "declaredLicenseExpression": "MIT OR Apache-2.0",
+      "licenseConclusion": "NOASSERTION",
+      "namedLicenseFilePresent": false,
+      "packagedVCSMetadata": {
+        "archiveMember": "vendor/pristine/async-compression-0.4.41/.cargo_vcs_info.json",
+        "sha256": "211f136adf8591766605ba6378219e1d660e991e315e4628955e5bd86e8e1a8f",
+        "value": {
+          "git": {
+            "sha1": "269174b4be20e3cfcbb7e7fa4d7d9596183e287b"
+          },
+          "path_in_vcs": "crates/async-compression"
+        }
+      },
+      "repository": "https://github.com/Nullus157/async-compression",
+      "retainedInlineStatements": [
+        {
+          "excerpt": "## License\n\nLicensed under either of\n\n- [Apache License, Version 2.0](LICENSE-APACHE)\n- [MIT license](LICENSE-MIT)\n\nat your option.\n\n### Contribution\n\nUnless you explicitly state otherwise, any contribution intentionally submitted\nfor inclusion in the work by you shall be dual licensed as above, without any\nadditional terms or conditions.\n\n[1]: https://img.shields.io/crates/v/async-compression.svg?style=flat-square\n[2]: https://crates.io/crates/async-compression\n[3]: https://img.shields.io/github/actions/workflow/status/Nullus157/async-compression/base.yml?style=flat-square\n[5]: https://img.shields.io/crates/d/async-compression.svg?style=flat-square\n[6]: https://crates.io/crates/async-compression\n[7]: https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square\n[8]: https://docs.rs/async-compression\n[9]: https://img.shields.io/crates/l/async-compression.svg?style=flat-square\n[10]: https://deps.rs/crate/async-compression/latest/status.svg?style=flat-square\n[11]: https://deps.rs/crate/async-compression\n[releases]: https://github.com/Nullus157/async-compression/releases\n",
+          "excerptSHA256": "4073ad5b8a3b61f1e565b4fcb105e8a3117a9fe1da5356bdf64177a9544462fa",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/async-compression-0.4.41/README.md",
+          "sourceSHA256": "5a7f048730d9cadc4d3ba7d4e635a28b4681e8e7bee276d914cc088855fdc4e0"
+        }
+      ]
+    },
+    {
+      "componentID": "cargo:compression-codecs@0.4.37",
+      "declaredLicenseExpression": "MIT OR Apache-2.0",
+      "licenseConclusion": "NOASSERTION",
+      "namedLicenseFilePresent": false,
+      "packagedVCSMetadata": {
+        "archiveMember": "vendor/pristine/compression-codecs-0.4.37/.cargo_vcs_info.json",
+        "sha256": "77de35184bd0896b9756509c9f2cd47b5ea987a33b24b7a9c624ed773286266d",
+        "value": {
+          "git": {
+            "sha1": "9d848a02f13f3a56542e4123be8947a8da06097e"
+          },
+          "path_in_vcs": "crates/compression-codecs"
+        }
+      },
+      "repository": "https://github.com/Nullus157/async-compression",
+      "retainedInlineStatements": [
+        {
+          "excerpt": "## License\n\nLicensed under either of\n\n- [Apache License, Version 2.0](LICENSE-APACHE)\n- [MIT license](LICENSE-MIT)\n\nat your option.\n\n### Contribution\n\nUnless you explicitly state otherwise, any contribution intentionally submitted\nfor inclusion in the work by you shall be dual licensed as above, without any\nadditional terms or conditions.\n\n[1]: https://img.shields.io/crates/v/async-compression.svg?style=flat-square\n[2]: https://crates.io/crates/async-compression\n[3]: https://img.shields.io/github/actions/workflow/status/Nullus157/async-compression/base.yml?style=flat-square\n[5]: https://img.shields.io/crates/d/async-compression.svg?style=flat-square\n[6]: https://crates.io/crates/async-compression\n[7]: https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square\n[8]: https://docs.rs/async-compression\n[9]: https://img.shields.io/crates/l/async-compression.svg?style=flat-square\n[10]: https://deps.rs/crate/async-compression/latest/status.svg?style=flat-square\n[11]: https://deps.rs/crate/async-compression\n[releases]: https://github.com/Nullus157/async-compression/releases\n",
+          "excerptSHA256": "4073ad5b8a3b61f1e565b4fcb105e8a3117a9fe1da5356bdf64177a9544462fa",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/compression-codecs-0.4.37/README.md",
+          "sourceSHA256": "5a7f048730d9cadc4d3ba7d4e635a28b4681e8e7bee276d914cc088855fdc4e0"
+        }
+      ]
+    },
+    {
+      "componentID": "cargo:compression-core@0.4.31",
+      "declaredLicenseExpression": "MIT OR Apache-2.0",
+      "licenseConclusion": "NOASSERTION",
+      "namedLicenseFilePresent": false,
+      "packagedVCSMetadata": {
+        "archiveMember": "vendor/pristine/compression-core-0.4.31/.cargo_vcs_info.json",
+        "sha256": "4bed1686b346d17ba3b8c52a6a6bd16163994853a6f52e159edfeeb9edeb3602",
+        "value": {
+          "git": {
+            "sha1": "2a28343998e67ea519b87005b9d295b134c00dd0"
+          },
+          "path_in_vcs": "crates/compression-core"
+        }
+      },
+      "repository": "https://github.com/Nullus157/async-compression",
+      "retainedInlineStatements": [
+        {
+          "excerpt": "## License\n\nLicensed under either of\n\n- [Apache License, Version 2.0](LICENSE-APACHE)\n- [MIT license](LICENSE-MIT)\n\nat your option.\n\n### Contribution\n\nUnless you explicitly state otherwise, any contribution intentionally submitted\nfor inclusion in the work by you shall be dual licensed as above, without any\nadditional terms or conditions.\n\n[1]: https://img.shields.io/crates/v/async-compression.svg?style=flat-square\n[2]: https://crates.io/crates/async-compression\n[3]: https://img.shields.io/github/actions/workflow/status/Nullus157/async-compression/base.yml?style=flat-square\n[5]: https://img.shields.io/crates/d/async-compression.svg?style=flat-square\n[6]: https://crates.io/crates/async-compression\n[7]: https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square\n[8]: https://docs.rs/async-compression\n[9]: https://img.shields.io/crates/l/async-compression.svg?style=flat-square\n[10]: https://deps.rs/crate/async-compression/latest/status.svg?style=flat-square\n[11]: https://deps.rs/crate/async-compression\n[releases]: https://github.com/Nullus157/async-compression/releases\n",
+          "excerptSHA256": "4073ad5b8a3b61f1e565b4fcb105e8a3117a9fe1da5356bdf64177a9544462fa",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/compression-core-0.4.31/README.md",
+          "sourceSHA256": "5a7f048730d9cadc4d3ba7d4e635a28b4681e8e7bee276d914cc088855fdc4e0"
+        }
+      ]
+    },
+    {
+      "componentID": "cargo:ns-keyed-archive@0.1.5",
+      "declaredLicenseExpression": "MIT OR Apache-2.0",
+      "licenseConclusion": "NOASSERTION",
+      "namedLicenseFilePresent": false,
+      "packagedVCSMetadata": {
+        "archiveMember": "vendor/pristine/ns-keyed-archive-0.1.5/.cargo_vcs_info.json",
+        "sha256": "7474f239804023f35d44def95d44df2d35b132ce46efd10b2e1239dba04dc99e",
+        "value": {
+          "git": {
+            "sha1": "f8cec65e865cb48301d33b2244bec45a2f3d2bc2"
+          },
+          "path_in_vcs": ""
+        }
+      },
+      "repository": "https://github.com/jkcoxson/ns_keyed_archive",
+      "retainedInlineStatements": []
+    },
+    {
+      "componentID": "cargo:plist-macro@0.1.6",
+      "declaredLicenseExpression": "MIT",
+      "licenseConclusion": "NOASSERTION",
+      "namedLicenseFilePresent": false,
+      "packagedVCSMetadata": {
+        "archiveMember": "vendor/pristine/plist-macro-0.1.6/.cargo_vcs_info.json",
+        "sha256": "c939dbbb062e2dadd89390ddcef347e84c5ce95b519aff9e58d1a03e3d4fb4c5",
+        "value": {
+          "git": {
+            "sha1": "d1d48559ddc8e9bd263f36180bbe1d4f2a3d55e5"
+          },
+          "path_in_vcs": ""
+        }
+      },
+      "repository": "https://github.com/jkcoxson/plist_macro",
+      "retainedInlineStatements": [
+        {
+          "excerpt": "## License\n\nMIT\n",
+          "excerptSHA256": "daf005969aac8cb4283b3777361f0244f4cce898b9a983a60b7f0d9e96f559bf",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist-macro-0.1.6/README.md",
+          "sourceSHA256": "5e2c21485fa6e5a3a685a94e3693e5faa4f9a2aa525e1b785875fae2328be864"
+        }
+      ]
+    },
+    {
+      "componentID": "cargo:plist_ffi@0.1.6",
+      "declaredLicenseExpression": "MIT",
+      "licenseConclusion": "NOASSERTION",
+      "namedLicenseFilePresent": false,
+      "packagedVCSMetadata": {
+        "archiveMember": "vendor/pristine/plist_ffi-0.1.6/.cargo_vcs_info.json",
+        "sha256": "2dba35d6c98da477110bb220acdd91357acc645bff14aeb4638d67524f444189",
+        "value": {
+          "git": {
+            "sha1": "265379167ab3f9a5664621a7f1c0f494b2ac7c96"
+          },
+          "path_in_vcs": ""
+        }
+      },
+      "repository": "https://github.com/jkcoxson/plist_ffi",
+      "retainedInlineStatements": [
+        {
+          "excerpt": "## License\n\nI'm not a lawyer. libplist's code (header, C++, tests) are under their original\nlicense. Any code written by me (Rust files) are under MIT OR libplist's license. \nPlease open an issue if this licensing is illegal or incompatible.\n",
+          "excerptSHA256": "83ad530545947f87acbf7f505f97a098c4ba5dd9070dae950a21dbaecdc9c611",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/README.md",
+          "sourceSHA256": "1b60445e401df6b5eba42cf43e39c8105b05d98f2c6bff5a1984a6da57d0a1af"
+        },
+        {
+          "excerpt": "/*\n * source libplist++ regression test\n *\n * Copyright (c) 2021 Sebastien Gonzalve All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "aab92a3a1eab6d1cf394b5ca4b83c00aa5e370633b6f96200bff6afa0815c9c9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/examples/plist_test.cpp",
+          "sourceSHA256": "9296ab111a8d8e1d9905ac0455d7f17f973bbf85881706987ccf079520ea69e9"
+        },
+        {
+          "excerpt": "/*\n * Array.h\n * Array node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "d1e53fada0283e4c90830c507aeda37fcbd5a070992332de5599758b1061ebb0",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Array.h",
+          "sourceSHA256": "46505fc115694da2f563bede32f63800102cb27d4d4a5483a3773407c54f87fe"
+        },
+        {
+          "excerpt": "/*\n * Boolean.h\n * Boolean node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "c77c03205743ec07c5348efd3f6a29b8ba1da606ea6bfb25dc4c3da04d7ce5ad",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Boolean.h",
+          "sourceSHA256": "37a6e5ddec0d78b7d083544462d2948a7dfca1532cbde0c01169a017ddaff930"
+        },
+        {
+          "excerpt": "/*\n * Data.h\n * Data node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "b3568869b20b7b1216efb7e8e57e71859125dca133113eaec822318d0e9dc65f",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Data.h",
+          "sourceSHA256": "e839ac6e3acd40ad7d460bf40657f6c1c522431eed3bdbf6b5580cbf98cb6093"
+        },
+        {
+          "excerpt": "/*\n * Date.h\n * Date node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "2957a87b927b1e5cc73e0251e4cbfb1665886c0979e0cd0b6e0d4114b889378d",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Date.h",
+          "sourceSHA256": "858d25d69f794ad0cba453cf74abc82839f78fefb484a8d26be9366c35d12375"
+        },
+        {
+          "excerpt": "/*\n * Dictionary.h\n * Dictionary node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "fe57fbf48930d543a13751f438423bae0ce29b254aeac9327930846cd455c1c0",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Dictionary.h",
+          "sourceSHA256": "26ea0cc35b6583b587e539f41da68f5e9be15c919ac291034131fc4388c0e5b0"
+        },
+        {
+          "excerpt": "/*\n * Integer.h\n * Integer node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "bfee54613022a929e6835f4ed9c6ad754e28fada0d07a349215823fc5d05c766",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Integer.h",
+          "sourceSHA256": "25d1ca9fd837b3c67d3a84e378bf704c1ed5514a2a492ab6714ed40fbd11face"
+        },
+        {
+          "excerpt": "/*\n * Key.h\n * Key node type for C++ binding\n *\n * Copyright (c) 2012 Nikias Bassen, All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "ed429c3e899172877fb448835ca34d7fe06c7368ed31865b53308ba03d073b6c",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Key.h",
+          "sourceSHA256": "806b610963c5aa729271c1e6750e30b1efcc5267c4e768599f8379c2dfed454c"
+        },
+        {
+          "excerpt": "/*\n * Node.h\n * Abstract node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "82068bfc4175cfa31e840dcb9b3e44e54c2ee7a67045fb54113d6e924d3925cb",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Node.h",
+          "sourceSHA256": "c38bc3dcae889534b0d214b093ff6cc56805f25ea24979289774beaf9d725a91"
+        },
+        {
+          "excerpt": "/*\n * Real.h\n * Real node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "5cf324bbe77e37498bedbef45abf04dfa46c6b5efebe28174f425baf8dc758ae",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Real.h",
+          "sourceSHA256": "4e05071c92650d0cf524ece765599a479b1d544b9219020b5227eb0e8ef53b9e"
+        },
+        {
+          "excerpt": "/*\n * String.h\n * String node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "f98b169a00eee876c7647f9b0e3fb44174723da01f9cd5262b15e08e6a1839b7",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/String.h",
+          "sourceSHA256": "33ed99438d7a631c60e95f4bbb30d7e0848b9c3be6128e6eaaab77d49a02816a"
+        },
+        {
+          "excerpt": "/*\n * Structure.h\n * Structure node type for C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "f9b29bd7c9031ea199c5ca7dd008f692f0b9db6c811791bd372bfb85c5bf53c1",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Structure.h",
+          "sourceSHA256": "fe7452a0f561e0a45cdf81aee4b9e04b50053ca07a7ab7ebf2b625ced9aab1cf"
+        },
+        {
+          "excerpt": "/*\n * Uid.h\n * Uid node type for C++ binding\n *\n * Copyright (c) 2012 Nikias Bassen, All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "3ef39cec3383ac597769d7ba82e34a3f9c933535ba9b188939d5b4fcaf1762dd",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/Uid.h",
+          "sourceSHA256": "c101bd72df5f13887965063212ec18e317383de37666766444c63dadf8df02e3"
+        },
+        {
+          "excerpt": "/*\n * plist++.h\n * Main include of libplist C++ binding\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "a62a21ff2e55d4a7a1323f48c0dd6c079e997082a3218c641fae34e5700a1447",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/plist++.h",
+          "sourceSHA256": "405c4eadbc53cc70474fccf365e1dcf34e9dd13cdec8942fad623e7d77bf05c7"
+        },
+        {
+          "excerpt": "/**\n * @file plist/plist.h\n * @brief Main include of libplist\n * \\internal\n *\n * Copyright (c) 2012-2023 Nikias Bassen, All Rights Reserved.\n * Copyright (c) 2008-2009 Jonathan Beck, All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "5dc7b3563f15fd76a5f4ba94c3899ad7aeba616d5f41b0fe86c416f3730c642e",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/include/plist/plist.h",
+          "sourceSHA256": "118a5ef7f331b2af5bc0d44032c1c761acc1c84fbc0fa5d7965e52b6169e69b1"
+        },
+        {
+          "excerpt": "/*\n * Array.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "0e35f3ce34a847e28fe7188b037e21f4601424769fd60677d253eb4e26dc110e",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Array.cpp",
+          "sourceSHA256": "8de87e18a8b4a5edd44a7b7a9072b825e8b06030ce8a43311c763212c23d3e48"
+        },
+        {
+          "excerpt": "/*\n * Boolean.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "d49cb1bc7b92114f2e9f1d16050fe847d86b038abe65a74e579d7d9731217f9f",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Boolean.cpp",
+          "sourceSHA256": "7d75049e2b671fcae0e13ea107330a3c44ba549d00d558d1d79cea271ab930d1"
+        },
+        {
+          "excerpt": "/*\n * Data.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n */",
+          "excerptSHA256": "c005ecc5c70a3fad712c9329f538f4de826829d1873252a503b9f559574215e6",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Data.cpp",
+          "sourceSHA256": "8916be06ecd2c02d8264a7fece9e0c56013c85e3fa6db7b4a86ae3c50f706171"
+        },
+        {
+          "excerpt": "/*\n * Date.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "3e45033fee8075c3e76ea5614ea1cdbdb4d21c2f1b19fb1d9243bc10415d3bb9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Date.cpp",
+          "sourceSHA256": "ad74db3222782a4403e749b78a43a63c5490bd5ee099c3410d63a49c81cc3177"
+        },
+        {
+          "excerpt": "/*\n * Dictionary.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "d28a4868ea5c5a7041663c395094019a2b690f92782a3ef3700f096b4073b29a",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Dictionary.cpp",
+          "sourceSHA256": "86b3ea114c6a62d7ae450a49bc8a71c63163d06bb29cc3a24780d592ed3fb20c"
+        },
+        {
+          "excerpt": "/*\n * Integer.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "b893420d3a55bcc895474db8871550151e97164b59109a2b44c296b650b69bb9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Integer.cpp",
+          "sourceSHA256": "d9179514ef9d437c9d4f2c39792243c9c2898596b422bc5092cd3b6a4a272d0c"
+        },
+        {
+          "excerpt": "/*\n * Key.cpp\n *\n * Copyright (c) 2012 Nikias Bassen, All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "77cfdf645d9787046fe0608768123febba5f3f3ea5c29053967816e25f9b87bd",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Key.cpp",
+          "sourceSHA256": "70a17e8e3f9eade7ee594fad0d87531108de5b5eda121172b490b9b526e1d01f"
+        },
+        {
+          "excerpt": "/*\n * Node.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "5b1cc20fb7c1f08341dc0f320d41782110db62cf674e74eb8c6dde9e60b2d8f6",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Node.cpp",
+          "sourceSHA256": "c8aeae0a166bbab175b0d77fc6e61845ab9834aba462a71552211915ab4dac6e"
+        },
+        {
+          "excerpt": "/*\n * Real.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "968f4afe9e512da357915f907581a7e63e46875b51bbae5e3f791537678ea6bf",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Real.cpp",
+          "sourceSHA256": "308897ab998e04fadafd8887f2da0ad3a147a3fdc9ace110424a3109f89d6e64"
+        },
+        {
+          "excerpt": "/*\n * String.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "76fca96a1b8bd3e1e85a1ac9409a878920f748588052d47e4a144bc391461a2e",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/String.cpp",
+          "sourceSHA256": "6d0574756ff235aa419191d832e13aece02b876f4891cee7322ceccbd5722731"
+        },
+        {
+          "excerpt": "/*\n * Structure.cpp\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "cd257198cc2e8075df6ddd1ac2228a579a4972e21b3af27f79ef5d0f7e706350",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Structure.cpp",
+          "sourceSHA256": "768bad18bc1cc8fc8ab08ef16d86769c8ab8812f56cce286231f03b2bf2fd994"
+        },
+        {
+          "excerpt": "/*\n * Uid.cpp\n *\n * Copyright (c) 2012 Nikias Bassen, All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "b923cc394522d4817f95c77b6ae38e555d2c00fcfc44508bddc0901b903c9fae",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/cpp/src/Uid.cpp",
+          "sourceSHA256": "735841fa531da22fac76f17bfcf424a819591db82b9b72b6ca74b6f007df0ffd"
+        },
+        {
+          "excerpt": "/*\n * backup_test.c\n * source libplist regression test\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "fde3b3e76ed86db3345870a90f2737beec0dcfb8a3616eb6cedb90cd826cb4b9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/test/plist_btest.c",
+          "sourceSHA256": "9cbe521a1ad0ee29ba49e0b9819b90ea55a07bd9a77cbf0c210b3cfa14ffe7f7"
+        },
+        {
+          "excerpt": "/*\n * backup_test.c\n * source libplist regression test\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "fde3b3e76ed86db3345870a90f2737beec0dcfb8a3616eb6cedb90cd826cb4b9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/test/plist_cmp.c",
+          "sourceSHA256": "3ff25b5341f8971ba5b9345930bfb7a91354f7e4b39dc3558be859117ad65f30"
+        },
+        {
+          "excerpt": "/*\n * backup_test.c\n * source libplist regression test\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "fde3b3e76ed86db3345870a90f2737beec0dcfb8a3616eb6cedb90cd826cb4b9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/test/plist_jtest.c",
+          "sourceSHA256": "0d902cf6b22c26de0f4fded6be547f52fb093ffca42fdc074e64082eae7d768c"
+        },
+        {
+          "excerpt": "/*\n * backup_test.c\n * source libplist regression test\n *\n * Copyright (c) 2009 Jonathan Beck All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "fde3b3e76ed86db3345870a90f2737beec0dcfb8a3616eb6cedb90cd826cb4b9",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/test/plist_test.c",
+          "sourceSHA256": "56c0d6f6c028d39e72faa2defdb04443c3085c644665f755e793301294a73625"
+        },
+        {
+          "excerpt": "/*\n * plistutil.c\n * Simple tool to convert a plist into different formats\n *\n * Copyright (c) 2009-2020 Martin Szulecki All Rights Reserved.\n * Copyright (c) 2013-2020 Nikias Bassen, All Rights Reserved.\n * Copyright (c) 2008 Zach C., All Rights Reserved.\n *\n * This library is free software; you can redistribute it and/or\n * modify it under the terms of the GNU Lesser General Public\n * License as published by the Free Software Foundation; either\n * version 2.1 of the License, or (at your option) any later version.\n *\n * This library is distributed in the hope that it will be useful,\n * but WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this library; if not, write to the Free Software\n * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA\n */",
+          "excerptSHA256": "ee20ddbcc799173cdfa5436fd9716499cea425d3129baae3a3fc3a8474842941",
+          "matchesLockedOriginalCrate": true,
+          "sourceArchiveMember": "vendor/pristine/plist_ffi-0.1.6/tools/plistutil.c",
+          "sourceSHA256": "8fba396d977b986913697c5f9e2d54dc405c8158bbbe9a2fb98fff3bd4e948b2"
+        }
+      ]
+    }
+  ],
+  "schema": 1,
+  "scope": "Six observed Apple-target packages without named license files; exact README grants and selected plist_ffi leading LGPL source notices. Not a full file-level audit."
+}

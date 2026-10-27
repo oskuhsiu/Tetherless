@@ -1,0 +1,18 @@
+{
+  "archive_sha256": "befbfd072a8e81c02f8c507aefce431fe5e7d051f83d48a23ffc9b9fe5a11799",
+  "files": {
+    ".cargo_vcs_info.json": "0a89e5765e6dfddb37c884a7b21081059e0baef954d92f89b28e0693b79dd9da",
+    "Cargo.lock": "93d4791548dcd876012eb118a98d1e42e024fff69b0fcf5392c2ce4a9397a1d0",
+    "Cargo.toml": "434f3f16d34a528eb3e7dc01e78d662b4bc3abc36eeeb5a95978e78cf9a40e45",
+    "LICENSE": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5",
+    "src/bindgen/cargo/cargo.rs": "a9f06e6394f950bf562eb0e5a686d2360a14ab81b87539b122e643907eb2f49c",
+    "src/bindgen/cargo/cargo_metadata.rs": "d616faea349e4e7ff5a81f944e9c25c3a7b1acc4d7cc421e437464c906d4bd8d"
+  },
+  "requested_absent": [
+    "COPYING",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "LICENSE.txt",
+    "NOTICE"
+  ]
+}

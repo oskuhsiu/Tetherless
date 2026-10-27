@@ -1,0 +1,10 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { inspectArchive, safeArchivePath, LIMITS } from '../src/archive.js';
+import { makeIpa } from './fixtures.mjs';
+const enc = new TextEncoder();
+test('accepts a synthetic IPA and locates the app bundle without extracting it', async () => { const result = await inspectArchive(new Blob([await makeIpa()])); assert.deepEqual(result.bundles, ['Payload/Fixture.app/Info.plist']); assert(result.expanded > 1000); });
+for (const name of ['../escape', '/absolute', 'a/../../b', 'a\\b', 'a//b', 'a\0b', 'C:/path', './name']) test(`rejects unsafe ZIP path ${JSON.stringify(name)}`, () => assert.throws(() => safeArchivePath(enc.encode(name), 0x800)));
+test('rejects ordinary duplicate case-colliding archive paths', async () => { const data = await makeIpa({ extra: [['Payload/Fixture.app/info.plist', 'collision']] }); await assert.rejects(inspectArchive(new Blob([data])), /colliding/); });
+test('rejects too large input before reading', async () => { await assert.rejects(inspectArchive({ size: LIMITS.input + 1, slice() { throw new Error('must not read'); } }), /150 MiB/); });
+test('rejects truncated ZIP', async () => { const data = await makeIpa(); await assert.rejects(inspectArchive(new Blob([data.slice(0, -3)])), /complete ZIP/); });
+test('rejects archive without one top-level app', async () => { const data = await makeIpa({ extra: [['Payload/Other.app/Info.plist', 'another']] }); await assert.rejects(inspectArchive(new Blob([data])), /exactly one/); });

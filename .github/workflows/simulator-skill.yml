@@ -1,0 +1,25 @@
+name: Simulator skill checks
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.agents/skills/ios-simulator-ci/**'
+      - 'docs/simulator-ci/**'
+      - '.github/workflows/simulator-skill.yml'
+  pull_request:
+    paths:
+      - '.agents/skills/ios-simulator-ci/**'
+      - 'docs/simulator-ci/**'
+      - '.github/workflows/simulator-skill.yml'
+permissions:
+  contents: read
+jobs:
+  skill-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Test read-only stage classification and evidence checks
+        run: python3 -m unittest discover -s .agents/skills/ios-simulator-ci/tests -v

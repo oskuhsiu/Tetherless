@@ -1,0 +1,13 @@
+# Managed ODA download workspaces
+
+`TransferWorkspace` is connected to `boundedODAPackageData`, covering ODA server-list, metadata, metadata-indirection and archive transfers. It is not yet the IPA installer's general-purpose staging manager.
+
+A caller-controlled pool under the app's temporary directory admits one active transfer. A real exclusive `usage.lock` is held across download, final bounded read and normal cleanup. Other cooperating callers using the same pool get a busy error before creating another workspace; they never reclaim a live download. Different app containers are different pools. The existing native mutation lease remains independent; no polling loop, credential cache or networking policy is bypassed.
+
+Only canonical `transfer-UUID` directories and their `download-UUID.part` files are reclaimed. Reclamation validates all candidate directories and contents before any deletion. It uses descriptor-relative, no-follow operations and rejects links, hard links, FIFOs, subdirectories and unrecognized stage contents. The stable lock and unknown root entries are retained. Listing limits are 128 root entries and eight files per recognized stage. Interrupted partial deletion is retryable. Legacy random `tetherless-oda-UUID` folders are deliberately not swept: they were not enrolled in this ownership protocol.
+
+Each transfer requests a positive ceiling at most 128 MiB. The existing ODA metadata/archive policy supplies its smaller applicable bound; the downloader validates declared and received bytes before writes, and the final read separately checks size and file identity/timestamps. This is a disk-workspace/admission bound. It does not bound every Data copy, parsed JSON graph or caller-retained result after release; complete aggregate RAM and install-wide disk budgeting remain separate work.
+
+An ordinary successful return requires explicit cleanup to succeed. On an earlier error/cancellation, best-effort cleanup preserves that original failure; an unreclaimed stage remains recognizable. A process death releases the kernel lock, allowing the next ordinary admission to reclaim abandoned work without a user cleanup button. No age/clock heuristic and no recursive sweep of the whole temp directory is used.
+
+Tests use production workspace/downloader code, real files and OS locks with scripted URLSession responses. An independent process verifies exclusion and a process using `os._exit` leaves a locked partial workspace for recovery. Success, transfer errors, cancellation, oversize/empty output, malformed stages, links/FIFO, unknown files, idempotent cleanup and lock inode preservation are covered. This is not live CDN/TLS, Apple authentication, hardware Data Protection or background iPhone validation.

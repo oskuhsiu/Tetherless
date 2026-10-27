@@ -1,0 +1,25 @@
+{
+  "artifact_sha256_supplied_by_parent": "07b66e8dd7be4fc6a36acde1b7d3db231b6395e8454ea63123057c47ed7c7978",
+  "compiler_error": "E0277: nested xpc! Properties:{} falls through to expression() without XpcConvertible",
+  "compiler_log_sha256": "38e93ae1044695ec4da8372d9d70359e858cc00c8858c05569973deb3be1579b",
+  "failed_artifact": 11372075978,
+  "failed_implementation": "3ae371e2b31439a75f1ae2040b717465e0bba57c",
+  "failed_job": 111982472086,
+  "failed_run": 37375339856,
+  "macro_contract": "xpc_internal empty object has no matching one-or-more dictionary arm; explicit XPCObject has identity XpcConvertible implementation",
+  "native_executed": false,
+  "pinned_macro_sha256": "4e760809245fb291267b7037e4aac6ce4f84c4a27769765f65bf87d6cf147c60",
+  "postimage_sha256": "e8fa9907f811c07d4d1db28f97313abf51a44f5a21029e42f90a83e27a4a382e",
+  "preimage_sha256": "d57d1e044bb86f2493b7dafe3ff0621c796a034ad3fca1c6e481d9fbea3863c3",
+  "prior_source_receipt_retained": "d3d85a874879e29021635ba4753121413b36749951d6cc4450b80cac050a8d04",
+  "replacement": {
+    "new": "\"Properties\":crate::xpc::XPCObject::Dictionary(crate::xpc::Dictionary::new()),",
+    "old": "\"Properties\":{},"
+  },
+  "schema": 1,
+  "scope": "One fixture-only explicit empty XPC dictionary expression; no production or protocol/assertion change",
+  "source_path": "idevice/src/remote_pairing/staged_test_peer.rs",
+  "unchanged_native_count": 3,
+  "unchanged_native_filter": "staged_acquisition::composite_transcript::",
+  "wire_contract": "XPCObject::Dictionary with an empty existing Dictionary constructor; zero entries, not Null or unit"
+}

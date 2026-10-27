@@ -1,0 +1,65 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1; classes = {}; objectVersion = 56;
+ objects = {
+  D00000000000000000000001 = {isa = PBXProject; buildConfigurationList = D00000000000000000000040;
+   compatibilityVersion = "Xcode 14.0"; developmentRegion = en; knownRegions = (en, Base,);
+   mainGroup = D00000000000000000000002; productRefGroup = D00000000000000000000003;
+   projectDirPath = ""; projectRoot = ""; targets = (D00000000000000000000010, D00000000000000000000020,);
+   attributes = {LastUpgradeCheck = 2630; TargetAttributes = {
+    D00000000000000000000010 = {CreatedOnToolsVersion = 26.3;};
+    D00000000000000000000020 = {CreatedOnToolsVersion = 26.3; TestTargetID = D00000000000000000000010;};
+   };};
+  };
+  D00000000000000000000002 = {isa = PBXGroup; sourceTree = "<group>"; children = (
+   D00000000000000000000004, D00000000000000000000005, D00000000000000000000003,);};
+  D00000000000000000000003 = {isa = PBXGroup; name = Products; sourceTree = "<group>";
+   children = (D00000000000000000000006, D00000000000000000000007,);};
+  D00000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipientApp.swift; sourceTree = "<group>";};
+  D00000000000000000000005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimePickerTests.swift; sourceTree = "<group>";};
+  D00000000000000000000006 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = RuntimeRecipient.app; sourceTree = BUILT_PRODUCTS_DIR;};
+  D00000000000000000000007 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = RuntimePickerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR;};
+  D00000000000000000000008 = {isa = PBXBuildFile; fileRef = D00000000000000000000004;};
+  D00000000000000000000009 = {isa = PBXBuildFile; fileRef = D00000000000000000000005;};
+  D00000000000000000000010 = {isa = PBXNativeTarget; buildConfigurationList = D00000000000000000000041;
+   buildPhases = (D00000000000000000000011, D00000000000000000000012, D00000000000000000000013,);
+   buildRules = (); dependencies = (); name = RuntimeRecipient; productName = RuntimeRecipient;
+   productReference = D00000000000000000000006; productType = "com.apple.product-type.application";};
+  D00000000000000000000011 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (D00000000000000000000008,); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000012 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000013 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000020 = {isa = PBXNativeTarget; buildConfigurationList = D00000000000000000000042;
+   buildPhases = (D00000000000000000000021, D00000000000000000000022, D00000000000000000000023,);
+   buildRules = (); dependencies = (D00000000000000000000024,); name = RuntimePickerTests; productName = RuntimePickerTests;
+   productReference = D00000000000000000000007; productType = "com.apple.product-type.bundle.ui-testing";};
+  D00000000000000000000021 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (D00000000000000000000009,); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000022 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000023 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000024 = {isa = PBXTargetDependency; target = D00000000000000000000010; targetProxy = D00000000000000000000025;};
+  D00000000000000000000025 = {isa = PBXContainerItemProxy; containerPortal = D00000000000000000000001; proxyType = 1; remoteGlobalIDString = D00000000000000000000010; remoteInfo = RuntimeRecipient;};
+  D00000000000000000000040 = {isa = XCConfigurationList; buildConfigurations = (D00000000000000000000050,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug;};
+  D00000000000000000000041 = {isa = XCConfigurationList; buildConfigurations = (D00000000000000000000051,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug;};
+  D00000000000000000000042 = {isa = XCConfigurationList; buildConfigurations = (D00000000000000000000052,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug;};
+  D00000000000000000000050 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {
+   ARCHS = arm64; ONLY_ACTIVE_ARCH = YES; SDKROOT = iphonesimulator; SUPPORTED_PLATFORMS = iphonesimulator;
+   IPHONEOS_DEPLOYMENT_TARGET = 17.0; TARGETED_DEVICE_FAMILY = 1; CLANG_ENABLE_MODULES = YES;
+   SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+   ENABLE_DEBUG_DYLIB = NO; CODE_SIGNING_ALLOWED = YES; CODE_SIGNING_REQUIRED = YES; CODE_SIGN_IDENTITY = "-";
+   CODE_SIGN_STYLE = Manual; AD_HOC_CODE_SIGNING_ALLOWED = YES; DEVELOPMENT_TEAM = XYZ0123456;
+   GENERATE_INFOPLIST_FILE = YES; PRODUCT_NAME = "$(TARGET_NAME)";
+   CURRENT_PROJECT_VERSION = 1; MARKETING_VERSION = 1.0;
+   LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks",);
+  };};
+  D00000000000000000000051 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {
+   PRODUCT_BUNDLE_IDENTIFIER = org.tetherless.Tetherless.RuntimeRecipient;
+   CODE_SIGN_ENTITLEMENTS = Recipient.entitlements; INFOPLIST_FILE = "Recipient-Info.plist";
+   INFOPLIST_KEY_CFBundleDisplayName = "Runtime Picker Recipient";
+   INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+  };};
+  D00000000000000000000052 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {
+   PRODUCT_BUNDLE_IDENTIFIER = org.tetherless.Tetherless.RuntimePickerTests;
+   TEST_TARGET_NAME = RuntimeRecipient;
+  };};
+ };
+ rootObject = D00000000000000000000001;
+}

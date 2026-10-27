@@ -1,0 +1,25 @@
+{
+  "apple_receipt_sha256": "24227e8480687b027f8c1a0e9d665af4e89844bf5c3ebb0d241fb3e6b58a5cc0",
+  "artifact_id": 11385154393,
+  "artifact_sha256": "c90f04e44019e67e551dca9708e9e958729ca475094aa6eefbd8e42d638f0a77",
+  "files": {
+    "aarch64-apple-ios-sim.json": {
+      "artifact_member": "apple-producer-output/provenance/aarch64-apple-ios-sim/provider-input-receipt.json",
+      "bytes": 1474,
+      "sha256": "7fa4315280cfa457a0e3285e6867cca06060f61ab0462e81162c7c9f9e8e2b3a",
+      "unchanged_from_authenticated_producer": true
+    },
+    "aarch64-apple-ios.json": {
+      "artifact_member": "apple-producer-output/provenance/aarch64-apple-ios/provider-input-receipt.json",
+      "bytes": 1421,
+      "sha256": "bfd9eaf44fc2394aa2de10f38dfc2c5700d42386d135d6d865518e68e023f1d7",
+      "unchanged_from_authenticated_producer": true
+    }
+  },
+  "repository": "oskuhsiu/Tetherless",
+  "run_attempt": 1,
+  "run_id": 37400684000,
+  "schema": 1,
+  "scope": "Genuine unchanged provider receipt bytes; surrounding unit-test archives and command receipts remain synthetic.",
+  "source_commit": "9ee2ccc9bd3519053781087acde54d4b4ee43236"
+}

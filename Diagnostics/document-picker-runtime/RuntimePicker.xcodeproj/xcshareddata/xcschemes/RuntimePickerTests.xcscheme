@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme LastUpgradeVersion="2630" version="1.7">
+ <BuildAction parallelizeBuildables="NO" buildImplicitDependencies="YES"><BuildActionEntries>
+  <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
+   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="D00000000000000000000010" BuildableName="RuntimeRecipient.app" BlueprintName="RuntimeRecipient" ReferencedContainer="container:RuntimePicker.xcodeproj"/>
+  </BuildActionEntry>
+  <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
+   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="D00000000000000000000020" BuildableName="RuntimePickerTests.xctest" BlueprintName="RuntimePickerTests" ReferencedContainer="container:RuntimePicker.xcodeproj"/>
+  </BuildActionEntry>
+ </BuildActionEntries></BuildAction>
+ <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.PosixSpawn" shouldUseLaunchSchemeArgsEnv="NO" testLanguage="en" testRegion="US">
+  <Testables><TestableReference skipped="NO" parallelizable="NO">
+   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="D00000000000000000000020" BuildableName="RuntimePickerTests.xctest" BlueprintName="RuntimePickerTests" ReferencedContainer="container:RuntimePicker.xcodeproj"/>
+  </TestableReference></Testables>
+ </TestAction>
+</Scheme>
