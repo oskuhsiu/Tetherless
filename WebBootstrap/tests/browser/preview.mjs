@@ -21,6 +21,8 @@ export async function staticResponse(rawUrl, method = 'GET', root = dist) {
   if (pathname.includes('\\') || pathname.includes('\0') || pathname.split('/').includes('..')) return response(400, 'Invalid path');
   if (pathname === '/Tetherless') return { ...response(308), headers: { Location: '/Tetherless/', 'Cache-Control': 'no-store' } };
   const relative = pathname.startsWith('/Tetherless/') ? pathname.slice('/Tetherless/'.length) : pathname.slice(1);
+  // Synthetic redirect fixture only; browsers must reject it without contacting the target.
+  if (relative === '__discovery_redirect_fixture__') return { ...response(302), headers: { Location: 'https://foreign.example/health', 'Cache-Control': 'no-store' } };
   try {
     const rootPath = await realpath(root);
     const file = await realpath(resolve(rootPath, relative || 'index.html'));

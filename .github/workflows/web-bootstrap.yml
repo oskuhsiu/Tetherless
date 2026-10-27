@@ -62,13 +62,16 @@ jobs:
             assert.equal(require(`${name}/package.json`).version, '1.58.2');
           }
           const lock = JSON.parse(fs.readFileSync('node_modules/playwright-core/browsers.json', 'utf8'));
+          const webkit = lock.browsers.find(b => b.name === 'webkit');
+          assert.equal(webkit.revision, '2248');
+          assert.equal(webkit.browserVersion, '26.0');
           const chromium = lock.browsers.filter((b) => ['chromium', 'chromium-headless-shell'].includes(b.name));
           assert.equal(chromium.length, 2);
           for (const browser of chromium) {
             assert.equal(browser.revision, '1208');
             assert.equal(browser.browserVersion, '145.0.7632.6');
           }
-          console.log(JSON.stringify(chromium, null, 2));
+          console.log(JSON.stringify([...chromium, webkit], null, 2));
           NODE
       - name: Unit tests and verified static build (no Apple service)
         timeout-minutes: 3
@@ -76,12 +79,14 @@ jobs:
           npm test
           npm run build
           node --test tests/browser/harness.test.mjs tests/gate-browser/harness.test.mjs
-      - name: Acquire locked Playwright Chromium (official dependencies)
-        timeout-minutes: 4
-        run: node node_modules/playwright/cli.js install --with-deps chromium
+      - name: Acquire locked Playwright Chromium and WebKit (official dependencies)
+        timeout-minutes: 6
+        run: node node_modules/playwright/cli.js install --with-deps chromium webkit
       - name: Run request-gated local browser tests (synthetic inputs only)
         timeout-minutes: 9
-        run: npm run test:browser
+        run: |
+          npm run test:browser
+          node node_modules/playwright/cli.js test --config playwright.discovery.config.js
       - name: Run production gate browser and HTTP regression (public synthetic fixtures only)
         timeout-minutes: 4
         run: |
@@ -96,6 +101,7 @@ jobs:
             WebBootstrap/qa-evidence/
             WebBootstrap/playwright-report/
             WebBootstrap/playwright-gate-report/
+            WebBootstrap/playwright-discovery-report/
             WebBootstrap/test-results/
           retention-days: 14
           if-no-files-found: error

@@ -15,7 +15,7 @@ async function check(handler, options = {}) {
 }
 test('health capability is exact and same-origin; request safety is retained', async () => {
   const { result, calls } = await check(url => reply(url, health)); assert.deepEqual(result, { kind: 'ready', profileAvailable: true }); assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, `${base}health`); assert.equal(calls[0].opts.redirect, 'error'); assert.equal(calls[0].opts.credentials, 'same-origin'); assert.equal(calls[0].opts.cache, 'no-store'); assert(calls[0].opts.signal);
+  assert.equal(calls[0].url, `${base}health`); assert.equal(calls[0].opts.redirect, 'manual'); assert.equal(calls[0].opts.credentials, 'same-origin'); assert.equal(calls[0].opts.cache, 'no-store'); assert(calls[0].opts.signal);
 });
 for (const first of ['network', 'timeout', '503']) test(`${first} retries once then accepts a real verified response`, async () => {
   const { result, calls } = await check((url, opts, count) => {
@@ -63,4 +63,19 @@ test('safe diagnostic contains only the public origin, health path and classifie
   const { result } = await check(url => reply(url, { error: 'secret-response-must-not-be-displayed' }, { status: 403 }), { origin: 'https://service.example/?private=value#fragment' });
   assert.equal(result.diagnostic, '頁面 https://service.example；/Tetherless/health：HTTP 403；服務回應未成功');
   assert(!result.diagnostic.includes('secret')); assert(!result.diagnostic.includes('private'));
+});
+
+test('body transport failure retries, but complete invalid JSON does not', async () => {
+  const { result, calls } = await check((url, opts, count) => {
+    if (count > 1) return reply(url, health);
+    const response = new Response(new ReadableStream({ start(controller) { controller.error(new TypeError('synthetic connection reset')); } }), { headers: { 'content-type': 'application/json' } });
+    Object.defineProperty(response, 'url', { value: url }); return response;
+  });
+  assert.equal(result.kind, 'ready'); assert.equal(calls.length, 2);
+});
+test('manual opaque redirect is rejected without retry', async () => {
+  const { result, calls } = await check(url => {
+    const response = reply(url, health); Object.defineProperty(response, 'type', { value: 'opaqueredirect' }); return response;
+  });
+  assert.equal(result.kind, 'invalid'); assert.match(result.diagnostic, /重新導向/); assert.equal(calls.length, 2); // health + config, not two health reads
 });

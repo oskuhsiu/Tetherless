@@ -29,6 +29,7 @@ export default defineConfig({
     navigationTimeout: 15_000,
   },
   projects: [
+    { name: 'discovery-ui-webkit', testMatch: '**/account-discovery.spec.js', use: { browserName: 'webkit', baseURL: 'http://127.0.0.1:4173/' } },
     { name: 'root-chromium', use: { baseURL: 'http://127.0.0.1:4173/' } },
     { name: 'project-subpath-chromium', use: { baseURL: 'http://127.0.0.1:4173/Tetherless/' } },
   ],

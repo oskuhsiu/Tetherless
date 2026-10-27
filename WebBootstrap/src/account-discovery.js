@@ -3,6 +3,7 @@ import { publicHttps } from './ota.js';
 // Only read-only discovery is retried, never account/session mutations. A check
 // uses at most two 5-second health attempts and one 5-second config request.
 const MAX_JSON_BYTES = 16 * 1024;
+class ReadTransportError extends Error {}
 function checkAborted(signal) { if (signal.aborted) throw signal.reason || new DOMException('Cancelled', 'AbortError'); }
 // Discovery must not introduce a dependency on AbortSignal.timeout/any.
 export function createReadDeadline(parentSignal, timeoutMs = 5000) {
@@ -19,7 +20,15 @@ async function readJson(response) {
   const parts = []; let size = 0;
   try {
     while (true) {
-      const { done, value } = await reader.read(); if (done) break;
+      let chunk;
+      try { chunk = await reader.read(); }
+      catch (error) {
+        // Fetch body transport errors are TypeError; malformed JSON is parsed
+        // separately below and must never be treated as a transient connection.
+        if (error.name === 'TypeError') throw new ReadTransportError();
+        throw error;
+      }
+      const { done, value } = chunk; if (done) break;
       size += value.byteLength; if (size > MAX_JSON_BYTES) throw new Error('oversized');
       parts.push(value);
     }
@@ -33,7 +42,7 @@ async function read(url, { fetcher, signal, timeoutMs }) {
   const deadline = createReadDeadline(signal, timeoutMs);
   try {
     let response;
-    try { response = await fetcher(url.href, { credentials: 'same-origin', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: deadline.signal }); }
+    try { response = await fetcher(url.href, { credentials: 'same-origin', redirect: 'manual', cache: 'no-store', referrerPolicy: 'no-referrer', signal: deadline.signal }); }
     catch (error) {
       checkAborted(signal);
       if (deadline.timedOut || error.name === 'TypeError' || error.name === 'TimeoutError') return { kind: 'unreachable', retry: true, reason: deadline.timedOut ? 'timeout' : 'network' };
@@ -41,10 +50,12 @@ async function read(url, { fetcher, signal, timeoutMs }) {
     }
     checkAborted(signal);
     if (deadline.timedOut) return { kind: 'unreachable', retry: true, reason: 'timeout' };
-    if (response.redirected || response.url !== url.href || response.type === 'opaque' || response.type === 'opaqueredirect') return { kind: 'invalid', status: response.status, reason: 'origin-or-redirect' };
+    // Manual mode never follows a redirect, including same-origin redirects.
+    // Browsers expose an opaque redirect; explicit status also covers test runtimes.
+    if ((response.status >= 300 && response.status <= 399) || response.redirected || response.url !== url.href || response.type === 'opaque' || response.type === 'opaqueredirect') return { kind: 'invalid', status: response.status, reason: 'origin-or-redirect' };
     if (!response.ok) return { kind: response.status === 404 ? 'unconfigured' : 'unreachable', retry: response.status >= 500 && response.status <= 599, status: response.status, reason: 'http' };
     try { const body = await readJson(response); checkAborted(signal); if (deadline.timedOut) return { kind: 'unreachable', retry: true, status: response.status, reason: 'timeout' }; return { body, status: response.status }; }
-    catch (error) { checkAborted(signal); return deadline.timedOut ? { kind: 'unreachable', retry: true, status: response.status, reason: 'timeout' } : { kind: 'invalid', status: response.status, reason: error.name === 'SyntaxError' ? 'json' : ['content-type', 'empty-body', 'oversized'].includes(error.message) ? error.message : 'unreadable' }; }
+    catch (error) { checkAborted(signal); return error instanceof ReadTransportError && !deadline.timedOut ? { kind: 'unreachable', retry: true, status: response.status, reason: 'network' } : deadline.timedOut ? { kind: 'unreachable', retry: true, status: response.status, reason: 'timeout' } : { kind: 'invalid', status: response.status, reason: error.name === 'SyntaxError' ? 'json' : ['content-type', 'empty-body', 'oversized'].includes(error.message) ? error.message : 'unreadable' }; }
   } finally { deadline.clear(); }
 }
 function delay(ms, signal) {
