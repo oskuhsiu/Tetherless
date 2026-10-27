@@ -272,3 +272,24 @@ Primary references checked 2026-10-06:
 - [Render free-plan limits](https://render.com/docs/free)
 - [Render deploy and shutdown behavior](https://render.com/docs/deploys)
 - [Render image platform requirements](https://render.com/docs/deploying-an-image)
+
+## TLS security baseline (2026-10-27)
+
+The source now requires Node 24.22.1 (official image digest in `base-images.json`),
+`rustls-webpki` 0.103.16, and `webpki-roots` / `webpki-root-certs` 1.0.10.
+Cargo resolved the lockfile; the legacy 0.26.11 roots wrapper delegates to 1.0.10.
+Every Docker stage installs and checks Debian `ca-certificates >= 20250419+deb13u1`,
+then regenerates the trust store. The changed RUN instructions invalidate prior
+CA-install layers. Exact package receipts remain in `/app/build-info`.
+
+Sources: [Render advisory](https://render.com/docs/advisory-emudhra),
+[Node release](https://nodejs.org/en/blog/release/v24.22.1),
+[Debian security changelog](https://metadata.ftp-master.debian.org/changelogs//main/c/ca-certificates/ca-certificates_20250419%2Bdeb13u1_changelog).
+
+CI checks pins, dependency resolution/build, the actual Node bundled root inventory,
+and the existing isolated image smoke tests. These do not establish rejection by
+the deployed service's HTTP clients. Before account testing, explicitly authorize
+a new deployment, confirm its image/source and CA receipts, and verify rejection
+with each actual production TLS client. Do not treat curl using another trust
+store as equivalent evidence. The prior suspended image is not updated by a Git
+merge; this change does not resume or deploy Render.

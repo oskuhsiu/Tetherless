@@ -45,7 +45,7 @@ jobs:
           sha256sum package-lock.json runtime-lock.json > qa-evidence/locks.sha256
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: '24.19.0'
+          node-version: '24.22.1'
           package-manager-cache: false
       - name: Acquire lockfile dependencies (network allowed only for setup)
         timeout-minutes: 4
@@ -57,7 +57,7 @@ jobs:
           node - <<'NODE' > qa-evidence/playwright-browser-lock.json
           const assert = require('node:assert/strict');
           const fs = require('node:fs');
-          assert.equal(process.versions.node, '24.19.0');
+          assert.equal(process.versions.node, '24.22.1');
           for (const name of ['@playwright/test', 'playwright', 'playwright-core']) {
             assert.equal(require(`${name}/package.json`).version, '1.58.2');
           }

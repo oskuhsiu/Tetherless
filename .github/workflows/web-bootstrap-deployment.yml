@@ -36,7 +36,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
-          node-version: '24.19.0'
+          node-version: '24.22.1'
           package-manager-cache: false
       - name: Record exact source and pinned build inputs
         shell: bash
@@ -55,6 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           node --test --test-concurrency=1 \
+            Tools/WebBootstrapService/deployment/tests/tls-baseline.test.mjs \
             Tools/WebBootstrapService/deployment/tests/proxy.test.mjs \
             Tools/WebBootstrapService/deployment/tests/gate-page.test.mjs \
             Tools/WebBootstrapService/deployment/tests/supervisor.test.mjs \
