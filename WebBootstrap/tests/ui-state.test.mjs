@@ -29,7 +29,142 @@ test('DOM mock: cancel terminates worker and stale completion cannot resurrect o
 test('DOM mock: repeated click starts only one worker and clear removes output', async()=>{const e=await environment();try{fill(e);e.$('sign').click();e.$('sign').click();await until(()=>e.MockWorker.all.length===1);e.MockWorker.all[0].succeed();await until(()=>!e.$('result').hidden);assert.equal(e.MockWorker.all.length,1);assert(e.$('status').textContent.includes('尚未驗證'));e.$('clear').click();assert(e.$('result').hidden);assert.equal(e.$('password').value,'');}finally{e.dispose();}});
 test('DOM mock: same-origin service health exposes explicit consent, and cancellation deletes a late session', async()=>{let release;const start=new Promise(r=>release=r);const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/sessions')&&opts.method==='POST'){await start;return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',state:'starting',expiresInSeconds:600},{status:202});}if(opts.method==='DELETE')return Response.json({ok:true});}});try{assert(!e.$('prelogin-device').hidden);e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid';e.$('apple-password').value='synthetic-not-a-secret';e.$('login-consent').checked=true;e.$('account-form').dispatchEvent(new e.dom.window.Event('submit',{cancelable:true}));await until(()=>e.calls.some(c=>c.url.endsWith('/v1/sessions')&&c.options.method==='POST'));assert.equal(e.$('apple-password').value,'');e.$('clear').click();release();await until(()=>e.calls.some(c=>c.options.method==='DELETE'));assert(e.$('provision-form').hidden);assert(e.calls.every(c=>!c.url.includes('synthetic-token')));assert(e.calls.filter(c=>c.options.method==='DELETE').every(c=>c.options.redirect==='error' && c.options.credentials==='same-origin'));}finally{release();e.dispose();}});
 test('DOM mock: empty 202 two-factor response succeeds but cannot overwrite later cancellation', async()=>{let release;const pending=new Promise(r=>release=r);const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/sessions')&&opts.method==='POST')return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',state:'starting',expiresInSeconds:600},{status:202});if(url.endsWith('/v1/sessions/synthetic-id')&&(!opts.method||opts.method==='GET'))return Response.json({state:'awaitingTwoFactor',challenge:{retry:false}});if(url.endsWith('/2fa')){await pending;return new Response(null,{status:202});}if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid';e.$('apple-password').value='synthetic-not-a-secret';e.$('login-consent').checked=true;e.$('account-form').dispatchEvent(new e.dom.window.Event('submit',{cancelable:true}));await until(()=>!e.$('two-factor').hidden);e.$('verification-code').value='123456';e.$('two-factor').dispatchEvent(new e.dom.window.Event('submit',{cancelable:true}));await tick();e.$('clear').click();release();await tick();assert(e.$('account-status').textContent.includes('已取消'));assert(!e.$('account-status').textContent.includes('等待 Apple'));}finally{release();e.dispose();}});
-test('DOM mock: enrollment keeps only ID/expiry, survives pagehide, and resumes after persisted pageshow', async()=>{let received=false;const id='11111111-2222-3333-4444-555555555555';const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/device-enrollments')&&opts.method==='POST')return Response.json({enrollmentId:id,profileUrl:`http://127.0.0.1:8787/v1/device-enrollments/${id}/profile/synthetic-capability`,expiresInSeconds:600},{status:201});if(url.includes('/v1/device-enrollments/')&&opts.method!=='DELETE')return Response.json({state:received?'received':'awaitingDevice',device:received?{udid:'00000000-0000000000000000'}:null,verification:'untrustedDeviceMetadata'});if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);const stored=JSON.parse(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert.deepEqual(Object.keys(stored).sort(),['expiresAt','id']);e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));assert(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert(!e.calls.some(c=>c.url.i…4264 tokens truncated…法讀取'));assert(e.$('provision-button').disabled);e.$('reload-devices').click();await until(()=>attempts===2&&!e.$('reload-devices').disabled);assert(e.$('existing-status').textContent.includes('沒有可用'));assert(e.$('provision-button').disabled);assert(!e.calls.some(c=>c.url.endsWith('/provision')));
+test('DOM mock: enrollment keeps only ID/expiry, survives pagehide, and resumes after persisted pageshow', async()=>{let received=false;const id='11111111-2222-3333-4444-555555555555';const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/device-enrollments')&&opts.method==='POST')return Response.json({enrollmentId:id,profileUrl:`http://127.0.0.1:8787/v1/device-enrollments/${id}/profile/synthetic-capability`,expiresInSeconds:600},{status:201});if(url.includes('/v1/device-enrollments/')&&opts.method!=='DELETE')return Response.json({state:received?'received':'awaitingDevice',device:received?{udid:'00000000-0000000000000000'}:null,verification:'untrustedDeviceMetadata'});if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);const stored=JSON.parse(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert.deepEqual(Object.keys(stored).sort(),['expiresAt','id']);e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));assert(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')&&c.options.method==='DELETE'));received=true;e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pageshow',{persisted:true}));await until(()=>e.$('account-udid').value==='00000000-0000000000000000');assert.equal(e.dom.window.sessionStorage.length,0);assert(e.calls.filter(c=>c.url.includes('/device-enrollments/')).every(c=>c.options.credentials==='same-origin' && c.options.redirect==='error'));}finally{e.dispose();}});
+function submit(e, id) { e.$(id).dispatchEvent(new e.dom.window.Event('submit', { cancelable:true })); }
+function loginInputs(e) { e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid'; e.$('apple-password').value='synthetic-not-a-secret'; e.$('login-consent').checked=true; }
+function sessionFetcher(extra = () => {}, teams = [{id:'TESTTEAM01',name:'Test Team',type:'personal'}]) { return async (url, opts) => {
+  const result = await extra(url, opts); if (result) return result;
+  if (url.endsWith('/v1/sessions') && opts.method === 'POST') return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',expiresInSeconds:600});
+  if (url.endsWith('/v1/sessions/synthetic-id') && opts.method !== 'DELETE') return Response.json({state:'authenticated'});
+  if (url.endsWith('/teams')) return Response.json({teams});
+  if (opts.method === 'DELETE') return new Response(null,{status:204});
+}; }
+test('DOM mock: progressive default hides technical fields and unconfigured login is guarded even if submitted directly', async()=>{
+  const e=await environment();try{
+    assert(e.$('manual-panel').hidden); assert(e.$('signing-panel').hidden); assert(e.$('install-panel').hidden); assert(!e.$('app-selection').hidden); assert.equal(e.$('app-source').value,'custom'); assert(e.$('login-button').disabled);
+    assert(e.$('release-status').textContent.includes('尚未綁定')); e.$('login-consent').checked=true; submit(e,'account-form'); await tick();
+    assert(!e.calls.some(c=>c.options.method==='POST'));
+  }finally{e.dispose();}
+});
+test('DOM mock: external configured service is a named outbound link, never local credential collection', async()=>{
+  const e=await environment({config:{accountServiceUrl:'https://service.example/signing/',officialRelease:null}});try{
+    assert(e.$('account-form').hidden); assert.equal(e.$('service-link').href,'https://service.example/signing/'); assert(e.$('account-unavailable').textContent.includes('https://service.example')); assert(!e.calls.some(c=>c.url.startsWith('https://service.example')));
+  }finally{e.dispose();}
+});
+test('DOM mock: available service still requires consent and an explicitly selected app before any session',async()=>{
+  const e=await environment({service:true});try{
+    submit(e,'account-form'); await tick(); assert(!e.calls.some(c=>c.options.method==='POST'));
+    e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('login-consent').checked=true; submit(e,'account-form'); await tick(); assert(e.$('login-button').disabled);
+    assert(e.$('ipa-prerequisite-status').textContent.includes('尚未選擇')); assert(!e.$('account-app-prerequisite').hidden); assert(!e.calls.some(c=>c.options.method==='POST'));
+  }finally{e.dispose();}
+});
+test('DOM mock: single Team is automatic, pre-login device identification is retained, and missing UDID opens entry',async()=>{
+  const e=await environment({service:true,fetcher:sessionFetcher()});try{
+    assert(!e.$('prelogin-device').hidden); loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden);
+    assert(e.$('account-form').hidden); assert(e.$('team-choice').hidden); assert(!e.$('team-summary').hidden); assert(e.$('device-collection').hidden); assert(!e.$('guided-preparation').hidden);
+    submit(e,'provision-form'); assert(!e.calls.some(c=>c.url.endsWith('/provision')));
+    e.$('account-udid').value=''; e.$('provision-consent').checked=true; submit(e,'provision-form'); assert(e.$('device-details').open); assert(e.$('account-status').textContent.includes('有效'));
+  }finally{e.dispose();}
+});
+test('DOM mock: multiple Teams remain a visible choice and unavailable profile service exposes manual device entry',async()=>{
+  const e=await environment({service:true,profileService:false,fetcher:sessionFetcher(undefined,[{id:'TEAM1',name:'One',type:'personal'},{id:'TEAM2',name:'Two',type:'organization'}])});try{
+    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); assert(!e.$('team-choice').hidden); assert(e.$('device-collection').hidden); assert(e.$('device-details').open);
+  }finally{e.dispose();}
+});
+test('DOM mock: manual mode and return preserve chosen files but invalidate output and rights',async()=>{
+  const e=await environment();try{
+    fill(e); e.$('sign').click(); await until(()=>e.MockWorker.all.length===1); e.MockWorker.all[0].succeed(); await until(()=>!e.$('result').hidden);
+    e.$('account-mode').click(); assert(e.$('result').hidden); assert(e.$('install-panel').hidden); assert(!e.$('rights').checked); assert.equal(e.$('ipa').files[0],fixture.ipa); assert.equal(e.$('p12').files[0],fixture.p12);
+    e.$('files-mode').click(); assert.equal(e.$('profiles').files[0],fixture.profile); assert(!e.$('manual-panel').hidden);
+  }finally{e.dispose();}
+});
+test('DOM mock: provisioning retry keeps original CSR, IPA and selection; return cancels and clears it',async()=>{
+  let bodies=[];
+  const e=await environment({service:true,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/provision')){bodies.push(opts.body); return Response.json({error:'provisioningUncertain'},{status:503});}})});try{
+    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); e.$('account-udid').value='00000000-0000000000000000'; e.$('provision-consent').checked=true; submit(e,'provision-form'); await until(()=>bodies.length===1 && !e.$('provision-button').disabled);
+    assert(e.$('ipa').disabled); assert(e.$('app-source').disabled); assert(e.$('team').disabled); assert(e.$('provision-button').textContent.includes('同一私鑰'));
+    submit(e,'provision-form'); await until(()=>bodies.length===2 && !e.$('provision-button').disabled); assert.equal(bodies[0],bodies[1]);
+    e.$('logout').click(); assert(e.$('provision-form').hidden); assert(!e.$('prelogin-device').hidden); assert.equal(e.$('apple-id').value,''); assert(!e.$('provision-consent').checked); assert(!e.$('ipa').disabled);
+  }finally{e.dispose();}
+});
+test('DOM mock: approved provisioning automatically starts local signing without another sign click',async()=>{
+  const original=forge.pki.rsa.generateKeyPair;
+  const p12=forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(fixture.material.p12.toString('binary')),false,fixture.password);
+  const privateKey=p12.getBags({bagType:forge.pki.oids.pkcs8ShroudedKeyBag})[forge.pki.oids.pkcs8ShroudedKeyBag][0].key;
+  const cert=forge.pki.certificateFromPem(fixture.material.certPem);
+  forge.pki.rsa.generateKeyPair=(_opts,callback)=>callback(null,{privateKey,publicKey:cert.publicKey});
+  const e=await environment({service:true,fetcher:sessionFetcher((url)=>{if(url.endsWith('/provision'))return Response.json({certificateDerBase64:forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes()),profiles:[{profileBase64:fixture.material.profile.toString('base64')}]});})});try{
+    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); e.$('account-udid').value='00000000-0000000000000000'; e.$('provision-consent').checked=true; submit(e,'provision-form'); await until(()=>e.MockWorker.all.length===1);
+    assert(e.$('account-panel').hidden); assert(!e.$('signing-panel').hidden); assert(e.$('cancel').hidden===false);
+    e.MockWorker.all[0].succeed(); await until(()=>!e.$('result').hidden); assert(!e.$('install-panel').hidden); assert(e.$('install-panel').textContent.includes('尚未實機驗證')); assert(e.$('install-link').hidden);
+    e.$('clear').click(); assert(e.$('result').hidden); assert(e.$('install-panel').hidden);
+  }finally{forge.pki.rsa.generateKeyPair=original;e.dispose();}
+});
+test('DOM mock: late cancelled inspection cannot erase the retry password',async()=>{
+  let release; const pending=new Promise(r=>release=r); const delayed=new File([await fixture.ipa.arrayBuffer()],'Delayed.ipa');
+  let reading=false; const original=delayed.slice.bind(delayed); delayed.slice=(...args)=>{const part=original(...args);part.arrayBuffer=async()=>{reading=true;await pending;throw new Error('Synthetic delayed inspection failure');};return part;};
+  const e=await environment();try{
+    fill(e); e.setFiles('ipa',[delayed]); e.$('sign').click(); await until(()=>reading); assert.equal(e.MockWorker.all.length,0); e.$('cancel').click(); e.$('password').value='new-retry-password'; release(); await tick(); await tick(); assert.equal(e.$('password').value,'new-retry-password'); assert(e.$('result').hidden);
+  }finally{release();e.dispose();}
+});
+test('DOM mock: revoking consent during official acquisition cannot transmit credentials',async()=>{
+  const raw=new Uint8Array(await fixture.ipa.arrayBuffer()); const sha256=Buffer.from(await crypto.subtle.digest('SHA-256',raw)).toString('hex');
+  const officialRelease={repository:'oskuhsiu/Tetherless',tag:'v-test',assetId:'123',assetName:'Tetherless.ipa',assetUrl:'https://github.com/oskuhsiu/Tetherless/releases/download/v-test/Tetherless.ipa',size:raw.length,sha256,sourceCommit:'a'.repeat(40),buildRunId:'1',buildHeadSha:'b'.repeat(40),runAttempt:1};
+  let release; const pending=new Promise(r=>release=r);
+  const e=await environment({service:true,profileService:false,config:{officialRelease},fetcher:async(url)=>{if(url===officialRelease.assetUrl){await pending;return new Response(raw);}}});try{
+    e.$('apple-id').value='synthetic@example.invalid';e.$('apple-password').value='synthetic';e.$('login-consent').checked=true;submit(e,'account-form');await until(()=>e.calls.some(c=>c.url===officialRelease.assetUrl));assert(e.$('account-form').inert);
+    e.$('login-consent').checked=false;release();await until(()=>!e.$('login-button').disabled);assert(!e.calls.some(c=>c.options.method==='POST'));assert(e.$('account-status').textContent.includes('授權已取消'));
+  }finally{release();e.dispose();}
+});
+test('DOM mock: profile round trip completes before credentials, resumes to login, and never posts a session early',async()=>{
+  let received=false;const id='11111111-2222-3333-4444-555555555555';
+  const e=await environment({service:true,fetcher:async(url,opts)=>{
+    if(url.endsWith('/v1/device-enrollments')&&opts.method==='POST')return Response.json({enrollmentId:id,profileUrl:`http://127.0.0.1:8787/v1/device-enrollments/${id}/profile/synthetic`,expiresInSeconds:600});
+    if(url.includes('/v1/device-enrollments/')&&opts.method!=='DELETE')return Response.json({state:received?'received':'awaitingDevice',device:received?{udid:'00000000-0000000000000000'}:null});
+    if(opts.method==='DELETE')return new Response(null,{status:204});
+  }});try{
+    assert(!e.$('prelogin-device').hidden);assert(e.$('account-form').hidden);e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);
+    e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));received=true;e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pageshow',{persisted:true}));await until(()=>!e.$('account-form').hidden);
+    assert(e.$('prelogin-device').hidden);assert.equal(e.$('account-udid').value,'00000000-0000000000000000');assert(!e.calls.some(c=>c.url.endsWith('/v1/sessions')));assert.equal(e.dom.window.sessionStorage.length,0);
+  }finally{e.dispose();}
+});
+test('DOM mock: protected same-origin service requests carry same-origin cookies and reject redirects',async()=>{
+  const e=await environment({service:true,profileService:false,fetcher:sessionFetcher()});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('logout').click();await tick();
+    const serviceCalls=e.calls.filter(c=>new URL(c.url).origin==='http://127.0.0.1:8787');assert(serviceCalls.length>=5);assert(serviceCalls.every(c=>c.options.credentials==='same-origin' && c.options.redirect===(new URL(c.url).pathname.endsWith('/health') ? 'manual' : 'error')));
+    assert(serviceCalls.filter(c=>c.url.includes('/v1/sessions')).every(c=>!c.url.includes('synthetic-token')));
+  }finally{e.dispose();}
+});
+test('DOM mock: exact inspected bundle IDs/App Group are shown before consent and pinned through provisioning',async()=>{
+  let body;
+  const e=await environment({service:true,profileService:false,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/provision')){body=JSON.parse(opts.body);return Response.json({error:'provisioningUncertain'},{status:503});}})});try{
+    loginInputs(e);e.setFiles('ipa',[new File([await makeIpa({bundleId:'org.tetherless.Tetherless'})],'Tetherless.ipa')]);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);
+    assert(e.$('provision-plan').textContent.includes('App IDs：\norg.tetherless.Tetherless'));assert(e.$('provision-plan').textContent.includes('App Group：group.org.tetherless.Tetherless'));assert(e.$('ipa').disabled);assert(e.$('app-source').disabled);assert.equal(body,undefined);
+    // Even a synthetic DOM replacement cannot change the reviewed session IPA.
+    e.setFiles('ipa',[fixture.ipa]);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>body);
+    assert.equal(body.apps[0].bundleId,'org.tetherless.Tetherless');assert.equal(body.appGroup.identifier,'group.org.tetherless.Tetherless');
+  }finally{e.dispose();}
+});
+function existingLogin(e,ipa=fixture.ipa){e.$('app-source').value='custom';e.$('app-source').dispatchEvent(new e.dom.window.Event('change'));e.setFiles('ipa',[ipa]);e.$('apple-id').value='test@example.invalid';e.$('apple-password').value='synthetic-not-a-secret';e.$('login-consent').checked=true;submit(e,'account-form');}
+const registeredDevice={udid:'00000000-0000000000000000',name:'Already registered iPhone',status:'active',selectable:true};
+function chooseExisting(e,udid=registeredDevice.udid){e.$('existing-device').value=udid;e.$('existing-device').dispatchEvent(new e.dom.window.Event('change'));}
+test('DOM mock: existing-device default logs in first, requires explicit active selection, and never registers a new device',async()=>{
+  let provision;
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher((url,opts)=>{
+    if(url.endsWith('/teams/TESTTEAM01/devices'))return Response.json({teamId:'TESTTEAM01',devices:[registeredDevice,{...registeredDevice,udid:'11111111-1111111111111111',status:'disabled',selectable:false}]});
+    if(url.endsWith('/provision')){provision=JSON.parse(opts.body);return Response.json({error:'deviceNotAvailable'},{status:409});}
+  })});try{
+    assert(!e.$('account-form').hidden);assert(e.$('prelogin-device').hidden);assert.equal(e.$('device-route').value,'existing');existingLogin(e);await until(()=>e.$('existing-device').options.length===2);
+    assert.equal(e.$('existing-device').value,'');assert(e.$('provision-button').disabled);assert(e.$('provision-consent').disabled);submit(e,'provision-form');assert.equal(provision,undefined);
+    chooseExisting(e);assert(e.$('existing-device-summary').textContent.includes('未驗證'));assert(!e.$('provision-consent').checked);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>provision);
+    assert.equal(provision.device.existingOnly,true);assert.equal(provision.device.udid,registeredDevice.udid);assert.equal(provision.device.name,registeredDevice.name);assert.equal(provision.consent,'use-existing-device-register-app-ids-and-issue-certificate');
+    await until(()=>!e.$('provision-button').disabled);assert(e.$('account-status').textContent.includes('不會改成新增裝置'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments')));
+  }finally{e.dispose();}
+});
+test('DOM mock: existing-device list errors and empty results stay blocked and permit a read-only retry',async()=>{
+  let attempts=0;
+  const e=await environment({service:true,deviceRoute:'existing',fetcher:sessionFetcher(url=>{if(url.endsWith('/devices')){attempts++;return attempts===1?Response.json({error:'appleRequestFailed'},{status:502}):Response.json({teamId:'TESTTEAM01',devices:[]});}})});try{
+    existingLogin(e);await until(()=>e.$('existing-status').textContent.includes('無法讀取'));assert(e.$('provision-button').disabled);e.$('reload-devices').click();await until(()=>attempts===2&&!e.$('reload-devices').disabled);assert(e.$('existing-status').textContent.includes('沒有可用'));assert(e.$('provision-button').disabled);assert(!e.calls.some(c=>c.url.endsWith('/provision')));
   }finally{e.dispose();}
 });
 test('DOM mock: Team changes clear device selection/consent and ignore a late old-Team response',async()=>{
