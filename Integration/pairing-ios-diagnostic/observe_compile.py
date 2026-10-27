@@ -21,6 +21,7 @@ _HELPERS = Path(__file__).resolve().parents[1] / "Dependencies/idevice"
 sys.path.insert(0, str(_HELPERS))
 try:
     import retained_c_provider
+    import symbol_visibility
 finally:
     sys.path.pop(0)
 
@@ -298,7 +299,7 @@ class _Files:
         except OSError as error:
             raise ObservationError("required evidence file is unavailable: " + str(path)) from error
 
-    def text(self, path: Path, limit: int = MAX_TEXT) -> str:
+    def recorded_bytes(self, path: Path, limit: int) -> bytes:
         data = self.read(path, limit, compiler_text=True)
         previous = self.references.get(str(path))
         # Persist bytes before any decoding or parsing so a failing input can
@@ -308,6 +309,10 @@ class _Files:
         _require(previous is None or previous == digest, "compiler text changed between reads: " + str(path))
         self.references[str(path)] = digest
         _require(len(self.references) <= MAX_REFERENCES, "filelist/response reference bound exceeded")
+        return data
+
+    def text(self, path: Path, limit: int = MAX_TEXT) -> str:
+        data = self.recorded_bytes(path, limit)
         try:
             text = data.decode("utf-8")
         except UnicodeDecodeError as error:
@@ -578,29 +583,22 @@ def _c_module_evidence(command: dict, files: _Files, expected: dict, sdk: str) -
             "c_provider_header_inventory": actual}
 
 
-def _live_map_ownership(text: str, c_archive: Path, c_symbols: list[str], rust_archive: Path,
-                        rust_symbols: list[str]) -> dict:
+def _live_map_ownership(raw: bytes, c_archive: Path, c_symbols: list[str], rust_archive: Path,
+                        rust_symbols: list[str], visibility: dict) -> dict:
     """Check actual live known exports; dead-stripped rows never satisfy roots."""
     _require(isinstance(c_symbols, list) and c_symbols == sorted(set(c_symbols))
              and isinstance(rust_symbols, list) and rust_symbols == sorted(set(rust_symbols))
              and not set(c_symbols) & set(rust_symbols), "full Rust/C export identities differ")
-    live, section = set(), None
-    for line in text.splitlines():
-        if line == "# Symbols:":
-            section = "live"
-        elif line == "# Dead Stripped Symbols:":
-            section = None
-        elif line.startswith("#"):
-            continue
-        elif section == "live" and line.strip():
-            match = re.fullmatch(r"0x[0-9A-Fa-f]+\s+0x[0-9A-Fa-f]+\s+\[\s*\d+\]\s+(.+)", line)
-            _require(match is not None, "unparsed live App map row")
-            live.add(match[1])
+    try:
+        _objects, rows = retained_c_provider.parse_link_map(raw)
+    except ValueError as error:
+        raise ObservationError("App live map ownership differs: " + str(error)) from error
+    live = {name for _owner, name in rows}
     c_live, rust_live = live & set(c_symbols), live & set(rust_symbols)
     _require(APP_C_ROOTS <= c_live and APP_RUST_ROOTS <= rust_live,
              "required diagnostic C/Rust roots are absent from live App map")
     try:
-        proof = retained_c_provider.link_ownership(text, c_archive, c_live, rust_archive, rust_live)
+        proof = retained_c_provider.link_ownership(raw, c_archive, c_live, rust_archive, rust_live, visibility=visibility)
     except ValueError as error:
         raise ObservationError("App live map ownership differs: " + str(error)) from error
     return dict(proof, c_live_symbols=sorted(c_live), rust_live_symbols=sorted(rust_live),
@@ -608,7 +606,7 @@ def _live_map_ownership(text: str, c_archive: Path, c_symbols: list[str], rust_a
 
 
 def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: str,
-                   provider_hash: str, configuration: str, sdk: str, c_provider: dict, rust_symbols: list[str]) -> dict:
+                   provider_hash: str, configuration: str, sdk: str, c_provider: dict, rust_symbols: list[str], visibility: dict) -> dict:
     args, cwd = _link_args(command["args"]), command["cwd"]
     c_provider_hash = _expected(c_provider["library_sha256"])
     output = files.path(_one(args, "-o"), cwd)
@@ -646,7 +644,8 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
     processed = candidates.pop()
     _require(processed.is_relative_to(files.roots[1]) and processed != archive,
              "final Ld archive is not an actual processed DerivedData copy")
-    _require(files.opaque_hash(processed) == archive_hash, "processed native archive identity differs")
+    processed_identity = files.opaque_identity(processed)
+    _require(processed_identity["sha256"] == archive_hash, "processed native archive identity differs")
     c_candidates = {path for path in direct if path.name == "libimobiledevice.a"}
     c_provider_name = re.compile(r"(?:lib)?(?:plist|imobiledevice|usbmuxd)(?:[-_.A-Za-z0-9]*)", re.I)
     framework_names = [name for flag in ("-framework", "-weak_framework", "-reexport_framework",
@@ -674,7 +673,8 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
         c_candidates.update(searched)
     _require(len(c_candidates) == 1, "final Ld does not select one verified C provider")
     c_archive = c_candidates.pop()
-    _require(c_archive.is_relative_to(files.roots[1]) and files.opaque_hash(c_archive) == c_provider_hash,
+    c_archive_identity = files.opaque_identity(c_archive)
+    _require(c_archive.is_relative_to(files.roots[1]) and c_archive_identity["sha256"] == c_provider_hash,
              "processed C provider archive differs from the mixed-provider proof")
     _require(C_SYSTEM_FRAMEWORKS <= set(_option(args, "-framework"))
              and not C_SYSTEM_FRAMEWORKS & set(_option(args, "-weak_framework")),
@@ -683,7 +683,16 @@ def _link_evidence(command: dict, files: _Files, archive: Path, archive_hash: st
              "final Ld lacks diagnostic C/Rust live roots")
     map_path = files.path(_one(args, "-map"), cwd)
     _require(map_path.is_relative_to(files.roots[1]), "App linker map must be inside owned DerivedData")
-    ownership = _live_map_ownership(files.text(map_path, MAX_MAP), c_archive, c_provider["symbols"], processed, rust_symbols)
+    # These exact DerivedData bytes match the producer's opaque archives. Only
+    # their filesystem locations change; member/name visibility stays bound.
+    try:
+        rebound = symbol_visibility.rebind(visibility, archives={
+            "rust": {"source": str(processed), "sha256": archive_hash, "bytes": processed_identity["size"]},
+            "c": {"source": str(c_archive), "sha256": c_provider_hash, "bytes": c_archive_identity["size"]}})
+    except ValueError as error:
+        raise ObservationError("App symbol visibility identity differs: " + str(error)) from error
+    ownership = _live_map_ownership(files.recorded_bytes(map_path, MAX_MAP), c_archive,
+                                    c_provider["symbols"], processed, rust_symbols, rebound)
     _require("OpenSSL" in _option(args, "-framework"), "final Ld lacks selected OpenSSL framework")
     _require("OpenSSL" not in _option(args, "-weak_framework"), "weak OpenSSL provider is unsupported")
     providers = set()
@@ -817,7 +826,8 @@ def observe_compile(log_path: Path, prepared_root: Path, derived_data: Path,
         _require(len(links) == 1, "expected one actual final SideStore Ld command")
         link = links[0]
         target = _device_identity(link, sdk)
-        link_info = _link_evidence(link, files, local["archive"], hashes["archive"], provider_hash, configuration, sdk, c_provider, rust_symbols)
+        link_info = _link_evidence(link, files, local["archive"], hashes["archive"], provider_hash, configuration, sdk, c_provider, rust_symbols,
+                                   native_binding["native_artifact"]["symbol_visibility"]["aarch64-apple-ios"])
         result = {"schema": 1, "observer_source": "new-after-workspace-reset", "configuration": configuration,
                 "log_sha256": _sha(raw_log), "compile": observations,
                 "link": {"line": link["line"], "command_sha256": link["command_sha256"],

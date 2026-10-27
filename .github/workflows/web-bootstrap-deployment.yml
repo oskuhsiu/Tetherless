@@ -2,13 +2,13 @@ name: Web bootstrap deployment package
 
 on:
   push:
-    branches: [develop, verify/staged-pairing-native, verify/web-signing-preview]
+    branches: [main, develop, verify/staged-pairing-native, verify/web-signing-preview]
     paths:
       - 'WebBootstrap/**'
       - 'Tools/WebBootstrapService/**'
       - '.github/workflows/web-bootstrap-deployment.yml'
   pull_request:
-    branches: [develop]
+    branches: [main, develop]
     paths:
       - 'WebBootstrap/**'
       - 'Tools/WebBootstrapService/**'
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   docker-nonaccount:
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/verify/staged-pairing-native' || github.ref == 'refs/heads/verify/web-signing-preview' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/verify/staged-pairing-native' || github.ref == 'refs/heads/verify/web-signing-preview' || github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:

@@ -2,13 +2,13 @@ name: Web bootstrap browser QA
 
 on:
   push:
-    branches: [develop, verify/staged-pairing-native, verify/web-signing-preview]
+    branches: [main, develop, verify/staged-pairing-native, verify/web-signing-preview]
     paths:
       - 'WebBootstrap/**'
       - 'Tools/WebBootstrapService/deployment/**'
       - '.github/workflows/web-bootstrap.yml'
   pull_request:
-    branches: [develop]
+    branches: [main, develop]
     paths:
       - 'WebBootstrap/**'
       - 'Tools/WebBootstrapService/deployment/**'

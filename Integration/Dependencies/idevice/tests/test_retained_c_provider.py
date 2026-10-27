@@ -117,9 +117,26 @@ class RetainedCProviderTests(unittest.TestCase):
             with self.assertRaises(ValueError):c.check_symbols(bad,symbols)
     def test_maps_require_live_correct_unambiguous_archive_members(self):
         symbols=c.ED|c.GLUE|c.REQUIRED_C;text=map_text('/fixture/c.a',symbols,'/fixture/rust.a',['_rust'])
-        c.link_ownership(text,'/fixture/c.a',symbols,'/fixture/rust.a',['_rust'])
+        c.link_ownership(text.encode(),'/fixture/c.a',symbols,'/fixture/rust.a',['_rust'])
         for bad in (text.replace('/fixture/c.a','/fixture/other.a'),text.replace('_plist_free','_not_plist_free'),text.replace('# Symbols:','# Dead Stripped Symbols:'),text.replace('(ed.o)','(glue.o)').replace('[ 2] _tetherless_c','[ 1] _tetherless_c')):
-            with self.assertRaises(ValueError):c.link_ownership(bad,'/fixture/c.a',symbols,'/fixture/rust.a',['_rust'])
+            with self.assertRaises(ValueError):c.link_ownership(bad.encode(),'/fixture/c.a',symbols,'/fixture/rust.a',['_rust'])
+    def test_nested_C_product_reader_keeps_literal_bytes_and_raw_receipt_hash(self):
+        fixture=Path(__file__).parent/'fixtures/mixed-provider-raw-byte-excerpt.map'
+        literals=b'\n'.join(row for row in fixture.read_bytes().split(b'\n') if b'[  2] literal string: ' in row)+b'\n'
+        outer=dict(self.f['outer']);product=dict(self.f['product'])
+        receipt=json.loads(product['producer-receipt.json'])
+        for row in receipt['slices']:
+            for link in row['links']:
+                base='work/evidence/'+row['sdk']+'-'+link['language']
+                data=outer[base+'.map'].replace(b'# Dead Stripped Symbols:',literals+b'# Dead Stripped Symbols:')
+                outer[base+'.map']=data
+                link['ownership']['map_sha256']=c.digest(data)
+                outer[base+'-ownership.json']=raw(link['ownership'])
+        product['producer-receipt.json']=raw(receipt)
+        inner=zipped(product);outer['work/libimobiledevice-derived-candidate.zip']=inner
+        outer['work/evidence/product-digest.json']=raw({'bytes':len(inner),'sha256':c.digest(inner)})
+        result=c.validate_product(outer,self.f['selection'],self.f['commit'],self.f['tree'])
+        self.assertEqual(len(result[1]),2)
     def test_real_failed_C_nm_receipt_preserves_historical_strip_not_raw_hash(self):
         fixture=Path(__file__).parent/'fixtures'
         old=(fixture/'c-provider-failed-37507597771-old-nm.txt').read_text()
@@ -135,8 +152,8 @@ class RetainedCProviderTests(unittest.TestCase):
                 '0x1000 0x10 [ 9999] _nonrequired\n# Dead Stripped Symbols:'),
             text+'<<dead>> 0x10 [ 9999] _nonrequired\n')
         for bad in cases:
-            with self.subTest(bad=bad[-100:]),self.assertRaises(ValueError):c.link_ownership(bad,'/fixture/c.a',symbols)
-        proof=c.link_ownership(text+'<<dead>> 0x10 [ 3] _not_live\n','/fixture/c.a',symbols)
+            with self.subTest(bad=bad[-100:]),self.assertRaises(ValueError):c.link_ownership(bad.encode(),'/fixture/c.a',symbols)
+        proof=c.link_ownership((text+'<<dead>> 0x10 [ 3] _not_live\n').encode(),'/fixture/c.a',symbols)
         self.assertNotIn('_not_live',proof['owners'])
     def test_zip_aliases_traversal_symlink_and_expansion_rejected(self):
         for files in ({'../a':b'x'},{'a':b'x','A':b'y'},{'a':b'x','a/b':b'y'},{'a/../b':b'x'},{'a\\b':b'x'}):
@@ -149,15 +166,15 @@ class RetainedCProviderTests(unittest.TestCase):
     def test_observed_failed_C_map_dialect_replays_all829_without_admission(self):
         fixture=Path(__file__).parent/'fixtures'
         context=json.loads((fixture/'c-provider-failed-37507597771-map.json').read_bytes())
-        text=(fixture/'c-provider-failed-37507597771-iphoneos-c.map').read_text()
-        self.assertEqual(c.digest(text.encode()),context['map_sha256'])
+        text=(fixture/'c-provider-failed-37507597771-iphoneos-c.map').read_bytes()
+        self.assertEqual(c.digest(text),context['map_sha256'])
         proof=c.link_ownership(text,context['library'],context['symbols'])
         self.assertEqual(proof['c_required_live_symbols'],829)
         self.assertEqual(proof['owners']['_sha512'],'81')
         self.assertEqual(proof['owners']['_tetherless_c_ed25519_sha512'],'41')
         self.assertEqual(proof['archive_members']['81'],proof['archive_members']['41'])
-        for changed in (text.replace('# Sections:','# Unknown:'), text.replace('# Symbols:','# Sections:'),
-                        text.replace('0x100004000\t0x000480E4\t__TEXT\t__text','malformed section row')):
+        for changed in (text.replace(b'# Sections:',b'# Unknown:'), text.replace(b'# Symbols:',b'# Sections:'),
+                        text.replace(b'0x100004000\t0x000480E4\t__TEXT\t__text',b'malformed section row')):
             with self.assertRaises(ValueError):c.link_ownership(changed,context['library'],context['symbols'])
     def test_json_duplicate_key_rejected(self):
         with self.assertRaisesRegex(ValueError,'duplicate JSON'):c.read_json_bytes(b'{"a":1,"a":2}')

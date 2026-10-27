@@ -1,5 +1,6 @@
 """Portable synthetic tool identity tests. No Rust/LLVM/native binary executes."""
 from pathlib import Path
+import ast
 import copy
 import json
 import subprocess
@@ -54,7 +55,7 @@ class ReaderTests(unittest.TestCase):
         self.assertEqual(value["llvm_nm"]["path"], str(self.f.nm))
         self.assertEqual(len(self.f.calls), 3)
         self.assertEqual(reader.scan_command(value, "/opaque/full.a"),
-            [str(self.f.nm), "--extern-only", "--defined-only", "--format=just-symbols", "/opaque/full.a"])
+            [str(self.f.nm), "--extern-only", "--defined-only", "--format=just-symbols", "--quiet", "/opaque/full.a"])
 
     def test_absent_component_never_falls_back_to_path_or_xcode(self):
         self.f.manifest.unlink()
@@ -156,6 +157,21 @@ class ReaderTests(unittest.TestCase):
                 if proof == "apple-producer": command += " --symbol-reader"
                 expected += [command + " --output .proof/evidence/toolchain-lock.observed.json"]
                 self.assertEqual(calls, expected)
+
+    def test_apple_workflow_recipe_pin_matches_reviewed_inventory(self):
+        repository = ROOT.parents[2]
+        workflow = (repository / ".github/workflows/pairing-components.yml").read_text()
+        step = workflow.split("      - name: Run the exact reviewed native proof offline", 1)[1]
+        script = textwrap.dedent(step.split("          python3 - <<'PYCODE'\n", 1)[1].split("          PYCODE", 1)[0])
+        # Inspect the actual caller without executing any native command.
+        pins = []
+        for node in ast.walk(ast.parse(script)):
+            if (isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name)
+                    and node.target.id == "command" and isinstance(node.value, ast.List)
+                    and node.value.elts and isinstance(node.value.elts[0], ast.Constant)
+                    and node.value.elts[0].value == "--recipe-lock-sha256"):
+                pins.append(ast.literal_eval(node.value))
+        self.assertEqual(pins, [["--recipe-lock-sha256", reader.digest(ROOT / "apple-recipe-files.json")]])
 
     def test_recipe_workflow_and_consumer_contract_are_bound(self):
         index = json.loads((ROOT / "apple-recipe-files.json").read_bytes())

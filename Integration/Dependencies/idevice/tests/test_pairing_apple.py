@@ -182,6 +182,7 @@ class AppleFixture:
         # provider identity, full symbol and live-map validators still run.
         selected = self.contract["targets"][target["rust"]]
         return {"target": target["rust"], "library": str(root / "product" / target["sdk"] / "libimobiledevice.a"),
+                "library_sha256": sha256((root / "product" / target["sdk"] / "libimobiledevice.a").read_bytes()),
                 "headers": str(root / "product" / target["sdk"] / "Headers"), "binary_format_inspected": False,
                 "fixture_sha256": sha256((root / "actions-artifact.zip").read_bytes()),
                 "handoff_sha256": expected_handoff_sha256, "source_commit": "c" * 40,
@@ -258,6 +259,19 @@ class AppleFixture:
                 output = "\n".join("_" + n for n in namespace["expected_target_exports"][target_name]["after"]) + "\n"
             else:
                 output = "\n".join(n for n in self.c_export_names() if not n.startswith("_synthetic_c_padding_")) + "\n"
+            if "--format=darwin" in argv:
+                if self.large_symbol_output:
+                    if Path(argv[-1]).name == "libidevice_ffi.a":
+                        output += "".join("_synthetic_rust_padding_" + str(i) + "\n" for i in range(12000))
+                    else:
+                        output += "".join("_synthetic_c_padding_" + str(i) + "\n" for i in range(12000))
+                lines = []
+                for name in output.splitlines():
+                    member = ("rust.o" if Path(argv[-1]).name == "libidevice_ffi.a" else
+                              "sha512-glue.o" if name in apple.retained_c_provider.GLUE else
+                              "sha512-ed.o" if name in apple.retained_c_provider.ED else "c.o")
+                    lines.append(str(argv[-1]) + ":" + member + ": 0000000000000000 (__TEXT,__text) external " + name)
+                output = "\n".join(lines) + "\n"
         elif "-fsyntax-only" in argv:
             output = "controlled syntax-only header check\n"
         elif argv[:2] == [self.binaries["cargo"], "tree"]:
@@ -308,11 +322,15 @@ class AppleFixture:
                 output = "_plist_free\n" + output
             if self.early_symbol_fault == "collision":
                 output = "_early_provider_collision\n" + output
-        code = "import sys,time; sys.stdout.write(" + repr(output) + "); sys.stdout.flush()"
+        payload = self.root / "controlled-command-output.txt"
+        payload.write_text(output)
+        code = "import sys,time; sys.stdout.write(open(" + repr(str(payload)) + ").read()); sys.stdout.flush()"
         options = dict(timeout_seconds=2, max_log_bytes=32768, tail_bytes=32768, term_grace_seconds=.2, kill_join_seconds=.2)
+        if log.name in ("rust-defined-members.txt", "c-defined-members.txt"):
+            options["max_log_bytes"] = bounded_process.MAX_LOG_BYTES
         if self.large_symbol_output and log.name in ("04-rust-export-symbols.txt", "04-c-export-symbols.txt"):
             if log.name.startswith("04-rust"):
-                code += "; sys.stdout.write('_synthetic_rust_padding\\n' * 12000); sys.stdout.flush()"
+                code += "; sys.stdout.write(''.join('_synthetic_rust_padding_' + str(i) + '\\n' for i in range(12000))); sys.stdout.flush()"
             else:
                 code += "; sys.stdout.write(''.join('_synthetic_c_padding_' + str(i) + '\\n' for i in range(12000))); sys.stdout.flush()"
             options.update(max_log_bytes=1024 * 1024, tail_bytes=bounded_process.SUMMARY_TAIL_BYTES)
@@ -324,7 +342,14 @@ class AppleFixture:
                 options["timeout_seconds"] = .15
             else:
                 code += "; sys.stderr.write('controlled native-command failure\\n'); sys.exit(7)"
-        return bounded_process.capture_helper_command([sys.executable, "-u", "-c", code], source=source, env=env, log=log, **options)
+        result = bounded_process.capture_helper_command([sys.executable, "-u", "-c", code], source=source, env=env, log=log, **options)
+        # The Python command is an explicit native-command test double. Retain
+        # its real output/join outcome, then attribute the simulated invocation.
+        status_path = log.with_name(log.name + ".status.json")
+        status = json.loads(status_path.read_bytes())
+        status.update(command=list(argv), max_log_bytes=bounded_process.MAX_LOG_BYTES)
+        status_path.write_bytes(canonical_json(status))
+        return result
 
     def patches(self):
         stack = ExitStack()

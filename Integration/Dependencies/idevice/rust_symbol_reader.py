@@ -12,7 +12,7 @@ import re
 CONTRACT = {"rust_release": "1.98.1", "rust_host": "aarch64-apple-darwin",
             "llvm_version": "22.1.8", "component": "llvm-tools-preview",
             "rustup_component": "llvm-tools", "tool": "llvm-nm"}
-FLAGS = ["--extern-only", "--defined-only", "--format=just-symbols"]
+FLAGS = ["--extern-only", "--defined-only", "--format=just-symbols", "--quiet"]
 MAX_METADATA = 1024 * 1024
 
 

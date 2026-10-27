@@ -9,7 +9,7 @@ on:
       - '.gitmodules'
       - '.github/workflows/native.yml'
   pull_request:
-    branches: [develop]
+    branches: [main, develop]
   workflow_dispatch:
 permissions:
   contents: read
