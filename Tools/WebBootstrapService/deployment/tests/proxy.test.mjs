@@ -103,7 +103,9 @@ test('code requires explicit same-origin POST, strong length, and bounded attemp
   assert.equal(h.received.length, 0);
 });
 test('gate cookie is secure, bounded, separate from Apple auth and stripped upstream', async t => {
-  const h = await harness(t);
+  // A fixed injected clock keeps the exact lifetime assertion independent of
+  // a millisecond tick between production expiry calculation and serialization.
+  const h = await harness(t, { now: () => Date.UTC(2026, 9, 27) });
   const opened = await h.unlock(); assert.equal(opened.status, 303);
   assert.equal(opened.headers.location, '/');
   const set = opened.headers['set-cookie'][0];
