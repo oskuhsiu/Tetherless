@@ -1,6 +1,11 @@
 # Build context: repository root. Official versioned images; record resolved image
 # digests when building. Debian package versions are recorded by CI, not pinned.
-FROM node:24.19.0-trixie-slim@sha256:ab3eebe934147fee049b5eb83c570f68c849a13c930bdfa482de99fcdfa3b3de AS frontend
+FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS frontend
+# Debian security update 20250419+deb13u1 distrusts the compromised CA chains.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge '20250419+deb13u1' \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 ARG SOURCE_COMMIT
 RUN node -e "if (!/^[a-f0-9]{40}$/.test(process.env.SOURCE_COMMIT || '')) process.exit(1)"
 WORKDIR /src/WebBootstrap
@@ -16,6 +21,8 @@ RUN npm test && npm run build \
 FROM rust:1.99.0-trixie@sha256:15ad267e7a4cb2dce5905c90c76765adb6714945c5ea6d7c82673897a5e4067b AS backend
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates pkg-config libssl-dev \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge '20250419+deb13u1' \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src/Tools/WebBootstrapService
 COPY Tools/WebBootstrapService/Cargo.toml Tools/WebBootstrapService/Cargo.lock ./
@@ -27,9 +34,11 @@ RUN cargo test --locked --all-targets && cargo build --locked --release \
     && cargo --version > /build-info/backend-cargo.txt \
     && dpkg-query -W > /build-info/backend-debian-packages.txt
 
-FROM node:24.19.0-trixie-slim@sha256:ab3eebe934147fee049b5eb83c570f68c849a13c930bdfa482de99fcdfa3b3de AS runtime
+FROM node:24.22.1-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates libssl3t64 libgcc-s1 zlib1g libzstd1 \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge '20250419+deb13u1' \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 ARG SOURCE_COMMIT
 LABEL org.opencontainers.image.revision=$SOURCE_COMMIT

@@ -1,5 +1,16 @@
 # Tetherless development status
 
+## Web TLS security update — 2026-10-27
+
+Approved source-only remediation updates the pinned Node image/CI runtime, Rust
+verifier and bundled roots, and enforces the Debian system CA security floor in
+all Docker stages. See `Tools/WebBootstrapService/deployment/README.md`.
+Regression and image-build results must be tied to the patch commit. No Render
+resume, environment change or deployment is authorized by this update. The old
+suspended image remains unpatched until a separately authorized rebuild/deploy;
+actual deployed-client certificate rejection and Apple/device acceptance remain
+pending.
+
 ## Main consolidation — 2026-10-27
 
 The owner requested consolidation of all current progress into `main`. This merges
