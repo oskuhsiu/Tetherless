@@ -131,7 +131,7 @@ test('DOM mock: profile round trip completes before credentials, resumes to logi
 test('DOM mock: protected same-origin service requests carry same-origin cookies and reject redirects',async()=>{
   const e=await environment({service:true,profileService:false,fetcher:sessionFetcher()});try{
     loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('logout').click();await tick();
-    const serviceCalls=e.calls.filter(c=>new URL(c.url).origin==='http://127.0.0.1:8787');assert(serviceCalls.length>=5);assert(serviceCalls.every(c=>c.options.credentials==='same-origin' && c.options.redirect==='error'));
+    const serviceCalls=e.calls.filter(c=>new URL(c.url).origin==='http://127.0.0.1:8787');assert(serviceCalls.length>=5);assert(serviceCalls.every(c=>c.options.credentials==='same-origin' && c.options.redirect===(new URL(c.url).pathname.endsWith('/health') ? 'manual' : 'error')));
     assert(serviceCalls.filter(c=>c.url.includes('/v1/sessions')).every(c=>!c.url.includes('synthetic-token')));
   }finally{e.dispose();}
 });

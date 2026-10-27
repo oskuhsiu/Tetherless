@@ -1,5 +1,24 @@
 # Tetherless development status
 
+## Discovery transport investigation — 2026-10-27
+
+The reported browser fetch failure is **not yet attributed to a specific cause**.
+A directly opened healthy `/health` response does not prove that the earlier
+page's fetch succeeded, or that the contexts and times match. Source review found
+no same-origin CSP/CORS defect in the normal top-level app.
+
+Two independently reviewed defects are addressed: interrupted response-body
+transport now gets the same bounded read-only retry as an interruption before
+headers; redirects are identified and rejected without following or retrying them.
+Malformed/oversized JSON, unsupported protocol, cancellation and foreign origins
+remain fail-closed. No account mutation is retried by this change.
+
+A local real-HTTP baseline reproduced both defects and the corrected source
+recovers from a first body disconnect. New Chromium/WebKit transport and UI tests
+must pass on the exact PR/main commit; local browser execution is blocked by
+missing runtime libraries. The Render service remains suspended; this source-only
+change does not authorize a restart/deploy and is not Apple/device acceptance.
+
 ## Web TLS security update — 2026-10-27
 
 Approved source-only remediation updates the pinned Node image/CI runtime, Rust

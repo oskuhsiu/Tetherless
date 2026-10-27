@@ -175,3 +175,22 @@ promised to trigger only this workflow.
 - [checkout pinned commit](https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262)
 - [setup-node v6.3.0 pinned commit](https://github.com/actions/setup-node/commit/53b83947a5a98c8d113130e565377fae1a50d02f)
 - [upload-artifact pinned commit](https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02)
+
+## Discovery transport regression (2026-10-27)
+
+`playwright.discovery.config.js` runs real local HTTP fault cases in locked
+Chromium and WebKit (Playwright 1.58.2 / WebKit 26.0 revision 2248). The fixture
+serves only the production discovery module, its URL helper and synthetic health
+responses. It has no outbound network implementation or account API. Browser
+requests are restricted to the fixture's exact loopback origin and GET method.
+Tests cover 301/302/307/308 same/foreign redirects without following, mid-body
+socket interruption, clean truncated JSON, oversized data, delay and cancellation.
+The main browser config also runs the credential-hidden/recheck/lifecycle UI
+regressions in WebKit. This is not Safari-on-iPhone or live Apple acceptance.
+
+Run after dependency setup:
+
+```sh
+node node_modules/playwright/cli.js install --with-deps chromium webkit
+node node_modules/playwright/cli.js test --config playwright.discovery.config.js
+```

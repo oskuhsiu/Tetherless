@@ -72,7 +72,9 @@ test('browser config uses both paths, locked default Chromium, bounded run and r
   assert.equal(config.use.launchOptions, undefined);
   assert.equal(config.use.channel, undefined);
   assert.equal(config.use.serviceWorkers, 'block');
-  assert.deepEqual(config.projects.map((p) => p.use.baseURL), ['http://127.0.0.1:4173/', base]);
+  assert.deepEqual(config.projects.filter(p => !p.use.browserName).map(p => p.use.baseURL), ['http://127.0.0.1:4173/', base]);
+  assert.equal(config.projects[0].use.browserName, 'webkit');
+  assert.equal(config.projects[0].testMatch, '**/account-discovery.spec.js');
   assert.equal(config.retries, 0);
   assert.equal(config.workers, 1);
   assert.equal(config.globalTimeout, 480000);
