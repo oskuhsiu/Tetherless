@@ -23,7 +23,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
   }
   const say = (text) => { $('account-status').textContent = text; };
   const base = new URL('.', document.baseURI);
-  const devices = setupDeviceEnrollment(base, { enabled: () => serviceAvailable && !existingRoute() && profileAvailable && !session && !busy, onReceived: () => { if (!session) showLogin(); } });
+  const devices = setupDeviceEnrollment(base, { enabled: () => serviceAvailable && !existingRoute() && profileAvailable && !session && !busy, onReceived: () => { if (!session) { showLogin(); say('裝置資料已取得，尚未向 Apple 註冊。若 IPA 未保留，請重新選取已下載的檔案，再登入並確認註冊；不用重裝描述檔。'); } } });
   $('continue-device').onclick = () => { if (!validUdid()) { $('device-details').open = true; return say('請取得或輸入有效的 iPhone UDID'); } devices.clear(); showLogin(); say('裝置資料已準備好，請登入 Apple。稍後仍須確認並授權註冊。'); };
   window.addEventListener('pageshow', (event) => { if (event.persisted) { if (serviceAvailable) devices.resume(); else void checkService(); } });
   const route = (path) => { const url = new URL(path.replace(/^\//, ''), base); if (url.origin !== location.origin) throw new Error('登入服務必須與此頁同源'); return url.href; };
@@ -208,7 +208,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
         profileAvailable = result.profileAvailable;
         $('service-origin').textContent = location.origin; $('device-service-origin').textContent = location.origin;
         $('device-collection').hidden = true;
-        if (profileAvailable && devices.hasPending()) $('device-route').value = 'new';
+        if (profileAvailable && (devices.hasPending() || devices.hasReturn())) $('device-route').value = 'new';
         serviceAvailable = true; showLogin(); devices.resume();
         $('account-unavailable').hidden = true; $('recheck-service').hidden = true; return;
       }

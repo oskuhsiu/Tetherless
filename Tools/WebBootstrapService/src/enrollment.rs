@@ -154,7 +154,7 @@ pub async fn status(
     authorized(&record, &headers)?;
     let state = record.state.lock().await;
     Ok(Json(
-        json!({"state":if state.device.is_some(){"received"}else{"awaitingDevice"},"device":state.device,"verification":"untrustedDeviceMetadata"}),
+        json!({"state":if state.device.is_some(){"received"}else{"awaitingDevice"},"device":state.device,"verification":"untrustedDeviceMetadata","expiresInSeconds":ENROLLMENT_TTL.saturating_sub(record.created.elapsed()).as_secs()}),
     ))
 }
 pub async fn cancel(
@@ -325,11 +325,12 @@ pub async fn callback(
         return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState));
     }
     state.device = Some(device);
-    // No metadata in URL, no open redirect, no configuration/MDM payload returned.
-    let location = HeaderValue::from_str(&format!("{}/#device-collected", app.allowed_origin))
+    // Only the non-secret lookup ID is in the fragment; reads still require the
+    // HttpOnly cookie. No device metadata, credentials, open redirect, or MDM payload.
+    let location = HeaderValue::from_str(&format!("{}/#device-collected={}", app.allowed_origin, id))
         .map_err(|_| invalid())?;
     Ok((
-        StatusCode::MOVED_PERMANENTLY,
+        StatusCode::SEE_OTHER,
         [(header::LOCATION, location)],
     )
         .into_response())
@@ -497,10 +498,10 @@ mod tests {
             .oneshot(request(signed.clone()))
             .await
             .unwrap();
-        assert_eq!(accepted.status(), StatusCode::MOVED_PERMANENTLY);
+        assert_eq!(accepted.status(), StatusCode::SEE_OTHER);
         assert_eq!(
             accepted.headers()[header::LOCATION],
-            "https://bootstrap.example/#device-collected"
+            format!("https://bootstrap.example/#device-collected={id}")
         );
         assert_eq!(
             router
@@ -530,6 +531,7 @@ mod tests {
             StatusCode::UNAUTHORIZED
         );
         let result = router
+            .clone()
             .oneshot(status_request(cookie.split(';').next().unwrap()))
             .await
             .unwrap();
@@ -543,6 +545,21 @@ mod tests {
         assert_eq!(json["state"], "received");
         assert_eq!(json["verification"], "untrustedDeviceMetadata");
         assert_eq!(json["device"]["udid"], "0".repeat(40));
+        let remaining = json["expiresInSeconds"].as_u64().unwrap();
+        assert!(remaining > 0 && remaining <= ENROLLMENT_TTL.as_secs());
+        // A second tab with the original cookie may read the same result. The
+        // lookup ID alone never authorizes a read or resets record.created.
+        let second = router.clone()
+            .oneshot(status_request(cookie.split(';').next().unwrap()))
+            .await.unwrap();
+        assert_eq!(second.status(), StatusCode::OK);
+        let repeated: serde_json::Value = serde_json::from_slice(
+            &axum::body::to_bytes(second.into_body(), 8192).await.unwrap()
+        ).unwrap();
+        assert_eq!(repeated["device"], json["device"]);
+        assert!(repeated["expiresInSeconds"].as_u64().unwrap() <= remaining);
+        assert_eq!(router.oneshot(status_request("__Secure-tetherless-enrollment=wrong"))
+            .await.unwrap().status(), StatusCode::UNAUTHORIZED);
     }
     #[tokio::test]
     async fn cancelled_or_expired_enrollment_cannot_be_used() {
