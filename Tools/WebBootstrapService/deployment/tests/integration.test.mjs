@@ -69,7 +69,7 @@ test('actual release backend, production supervisor and built frontend, without 
     const status = JSON.parse(health.body);
     assert.equal(status.protocol, 1); assert.equal(status.appleAuthAvailable, true);
     assert.equal(status.profileServiceAvailable, true); assert.equal(status.liveAppleAcceptance, false);
-    assert.equal(status.accountBackendPin, 'dd442588370060b8776b1276a1acd717b6668b26');
+    assert.equal(status.accountBackendPin, '8ca39b6203263e539408986e546c42e7c1cc3699');
     assert.equal(health.headers['cache-control'], 'no-store');
     assert.equal((await request(port, '/health', { headers: { host: 'hostile.example.com' } })).status, 403);
     assert.equal((await request(port, '/v1/sessions/absent')).status, 401);

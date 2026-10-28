@@ -28,7 +28,10 @@ WORKDIR /src/Tools/WebBootstrapService
 COPY Tools/WebBootstrapService/Cargo.toml Tools/WebBootstrapService/Cargo.lock ./
 COPY Tools/WebBootstrapService/src/ ./src/
 COPY Tools/WebBootstrapService/tests/ ./tests/
-RUN cargo test --locked --all-targets && cargo build --locked --release \
+COPY Tools/WebBootstrapService/vendor/ ./vendor/
+RUN cargo test --locked --all-targets \
+    && cargo test --locked -p isideload --lib transport_tests \
+    && cargo build --locked --release \
     && mkdir -p /build-info \
     && rustc --version > /build-info/backend-rustc.txt \
     && cargo --version > /build-info/backend-cargo.txt \
@@ -49,6 +52,8 @@ COPY --from=frontend /build-info /app/build-info
 COPY --from=backend /build-info /app/build-info
 COPY LICENSE /app/licenses/AGPL-3.0.txt
 COPY Tools/WebBootstrapService/README.md /app/licenses/account-service-notices.md
+COPY Tools/WebBootstrapService/vendor/isideload/LICENSE /app/licenses/isideload-MIT.txt
+COPY Tools/WebBootstrapService/vendor/PATCHES.md /app/licenses/isideload-provenance.md
 COPY Tools/WebBootstrapService/deployment/*.mjs /app/deployment/
 RUN node -e "if (!/^[a-f0-9]{40}$/.test(process.env.SOURCE_COMMIT || '')) process.exit(1)" \
     && printf '%s\n' "$SOURCE_COMMIT" > /app/build-info/source-commit.txt \
