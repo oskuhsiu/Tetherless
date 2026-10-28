@@ -60,6 +60,7 @@ def apply(root: Path):
     subprocess.run([sys.executable, str(Path(__file__).with_name("manager_update.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("certificate_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("certificate_issuance.py")), str(root)], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("certificate_lifecycle_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("onboarding.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("launch_safety.py")), str(root)], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("catalog_safety.py")), str(root)], check=True)

@@ -40,7 +40,7 @@ class CertificateSafetyTests(unittest.TestCase):
         self.assertLess(source.index('guard case .tooManyCertificates'),source.index('resolveRevocation(certificates: current'))
         self.assertIn('case .keepExisting: throw error',source)
         self.assertIn('$0.data == cert.data',source)
-        self.assertIn('guard !selected.isEmpty',source)
+        self.assertIn('guard selected.count == 1',source)
     def test_active_envelope_read_is_not_split_field_fallback(self):
         source=(ROOT/'Native/NativeCertificatePersistence.swift').read_text()
         self.assertIn('if let envelope = try store().read() { return try decode(envelope.identity) }',source)

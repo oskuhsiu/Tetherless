@@ -21,6 +21,7 @@ struct NativeRenewalSettings: View {
                 introduction
                 setup
                 verification
+                NativeSigningMaterialControls()
                 NativeCertificateRecoveryControls()
                 NativeManagerUpdateControls()
                 currentApps

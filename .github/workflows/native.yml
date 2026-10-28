@@ -17,6 +17,24 @@ concurrency:
   group: native-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  certificate-crypto-consumer:
+    runs-on: macos-15
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install pinned web fixture dependencies (no lifecycle scripts)
+        run: npm ci --ignore-scripts --prefix WebBootstrap
+      - name: Real pinned signer and Security crypto interoperability (synthetic only)
+        run: python3 Integration/run_certificate_crypto_consumer.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: certificate-crypto-${{ github.sha }}
+          path: artifacts/certificate-crypto/
+          if-no-files-found: error
+          retention-days: 7
   unsigned-build:
     # Dedicated helper branch does not build the app; develop and PR acceptance stay unchanged.
     if: github.ref != 'refs/heads/verify/staged-pairing-native'

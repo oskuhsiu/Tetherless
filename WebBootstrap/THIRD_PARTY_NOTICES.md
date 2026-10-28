@@ -28,22 +28,28 @@ Runtime dependencies are exact-version pinned in `package.json`; full integrity
 locks reside in `package-lock.json`. Direct runtime license texts are copied under
 `licenses/npm/` and included in the static build.
 
-- `node-forge` 1.4.0: BSD-3-Clause (selected dual-license option), P12/CMS metadata,
+- `node-forge` 1.4.2: BSD-3-Clause (selected dual-license option), P12/CMS metadata,
   CSR and local test-only/key material construction
 - `@zip.js/zip.js` 2.8.26: BSD-3-Clause, bounded metadata reading
 - `@plist/binary.parse` 1.1.0: BSD-3-Clause-Clear, Apple binary plist metadata
 
-## Known dependency risk
+## Dependency review (2026-10-28)
 
-The 2026-10-06 npm audit reports **one high finding** and no available patch:
-[GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv), affecting
-node-forge RSA PKCS#1 v1.5 signature verification through 1.4.0. Application code
-here does not call forge's signature verification API or use it to establish an
-Apple trust chain; it uses parsing, encryption/serialization and CSR generation.
-This usage limitation is not a clean audit or a remediation. A supported patched
-version or replacement must be reviewed before production security approval. Do
-not add forge signature verification as a workaround. The artifact records the
-full audit in `runtime-audit.json`; this dependency risk remains open.
+The prior 2026-10-06 audit recorded a high Forge finding. The older
+[GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv)
+was superseded for remediation evidence by the maintainer's
+[new advisory](https://github.com/digitalbazaar/forge/security/advisories/GHSA-2g46-22mc-6gwp):
+1.4.1 fixes the issue and the pinned 1.4.2 includes that repair. Web and native
+copies were upgraded together from the official package, with integrity checks.
+Product CSR verification independently uses fail-closed platform WebCrypto;
+Forge is not used to establish an Apple trust chain. Development Vite was also
+updated to its official 8.1.6 security release.
+
+The fresh full dependency audit in `runtime-audit.json` reports zero known
+findings at 2026-10-28. This is a registry snapshot, not proof of no vulnerabilities
+or production/device acceptance. Primary sources, prior metadata discrepancy,
+call-path review and regression boundaries are in
+[`docs/CERTIFICATE_DEPENDENCY_REVIEW.md`](../docs/CERTIFICATE_DEPENDENCY_REVIEW.md).
 
 ## Bounded binary plist adapter
 

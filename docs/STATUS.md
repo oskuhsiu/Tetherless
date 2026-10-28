@@ -1,5 +1,39 @@
 # Tetherless development status
 
+## Certificate lifecycle — 2026-10-28 (implementation checkpoint; NOT deployed)
+
+Current work is isolated on `feature/certificate-lifecycle`, based on main
+`c3b8f7c736f2b6c56ab1a20ed085a83ea672573b`. The previous login/Team diagnostics
+are historical entries below. This new candidate is not validated by that main
+commit's green CI.
+
+Scope: explicit encrypted web recovery before issuance; separate certificate
+readback/export from profile creation; same-key recovery across sessions; bounded
+certificate listing and exact, explicitly confirmed revocation; native signing
+material import/export and removal of free-account bulk revocation defaults.
+See [the lifecycle contract](CERTIFICATE_LIFECYCLE.md) for failure and privacy
+boundaries. No real Apple account, signing key or certificate mutation is used in
+tests, and no Render deployment or service-window extension is part of this work.
+
+Local verification after integration:
+
+- Rust: **62/62 tests**, release build, and **7** real loopback HTTP health/origin/session admission checks passed. Reproducible commands and source hashes are in `Tools/WebBootstrapService/VERIFICATION.md` and its lifecycle JSON record.
+- Web before the dependency-safety follow-up: **174/174** unit/DOM/crypto/actual pinned-WASM tests and production build passed. The WebCrypto follow-up adds six unit tests and one browser scenario; report its exact new CI result separately.
+- Native focused Python: **25 passed, 1 skipped** (26 total, including 20 existing certificate tests). The new suite has five passing source/resource/Node–OpenSSL tests and one macOS-only Swift/JavaScriptCore/Security harness not run here.
+- Full Integration suite: **510 total; 470 passed, 32 skipped, 1 failure and 7 errors**, all eight failures/errors requiring missing `swiftc`. Do not describe the aggregate as green.
+- `swift test` and `swift test -c release` are blocked (`swift: command not found`). Unsigned native Debug/Release, actual JSCore/Security interoperability, app-resource packaging, and actual Chromium/WebKit execution require CI. The official local browser archive URL returned HTML rather than a ZIP.
+- Independent review reproduced the old plaintext native P12 builder, verified new protected output with OpenSSL and the real WASM signer, and checked cancellation/retry/revocation races. No live Apple account operation or iPhone install/launch/readback was tested.
+
+Confirmed compatibility repair: native diagnostics proved Forge's default AES PBKDF2-SHA1 PRF mismatched Apple's and pinned CodeSignKit's SHA256 decoder behavior. Both exports now explicitly use SHA256 PRF, retaining AES256/100000/MAC and native Security readback. New P12 export passwords are printable ASCII only; Unicode recovery passwords remain supported. Native import accepts one leaf certificate plus its matching RSA 2048–4096 key, not CA-chain bundles. A dedicated pinned CodeSignKit signing/native Security consumer job is added and remains pending until its actual CI result. See [CI decisions](CERTIFICATE_CI_DECISIONS.md) for evidence and unchanged gates.
+
+The user authorized publication to an isolated branch and a **draft PR for CI only**. No main/develop update, merge, deployment or live Apple certificate action is authorized by that approval. The existing main-based checkout is intentional: develop is 89 commits behind main; using it as the draft target would add unrelated history. Exact published SHA and CI outcomes must be recorded before reporting those stages passed.
+
+
+Verified draft PR checkpoint **795dc239d5166ba14b6dd4bc781e81219a2f98ca**: [native CI](https://github.com/oskuhsiu/Tetherless/actions/runs/40664302513) passed Debug and Release (each 503 Integration tests passed, 7 skipped; prepared contracts 13/13), plus 9 real macOS JSCore/Security/pinned-CodeSignKit consumer checks. Both unsigned IPA artifacts were downloaded and the three JS resources plus license verified byte-for-byte at the app bundle root. [Browser CI](https://github.com/oskuhsiu/Tetherless/actions/runs/40664302479) passed 174 unit tests, 12 harness tests, 98 browser tests, 34 gate cases and 13 transport cases. Core, Simulator Core and Docker checks also passed. These actual CI results close the earlier environment-only build/browser gaps **for that commit**, not real iPhone acceptance.
+
+The subsequent security follow-up replaces affected Forge CSR verification with platform WebCrypto and updates the development-only Vite pin to 8.1.6 plus web/native Forge to the newly verified official 1.4.2 patch. Its exact commit needs fresh full browser/build CI. The stale Forge advisory was reconciled with the newer maintainer fix; see [dependency review](CERTIFICATE_DEPENDENCY_REVIEW.md) for primary advisories, product-call-path mitigation and residual risk. No live Apple or deployment acceptance is inferred.
+
+
 ## Apple login diagnostics — 2026-10-28 (local candidate, not deployed)
 
 Base: main `22ed2fa4962eebed156e2747e32b8d7232db8dca`; the current profile

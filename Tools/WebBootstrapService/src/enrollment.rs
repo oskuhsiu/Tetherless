@@ -439,6 +439,7 @@ mod tests {
     }
     fn app() -> Arc<App> {
         Arc::new(App {
+            certificate_state: Mutex::new(crate::certificates::CertificateState::default()),
             sessions: tokio::sync::RwLock::new(std::collections::HashMap::new()),
             last_start: Mutex::new(None),
             enrollments: tokio::sync::RwLock::new(std::collections::HashMap::new()),

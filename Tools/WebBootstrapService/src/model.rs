@@ -32,6 +32,7 @@ pub enum ErrorCode {
     AppleRequestFailed,
     CertificateLimit,
     CertificateMismatch,
+    CertificateMissing,
     ProfileMismatch,
     ProvisioningUncertain,
     OriginRejected,
@@ -196,6 +197,9 @@ pub struct AppGroupInput {
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ProvisionRequest {
+    /// Defaults to reuse-only: old clients cannot silently issue.
+    #[serde(default)]
+    pub certificate_intent: CertificateIntent,
     /// Exact action consent, displayed by the client before submitting.
     pub consent: String,
     pub team_id: String,
@@ -205,6 +209,14 @@ pub struct ProvisionRequest {
     pub apps: Vec<AppInput>,
     #[serde(default)]
     pub app_group: Option<AppGroupInput>,
+}
+
+#[derive(Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum CertificateIntent {
+    #[default]
+    ReuseOnly,
+    CreateOrReuse,
 }
 
 impl ProvisionRequest {
@@ -348,6 +360,7 @@ mod tests {
     }
     fn synthetic_request() -> ProvisionRequest {
         ProvisionRequest {
+            certificate_intent: CertificateIntent::ReuseOnly,
             consent: "register-device-app-ids-and-issue-certificate".into(),
             team_id: "SYNTHETIC".into(),
             device: DeviceInput {
@@ -431,6 +444,15 @@ mod tests {
         assert!(input.validate().is_ok());
         input.device.existing_only = false;
         assert!(input.validate().is_err());
+    }
+    #[test]
+    fn missing_certificate_intent_is_reuse_only_and_unknown_intent_is_rejected() {
+        let mut value = serde_json::to_value(synthetic_request()).unwrap();
+        value.as_object_mut().unwrap().remove("certificateIntent");
+        let request: ProvisionRequest = serde_json::from_value(value.clone()).unwrap();
+        assert!(request.certificate_intent == CertificateIntent::ReuseOnly);
+        value["certificateIntent"] = serde_json::json!("retryOrRevokeAutomatically");
+        assert!(serde_json::from_value::<ProvisionRequest>(value).is_err());
     }
     #[test]
     fn old_explicit_registration_requests_remain_registration_only() {

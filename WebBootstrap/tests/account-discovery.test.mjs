@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { discoverAccountService } from '../src/account-discovery.js';
 const base = 'https://service.example/Tetherless/';
-const health = { protocol: 1, appleAuthAvailable: true, profileServiceAvailable: true };
+const health = { protocol: 1, certificateLifecycle: 1, appleAuthAvailable: true, profileServiceAvailable: true };
 function reply(url, body, { status = 200, type = 'application/json', finalUrl = url, redirected = false } = {}) {
   const response = new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers: { 'content-type': type } });
   Object.defineProperties(response, { url: { value: finalUrl }, redirected: { value: redirected } }); return response;
@@ -31,8 +31,8 @@ test('persistent transient failures are bounded to two attempts, and never expos
 });
 for (const [name, body, options, kind = 'invalid'] of [
   ['HTML', '<html>not health</html>', { type: 'text/html' }], ['broken JSON', '{', {}], ['null', null, {}], ['false', false, {}], ['zero', 0, {}], ['array', [], {}],
-  ['wrong protocol', { ...health, protocol: '1' }, {}], ['truthy auth', { ...health, appleAuthAvailable: 'true' }, {}], ['missing auth', { protocol: 1 }, {}],
-  ['unconfigured', { ...health, appleAuthAvailable: false }, {}, 'unconfigured'], ['not found', {}, { status: 404 }, 'unconfigured'], ['forbidden', {}, { status: 403 }, 'unreachable'],
+  ['wrong protocol', { ...health, protocol: '1' }, {}], ['truthy auth', { ...health, certificateLifecycle: 1, appleAuthAvailable: 'true' }, {}], ['missing auth', { protocol: 1 }, {}],
+  ['unconfigured', { ...health, certificateLifecycle: 1, appleAuthAvailable: false }, {}, 'unconfigured'], ['not found', {}, { status: 404 }, 'unconfigured'], ['forbidden', {}, { status: 403 }, 'unreachable'],
   ['foreign response', health, { finalUrl: 'https://foreign.example/health' }], ['redirected', health, { redirected: true }], ['oversized', ' '.repeat(16385), {}],
 ]) test(`${name} fails closed without automatic health retry`, async () => {
   const { result, calls } = await check(url => reply(url, body, options)); assert.equal(result.kind, kind); assert.equal(calls.filter(c => c.url.endsWith('/health')).length, 1);
@@ -49,7 +49,7 @@ test('cancellation during retry backoff stops all remaining reads', async () => 
 test('configured external service is only a link and is never queried', async () => {
   const calls = [];
   const result = await discoverAccountService({ base, origin: 'https://service.example', signal: new AbortController().signal,
-    fetcher: async url => { calls.push(url); return reply(url, url.endsWith('/health') ? { protocol: 1, appleAuthAvailable: false } : { accountServiceUrl: 'https://other.example/' }); } });
+    fetcher: async url => { calls.push(url); return reply(url, url.endsWith('/health') ? { protocol: 1, certificateLifecycle: 1, appleAuthAvailable: false } : { accountServiceUrl: 'https://other.example/' }); } });
   assert.equal(result.kind, 'unconfigured'); assert.equal(result.externalUrl, 'https://other.example/'); assert.match(result.diagnostic, /HTTP 200/); assert(calls.every(url => new URL(url).origin === 'https://service.example'));
 });
 test('discovery works without AbortSignal.timeout, any or throwIfAborted', async () => {
@@ -78,4 +78,9 @@ test('manual opaque redirect is rejected without retry', async () => {
     const response = reply(url, health); Object.defineProperty(response, 'type', { value: 'opaqueredirect' }); return response;
   });
   assert.equal(result.kind, 'invalid'); assert.match(result.diagnostic, /重新導向/); assert.equal(calls.length, 2); // health + config, not two health reads
+});
+test('legacy service without certificate lifecycle cannot collect credentials through the new UI', async () => {
+  const { certificateLifecycle, ...legacy } = health;
+  const { result, calls } = await check(url => reply(url, legacy));
+  assert.equal(result.kind, 'invalid'); assert(result.diagnostic.includes('安全憑證恢復')); assert.equal(calls.filter(c => c.url.endsWith('/health')).length, 1);
 });

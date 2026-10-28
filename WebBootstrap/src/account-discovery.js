@@ -83,13 +83,14 @@ export async function discoverAccountService({ base, origin, signal, fetcher = f
         const health = result.body;
         if (!health || typeof health !== 'object' || Array.isArray(health) || health.protocol !== 1 || typeof health.appleAuthAvailable !== 'boolean') result = { kind: 'invalid', status: result.status, reason: 'protocol' };
         else if (!health.appleAuthAvailable) result = { kind: 'unconfigured', status: result.status, reason: 'disabled' };
+        else if (health.certificateLifecycle !== 1) result = { kind: 'invalid', status: result.status, reason: 'certificate-lifecycle' };
         else return { kind: 'ready', profileAvailable: health.profileServiceAvailable === true };
       }
       if (!result.retry || attempt === 1) break;
       await delay(retryDelayMs, signal);
     }
   }
-  const reasons = { timeout: '檢查逾時', network: '瀏覽器無法讀取回應（網路或請求遭阻擋）', unreadable: '回應無法讀取', 'origin-or-redirect': '回應來源或重新導向未通過驗證', http: '服務回應未成功', 'content-type': '回應類型不是 JSON', json: 'JSON 格式無效', 'empty-body': '沒有回應內容', oversized: '回應超過大小限制', protocol: '服務協定或登入能力欄位不符', disabled: '服務未啟用 Apple 登入', 'unsupported-host': '此頁所在位置不支援帳號登入' };
+  const reasons = { 'certificate-lifecycle': '服務版本不支援安全憑證恢復；請先更新服務，尚未開放登入', timeout: '檢查逾時', network: '瀏覽器無法讀取回應（網路或請求遭阻擋）', unreadable: '回應無法讀取', 'origin-or-redirect': '回應來源或重新導向未通過驗證', http: '服務回應未成功', 'content-type': '回應類型不是 JSON', json: 'JSON 格式無效', 'empty-body': '沒有回應內容', oversized: '回應超過大小限制', protocol: '服務協定或登入能力欄位不符', disabled: '服務未啟用 Apple 登入', 'unsupported-host': '此頁所在位置不支援帳號登入' };
   const diagnostic = `頁面 ${current.origin}；${new URL('health', root).pathname}：${result.status ? `HTTP ${result.status}；` : ''}${reasons[result.reason]}`;
   const config = await read(new URL('config.json', root), options);
   if (config.body?.accountServiceUrl) {

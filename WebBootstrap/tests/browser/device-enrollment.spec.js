@@ -28,7 +28,7 @@ async function fixture(context,{cookie=true,now=Date.now}={}) {
       if(cookie)res.setHeader('Set-Cookie',`__Secure-tetherless-enrollment=${cookieValue}; Path=/v1/device-enrollments/${id}; Max-Age=120; Secure; HttpOnly; SameSite=Lax`);
       res.writeHead(200,{'Content-Type':'text/html'});return res.end('<title>Synthetic cookie setup only</title>');
     }
-    if(path==='/health')return json(200,{protocol:1,appleAuthAvailable:true,profileServiceAvailable:true});
+    if(path==='/health')return json(200,{protocol:1,certificateLifecycle: 1, appleAuthAvailable:true,profileServiceAvailable:true});
     if(path==='/config.json')return json(200,{accountServiceUrl:null,officialRelease:null});
     if(path.startsWith('/v1/')){
       calls.push({path,method:req.method});

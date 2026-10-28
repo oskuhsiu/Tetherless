@@ -6,12 +6,8 @@ use base64::{Engine, engine::general_purpose::STANDARD};
 use isideload::{
     SideloadError,
     dev::{
-        app_groups::AppGroupsApi,
-        app_ids::AppIdsApi,
-        certificates::{CertificatesApi, DevelopmentCertificate},
-        developer_session::DeveloperSession,
-        devices::DevicesApi,
-        teams::TeamsApi,
+        app_groups::AppGroupsApi, app_ids::AppIdsApi, certificates::CertificatesApi,
+        developer_session::DeveloperSession, devices::DevicesApi,
     },
 };
 use openssl::{
@@ -134,7 +130,7 @@ fn validate_profile_metadata(
     Ok(())
 }
 
-fn apple_error(report: rootcause::Report) -> ApiError {
+pub(crate) fn apple_error(report: rootcause::Report) -> ApiError {
     // Never format a report: upstream messages may carry private server data.
     let capacity = report.iter_reports().any(|node| {
         matches!(
@@ -149,18 +145,7 @@ fn apple_error(report: rootcause::Report) -> ApiError {
     }
 }
 
-fn matching_certificate<'a>(
-    certs: &'a [DevelopmentCertificate],
-    public_key: &[u8],
-) -> Option<&'a DevelopmentCertificate> {
-    certs.iter().find(|cert| {
-        cert.cert_content
-            .as_ref()
-            .is_some_and(|bytes| certificate_matches_public_key(bytes.as_ref(), public_key))
-    })
-}
-
-fn certificate_matches_public_key(bytes: &[u8], public_key: &[u8]) -> bool {
+pub(crate) fn certificate_matches_public_key(bytes: &[u8], public_key: &[u8]) -> bool {
     Certificate::from_der(bytes)
         .ok()
         .and_then(|parsed| parsed.tbs_certificate.subject_public_key_info.to_der().ok())
@@ -172,11 +157,7 @@ pub async fn provision(
     input: &ProvisionRequest,
     public_key: &[u8],
 ) -> ApiResult<ProvisionOutput> {
-    let teams = dev.list_teams().await.map_err(apple_error)?;
-    let team = teams
-        .into_iter()
-        .find(|t| t.team_id == input.team_id)
-        .ok_or_else(invalid)?;
+    let team = crate::certificates::owned_team(dev, &input.team_id).await?;
     // Existing-only intent is checked before ANY certificate/App ID/device mutation.
     // Re-read the selected authenticated team's directory; never silently register,
     // enable, or substitute a missing/disabled/unknown device.
@@ -187,31 +168,12 @@ pub async fn provision(
     // Calling CertificateIdentity::retrieve would introduce key persistence and
     // optional revocation. This service intentionally never calls that API.
     let certificates = dev.list_ios_certs(&team).await.map_err(apple_error)?;
-    let (certificate, reused) =
-        if let Some(existing) = matching_certificate(&certificates, public_key) {
-            (existing.clone(), true)
-        } else {
-            // Exactly one issuance submission per accepted provisioning request.
-            // There is no automatic network retry or certificate revocation.
-            let request = dev
-                .submit_development_csr(
-                    &team,
-                    input.csr_pem.clone(),
-                    input.machine_name.clone(),
-                    None,
-                )
-                .await
-                .map_err(apple_error)?;
-            let issued = dev.list_ios_certs(&team).await.map_err(apple_error)?;
-            let certificate = issued
-                .into_iter()
-                .find(|c| c.certificate_id.as_deref() == Some(request.cert_request_id.as_str()))
-                .ok_or(ApiError(
-                    StatusCode::BAD_GATEWAY,
-                    ErrorCode::ProvisioningUncertain,
-                ))?;
-            (certificate, false)
-        };
+    // Profiles are a separate stage. This endpoint never creates certificates,
+    // including for old clients or after an interrupted/expired session.
+    let certificate = crate::certificates::matching_unique(&certificates, public_key)?.ok_or(
+        ApiError(StatusCode::CONFLICT, ErrorCode::CertificateMissing),
+    )?;
+    let reused = true;
     let der = certificate.cert_content.as_ref().ok_or(ApiError(
         StatusCode::BAD_GATEWAY,
         ErrorCode::CertificateMismatch,

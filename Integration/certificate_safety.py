@@ -204,12 +204,34 @@ def patch_view(source):
     source = once(source, '    func cancelImport() {', '''    func cancelImport() {
         self.importPasswordInput = ""
         guard currentImportIndex < pendingImports.count else { return }''')
+    # One validated, bounded P12 import path. The legacy UI used a different
+    # decoder on the main thread and must not bypass the new security gates.
+    start = '    func startBulkImport(urls: [URL]) {'
+    end = '    func cancelImport() {'
+    before, tail = source.split(start); _, after = tail.split(end)
+    source = before + '''    private func useValidatedSigningImport() {
+        self.pendingImports = []; self.currentImportIndex = 0
+        self.lastUsedPassword = ""; self.importPasswordInput = ""
+        self.showPasswordPromptForImport = false
+        self.errorMessage = "Use Auto Renewal → Signing material to import and validate your P12 locally. No private key was imported here."
+    }
+    func startBulkImport(urls: [URL]) { useValidatedSigningImport() }
+    func processNextImport() { useValidatedSigningImport() }
+    func submitImportPassword() { useValidatedSigningImport() }
+''' + end + after
+    start = '    func importPrivateKey(data: Data, for cert: ALTX509Certificate) {'
+    end = '    func clearPrivateKey(for cert: ALTX509Certificate) {'
+    before, tail = source.split(start); _, after = tail.split(end)
+    source = before + '''    func importPrivateKey(data: Data, for cert: ALTX509Certificate) {
+        useValidatedSigningImport()
+    }
+''' + end + after
     return source
 
 
 def patch_key_input(source):
     source = once(source, '                                viewModel.saveLocalCertificate(signableCert)',
-                         '                                try viewModel.saveLocalCertificate(signableCert)')
+                         '                                throw CertificateExportFailure.useValidatedImport')
     return source
 
 
