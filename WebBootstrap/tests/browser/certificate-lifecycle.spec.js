@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, extname } from 'node:path';
 import forge from 'node-forge';
 import { makeIpa } from '../fixtures.mjs';
-import { importRecovery, importP12 } from '../../src/certificate-recovery.js';
+import { createIdentity, exportRecovery, importRecovery, importP12 } from '../../src/certificate-recovery.js';
 const password='synthetic-backup-password', team='TESTTEAM01', udid='00000000-0000000000000000';
 let server;
 test.afterEach(async()=>{if(server){const old=server;server=undefined;old.closeAllConnections();await new Promise(r=>old.close(r));}});
@@ -108,4 +108,19 @@ test('session expiry clears memory but two new tabs can import the same saved id
   await Promise.all([second.locator('#provision-button').click(),third.locator('#provision-button').click()]);
   for(const tab of [second,third])await expect(tab.locator('#result')).toBeVisible({timeout:60000});
   const certs=f.calls.filter(c=>c.path.endsWith('/certificate'));expect(certs).toHaveLength(3);expect(new Set(certs.map(c=>c.body.csrPem)).size).toBe(1);expect(certs.slice(1).every(c=>c.body.certificateIntent==='reuseOnly')).toBe(true);expect(f.issued).toBe(1);expect(f.blocked).toEqual([]);
+});
+
+
+test('platform CSR verification rejects malformed DigestInfo and unavailable API without certificate requests',async({context,page})=>{
+  const f=await fixture(context),identity=await createIdentity(team),a=forge.asn1,n=(type,value)=>a.create(a.Class.UNIVERSAL,type,Array.isArray(value),value);
+  const root=a.fromDer(forge.pem.decode(identity.csrPem)[0].body,{decodeBitStrings:false}),md=forge.md.sha256.create();md.update(a.toDer(root.value[0]).getBytes());
+  const malformed=n(a.Type.SEQUENCE,[n(a.Type.SEQUENCE,[n(a.Type.OID,a.oidToDer(forge.pki.oids.sha256).getBytes()),n(a.Type.NULL,''),n(a.Type.OCTETSTRING,'synthetic extra nested data')]),n(a.Type.OCTETSTRING,md.digest().getBytes())]);
+  root.value[2].value='\x00'+identity.keys.privateKey.sign(a.toDer(malformed).getBytes(),'NONE');
+  identity.csrPem=forge.pem.encode({type:'CERTIFICATE REQUEST',body:a.toDer(root).getBytes()});
+  const recovery=await exportRecovery(identity,password);let downloads=0;page.on('download',()=>downloads++);
+  await login(page,f.origin);await page.locator('#identity-source').selectOption('recovery');await page.locator('#identity-file').setInputFiles({name:'synthetic-malformed-recovery.json',mimeType:'application/json',buffer:Buffer.from(await recovery.arrayBuffer())});
+  await page.locator('#identity-import-password').fill(password);await page.locator('#identity-export-password').fill(password);await page.locator('#prepare-identity').click();
+  await expect(page.locator('#identity-status')).toContainText('不相符');await expect(page.locator('#recovery-saved')).toBeDisabled();expect(downloads).toBe(0);expect(f.calls.filter(c=>c.path.endsWith('/certificate'))).toHaveLength(0);
+  await page.addInitScript(()=>Object.defineProperty(crypto.subtle,'verify',{value:undefined}));await login(page,f.origin);await page.locator('#identity-export-password').fill(password);await page.locator('#prepare-identity').click();
+  await expect(page.locator('#identity-status')).toContainText('沒有可用的原生');await expect(page.locator('#recovery-saved')).toBeDisabled();expect(downloads).toBe(0);expect(f.calls.filter(c=>c.path.endsWith('/certificate'))).toHaveLength(0);expect(f.blocked).toEqual([]);
 });

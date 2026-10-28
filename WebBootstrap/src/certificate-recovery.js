@@ -1,4 +1,5 @@
 import forge from 'node-forge';
+import { verifyCsrNative } from './csr-native.js';
 
 // Versioned, client-only recovery format. No localStorage, IndexedDB or server custody.
 const LIMIT = 1024 * 1024;
@@ -12,7 +13,8 @@ function bytes(value, maximum = LIMIT) {
 export async function createIdentity(teamId) {
   if (!/^[A-Za-z0-9]{1,64}$/.test(teamId)) throw new Error('請先選擇有效的 Team');
   const keys = await new Promise((resolve, reject) => forge.pki.rsa.generateKeyPair({ bits: 2048, workers: 0 }, (error, pair) => error ? reject(error) : resolve(pair)));
-  return identityFromKey(keys.privateKey, teamId);
+  const identity = identityFromKey(keys.privateKey, teamId);
+  await verifyCsrNative(identity.csrPem); return identity;
 }
 function identityFromKey(privateKey, teamId, certificateDerBase64) {
   if (!/^[A-Za-z0-9]{1,64}$/.test(teamId)) throw new Error('無效的 Team');
@@ -25,7 +27,6 @@ function identityFromKey(privateKey, teamId, certificateDerBase64) {
   if (privateKey.n.bitLength() < 2048 || privateKey.n.bitLength() > 4096) throw new Error('只接受 2048 至 4096 位元 RSA 私鑰');
   const csr = forge.pki.createCertificationRequest(); csr.publicKey = publicKey;
   csr.setSubject([{ name: 'commonName', value: 'Tetherless browser signing' }]); csr.sign(privateKey, forge.md.sha256.create());
-  if (!csr.verify()) throw new Error('私鑰無法產生有效簽章');
   const identity = { teamId, keys: { privateKey, publicKey }, csrPem: forge.pki.certificationRequestToPem(csr) };
   if (certificateDerBase64) acceptCertificate(identity, certificateDerBase64);
   return identity;
@@ -62,8 +63,8 @@ export async function importRecovery(file, password) {
   if (!payload || Array.isArray(payload) || payload.version !== 1 || !/^[A-Za-z0-9]{1,64}$/.test(payload.teamId) || typeof payload.privateKeyPem !== 'string' || payload.privateKeyPem.length > 32768 || typeof payload.csrPem !== 'string' || payload.csrPem.length > 32768) throw new Error('恢復檔內容無效');
   try {
     const identity = identityFromKey(forge.pki.privateKeyFromPem(payload.privateKeyPem), payload.teamId, payload.certificateDerBase64);
-    const csr = forge.pki.certificationRequestFromPem(payload.csrPem);
-    if (!csr.verify() || !csr.publicKey.n.equals(identity.keys.publicKey.n) || !csr.publicKey.e.equals(identity.keys.publicKey.e)) throw new Error();
+    const csr = await verifyCsrNative(payload.csrPem);
+    if ( !csr.publicKey.n.equals(identity.keys.publicKey.n) || !csr.publicKey.e.equals(identity.keys.publicKey.e)) throw new Error();
     identity.csrPem = payload.csrPem; return identity;
   } catch { throw new Error('恢復檔的私鑰、CSR 或憑證不相符'); }
 }
@@ -109,7 +110,7 @@ export async function importP12(file, password, teamId) {
     const identity = identityFromKey(keyBags[0].key, teamId);
     const certs = (p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] || []).map(b => b.cert).filter(c => c?.publicKey.n?.equals(identity.keys.publicKey.n));
     if (certs.length !== 1) throw new Error();
-    acceptCertificate(identity, forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(certs[0])).getBytes())); return identity;
+    acceptCertificate(identity, forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(certs[0])).getBytes())); await verifyCsrNative(identity.csrPem); return identity;
   } catch { throw new Error('P12 密碼、私鑰、有效憑證或 Team 不符'); }
 }
 export function exportP12(identity, password) {
@@ -135,11 +136,11 @@ export function importP12InWorker(file, password, teamId, signal) {
     const timer = setTimeout(() => finish(new Error('P12 解析超過 15 秒，已停止；請檢查檔案')), 15000);
     signal?.addEventListener('abort', cancel, { once: true });
     worker.onerror = () => finish(new Error('P12 本機解析未完成'));
-    worker.onmessage = ({ data }) => {
+    worker.onmessage = async ({ data }) => {
       if (settled) return;
       if (!data || typeof data !== 'object') return finish(new Error('P12 解析回應無效'));
       if (data.error) return finish(new Error(data.error));
-      try { if (data.teamId !== teamId || typeof data.privateKeyPem !== 'string' || data.privateKeyPem.length > 32768) throw new Error(); finish(null, identityFromKey(forge.pki.privateKeyFromPem(data.privateKeyPem), teamId, data.certificateDerBase64)); }
+      try { if (data.teamId !== teamId || typeof data.privateKeyPem !== 'string' || data.privateKeyPem.length > 32768) throw new Error(); const identity = identityFromKey(forge.pki.privateKeyFromPem(data.privateKeyPem), teamId, data.certificateDerBase64); await verifyCsrNative(identity.csrPem); finish(null, identity); }
       catch { finish(new Error('P12 私鑰或 Team 不符')); }
     };
     worker.postMessage({ file, password, teamId });

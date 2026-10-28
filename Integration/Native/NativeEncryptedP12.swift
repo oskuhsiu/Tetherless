@@ -9,8 +9,8 @@ import CryptoKit
 /// browser/network APIs and uses only Security.framework entropy. No JS value,
 /// key, password or context is retained on success or failure.
 enum NativeEncryptedP12 {
-    private static let forgeSHA256 = "d9b9074e6861200d676e25dcfe97889db5e8f4150bb766d29c491ad709a51b58"
-    private static let adapterSHA256 = "f1d1809536939e5b4b63ae82d83ddb5e0b0a9fbbcad41d110ad960a5ff77a694"
+    private static let forgeSHA256 = "52b553e747df79daa5056ff5e4dff37094c7d8a71194efe2b153d7c3f12763ff"
+    private static let adapterSHA256 = "752bf74b3d164f5c5331b9cf2c6e09caf8ba6e50cde9a7216251e69df0fa21a1"
     private static let environmentSHA256 = "2b7eb0137ba46b90f0fa7533710091221f650db47ac7e30ec00fcfbda759f226"
     static func export(certificateDER: Data, privateKeyDER: Data, password: String) throws -> Data {
         guard !certificateDER.isEmpty, certificateDER.count <= 16_384,

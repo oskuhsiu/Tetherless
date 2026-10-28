@@ -76,7 +76,7 @@ The internal legacy record is protected by Keychain custody; it must not be reus
 as a supposedly password-protected downloaded backup.
 
 The candidate routes explicit external export through the existing pinned
-node-forge 1.4.0 in a fresh, local JavaScriptCore context. It does not use a web
+node-forge 1.4.2 in a fresh, local JavaScriptCore context. It does not use a web
 view or network service. Fixed resources are checked by SHA-256; Security.framework
 supplies entropy and failure cannot fall back to `Math.random` or the old builder.
 The implementation must prove an encrypted key bag and a MAC, not merely accept a

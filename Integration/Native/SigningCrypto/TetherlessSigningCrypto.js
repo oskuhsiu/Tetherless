@@ -1,4 +1,4 @@
-/* Tetherless local-only adapter for pinned node-forge 1.4.0. No network API. */
+/* Tetherless local-only adapter for pinned node-forge 1.4.2. No network API. */
 (function () {
   'use strict';
   function randomBytes(count) {
