@@ -329,8 +329,11 @@ pub async fn callback(
     // HttpOnly cookie. No device metadata, credentials, open redirect, or MDM payload.
     let location = HeaderValue::from_str(&format!("{}/#device-collected={}", app.allowed_origin, id))
         .map_err(|_| invalid())?;
+    // Profile Service is an iOS protocol endpoint, not a browser form. Keep
+    // its 301 Safari-return compatibility baseline; generic POST/303 semantics
+    // are not evidence that Settings supports 303 for this exchange.
     Ok((
-        StatusCode::SEE_OTHER,
+        StatusCode::MOVED_PERMANENTLY,
         [(header::LOCATION, location)],
     )
         .into_response())
@@ -498,7 +501,8 @@ mod tests {
             .oneshot(request(signed.clone()))
             .await
             .unwrap();
-        assert_eq!(accepted.status(), StatusCode::SEE_OTHER);
+        assert_eq!(accepted.status(), StatusCode::MOVED_PERMANENTLY);
+        assert_eq!(accepted.headers()[header::CACHE_CONTROL], "no-store");
         assert_eq!(
             accepted.headers()[header::LOCATION],
             format!("https://bootstrap.example/#device-collected={id}")

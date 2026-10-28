@@ -176,7 +176,7 @@ HTTP loopback is for API tests only and refuses profile creation.
   metadata belongs to the phone currently showing the browser. It never uses a
   substring search to pull XML out of CMS. A wrong challenge, malformed/unsigned
   message, replay, expired/cancelled record or sixth attempt is rejected.
-- Successful receipt returns a fixed 301 to `/#device-collected`; no UDID or
+- Successful receipt returns a fixed 301 to `/#device-collected={enrollmentId}`; no UDID or
   bearer is put in the return URL. `GET /v1/device-enrollments/{id}` uses the
   HttpOnly cookie and returns `{state:"awaitingDevice"|"received",device:null|
   {udid,product,version},verification:"untrustedDeviceMetadata"}`.
@@ -238,6 +238,12 @@ Profile Service source references:
 - [Apple profile-server example and challenge exchange](https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/iPhoneOTAConfiguration/profile-service/profile-service.html)
 - [Apple example request and device-response keys](https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/iPhoneOTAConfiguration/ConfigurationProfileExamples/ConfigurationProfileExamples.html)
 - [Source example documenting the 301 Safari return pattern](https://github.com/shaojiankui/iOS-UDID-Safari/blob/master/README.md)
+
+The callback keeps HTTP 301 as the Profile Service compatibility baseline used
+by the Apple example and the original Safari-return implementation above. A
+general browser POST-to-GET preference for 303 does not establish Settings
+compatibility. Restoring 301 retains the non-secret return ID, cookie authorization
+and original ten-minute TTL; it is not proof of current-iOS installation success.
 
 The archived Apple example includes an obsolete CA. This service deliberately
 does not import it or claim modern Apple-device attestation. It reports only
