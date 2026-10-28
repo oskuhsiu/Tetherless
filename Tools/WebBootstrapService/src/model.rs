@@ -60,6 +60,8 @@ pub struct StartRequest {
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionView {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diagnostic: Option<crate::login_diagnostics::LoginDiagnostic>,
     pub state: &'static str,
     pub challenge: Option<Challenge>,
     pub error: Option<ErrorCode>,
@@ -69,13 +71,21 @@ impl SessionView {
         Self {
             state,
             challenge: None,
+            diagnostic: None,
             error: None,
+        }
+    }
+    pub fn login_failed(diagnostic: crate::login_diagnostics::LoginDiagnostic) -> Self {
+        Self {
+            diagnostic: Some(diagnostic),
+            ..Self::failed(ErrorCode::AppleAuthenticationFailed)
         }
     }
     pub fn failed(error: ErrorCode) -> Self {
         Self {
             state: "failed",
             challenge: None,
+            diagnostic: None,
             error: Some(error),
         }
     }

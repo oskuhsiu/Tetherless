@@ -1,5 +1,30 @@
 # Tetherless development status
 
+## Apple login diagnostics — 2026-10-28 (local candidate, not deployed)
+
+Base: main `22ed2fa4962eebed156e2747e32b8d7232db8dca`; the current profile
+callback is **301**, retaining the cookie-authorized cross-tab recovery. The older
+303 discussion below is historical, not the current callback contract.
+
+The reported generic login failure does not identify the cause: setup, anisette,
+Apple SRP/2FA and developer-token errors were collapsed. This candidate adds only
+bearer-session fixed stage/kind enums and optional numeric Apple/HTTP codes;
+upstream strings, response bodies, URLs and account data are neither displayed
+nor logged. HTTP rejection is not proof of an IP ban. Unknown-method 2FA now
+requires choosing a device/SMS method before a code can be sent, in both UI and
+backend. No proxy, anisette-provider, TLS, automatic retry or credential changes.
+
+Local evidence: Rust 1.99.0 `cargo test --locked --all-targets` 34/34; frontend
+147/147 tests and production build; Rust release build passed; deployment Node
+tests 54 pass, 1 skip;
+independent security/source review without a blocking finding. Real Chromium /
+WebKit execution is blocked: locked browser binaries absent and official download
+returned an invalid ZIP. New browser specs remain pending (DOM tests did run).
+The broader Python suite ran 504 tests: 448 passed, 49 skipped, 7 errored solely
+because `swiftc` is absent; Swift debug/release and native tests are unrun here.
+No live Apple login/signing/install/renewal or root-cause claim is made. Remote
+publication, exact-commit CI, merge and deployment require separate approval.
+
 ## Settings callback recovery — 2026-10-27 (local verification)
 
 The reported return-to-start is reproduced synthetically when Settings opens the

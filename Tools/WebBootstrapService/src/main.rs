@@ -2,7 +2,9 @@
 mod apple;
 mod devices;
 mod enrollment;
+mod login_diagnostics;
 mod model;
+use login_diagnostics::{LoginDiagnostic, LoginFailureKind, LoginStage};
 
 use axum::{
     Json, Router,
@@ -268,7 +270,10 @@ async fn start(
     let task = tokio::spawn(login(login_session, input.apple_id, password, rx));
     tokio::spawn(async move {
         if task.await.is_err() && !session.cancel.is_cancelled() {
-            *session.view.lock().await = SessionView::failed(ErrorCode::AppleAuthenticationFailed);
+            *session.view.lock().await = SessionView::login_failed(LoginDiagnostic::new(
+                LoginStage::Task,
+                LoginFailureKind::TaskFailed,
+            ));
         }
     });
     Ok((
@@ -293,6 +298,7 @@ async fn login(
         async move {
             *session.view.lock().await = SessionView {
                 state: "awaitingTwoFactor",
+                diagnostic: None,
                 error: None,
                 challenge: Some(Challenge {
                     sms: params.sms,
@@ -322,13 +328,21 @@ async fn login(
             ANISETTE_ORIGIN,
             Box::new(InMemoryStorage::new()),
             "0".into(),
-        )?;
+        )
+        .map_err(|error| login_diagnostics::classify(LoginStage::AccountSetup, error))?;
         let mut account = AppleAccount::builder(&apple_id)
             .anisette_provider(provider)
             .err_429_retries(None)
+            .build()
+            .await
+            .map_err(|error| login_diagnostics::classify(LoginStage::AccountSetup, error))?;
+        account
             .login(password.as_str(), callback)
-            .await?;
-        DeveloperSession::from_account(&mut account).await
+            .await
+            .map_err(|error| login_diagnostics::classify(LoginStage::AppleLogin, error))?;
+        DeveloperSession::from_account(&mut account)
+            .await
+            .map_err(|error| login_diagnostics::classify(LoginStage::DeveloperToken, error))
     };
     let result = tokio::select! {
         _ = session.cancel.cancelled() => return,
@@ -342,8 +356,8 @@ async fn login(
             *session.developer.lock().await = Some(dev);
             *session.view.lock().await = SessionView::state("authenticated");
         }
-        Err(_) => {
-            *session.view.lock().await = SessionView::failed(ErrorCode::AppleAuthenticationFailed);
+        Err(diagnostic) => {
+            *session.view.lock().await = SessionView::login_failed(diagnostic);
         }
     }
 }
@@ -380,7 +394,12 @@ async fn two_factor(
     }
     let answer = match input {
         TwoFactorRequest::SubmitCode { code }
-            if code.len() == 6 && code.bytes().all(|c| c.is_ascii_digit()) =>
+            if code.len() == 6
+                && code.bytes().all(|c| c.is_ascii_digit())
+                && view
+                    .challenge
+                    .as_ref()
+                    .is_some_and(|challenge| !challenge.unknown) =>
         {
             TwoFactorCallbackResponse::SubmitCode(code)
         }
@@ -550,6 +569,92 @@ mod tests {
             two_factor: tx,
             provision: Mutex::new(None),
         })
+    }
+    #[tokio::test]
+    async fn unknown_two_factor_rejects_code_without_consuming_challenge() {
+        let app = test_app();
+        let mut session = synthetic_session("awaitingTwoFactor", Duration::ZERO);
+        let (tx, mut rx) = mpsc::channel(1);
+        Arc::get_mut(&mut session).unwrap().two_factor = tx;
+        session.view.lock().await.challenge = Some(Challenge {
+            sms: false,
+            unknown: true,
+            retry: true,
+            numbers: vec![],
+            selected_number_id: None,
+        });
+        app.sessions
+            .write()
+            .await
+            .insert("id".into(), session.clone());
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            header::AUTHORIZATION,
+            HeaderValue::from_static("Bearer synthetic-bearer"),
+        );
+        assert!(matches!(
+            two_factor(
+                State(app.clone()),
+                Path("id".into()),
+                headers.clone(),
+                Json(TwoFactorRequest::SubmitCode {
+                    code: "123456".into()
+                })
+            )
+            .await,
+            Err(ApiError(StatusCode::BAD_REQUEST, ErrorCode::InvalidRequest))
+        ));
+        assert!(matches!(
+            rx.try_recv(),
+            Err(mpsc::error::TryRecvError::Empty)
+        ));
+        assert_eq!(session.view.lock().await.state, "awaitingTwoFactor");
+        assert_eq!(
+            two_factor(
+                State(app.clone()),
+                Path("id".into()),
+                headers.clone(),
+                Json(TwoFactorRequest::SendToDevices)
+            )
+            .await
+            .unwrap(),
+            StatusCode::ACCEPTED
+        );
+        assert!(matches!(
+            rx.try_recv().unwrap(),
+            TwoFactorCallbackResponse::SendToDevices
+        ));
+        assert_eq!(session.view.lock().await.state, "starting");
+        // Simulate the subsequent callback after a method was selected.
+        *session.view.lock().await = SessionView {
+            state: "awaitingTwoFactor",
+            error: None,
+            diagnostic: None,
+            challenge: Some(Challenge {
+                sms: false,
+                unknown: false,
+                retry: false,
+                numbers: vec![],
+                selected_number_id: None,
+            }),
+        };
+        assert_eq!(
+            two_factor(
+                State(app),
+                Path("id".into()),
+                headers,
+                Json(TwoFactorRequest::SubmitCode {
+                    code: "123456".into()
+                })
+            )
+            .await
+            .unwrap(),
+            StatusCode::ACCEPTED
+        );
+        assert!(matches!(
+            rx.try_recv().unwrap(),
+            TwoFactorCallbackResponse::SubmitCode(_)
+        ));
     }
     #[tokio::test]
     async fn registered_device_route_requires_bearer_state_and_origin_without_network() {

@@ -194,3 +194,16 @@ Run after dependency setup:
 node node_modules/playwright/cli.js install --with-deps chromium webkit
 node node_modules/playwright/cli.js test --config playwright.discovery.config.js
 ```
+
+## Login diagnostic and unknown-2FA regression coverage
+
+The synthetic guided suite also covers an unknown 2FA method: direct code entry
+and programmatic submission remain blocked until the user requests a supported
+method; cancellation clears the disabled state. A failed-login fixture checks
+that only allowlisted diagnostic stage/kind labels and numeric Apple/HTTP codes
+reach the status text. Arbitrary response messages, URLs and token fields are
+never rendered. HTTP 403 is not treated as proof of an IP block.
+
+These fixtures do not establish Apple authentication success or the cause of a
+real account failure. The same state transitions have DOM-emulation tests in
+`tests/ui-state.test.mjs`; DOM tests are not a substitute for browser/device QA.

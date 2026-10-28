@@ -248,3 +248,32 @@ and original ten-minute TTL; it is not proof of current-iOS installation success
 The archived Apple example includes an obsolete CA. This service deliberately
 does not import it or claim modern Apple-device attestation. It reports only
 untrusted metadata until the user reviews and explicitly elects to register it.
+
+### Privacy-preserving login diagnostics
+
+A failed login session retains the existing `appleAuthenticationFailed` error and
+may include `diagnostic` in the bearer-authorized, no-store session response.
+Only fixed stage/kind enums and optional numeric `appleCode`/`httpStatus` are
+returned. No upstream message, URL, response body, attachment, account identifier,
+password or verification code is formatted or logged. Unknown error types remain
+`unknown`; they are not classified by searching private message text.
+
+Stages distinguish account setup (including the Apple URL bag), Apple login
+(including anisette provisioning and 2FA), and acquiring the developer/Xcode
+app token. A task failure is separate. These stages do not identify every internal
+upstream substep. HTTP 403/429 alone is **not** proof of IP blocking, and a failed
+login is not proof of an incorrect password. Existing historical failures cannot
+be reconstructed because detailed error reports were intentionally discarded.
+
+When Apple/upstream cannot identify an active 2FA method, the UI requires choosing
+trusted devices or an available SMS number before accepting a code. The backend
+also rejects code submission in that unknown-method state without consuming the
+challenge. This change does not add automatic code resends or password retries,
+change anisette servers, enable a proxy, or weaken TLS verification.
+
+The direct reqwest/reqwest-middleware dependencies reuse the exact versions
+already in the lockfile solely for typed error inspection; default features are
+disabled and no resolved dependency version is changed. Verification uses only
+synthetic reports, in-memory responses and local mock UI flows, not an Apple
+account. This diagnostic work does not establish actual Apple login, signing,
+installation or renewal acceptance.
