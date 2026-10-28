@@ -39,3 +39,26 @@ One discriminating next CI run is justified by those changes, not an unchanged
 retry. Acceptance remains unchanged. No Simulator source, workflow, timeout,
 signing, selector or environment setting changes; the narrow Web/Integration/docs
 patch does not match the Simulator push path filters.
+
+## 2026-10-28 — distinguish decoder format from algorithm assumptions
+
+Second source `2e8d6f8d732be8ec93ce095daf52012bcfd80f1a`: Browser run
+`40659627118` passed actual 98 browser cases (15 new lifecycle executions),
+34 production-gate and 13 transport cases. Its merge commit `f196bd9` has the
+same tree `1514fc203affd27128f91152cf469c7ae2473e0f` as the head.
+
+Native's memory-only fixture produced a real encrypted P12, but correct-password
+Security import returned -26275 (decode), whereas wrong/empty passwords returned
+-25293 (authentication). This supports password/MAC enforcement followed by a
+decode problem, not a proven general AES limitation. The runner is macOS 15.7.9
+with OpenSSL 1.1.1w. Previous OpenSSL controls did not exist because that version
+does not support the chosen `-iter` flag; their missing statuses are not evidence.
+
+Next bounded diagnostic: use supported OpenSSL default-iteration controls and
+print their actual MAC/keybag parameters; add identical-pinned-Forge test-only
+AES256/2048/SHA1, AES256/100000/SHA256 and 3DES/100000 controls. These distinguish
+iteration, PBKDF2 PRF, library format and cipher/container behavior in one run.
+Local fixture generation and OpenSSL decoding for all three Forge controls passed.
+Product AES256/100000 output, native readback assertions, negative tests and all
+workflow/environment settings remain unchanged. No cipher downgrade, custom
+cryptography or bypass of failed validation is introduced.

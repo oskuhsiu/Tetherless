@@ -100,9 +100,28 @@ class NativeLifecycleTests(unittest.TestCase):
             for name, algorithm in [('control-aes.p12', 'AES-256-CBC'), ('control-3des.p12', 'PBE-SHA1-3DES')]:
                 control = run('openssl', 'pkcs12', '-export', '-inkey', 'key.pem', '-in', 'cert.pem', '-out', name,
                     '-passout', 'pass:synthetic-native-backup-only', '-keypbe', algorithm, '-certpbe', algorithm,
-                    '-macalg', 'sha1', '-iter', '100000', ok=False)
+                    '-macalg', 'sha1', ok=False)
                 print('native_crypto_control ' + name + ' generation_exit=' + str(control.returncode), flush=True)
                 if control.returncode: (root / name).unlink(missing_ok=True)
+                else:
+                    inventory = run('openssl', 'pkcs12', '-in', name, '-passin', 'pass:synthetic-native-backup-only', '-info', '-noout', ok=False)
+                    for line in inventory.stderr.decode().splitlines():
+                        if line.startswith(('MAC:', 'MAC Iteration', 'Shrouded Keybag', 'PKCS7 Encrypted data')):
+                            print('native_crypto_control ' + name + ' ' + line, flush=True)
+            # Test-only same-library controls isolate algorithm vs iteration.
+            # Product export and its readback assertion remain AES-256/100000.
+            control_script = r'''const fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
+const resources=process.argv[2], c=vm.createContext({nativeSecureRandom:n=>Array.from(crypto.randomBytes(n))});
+for(const name of ['TetherlessCryptoEnvironment.js','TetherlessForge.min.js','TetherlessSigningCrypto.js'])vm.runInContext(fs.readFileSync(resources+'/'+name,'utf8'),c);
+c.cert=fs.readFileSync('cert.der').toString('base64');c.key=fs.readFileSync('key.der').toString('base64');
+for(const [name,algorithm,count,prf] of [['control-forge-aes-2048.p12','aes256',2048,'sha1'],['control-forge-3des-100000.p12','3des',100000,'sha1'],['control-forge-aes-sha256-100000.p12','aes256',100000,'sha256']]) {
+ c.algorithm=algorithm;c.count=count;c.prf=prf;
+ const value=vm.runInContext("forge.util.encode64(forge.asn1.toDer(forge.pkcs12.toPkcs12Asn1(forge.pki.privateKeyFromAsn1(forge.asn1.fromDer(forge.util.decode64(key))),[forge.pki.certificateFromAsn1(forge.asn1.fromDer(forge.util.decode64(cert)))],'synthetic-native-backup-only',{algorithm:algorithm,count:count,prfAlgorithm:prf,saltSize:16,useMac:true})).getBytes())",c);
+ fs.writeFileSync(name,Buffer.from(value,'base64'));
+}
+'''
+            (root / 'controls.cjs').write_text(control_script)
+            run('node', 'controls.cjs', str(ROOT / 'Native/SigningCrypto'))
             bundle = root / 'NativeCryptoTest.app/Contents'
             resources = bundle / 'Resources'; resources.mkdir(parents=True)
             executable = bundle / 'MacOS/native-check'; executable.parent.mkdir()
@@ -111,7 +130,7 @@ class NativeLifecycleTests(unittest.TestCase):
             for file in (ROOT / 'Native/SigningCrypto').glob('*.js'): shutil.copyfile(file, resources / file.name)
             harness = r'''import Foundation
 import Security
-enum NativeHarnessFailure: Error { case securityReadback(correct: OSStatus, empty: OSStatus, wrong: OSStatus, opensslAES: OSStatus?, openssl3DES: OSStatus?) }
+enum NativeHarnessFailure: Error { case securityReadback(correct: OSStatus, empty: OSStatus, wrong: OSStatus, opensslAES: OSStatus?, openssl3DES: OSStatus?, forgeAES2048: OSStatus?, forge3DES100000: OSStatus?, forgeAESSHA256100000: OSStatus?) }
 @main struct Check {
  static func main() async throws {
   let root = URL(fileURLWithPath: CommandLine.arguments[1]), password = "synthetic-native-backup-only"
@@ -131,9 +150,11 @@ enum NativeHarnessFailure: Error { case securityReadback(correct: OSStatus, empt
   }
   let correct = imported(password), empty = imported(""), wrong = imported("incorrect")
   let aes = control("control-aes.p12"), tripleDES = control("control-3des.p12")
+  let forgeAES = control("control-forge-aes-2048.p12"), forge3DES = control("control-forge-3des-100000.p12")
+  let forgeAESSHA256 = control("control-forge-aes-sha256-100000.p12")
   guard correct == errSecSuccess, empty != errSecSuccess, wrong != errSecSuccess else {
     // Synthetic fixture only: fixed stage and numeric status, never key/password/P12.
-    throw NativeHarnessFailure.securityReadback(correct: correct, empty: empty, wrong: wrong, opensslAES: aes, openssl3DES: tripleDES)
+    throw NativeHarnessFailure.securityReadback(correct: correct, empty: empty, wrong: wrong, opensslAES: aes, openssl3DES: tripleDES, forgeAES2048: forgeAES, forge3DES100000: forge3DES, forgeAESSHA256100000: forgeAESSHA256)
   }
   try bytes.write(to: root.appendingPathComponent("native.p12"))
  }
