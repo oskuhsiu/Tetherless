@@ -145,3 +145,14 @@ test('synthetic login failure shows only safe diagnostic labels and numeric code
   expect(guided.twoFactorActions).toEqual([]); expect(guided.provisioningBodies).toHaveLength(0);
   await page.locator('#logout').click(); await expect(page.locator('#account-status')).not.toContainText('HTTP 403');
 });
+
+test('synthetic Teams failure stops 2FA and permits only one explicit same-session read retry', async ({ page, guided }) => {
+  guided.teamErrors.push({status:502,error:'appleRequestFailed',diagnostic:{stage:'developerTeams',kind:'developerRejected',upstream:'apple',appleCode:1234,message:'PRIVATE'}});
+  await chooseCustom(page); await credentials(page); await page.locator('#login-button').click(); await expect(page.locator('#two-factor')).toBeVisible();
+  await page.locator('#verification-code').fill(SYNTHETIC.code); await page.locator('#verify-button').click();
+  await expect(page.locator('#journey-title')).toHaveText('Team 讀取失敗'); await expect(page.locator('#account-status')).toContainText('Apple 代碼 1234'); await expect(page.locator('#account-status')).not.toContainText('PRIVATE');
+  await expect(page.locator('#two-factor')).toBeHidden(); await expect(page.locator('#verify-button')).toBeDisabled(); await expect(page.locator('#resend-code')).toBeDisabled(); await expect(page.locator('#provision-form')).toBeHidden(); await expect(page.locator('#ipa')).toBeDisabled();
+  const before=guided.calls.filter(call=>call.path.endsWith('/teams')); expect(before).toHaveLength(1);
+  await page.locator('#retry-teams').click(); await expect(page.locator('#provision-form')).toBeVisible(); await expect(page.locator('#retry-teams')).toBeHidden();
+  const reads=guided.calls.filter(call=>call.path.endsWith('/teams')); expect(reads).toHaveLength(2); expect(reads[0].path).toBe(reads[1].path); expect(guided.calls.filter(call=>call.name==='login')).toHaveLength(1); expect(guided.twoFactorActions).toEqual(['submitCode']); expect(guided.provisioningBodies).toHaveLength(0);
+});

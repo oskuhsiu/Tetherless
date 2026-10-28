@@ -19,3 +19,8 @@ test('journey: manual mode expands controls and back returns to account', () => 
 });
 
 test('unavailable discovery title does not diagnose service setup', () => { assert.equal(journeyView({ accountPhase: 'unavailable' }).title, '尚未確認登入服務'); });
+test('Teams loading/failure is explicit and never exposes provisioning or verification-code titles', () => {
+  for (const [accountPhase, title] of [['teamsLoading', '正在讀取 Apple Team…'], ['teamsFailed', 'Team 讀取失敗']]) {
+    const view = journeyView({ accountPhase }); assert.equal(view.title, title); assert.equal(view.step, 'verify'); assert(view.account); assert(!view.preparation); assert(!view.install);
+  }
+});

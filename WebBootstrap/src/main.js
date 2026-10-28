@@ -11,7 +11,7 @@ let manual = false, accountPhase = 'checking', signing = false, officialRelease,
 const custom = () => el('app-source').value === 'custom';
 const canSubmitAccount = () => configLoaded && (custom() ? Boolean(el('ipa').files[0]) : Boolean(officialRelease));
 const selectedIpa = () => manual || custom() ? el('ipa').files[0] : officialIpa;
-const lockedPhase = () => ['authenticating', 'twoFactor', 'authenticated', 'provisioning', 'provisionRetry', 'material'].includes(accountPhase);
+const lockedPhase = () => ['authenticating', 'twoFactor', 'teamsLoading', 'teamsFailed', 'authenticated', 'provisioning', 'provisionRetry', 'material'].includes(accountPhase);
 function render() {
   const view = journeyView({ manual, accountPhase, signing, material: Boolean(generated), output: Boolean(output) });
   el('account-panel').hidden = !view.account;
@@ -33,8 +33,8 @@ function render() {
   el('ipa-prerequisite-status').textContent = el('ipa').files[0] ? '已選擇 IPA。登入送出前仍會檢查檔案大小、結構與 bundle IDs；檢查失敗不會傳送帳號密碼。' : '尚未選擇 IPA，登入按鈕暫不開放。';
   (manual ? el('manual-app-slot') : view.preparation ? el('guided-app-slot') : needsOwnIpa ? el('prerequisite-app-slot') : el('custom-app-slot')).append(el('app-selection'));
   el('login-button').disabled = accountPhase !== 'login' || !canSubmitAccount();
-  el('clear').hidden = !manual && !signing && !generated && !output && !['authenticating', 'twoFactor', 'authenticated', 'provisioning', 'provisionRetry'].includes(accountPhase);
-  const locked = signing || ['authenticating', 'twoFactor', 'authenticated', 'provisioning', 'provisionRetry', 'material'].includes(accountPhase);
+  el('clear').hidden = !manual && !signing && !generated && !output && !['authenticating', 'twoFactor', 'teamsLoading', 'teamsFailed', 'authenticated', 'provisioning', 'provisionRetry'].includes(accountPhase);
+  const locked = signing || ['authenticating', 'twoFactor', 'teamsLoading', 'teamsFailed', 'authenticated', 'provisioning', 'provisionRetry', 'material'].includes(accountPhase);
   for (const id of ['ipa', 'app-source', 'release-file']) el(id).disabled = locked;
   el('app-options').hidden = manual || signing || Boolean(output);
 }

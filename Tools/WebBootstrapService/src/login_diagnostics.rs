@@ -10,6 +10,7 @@ pub enum LoginStage {
     AccountSetup,
     AppleLogin,
     DeveloperToken,
+    DeveloperTeams,
     Task,
 }
 
@@ -17,6 +18,8 @@ pub enum LoginStage {
 #[serde(rename_all = "camelCase")]
 pub enum LoginFailureKind {
     AppleRejected,
+    DeveloperRejected,
+    UpstreamTimeout,
     HttpRejected,
     NetworkTimeout,
     NetworkConnect,
@@ -97,6 +100,13 @@ pub fn classify(stage: LoginStage, report: rootcause::Report) -> LoginDiagnostic
                         ..LoginDiagnostic::new(stage, LoginFailureKind::AppleRejected)
                     };
                 }
+                SideloadError::DeveloperError(code, _) => {
+                    return LoginDiagnostic {
+                        apple_code: Some(*code),
+                        upstream: UpstreamService::Apple,
+                        ..LoginDiagnostic::new(stage, LoginFailureKind::DeveloperRejected)
+                    };
+                }
                 _ => {}
             }
         }
@@ -131,6 +141,20 @@ mod tests {
             serde_json::json!({
                 "stage": "appleLogin", "kind": "appleRejected", "appleCode": -21669, "upstream": "apple",
             })
+        );
+    }
+
+    #[test]
+    fn wrapped_developer_rejection_exposes_only_numeric_code() {
+        let report = report!(SideloadError::DeveloperError(
+            1100,
+            "SYNTHETIC_PRIVATE_MESSAGE".into()
+        ))
+        .context("SYNTHETIC_PRIVATE_CONTEXT")
+        .attach("SYNTHETIC_PRIVATE_BODY");
+        assert_eq!(
+            serde_json::to_value(classify(LoginStage::DeveloperTeams, report.into())).unwrap(),
+            serde_json::json!({"stage":"developerTeams","kind":"developerRejected","upstream":"apple","appleCode":1100})
         );
     }
 
@@ -193,24 +217,31 @@ mod tests {
 
     #[test]
     fn synthetic_503_identifies_service_family_without_disclosing_url() {
-        for (host, expected) in [("mac-ani.jkcoxson.com", "anisette"), ("gsa.apple.com", "apple")] {
-            let response = axum::http::Response::builder()
-                .status(503)
-                .body("")
-                .unwrap();
-            let error = reqwest::Response::from(response)
-                .error_for_status()
-                .unwrap_err()
-                .with_url(
-                    format!("https://{host}/private?token=SYNTHETIC_SECRET")
-                        .parse()
-                        .unwrap(),
+        for (stage, stage_name) in [
+            (LoginStage::AppleLogin, "appleLogin"),
+            (LoginStage::DeveloperTeams, "developerTeams"),
+        ] {
+            for (host, expected) in [
+                ("mac-ani.jkcoxson.com", "anisette"),
+                ("gsa.apple.com", "apple"),
+            ] {
+                let response = axum::http::Response::builder()
+                    .status(503)
+                    .body("")
+                    .unwrap();
+                let error = reqwest::Response::from(response)
+                    .error_for_status()
+                    .unwrap_err()
+                    .with_url(
+                        format!("https://{host}/private?token=SYNTHETIC_SECRET")
+                            .parse()
+                            .unwrap(),
+                    );
+                assert_eq!(
+                    serde_json::to_value(classify(stage, report!(error).into())).unwrap(),
+                    serde_json::json!({"stage":stage_name, "kind":"httpRejected", "httpStatus":503, "upstream":expected})
                 );
-            assert_eq!(
-                serde_json::to_value(classify(LoginStage::AppleLogin, report!(error).into()))
-                    .unwrap(),
-                serde_json::json!({"stage":"appleLogin", "kind":"httpRejected", "httpStatus":503, "upstream":expected})
-            );
+            }
         }
     }
 }
