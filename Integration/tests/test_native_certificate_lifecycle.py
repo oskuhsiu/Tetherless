@@ -92,6 +92,17 @@ class NativeLifecycleTests(unittest.TestCase):
             run('openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'key.pem', '-out', 'cert.pem', '-subj', '/CN=Native-Synthetic-Not-Apple', '-days', '2')
             run('openssl', 'x509', '-in', 'cert.pem', '-outform', 'DER', '-out', 'cert.der')
             run('openssl', 'pkcs8', '-topk8', '-nocrypt', '-in', 'key.pem', '-outform', 'DER', '-out', 'key.der')
+            version = run('openssl', 'version').stdout.decode().strip()
+            print('native_crypto_environment macOS=' + platform.mac_ver()[0] + ' openssl=' + version, flush=True)
+            # Diagnostic controls only: never replace the product AES output or
+            # relax its Security readback assertion. Some OpenSSL builds lack
+            # these options; an absent control is explicitly not evidence.
+            for name, algorithm in [('control-aes.p12', 'AES-256-CBC'), ('control-3des.p12', 'PBE-SHA1-3DES')]:
+                control = run('openssl', 'pkcs12', '-export', '-inkey', 'key.pem', '-in', 'cert.pem', '-out', name,
+                    '-passout', 'pass:synthetic-native-backup-only', '-keypbe', algorithm, '-certpbe', algorithm,
+                    '-macalg', 'sha1', '-iter', '100000', ok=False)
+                print('native_crypto_control ' + name + ' generation_exit=' + str(control.returncode), flush=True)
+                if control.returncode: (root / name).unlink(missing_ok=True)
             bundle = root / 'NativeCryptoTest.app/Contents'
             resources = bundle / 'Resources'; resources.mkdir(parents=True)
             executable = bundle / 'MacOS/native-check'; executable.parent.mkdir()
@@ -100,14 +111,30 @@ class NativeLifecycleTests(unittest.TestCase):
             for file in (ROOT / 'Native/SigningCrypto').glob('*.js'): shutil.copyfile(file, resources / file.name)
             harness = r'''import Foundation
 import Security
+enum NativeHarnessFailure: Error { case securityReadback(correct: OSStatus, empty: OSStatus, wrong: OSStatus, opensslAES: OSStatus?, openssl3DES: OSStatus?) }
 @main struct Check {
  static func main() async throws {
   let root = URL(fileURLWithPath: CommandLine.arguments[1]), password = "synthetic-native-backup-only"
   let bytes = try await Task.detached {
     try NativeEncryptedP12.export(certificateDER: Data(contentsOf: root.appendingPathComponent("cert.der")), privateKeyDER: Data(contentsOf: root.appendingPathComponent("key.der")), password: password)
   }.value
-  func imported(_ password: String) -> Bool { var entries: CFArray?; return SecPKCS12Import(bytes as CFData, [kSecImportExportPassphrase as String:password] as CFDictionary, &entries) == errSecSuccess }
-  guard imported(password), !imported(""), !imported("incorrect") else { throw CertificateExportFailure.invalidIdentity }
+  // macOS otherwise persists identities in the default Keychain, unlike iOS.
+  // The CI runner is macOS 15; require its public memory-only option so this
+  // synthetic test measures decoding, never Keychain unlock or persistence.
+  guard #available(macOS 15.0, *) else { throw CertificateExportFailure.unavailable }
+  let memoryOnlyKey = kSecImportToMemoryOnly as String
+  func imported(_ password: String) -> OSStatus { var entries: CFArray?; return SecPKCS12Import(bytes as CFData, [kSecImportExportPassphrase as String:password, memoryOnlyKey:true] as CFDictionary, &entries) }
+  func control(_ name: String) -> OSStatus? {
+    guard let control = try? Data(contentsOf: root.appendingPathComponent(name)) else { return nil }
+    var entries: CFArray?
+    return SecPKCS12Import(control as CFData, [kSecImportExportPassphrase as String: password, memoryOnlyKey:true] as CFDictionary, &entries)
+  }
+  let correct = imported(password), empty = imported(""), wrong = imported("incorrect")
+  let aes = control("control-aes.p12"), tripleDES = control("control-3des.p12")
+  guard correct == errSecSuccess, empty != errSecSuccess, wrong != errSecSuccess else {
+    // Synthetic fixture only: fixed stage and numeric status, never key/password/P12.
+    throw NativeHarnessFailure.securityReadback(correct: correct, empty: empty, wrong: wrong, opensslAES: aes, openssl3DES: tripleDES)
+  }
   try bytes.write(to: root.appendingPathComponent("native.p12"))
  }
 }
@@ -117,6 +144,8 @@ import Security
             run(str(executable), str(root))
             run('openssl','pkcs12','-in','native.p12','-passin','pass:synthetic-native-backup-only','-info','-noout')
             (resources / 'TetherlessSigningCrypto.js').write_text('throw new Error("tampered");')
+            self.assertNotEqual(run(str(executable), str(root), ok=False).returncode, 0)
+            (resources / 'TetherlessSigningCrypto.js').unlink()
             self.assertNotEqual(run(str(executable), str(root), ok=False).returncode, 0)
 
     @unittest.skipUnless(shutil.which('openssl') and shutil.which('node'), 'Node/OpenSSL required')
