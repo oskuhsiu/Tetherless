@@ -16,3 +16,14 @@ test('unknown labels, inherited object keys and invalid values fail closed', () 
 test('each diagnostic category is represented without raw upstream strings', () => {
   for (const kind of ['appleRejected', 'anisetteUnavailable', 'httpRejected', 'networkTimeout', 'networkConnect', 'networkFailure', 'unknown', 'taskFailed']) assert.match(loginDiagnosticText({ stage: 'developerToken', kind }), /診斷：開發者登入憑證/);
 });
+
+test('upstream attribution accepts only fixed enum labels, never hosts or raw URLs', () => {
+  for (const [upstream, label] of [['apple', 'Apple 服務'], ['anisette', 'Anisette 服務'], ['other', '其他上游'], ['unknown', '上游尚未識別']]) {
+    const text = loginDiagnosticText({ stage: 'appleLogin', kind: 'networkFailure', upstream, url: 'https://private.invalid/token' });
+    assert(text.includes(`來源：${label}`)); assert.doesNotMatch(text, /private|https:/);
+  }
+  for (const upstream of ['https://private.invalid/token', 'mac-ani.jkcoxson.com', 'constructor', '__proto__', ['apple'], {}, null, 403]) {
+    const text = loginDiagnosticText({ stage: 'appleLogin', kind: 'networkFailure', upstream });
+    assert.doesNotMatch(text, /來源：|private|iloader|constructor|__proto__/);
+  }
+});

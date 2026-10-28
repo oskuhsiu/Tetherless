@@ -356,11 +356,22 @@ test('DOM mock: unknown 2FA blocks code and direct submit until a method is requ
 });
 test('DOM mock: safe diagnostic is visible on failed login and cancellation clears it', async () => {
   const e = await environment({ service: true, fetcher: sessionFetcher((url, opts) => {
-    if (url.endsWith('/v1/sessions/synthetic-id') && opts.method !== 'DELETE') return Response.json({ state: 'failed', error: 'appleAuthenticationFailed', diagnostic: { stage: 'appleLogin', kind: 'appleRejected', appleCode: -21669, httpStatus: 403, message: 'PRIVATE_RESPONSE', token: 'PRIVATE_TOKEN' } });
+    if (url.endsWith('/v1/sessions/synthetic-id') && opts.method !== 'DELETE') return Response.json({ state: 'failed', error: 'appleAuthenticationFailed', diagnostic: { stage: 'appleLogin', kind: 'appleRejected', upstream: 'apple', appleCode: -21669, httpStatus: 403, message: 'PRIVATE_RESPONSE', token: 'PRIVATE_TOKEN' } });
   }) });
   try {
     loginInputs(e); submit(e, 'account-form'); await until(() => e.$('account-status').textContent.includes('診斷：'));
-    const text = e.$('account-status').textContent; assert(text.includes('Apple 代碼 -21669／HTTP 403')); assert(text.includes('不能單獨判定')); assert(!text.includes('PRIVATE'));
+    const text = e.$('account-status').textContent; assert(text.includes('來源：Apple 服務／Apple 代碼 -21669／HTTP 403')); assert(text.includes('不能單獨判定')); assert(!text.includes('PRIVATE'));
     e.$('logout').click(); assert(!e.$('account-status').textContent.includes('診斷：')); assert.equal(e.$('apple-id').value, '');
+  } finally { e.dispose(); }
+});
+
+test('DOM mock: provider disclosure is explicit before unchecked login consent; it sends no credentials automatically', async () => {
+  const e = await environment({ service: true, deviceRoute: 'existing' });
+  try {
+    const privacy = e.$('account-form').querySelector('.privacy').textContent;
+    for (const text of ['mac-ani.jkcoxson.com', '隨機 Anisette 識別碼', '不是實機 UDID', '不透明 token', '不會收到 Apple 密碼、2FA 或簽署私鑰', '第三方資料保留期限未知']) assert(privacy.includes(text));
+    assert(!privacy.includes('ani.stikstore.app'));
+    assert(e.$('login-consent').closest('label').textContent.includes('mac-ani.jkcoxson.com')); assert(!e.$('login-consent').checked);
+    submit(e, 'account-form'); await tick(); assert(!e.calls.some(call => call.options.method === 'POST'));
   } finally { e.dispose(); }
 });

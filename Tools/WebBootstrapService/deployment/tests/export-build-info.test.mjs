@@ -118,6 +118,7 @@ test('Docker context permits only the pinned public owned IPA after blanket arti
     '!Tools/WebBootstrapService/', '!Tools/WebBootstrapService/README.md',
     '!Tools/WebBootstrapService/Cargo.toml', '!Tools/WebBootstrapService/Cargo.lock',
     '!Tools/WebBootstrapService/src/', '!Tools/WebBootstrapService/src/**',
+    '!Tools/WebBootstrapService/vendor/', '!Tools/WebBootstrapService/vendor/**',
     '!Tools/WebBootstrapService/tests/', '!Tools/WebBootstrapService/tests/**',
     '!Tools/WebBootstrapService/deployment/', '!Tools/WebBootstrapService/deployment/**',
     '**/node_modules', '**/dist', '**/target', '**/.toolchain', '**/.env*',
@@ -162,7 +163,31 @@ test('Docker uses the owned fixture in the frontend test builder without copying
     'COPY --from=backend /build-info /app/build-info',
     'COPY LICENSE /app/licenses/AGPL-3.0.txt',
     'COPY Tools/WebBootstrapService/README.md /app/licenses/account-service-notices.md',
+    'COPY Tools/WebBootstrapService/vendor/isideload/LICENSE /app/licenses/isideload-MIT.txt',
+    'COPY Tools/WebBootstrapService/vendor/PATCHES.md /app/licenses/isideload-provenance.md',
     'COPY Tools/WebBootstrapService/deployment/*.mjs /app/deployment/',
   ]);
   assert.doesNotMatch(runtime, /^ADD /m);
+});
+
+test('vendored dependency preserves upstream provenance except two declared transport patches', async () => {
+  const root = new URL('../../vendor/', import.meta.url);
+  const manifest = JSON.parse(await readFile(new URL('UPSTREAM-SHA256.json', root), 'utf8'));
+  assert.equal(manifest.repository, 'https://github.com/nab138/isideload');
+  assert.equal(manifest.revision, '8ca39b6203263e539408986e546c42e7c1cc3699');
+  const changed = [];
+  for (const [path, expected] of Object.entries(manifest.original_files)) {
+    assert.match(path, /^(?:README\.md|LICENSE|isideload\/[A-Za-z0-9_./-]+)$/);
+    assert(!path.includes('..'));
+    const actual = createHash('sha256').update(await readFile(new URL(path, root))).digest('hex');
+    if (actual !== expected) changed.push(path);
+  }
+  assert.deepEqual(changed.sort(), [
+    'isideload/src/anisette/remote_v3/mod.rs',
+    'isideload/src/anisette/remote_v3/websocket.rs',
+  ]);
+  assert.equal(manifest.original_files['isideload/LICENSE'], 'c6e929e3490b6475e382b4f74aaddd068deb3bf27cca2109821591e692dfcb3b');
+  const dockerfile = await readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
+  assert.match(dockerfile, /cargo test --locked -p isideload --lib transport_tests/);
+  assert.doesNotMatch(dockerfile, /cargo test[^\n]*-p isideload[^\n]*--features/);
 });

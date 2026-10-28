@@ -39,7 +39,7 @@ const TTL: Duration = Duration::from_secs(600);
 const MAX_SESSIONS: usize = 8;
 const UPSTREAM_TIMEOUT: Duration = Duration::from_secs(120);
 // Explicit endpoint pin. It cannot be selected from a request, URL or account.
-const ANISETTE_ORIGIN: &str = "https://ani.stikstore.app";
+const ANISETTE_ORIGIN: &str = "https://mac-ani.jkcoxson.com";
 
 struct Session {
     token: Zeroizing<String>,
@@ -156,7 +156,7 @@ fn routes(app: Arc<App>) -> Router {
     let origin = HeaderValue::from_str(&app.allowed_origin).expect("origin validated at startup");
     let profile_service_available = app.allowed_origin.starts_with("https://");
     Router::new()
-        .route("/health", get(move || async move { Json(json!({"protocol":1,"appleAuthAvailable":true,"profileServiceAvailable":profile_service_available,"service":"tetherless-web-bootstrap", "accountBackend":"isideload", "accountBackendPin":"dd442588370060b8776b1276a1acd717b6668b26", "liveAppleAcceptance":false})) }))
+        .route("/health", get(move || async move { Json(json!({"protocol":1,"appleAuthAvailable":true,"profileServiceAvailable":profile_service_available,"service":"tetherless-web-bootstrap", "accountBackend":"isideload", "accountBackendPin":"8ca39b6203263e539408986e546c42e7c1cc3699", "accountBackendPatch":"bounded-no-redirect-anisette-transport", "liveAppleAcceptance":false})) }))
         .route("/v1/device-enrollments", post(enrollment::create))
         .route("/v1/device-enrollments/{id}", get(enrollment::status).delete(enrollment::cancel))
         .route("/v1/device-enrollments/{id}/profile/{ticket}", get(enrollment::profile))

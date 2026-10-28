@@ -31,7 +31,7 @@ for (let i = 0; i < 100; i++) {
 assert.ok(ready, 'Production entrypoint must become ready');
 const health = await request('/health'); const status = JSON.parse(health.body);
 assert.equal(status.service, 'tetherless-web-bootstrap');
-assert.equal(status.accountBackendPin, 'dd442588370060b8776b1276a1acd717b6668b26');
+assert.equal(status.accountBackendPin, '8ca39b6203263e539408986e546c42e7c1cc3699');
 assert.equal(status.liveAppleAcceptance, false); assert.equal(status.profileServiceAvailable, true);
 assert.equal((await request('/health', { headers: { host: 'hostile.example.com' } })).status, 403);
 assert.equal((await request('/v1/sessions/absent')).status, publicMode ? 404 : 401);

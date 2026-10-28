@@ -11,6 +11,8 @@
 !Tools/WebBootstrapService/Cargo.lock
 !Tools/WebBootstrapService/src/
 !Tools/WebBootstrapService/src/**
+!Tools/WebBootstrapService/vendor/
+!Tools/WebBootstrapService/vendor/**
 !Tools/WebBootstrapService/tests/
 !Tools/WebBootstrapService/tests/**
 !Tools/WebBootstrapService/deployment/

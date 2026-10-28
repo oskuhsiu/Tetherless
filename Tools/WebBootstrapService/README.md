@@ -6,10 +6,12 @@ certificate parser, pairing or renewal paths.
 
 ## What is real
 
-The production implementation calls `isideload` at exact source revision
-[`dd442588370060b8776b1276a1acd717b6668b26`](https://github.com/nab138/isideload/tree/dd442588370060b8776b1276a1acd717b6668b26).
-The upstream MIT license is in that repository; retain dependency notices when
-distributing. This service's source is AGPL-3.0-only, matching Tetherless.
+The production implementation uses a vendored `isideload` base revision
+[`8ca39b6203263e539408986e546c42e7c1cc3699`](https://github.com/nab138/isideload/tree/8ca39b6203263e539408986e546c42e7c1cc3699).
+with the local `bounded-no-redirect-anisette-transport` patch. The original MIT
+license, source hashes, and exact patch scope are retained in `vendor/`. Only two
+upstream anisette transport modules are modified; Apple auth/crypto is unmodified.
+Retain these dependency notices when distributing. This service's source is AGPL-3.0-only, matching Tetherless.
 
 - Apple SRP/GrandSlam: `AppleAccount::builder(...).login(...)`
 - Trusted-device and SMS 2FA: `TwoFactorCallbackParams/Response`
@@ -40,13 +42,27 @@ is deliberately written to disk. Do not enable request-body, authorization-heade
 debug, upstream-error, proxy or process-dump logging. No tracing subscriber is
 installed. Upstream error descriptions are not sent to the browser.
 
-The fixed remote anisette provider is `https://ani.stikstore.app`; it receives
-anisette provisioning/identity data. The account service sends authentication and
+The fixed remote anisette provider is `https://mac-ani.jkcoxson.com`, also the
+[xtool default](https://github.com/xtool-org/xtool/blob/70e1568fdfcb20b560774057cd783f02361293b9/Sources/XKit/GrandSlam/Anisette/OmnisetteADIProvider.swift).
+This selects the same recipient, not identical xtool authentication code. Our
+isideload client can additionally send the resync fields below; acceptance by
+this server has not been verified. The client sends
+`identifier`, `adi_pb`, and (for resync) `sim`, `device_id`, `md_lu`;
+provisioning also sends `spim`, `ptm`, and `tk` over WSS. These are opaque
+authentication-related values, not harmless telemetry. The device ID derives
+from a generated anisette identity, not the physical iPhone UDID. The provider
+also sees the service egress IP. Apple passwords, 2FA codes, account email, and
+signing private keys are not fields in these provider request builders. Provider
+retention/reuse policies are not established by this code. Explicit browser
+consent is required before starting login. The account service sends authentication and
 developer requests to Apple. This is not a direct-browser-to-Apple-only system.
 Using an existing remote anisette provider avoids distributing Apple's ADI
 binaries; the operator still needs to assess that provider's availability and
 privacy terms. There is no arbitrary request proxy, destination URL or user
-selected anisette server endpoint.
+selected anisette server endpoint. Native provider HTTP redirects are disabled;
+response sizes and HTTP/WebSocket waits are bounded, with normal TLS validation.
+See `vendor/PATCHES.md` for tested controls and limits. Mock tests do not prove
+real Apple login, full hsc434 resync, or provider availability.
 
 Run behind an HTTPS reverse proxy on a host you control. The process deliberately
 binds only a loopback address. Serve `WebBootstrap/dist` at the same origin as
@@ -221,8 +237,8 @@ waiting caller and verify that the occupied capacity is not prematurely freed.
 
 ## Source feasibility references
 
-- [isideload API source](https://github.com/nab138/isideload/tree/dd442588370060b8776b1276a1acd717b6668b26/isideload/src)
-- [isideload WASM feature and native dependencies](https://github.com/nab138/isideload/blob/dd442588370060b8776b1276a1acd717b6668b26/isideload/Cargo.toml)
+- [isideload API source](https://github.com/nab138/isideload/tree/8ca39b6203263e539408986e546c42e7c1cc3699/isideload/src)
+- [isideload WASM feature and native dependencies](https://github.com/nab138/isideload/blob/8ca39b6203263e539408986e546c42e7c1cc3699/isideload/Cargo.toml)
 - [SideSign current pin](https://github.com/SideStore/SideSign/tree/6b68651697f99791ef85404b7aea1891a26a285d)
 - [SideSign dependency pins](https://github.com/SideStore/SideSign/blob/6b68651697f99791ef85404b7aea1891a26a285d/Package.resolved)
 

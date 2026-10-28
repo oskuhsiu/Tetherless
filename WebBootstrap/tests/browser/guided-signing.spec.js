@@ -131,9 +131,15 @@ test('synthetic unknown 2FA blocks direct code submission until a method is sele
 });
 
 test('synthetic login failure shows only safe diagnostic labels and numeric codes', async ({ page, guided }) => {
-  guided.loginDiagnostic = { stage: 'developerToken', kind: 'httpRejected', httpStatus: 403, message: 'PRIVATE_RESPONSE', token: 'PRIVATE_TOKEN', url: 'https://secret.invalid/' };
-  await chooseCustom(page); await credentials(page); await page.locator('#login-button').click();
-  await expect(page.locator('#account-status')).toContainText('開發者登入憑證／上游 HTTP 請求未成功／HTTP 403');
+  guided.loginDiagnostic = { stage: 'developerToken', kind: 'httpRejected', upstream: 'anisette', httpStatus: 403, message: 'PRIVATE_RESPONSE', token: 'PRIVATE_TOKEN', url: 'https://secret.invalid/' };
+  await chooseCustom(page);
+  await expect(page.locator('#account-form .privacy')).toContainText('mac-ani.jkcoxson.com');
+  await expect(page.locator('#account-form .privacy')).toContainText('不是實機 UDID');
+  await expect(page.locator('#account-form .privacy')).toContainText('第三方資料保留期限未知');
+  await expect(page.locator('#login-consent')).not.toBeChecked();
+  expect(guided.calls.some(call => call.name === 'login')).toBe(false);
+  await credentials(page); await page.locator('#login-button').click();
+  await expect(page.locator('#account-status')).toContainText('開發者登入憑證／上游 HTTP 請求未成功／來源：Anisette 服務／HTTP 403');
   await expect(page.locator('#account-status')).toContainText('不能單獨判定');
   await expect(page.locator('#account-status')).not.toContainText('PRIVATE'); await expect(page.locator('#account-status')).not.toContainText('secret.invalid');
   expect(guided.twoFactorActions).toEqual([]); expect(guided.provisioningBodies).toHaveLength(0);

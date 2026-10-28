@@ -17,10 +17,10 @@
     <div id="account-app-prerequisite" class="notice" hidden><strong>先選擇你自己的 IPA，再登入 Apple</strong><p>目前沒有已驗證的官方 Tetherless 安裝包。請選擇你有權使用的 IPA；不需要先準備 P12。檔案只在此分頁檢查與簽署，不會上傳。</p><div id="prerequisite-app-slot"></div><p id="ipa-prerequisite-status" role="status">尚未選擇 IPA，登入按鈕暫不開放。</p></div>
     <form id="account-form" hidden>
       <p class="hint">使用你的 Apple Developer 帳號（包含免費 Personal Team）。這不是 Apple 官方登入頁面。</p>
-      <details class="privacy" open><summary>登入資料會送到哪裡？</summary><p>你正使用 <strong id="service-origin"></strong> 的服務。此服務會暫時接收 Apple 帳號密碼、2FA 與登入 session，並與 Apple 溝通。Anisette 服務 ani.stikstore.app 會收到暫時的裝置識別／provisioning 資料。私鑰只在此瀏覽器產生，不會上傳。</p></details>
+      <details class="privacy" open><summary>登入資料會送到哪裡？</summary><p>你正使用 <strong id="service-origin"></strong> 的服務。此服務會暫時接收 Apple 帳號密碼、2FA 與登入 session，並向 Apple 驗證。簽署私鑰只在此瀏覽器產生，不會上傳。</p><p>第三方 Anisette 服務 <strong>mac-ani.jkcoxson.com</strong> 會收到隨機 Anisette 識別碼（不是實機 UDID），以及 provisioning／驗證用的不透明 token；不會收到 Apple 密碼、2FA 或簽署私鑰。第三方資料保留期限未知。</p></details>
       <label for="apple-id">Apple 帳號</label><input id="apple-id" type="email" autocomplete="username" required>
       <label for="apple-password">密碼</label><input id="apple-password" type="password" autocomplete="current-password" required>
-      <label class="check"><input id="login-consent" type="checkbox" required>我信任並同意將上述資料傳送給這些服務，以登入 Apple</label><button type="submit" id="login-button">登入並繼續</button>
+      <label class="check"><input id="login-consent" type="checkbox" required>我信任本服務與 mac-ani.jkcoxson.com，了解上述資料傳送與保留風險，並同意登入 Apple</label><button type="submit" id="login-button">登入並繼續</button>
     </form>
     <form id="two-factor" hidden><p>請完成 Apple 的安全驗證</p><label for="verification-code">6 位數驗證碼</label><input id="verification-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button type="submit" id="verify-button">繼續</button><details><summary>沒有收到驗證碼？</summary><button type="button" id="resend-code" class="secondary">重新要求裝置驗證碼</button><div id="sms-options" hidden><label for="phone-choice">Apple 提供的簡訊電話</label><select id="phone-choice"></select><button type="button" id="send-sms" class="secondary">要求簡訊驗證碼</button></div></details></form>
     <div id="guided-preparation" hidden>

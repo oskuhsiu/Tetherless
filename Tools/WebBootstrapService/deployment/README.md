@@ -1,6 +1,6 @@
 # Bounded web-signing test service
 
-This packages the existing browser signer and unchanged real Rust account
+This packages the existing browser signer and real Rust account
 service into one Linux container. It adds no signed-IPA hosting, OTA-install
 endpoint, native signing/parser/admission change, or production mock backend.
 A successful build or local smoke test is not live Apple or iPhone acceptance.
@@ -16,7 +16,13 @@ that commit's public source tree and LICENSE in the fixed `https://github.com/os
 The licenses page is stamped at build time using the same validated `SOURCE_COMMIT`.
 There is no configurable repository URL and no `main`/`latest` source reference. A closed
 test window still offers those links while refusing account access. The image
-also includes the repository LICENSE under `/app/licenses/AGPL-3.0.txt`.
+also includes the repository LICENSE under `/app/licenses/AGPL-3.0.txt`, the
+vendored upstream MIT license, and its bounded transport patch provenance.
+`/health` distinguishes the upstream base revision from `accountBackendPatch`.
+The approved provider is `mac-ani.jkcoxson.com`; before login the UI discloses its
+authentication-related token inputs and requires fresh consent. See the account
+service README for the exact recipient/data boundary. This is not a promise of
+provider availability, retention policy, or successful live Apple authentication.
 
 The production supervisor reads the immutable build-generated identity; runtime
 `SOURCE_COMMIT` does not replace it. Local tests use a clearly synthetic identity
@@ -163,7 +169,7 @@ administrative access remain a hosting-provider trust dependency.
 
 The browser's Apple password/2FA reach the approved HTTPS host and account-service
 memory. Apple authentication and developer requests go to Apple. The pinned
-Anisette provider `https://ani.stikstore.app` receives generated identifier/ADI
+Anisette provider `https://mac-ani.jkcoxson.com` receives generated identifier/ADI
 provisioning material; this is not a claim that it receives the Apple password.
 The browser creates the signing key and sends only the CSR. The existing service
 issues development signing material, including for paid teams; it does not issue
