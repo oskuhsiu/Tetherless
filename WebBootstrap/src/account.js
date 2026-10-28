@@ -4,11 +4,12 @@ import { discoverAccountService } from './account-discovery.js';
 import { tetherlessGroup } from './tetherless-identity.js';
 import { setupRegisteredDevices } from './registered-devices.js';
 import { setupDeviceEnrollment } from './device-enrollment.js';
+import { loginDiagnosticText } from './login-diagnostics.js';
 const $ = (id) => document.getElementById(id);
-const safeErrors = { deviceNotAvailable: '所選裝置不再可用或不屬於此 Team。請取消原申請後重新選擇；不會改成新增裝置', invalidRequest: '請求或 Team 無效，請重新確認選擇', appleAuthenticationFailed: 'Apple 登入失敗，請重新開始', expired: '登入 session 已到期，請重新登入', certificateLimit: '憑證名額不足。此服務不會自動撤銷其他憑證', busy: '原申請仍在處理中，請稍後只查詢原申請結果', profileMismatch: 'Apple profile 與 Team、裝置、App 或共享群組不符，未提供簽署資料', certificateMismatch: 'Apple 憑證與此分頁 CSR 不符', appleRequestFailed: 'Apple 請求未完成，請確認帳號狀態', authenticationFailed: 'Apple 登入失敗，請重新開始', sessionExpired: '登入 session 已到期，請重新登入', wrongState: '這次操作的狀態已改變。請先取消 session 再重新開始；不要重複建立憑證', certificateCapacity: '憑證名額不足。此服務不會自動撤銷其他憑證', provisioningUncertain: 'Apple 操作結果不確定。保留此分頁的原私鑰；此服務不會再次建立憑證', provisioningFailed: 'Apple provisioning 未完成。請檢查 Team 與裝置狀態；若結果不確定，不要重複送出' };
+const safeErrors = { deviceNotAvailable: '所選裝置不再可用或不屬於此 Team。請取消原申請後重新選擇；不會改成新增裝置', invalidRequest: '請求或 Team 無效，請重新確認選擇', appleAuthenticationFailed: 'Apple 登入未完成', expired: '登入 session 已到期，請重新登入', certificateLimit: '憑證名額不足。此服務不會自動撤銷其他憑證', busy: '原申請仍在處理中，請稍後只查詢原申請結果', profileMismatch: 'Apple profile 與 Team、裝置、App 或共享群組不符，未提供簽署資料', certificateMismatch: 'Apple 憑證與此分頁 CSR 不符', appleRequestFailed: 'Apple 請求未完成，請確認帳號狀態', authenticationFailed: 'Apple 登入未完成', sessionExpired: '登入 session 已到期，請重新登入', wrongState: '這次操作的狀態已改變。請先取消 session 再重新開始；不要重複建立憑證', certificateCapacity: '憑證名額不足。此服務不會自動撤銷其他憑證', provisioningUncertain: 'Apple 操作結果不確定。保留此分頁的原私鑰；此服務不會再次建立憑證', provisioningFailed: 'Apple provisioning 未完成。請檢查 Team 與裝置狀態；若結果不確定，不要重複送出' };
 export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMaterial, onState = () => {}, onInvalidate = () => {}, canSubmit = () => true }) {
   let session, aborter, generation = 0, expiryTimer, busy = false, pendingProvision, serviceAvailable = false, profileAvailable = false, phase = 'checking', selectedPlan, teamIds = new Set();
-  let discovery, discoveryGeneration = 0;
+  let discovery, discoveryGeneration = 0, twoFactorUnknown = false, codeSubmitting = false;
   const existingRoute = () => $('device-route').value === 'existing';
   const state = (value) => { phase = value; onState(value); };
   const validUdid = () => /^(?:[0-9A-Fa-f]{40}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16})$/.test($('account-udid').value.trim());
@@ -53,12 +54,12 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
     pendingProvision = undefined; selectedPlan = undefined; teamIds.clear(); registered.freeze(false); registered.clear(); onInvalidate();
     generation++; aborter?.abort(); aborter = undefined; busy = false; clearTimeout(expiryTimer);
     if (session) { const { sessionId, sessionToken } = session; fetch(route(`v1/sessions/${encodeURIComponent(sessionId)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${sessionToken}` }, credentials: 'same-origin', redirect: 'error', keepalive: true, referrerPolicy: 'no-referrer' }).catch(() => {}); }
-    session = undefined;
+    session = undefined; twoFactorUnknown = false; codeSubmitting = false;
     for (const id of ['apple-password', 'verification-code', 'apple-id', 'account-udid']) $(id).value = '';
     $('account-udid').value = retainedUdid;
     for (const id of ['login-consent', 'provision-consent']) $(id).checked = false;
     for (const id of ['two-factor', 'provision-form', 'logout']) $(id).hidden = true;
-    $('send-sms').disabled = false; $('verify-button').disabled = false; $('login-button').disabled = !serviceAvailable; $('provision-button').disabled = false; $('provision-button').textContent = '同意並準備 App'; $('account-form').inert = false;
+    $('verification-code').disabled = false; $('send-sms').disabled = false; $('verify-button').disabled = false; $('login-button').disabled = !serviceAvailable; $('provision-button').disabled = false; $('provision-button').textContent = '同意並準備 App'; $('account-form').inert = false;
     for (const id of ['team', 'device-name', 'account-udid', 'provision-consent']) $(id).disabled = false;
     showLogin();
     say('登入 session 已取消；伺服器也會在最長 10 分鐘後清除未完成 session');
@@ -80,14 +81,17 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
         $('provision-plan').textContent = `${selectedPlan.ipa.name}\nApp IDs：\n${selectedPlan.bundles.map((bundle) => bundle.id).join('\n')}\n${selectedPlan.appGroup ? `App Group：${selectedPlan.appGroup.identifier}` : '此 IPA 不需要 Tetherless 共用 App Group'}\n${existingRoute() ? '使用下方明確選取的已註冊裝置，不新增裝置。' : '另會註冊下方裝置。'}建立開發憑證並取得上述 App IDs 的 profiles。`;
         $('provision-form').hidden = false; state('authenticated'); say('確認所選裝置與以下授權後，將自動取得簽署資料並在本機準備 App。'); if (existingRoute()) await registered.load(); return;
       }
-      if (result.state === 'failed') throw new Error(safeErrors[result.error] || 'Apple 登入未完成，請取消後重新登入');
+      if (result.state === 'failed') throw new Error(`${safeErrors[result.error] || 'Apple 登入未完成，請取消後重新登入'}${loginDiagnosticText(result.diagnostic)}`);
       if (result.state === 'awaitingTwoFactor') {
         $('account-form').hidden = true; $('two-factor').hidden = false; state('twoFactor');
+        twoFactorUnknown = result.challenge?.unknown === true;
+        $('verification-code').disabled = twoFactorUnknown; $('verify-button').disabled = twoFactorUnknown || codeSubmitting;
+        if (twoFactorUnknown) $('verification-code').value = '';
         const numbers = result.challenge?.numbers || []; const selected = $('phone-choice').value;
         $('sms-options').hidden = !numbers.length;
         $('phone-choice').replaceChildren(...numbers.map((number) => { const option = document.createElement('option'); option.value = String(number.id); option.textContent = `電話號碼末兩碼 ${number.lastTwoDigits}`; return option; }));
         if (numbers.some((number) => String(number.id) === selected)) $('phone-choice').value = selected;
-        say(result.challenge?.retry ? '驗證碼未被接受，請重新輸入' : '請輸入 Apple 裝置或簡訊收到的驗證碼，也可選擇下方 Apple 提供的電話號碼要求簡訊');
+        say(twoFactorUnknown ? '尚未確定驗證方式。請先要求 Apple 裝置驗證碼，或選擇電話號碼要求簡訊；目前不能直接輸入驗證碼。' : result.challenge?.retry ? '驗證碼未被接受，請重新輸入' : '請輸入 Apple 裝置或簡訊收到的驗證碼，也可選擇下方 Apple 提供的電話號碼要求簡訊');
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
@@ -114,12 +118,12 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
     finally { if (current === generation) { busy = false; if (!session) { $('login-button').disabled = false; $('logout').hidden = true; showLogin(); } } }
   };
   $('two-factor').onsubmit = async (event) => {
-    event.preventDefault(); if (!session || $('verify-button').disabled) return;
+    event.preventDefault(); if (!session || twoFactorUnknown || codeSubmitting || $('verify-button').disabled) return;
     const current = generation;
     const code = $('verification-code').value; $('verification-code').value = '';
     if (!/^\d{6}$/.test(code)) return say('請輸入 6 位數驗證碼');
-    $('verify-button').disabled = true;
-    try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'submitCode', code }) }); if (current === generation) say('已送出驗證碼，等待 Apple 回應…'); } catch (error) { if (current === generation) say(error.message); } finally { if (current === generation) $('verify-button').disabled = false; }
+    codeSubmitting = true; $('verify-button').disabled = true;
+    try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'submitCode', code }) }); if (current === generation) say('已送出驗證碼，等待 Apple 回應…'); } catch (error) { if (current === generation) say(error.message); } finally { if (current === generation) { codeSubmitting = false; $('verify-button').disabled = twoFactorUnknown; } }
   };
   $('resend-code').onclick = async () => { if (!session) return; const current = generation; try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'sendToDevices' }) }); if (current === generation) say('已要求 Apple 裝置驗證碼'); } catch (error) { if (current === generation) say(error.message); } };
   $('send-sms').onclick = async () => {

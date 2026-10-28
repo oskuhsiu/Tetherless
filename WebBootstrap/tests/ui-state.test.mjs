@@ -336,3 +336,30 @@ test('DOM mock: invalid callback fragments and conflicting pending ID never read
     try{assert.equal(e.dom.window.location.hash,'');assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')));assert(e.$('account-form').hidden);assert(e.$('device-status').textContent.includes('原瀏覽器'));if(conflict)assert.equal(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'),stored);}finally{e.dispose();}
   }
 });
+
+test('DOM mock: unknown 2FA blocks code and direct submit until a method is requested', async () => {
+  let unknown = true; const actions = [];
+  const e = await environment({ service: true, fetcher: sessionFetcher((url, opts) => {
+    if (url.endsWith('/v1/sessions/synthetic-id') && opts.method !== 'DELETE') return Response.json({ state: 'awaitingTwoFactor', challenge: { unknown, numbers: [], retry: false } });
+    if (url.endsWith('/2fa')) { const body = JSON.parse(opts.body); actions.push(body.action); if (body.action === 'sendToDevices') unknown = false; return new Response(null, { status: 202 }); }
+  }) });
+  try {
+    loginInputs(e); submit(e, 'account-form'); await until(() => !e.$('two-factor').hidden);
+    assert(e.$('verification-code').disabled); assert(e.$('verify-button').disabled); assert(e.$('account-status').textContent.includes('尚未確定驗證方式'));
+    e.$('verification-code').value = '123456'; submit(e, 'two-factor'); await tick(); assert.deepEqual(actions, []);
+    e.$('resend-code').click(); await until(() => !e.$('verification-code').disabled);
+    assert.deepEqual(actions, ['sendToDevices']); e.$('verification-code').value = '123456'; submit(e, 'two-factor'); await until(() => actions.length === 2);
+    assert.deepEqual(actions, ['sendToDevices', 'submitCode']);
+    e.$('logout').click(); assert(!e.$('verification-code').disabled); assert.equal(e.$('verification-code').value, ''); assert(e.$('two-factor').hidden);
+  } finally { e.dispose(); }
+});
+test('DOM mock: safe diagnostic is visible on failed login and cancellation clears it', async () => {
+  const e = await environment({ service: true, fetcher: sessionFetcher((url, opts) => {
+    if (url.endsWith('/v1/sessions/synthetic-id') && opts.method !== 'DELETE') return Response.json({ state: 'failed', error: 'appleAuthenticationFailed', diagnostic: { stage: 'appleLogin', kind: 'appleRejected', appleCode: -21669, httpStatus: 403, message: 'PRIVATE_RESPONSE', token: 'PRIVATE_TOKEN' } });
+  }) });
+  try {
+    loginInputs(e); submit(e, 'account-form'); await until(() => e.$('account-status').textContent.includes('診斷：'));
+    const text = e.$('account-status').textContent; assert(text.includes('Apple 代碼 -21669／HTTP 403')); assert(text.includes('不能單獨判定')); assert(!text.includes('PRIVATE'));
+    e.$('logout').click(); assert(!e.$('account-status').textContent.includes('診斷：')); assert.equal(e.$('apple-id').value, '');
+  } finally { e.dispose(); }
+});

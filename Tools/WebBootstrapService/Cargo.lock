@@ -2957,6 +2957,8 @@ dependencies = [
  "isideload",
  "openssl",
  "plist",
+ "reqwest",
+ "reqwest-middleware",
  "rootcause",
  "rsa",
  "rustls",
