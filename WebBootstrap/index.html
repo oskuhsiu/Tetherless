@@ -23,6 +23,7 @@
       <label class="check"><input id="login-consent" type="checkbox" required>我信任本服務與 mac-ani.jkcoxson.com，了解上述資料傳送與保留風險，並同意登入 Apple</label><button type="submit" id="login-button">登入並繼續</button>
     </form>
     <form id="two-factor" hidden><p>請完成 Apple 的安全驗證</p><label for="verification-code">6 位數驗證碼</label><input id="verification-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button type="submit" id="verify-button">繼續</button><details><summary>沒有收到驗證碼？</summary><button type="button" id="resend-code" class="secondary">重新要求裝置驗證碼</button><div id="sms-options" hidden><label for="phone-choice">Apple 提供的簡訊電話</label><select id="phone-choice"></select><button type="button" id="send-sms" class="secondary">要求簡訊驗證碼</button></div></details></form>
+    <button type="button" id="retry-teams" class="secondary" hidden>以原 session 重讀 Team（限一次）</button>
     <div id="guided-preparation" hidden>
       <div id="guided-app-slot"></div>
       <form id="provision-form" hidden><div class="notice"><strong>確認這次會建立的項目</strong><p id="provision-plan"></p></div>

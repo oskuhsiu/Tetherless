@@ -9,7 +9,7 @@ const $ = (id) => document.getElementById(id);
 const safeErrors = { deviceNotAvailable: '所選裝置不再可用或不屬於此 Team。請取消原申請後重新選擇；不會改成新增裝置', invalidRequest: '請求或 Team 無效，請重新確認選擇', appleAuthenticationFailed: 'Apple 登入未完成', expired: '登入 session 已到期，請重新登入', certificateLimit: '憑證名額不足。此服務不會自動撤銷其他憑證', busy: '原申請仍在處理中，請稍後只查詢原申請結果', profileMismatch: 'Apple profile 與 Team、裝置、App 或共享群組不符，未提供簽署資料', certificateMismatch: 'Apple 憑證與此分頁 CSR 不符', appleRequestFailed: 'Apple 請求未完成，請確認帳號狀態', authenticationFailed: 'Apple 登入未完成', sessionExpired: '登入 session 已到期，請重新登入', wrongState: '這次操作的狀態已改變。請先取消 session 再重新開始；不要重複建立憑證', certificateCapacity: '憑證名額不足。此服務不會自動撤銷其他憑證', provisioningUncertain: 'Apple 操作結果不確定。保留此分頁的原私鑰；此服務不會再次建立憑證', provisioningFailed: 'Apple provisioning 未完成。請檢查 Team 與裝置狀態；若結果不確定，不要重複送出' };
 export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMaterial, onState = () => {}, onInvalidate = () => {}, canSubmit = () => true }) {
   let session, aborter, generation = 0, expiryTimer, busy = false, pendingProvision, serviceAvailable = false, profileAvailable = false, phase = 'checking', selectedPlan, teamIds = new Set();
-  let discovery, discoveryGeneration = 0, twoFactorUnknown = false, codeSubmitting = false;
+  let discovery, discoveryGeneration = 0, twoFactorUnknown = false, codeSubmitting = false, sessionDeadline = 0, teamsRetryUsed = false, teamSessionInvalid = false;
   const existingRoute = () => $('device-route').value === 'existing';
   const state = (value) => { phase = value; onState(value); };
   const validUdid = () => /^(?:[0-9A-Fa-f]{40}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16})$/.test($('account-udid').value.trim());
@@ -41,7 +41,13 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
       const bytes = new Uint8Array(size); let offset = 0; for (const part of parts) { bytes.set(part, offset); offset += part.byteLength; } text = new TextDecoder().decode(bytes);
     } else text = await response.text();
     let body; try { body = text ? JSON.parse(text) : {}; } catch { throw new Error('簽署服務沒有傳回有效回應'); }
-    if (!response.ok) { const code = body.error || body.code; throw new Error(safeErrors[code] || `簽署服務回應 ${response.status}。請檢查狀態，勿重複提交不確定的操作。`); }
+    if (!response.ok) {
+      const code = body.error || body.code;
+      const safeMessage = `${Object.hasOwn(safeErrors, code) ? safeErrors[code] : `簽署服務回應 ${response.status}。請檢查狀態，勿重複提交不確定的操作。`}${loginDiagnosticText(body.diagnostic)}`;
+      const error = new Error(safeMessage); error.safeMessage = safeMessage;
+      error.sessionInvalid = [401, 404, 410].includes(response.status) || ['expired', 'sessionExpired', 'unauthorized', 'notFound'].includes(code);
+      throw error;
+    }
     return body;
   }
   const registered = setupRegisteredDevices({ request, getSessionId: () => session?.sessionId, getTeamId: () => teamIds.has($('team').value) ? $('team').value : '', onSelection: (device) => { $('provision-consent').checked = false; if (existingRoute()) { $('provision-consent').disabled = !device; $('provision-button').disabled = !device; } } });
@@ -54,24 +60,26 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
     pendingProvision = undefined; selectedPlan = undefined; teamIds.clear(); registered.freeze(false); registered.clear(); onInvalidate();
     generation++; aborter?.abort(); aborter = undefined; busy = false; clearTimeout(expiryTimer);
     if (session) { const { sessionId, sessionToken } = session; fetch(route(`v1/sessions/${encodeURIComponent(sessionId)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${sessionToken}` }, credentials: 'same-origin', redirect: 'error', keepalive: true, referrerPolicy: 'no-referrer' }).catch(() => {}); }
-    session = undefined; twoFactorUnknown = false; codeSubmitting = false;
+    session = undefined; twoFactorUnknown = false; codeSubmitting = false; sessionDeadline = 0; teamsRetryUsed = false; teamSessionInvalid = false;
+    $('retry-teams').hidden = true; $('retry-teams').disabled = false;
     $('two-factor').querySelector('details').open = false;
     for (const id of ['apple-password', 'verification-code', 'apple-id', 'account-udid']) $(id).value = '';
     $('account-udid').value = retainedUdid;
     for (const id of ['login-consent', 'provision-consent']) $(id).checked = false;
     for (const id of ['two-factor', 'provision-form', 'logout']) $(id).hidden = true;
-    $('verification-code').disabled = false; $('send-sms').disabled = false; $('verify-button').disabled = false; $('login-button').disabled = !serviceAvailable; $('provision-button').disabled = false; $('provision-button').textContent = '同意並準備 App'; $('account-form').inert = false;
+    $('verification-code').disabled = false; $('resend-code').disabled = false; $('send-sms').disabled = false; $('verify-button').disabled = false; $('login-button').disabled = !serviceAvailable; $('provision-button').disabled = false; $('provision-button').textContent = '同意並準備 App'; $('account-form').inert = false;
     for (const id of ['team', 'device-name', 'account-udid', 'provision-consent']) $(id).disabled = false;
     showLogin();
     say('登入 session 已取消；伺服器也會在最長 10 分鐘後清除未完成 session');
   }
   $('logout').onclick = clear;
-  async function poll(current) {
-    while (current === generation && session) {
-      const result = await request(`v1/sessions/${session.sessionId}`);
-      if (current !== generation) return;
-      if (result.state === 'authenticated') {
-        $('two-factor').hidden = true; const { teams } = await request(`v1/sessions/${session.sessionId}/teams`); if (current !== generation) return;
+  const canRetryTeams = () => session && Date.now() < sessionDeadline && !teamsRetryUsed && !teamSessionInvalid;
+  async function loadTeams(current) {
+    $('two-factor').hidden = true; $('verification-code').value = ''; $('verify-button').disabled = true;
+    $('resend-code').disabled = true; $('send-sms').disabled = true; $('retry-teams').hidden = true;
+    state('teamsLoading'); say('Apple 驗證已通過，正在讀取 Team…');
+    try {
+      const { teams } = await request(`v1/sessions/${session.sessionId}/teams`); if (current !== generation || !session) return;
         if (!Array.isArray(teams) || !teams.length || teams.length > 1000 || teams.some(team => typeof team.id !== 'string' || !/^[A-Za-z0-9]{1,64}$/.test(team.id)) || new Set(teams.map(team => team.id)).size !== teams.length) throw new Error('此帳號沒有可用的 Apple Team');
         teamIds = new Set(teams.map(team => team.id));
         $('team').replaceChildren(...teams.map((team) => { const option = document.createElement('option'); option.value = team.id; option.textContent = `${team.name} · ${team.type} · ${team.id}`; return option; }));
@@ -81,6 +89,24 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
         $('provision-consent-text').textContent = existingRoute() ? '我確認所選已註冊裝置與 Team 正確，有權使用所選 IPA，並同意使用此装置、建立上方 App IDs／App Group、開發憑證及 profiles。這會占用 Apple Team 名額；不新增裝置或自動撤銷其他憑證。' : '我確認新裝置與 Team 正確，有權使用所選 IPA，並同意註冊此裝置、建立上方 App IDs／App Group、開發憑證及 profiles。這會占用 Apple Team 名額；不會自動撤銷其他憑證。';
         $('provision-plan').textContent = `${selectedPlan.ipa.name}\nApp IDs：\n${selectedPlan.bundles.map((bundle) => bundle.id).join('\n')}\n${selectedPlan.appGroup ? `App Group：${selectedPlan.appGroup.identifier}` : '此 IPA 不需要 Tetherless 共用 App Group'}\n${existingRoute() ? '使用下方明確選取的已註冊裝置，不新增裝置。' : '另會註冊下方裝置。'}建立開發憑證並取得上述 App IDs 的 profiles。`;
         $('provision-form').hidden = false; state('authenticated'); say('確認所選裝置與以下授權後，將自動取得簽署資料並在本機準備 App。'); if (existingRoute()) await registered.load(); return;
+    } catch (error) {
+      if (current !== generation || !session) return;
+      teamSessionInvalid ||= error.sessionInvalid === true;
+      state('teamsFailed'); $('provision-form').hidden = true;
+      $('retry-teams').hidden = !canRetryTeams(); $('retry-teams').disabled = false;
+      say(`Apple 驗證已通過，但 Team 讀取失敗；目前沒有繼續等待或執行建立操作。${error.safeMessage || '未取得有效 Team 回應。'}${canRetryTeams() ? ' 可手動重讀一次；不會重新登入或延長 session。' : ' 請取消此 session；不會自動重新登入。'}`);
+    }
+  }
+  $('retry-teams').onclick = () => {
+    if (phase !== 'teamsFailed' || !canRetryTeams()) { $('retry-teams').hidden = true; return; }
+    teamsRetryUsed = true; $('retry-teams').disabled = true; void loadTeams(generation);
+  };
+  async function poll(current) {
+    while (current === generation && session) {
+      const result = await request(`v1/sessions/${session.sessionId}`);
+      if (current !== generation) return;
+      if (result.state === 'authenticated') {
+        await loadTeams(current); return;
       }
       if (result.state === 'failed') throw new Error(`${safeErrors[result.error] || 'Apple 登入未完成，請取消後重新登入'}${loginDiagnosticText(result.diagnostic)}`);
       if (result.state === 'awaitingTwoFactor') {
@@ -115,28 +141,28 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
       const started = await request('v1/sessions', { method: 'POST', body });
       if (current !== generation) { if (started.sessionId && started.sessionToken) fetch(route(`v1/sessions/${encodeURIComponent(started.sessionId)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${started.sessionToken}` }, credentials: 'same-origin', redirect: 'error' }).catch(() => {}); return; }
       if (!started.sessionId || !started.sessionToken) throw new Error('服務未提供有效 session');
-      session = started; $('logout').hidden = false; $('account-form').inert = true; $('account-form').hidden = true;
+      session = started; sessionDeadline = Date.now() + Math.min(600, started.expiresInSeconds || 600) * 1000; $('logout').hidden = false; $('account-form').inert = true; $('account-form').hidden = true;
       expiryTimer = setTimeout(() => { clear(); say('登入 session 已到期，原私鑰與未完成申請資料已清除。如 Apple 操作結果不確定，請先檢查帳號中的憑證狀態，不要直接建立新申請。'); }, Math.min(600, started.expiresInSeconds || 600) * 1000);
       await poll(current);
     } catch (error) { if (current === generation) say(error.name === 'AbortError' ? '已取消' : error.message); }
     finally { if (current === generation) { busy = false; if (!session) { $('login-button').disabled = false; $('logout').hidden = true; showLogin(); } } }
   };
   $('two-factor').onsubmit = async (event) => {
-    event.preventDefault(); if (!session || twoFactorUnknown || codeSubmitting || $('verify-button').disabled) return;
+    event.preventDefault(); if (!session || phase !== 'twoFactor' || twoFactorUnknown || codeSubmitting || $('verify-button').disabled) return;
     const current = generation;
     const code = $('verification-code').value; $('verification-code').value = '';
     if (!/^\d{6}$/.test(code)) return say('請輸入 6 位數驗證碼');
     codeSubmitting = true; $('verify-button').disabled = true;
-    try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'submitCode', code }) }); if (current === generation) say('已送出驗證碼，等待 Apple 回應…'); } catch (error) { if (current === generation) say(error.message); } finally { if (current === generation) { codeSubmitting = false; $('verify-button').disabled = twoFactorUnknown; } }
+    try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'submitCode', code }) }); if (current === generation && phase === 'twoFactor') say('已送出驗證碼，等待 Apple 回應…'); } catch (error) { if (current === generation && phase === 'twoFactor') say(error.message); } finally { if (current === generation && phase === 'twoFactor') { codeSubmitting = false; $('verify-button').disabled = twoFactorUnknown; } }
   };
-  $('resend-code').onclick = async () => { if (!session) return; const current = generation; try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'sendToDevices' }) }); if (current === generation) say('已要求 Apple 裝置驗證碼'); } catch (error) { if (current === generation) say(error.message); } };
+  $('resend-code').onclick = async () => { if (!session || phase !== 'twoFactor') return; const current = generation; try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'sendToDevices' }) }); if (current === generation && phase === 'twoFactor') say('已要求 Apple 裝置驗證碼'); } catch (error) { if (current === generation && phase === 'twoFactor') say(error.message); } };
   $('send-sms').onclick = async () => {
-    if (!session || !$('phone-choice').options.length) return;
+    if (!session || phase !== 'twoFactor' || !$('phone-choice').options.length) return;
     const current = generation, numberId = Number($('phone-choice').value); if (!Number.isSafeInteger(numberId)) return;
     $('send-sms').disabled = true;
-    try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'sendSms', numberId }) }); if (current === generation) say('已要求 Apple 傳送簡訊驗證碼'); }
-    catch (error) { if (current === generation) say(error.message); }
-    finally { if (current === generation) $('send-sms').disabled = false; }
+    try { await request(`v1/sessions/${session.sessionId}/2fa`, { method: 'POST', body: JSON.stringify({ action: 'sendSms', numberId }) }); if (current === generation && phase === 'twoFactor') say('已要求 Apple 傳送簡訊驗證碼'); }
+    catch (error) { if (current === generation && phase === 'twoFactor') say(error.message); }
+    finally { if (current === generation && phase === 'twoFactor') $('send-sms').disabled = false; }
   };
   $('provision-form').onsubmit = async (event) => {
     event.preventDefault(); if (!session || !['authenticated', 'provisioning', 'provisionRetry'].includes(phase) || !$('provision-consent').checked || $('provision-button').disabled) return;

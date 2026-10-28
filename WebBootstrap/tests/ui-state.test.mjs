@@ -375,3 +375,52 @@ test('DOM mock: provider disclosure is explicit before unchecked login consent; 
     submit(e, 'account-form'); await tick(); assert(!e.calls.some(call => call.options.method === 'POST'));
   } finally { e.dispose(); }
 });
+
+test('DOM mock: Teams failure is terminal; one explicit retry keeps the same session and makes no mutation', async () => {
+  const reads = []; let calls = 0;
+  const e = await environment({ service: true, fetcher: sessionFetcher((url, opts) => {
+    if (url.endsWith('/teams')) { reads.push({url, authorization:opts.headers.Authorization}); if (++calls === 1) return Response.json({error:'appleRequestFailed',diagnostic:{stage:'developerTeams',kind:'developerRejected',upstream:'apple',appleCode:1234,message:'PRIVATE'}},{status:502}); }
+  }) });
+  try {
+    loginInputs(e); submit(e,'account-form'); await until(()=>e.$('journey-title').textContent==='Team 讀取失敗');
+    assert(e.$('two-factor').hidden); assert(e.$('verify-button').disabled); assert(e.$('resend-code').disabled); assert(e.$('send-sms').disabled); assert(e.$('provision-form').hidden);
+    assert(e.$('account-status').textContent.includes('Apple 代碼 1234')); assert(!e.$('account-status').textContent.includes('PRIVATE')); assert(!e.$('retry-teams').hidden); assert(e.$('ipa').disabled);
+    submit(e,'two-factor'); await e.$('resend-code').onclick(); await e.$('send-sms').onclick(); await tick(); assert.equal(calls,1); assert(!e.calls.some(c=>c.url.endsWith('/2fa')));
+    e.$('retry-teams').click(); e.$('retry-teams').click(); await until(()=>!e.$('provision-form').hidden);
+    assert.equal(calls,2); assert.deepEqual(reads[0],reads[1]); assert(e.$('retry-teams').hidden);
+    assert.equal(e.calls.filter(c=>c.url.endsWith('/v1/sessions')&&c.options.method==='POST').length,1); assert(!e.calls.some(c=>c.url.endsWith('/provision')));
+  } finally { e.dispose(); }
+});
+test('DOM mock: repeated Teams failure exhausts manual retry, and original expiry clears it without relogin', async () => {
+  let reads=0;
+  const e = await environment({service:true,fetcher:sessionFetcher((url,opts)=>{
+    if(url.endsWith('/v1/sessions')&&opts.method==='POST')return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',expiresInSeconds:1});
+    if(url.endsWith('/teams')) {reads++;return Response.json({error:'appleRequestFailed',diagnostic:{stage:'developerTeams',kind:'upstreamTimeout',upstream:'unknown'}},{status:504});}
+  })});
+  try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('retry-teams').hidden);e.$('retry-teams').click();await until(()=>reads===2&&e.$('journey-title').textContent==='Team 讀取失敗');
+    assert(e.$('retry-teams').hidden);e.$('retry-teams').onclick();await tick();assert.equal(reads,2);
+    await until(()=>e.$('account-status').textContent.includes('session 已到期'));assert(e.$('retry-teams').hidden);assert(e.$('two-factor').hidden);assert.equal(e.$('apple-id').value,'');
+    assert.equal(e.calls.filter(c=>c.url.endsWith('/v1/sessions')&&c.options.method==='POST').length,1);
+  }finally{e.dispose();}
+});
+test('DOM mock: unauthorized Teams response disables retry; cancelled late read cannot revive preparation', async () => {
+  const e = await environment({service:true,fetcher:sessionFetcher(url=>url.endsWith('/teams')?Response.json({error:'expired'},{status:410}):undefined)});
+  try{loginInputs(e);submit(e,'account-form');await until(()=>e.$('journey-title').textContent==='Team 讀取失敗');assert(e.$('retry-teams').hidden);assert(e.$('account-status').textContent.includes('session 已到期'));}finally{e.dispose();}
+  let release;const held=new Promise(resolve=>release=resolve);let reads=0;
+  const f = await environment({service:true,fetcher:sessionFetcher(async url=>{if(url.endsWith('/teams')){if(++reads===1)return Response.json({error:'appleRequestFailed'},{status:502});await held;}})});
+  try{loginInputs(f);submit(f,'account-form');await until(()=>!f.$('retry-teams').hidden);f.$('retry-teams').click();await until(()=>reads===2);f.$('logout').click();release();await tick();await tick();assert(f.$('provision-form').hidden);assert(f.$('retry-teams').hidden);assert(f.$('account-status').textContent.includes('已取消'));}finally{release();f.dispose();}
+});
+test('DOM mock: late 2FA response cannot overwrite terminal Teams failure or reenable verification', async () => {
+  let verified=false, release; const held=new Promise(resolve=>release=resolve); let submissions=0;
+  const e=await environment({service:true,fetcher:sessionFetcher(async(url,opts)=>{
+    if(url.endsWith('/v1/sessions/synthetic-id')&&opts.method!=='DELETE')return Response.json({state:verified?'authenticated':'awaitingTwoFactor',challenge:{unknown:false,numbers:[]}});
+    if(url.endsWith('/2fa')){submissions++;verified=true;await held;return new Response(null,{status:202});}
+    if(url.endsWith('/teams'))return Response.json({error:'appleRequestFailed',diagnostic:{stage:'developerTeams',kind:'upstreamTimeout'}},{status:504});
+  })});
+  try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('two-factor').hidden);e.$('verification-code').value='123456';submit(e,'two-factor');submit(e,'two-factor');
+    await until(()=>e.$('journey-title').textContent==='Team 讀取失敗');const failure=e.$('account-status').textContent;release();await tick();await tick();
+    assert.equal(submissions,1);assert.equal(e.$('account-status').textContent,failure);assert(e.$('verify-button').disabled);assert(e.$('two-factor').hidden);
+  }finally{release();e.dispose();}
+});

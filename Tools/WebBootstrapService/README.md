@@ -265,11 +265,11 @@ The archived Apple example includes an obsolete CA. This service deliberately
 does not import it or claim modern Apple-device attestation. It reports only
 untrusted metadata until the user reviews and explicitly elects to register it.
 
-### Privacy-preserving login diagnostics
+### Privacy-preserving login and Team-list diagnostics
 
 A failed login session retains the existing `appleAuthenticationFailed` error and
 may include `diagnostic` in the bearer-authorized, no-store session response.
-Only fixed stage/kind enums and optional numeric `appleCode`/`httpStatus` are
+Only fixed stage/kind/upstream-service enums and optional numeric `appleCode`/`httpStatus` are
 returned. No upstream message, URL, response body, attachment, account identifier,
 password or verification code is formatted or logged. Unknown error types remain
 `unknown`; they are not classified by searching private message text.
@@ -280,6 +280,22 @@ app token. A task failure is separate. These stages do not identify every intern
 upstream substep. HTTP 403/429 alone is **not** proof of IP blocking, and a failed
 login is not proof of an incorrect password. Existing historical failures cannot
 be reconstructed because detailed error reports were intentionally discarded.
+
+The read-only `GET /v1/sessions/{id}/teams` response also retains its existing
+`appleRequestFailed` code while adding the same bounded diagnostic shape. Its
+stage is `developerTeams`; typed DeveloperError codes are numeric only, and the
+existing 120-second operation deadline is explicitly classified as
+`upstreamTimeout`. That deadline can cover Anisette header preparation or the
+Apple developer request, so timeout alone does not identify the failing service.
+Lookup, cancellation and expiry keep their existing errors. Diagnostics do not
+add automatic Apple requests, automatic retries, a new data recipient or longer
+session TTL.
+The browser presents Team-list failure as terminal, rather than leaving a 2FA
+waiting screen. A displayed error is not evidence that work is still running.
+Before the original session deadline, an explicit user action can retry that
+same read-only Team request at most once. It does not repeat login, resubmit 2FA,
+create devices/certificates/profiles, or reset the session expiry timer. Expiry,
+cancellation and stale responses cannot reopen the action.
 
 When Apple/upstream cannot identify an active 2FA method, the UI requires choosing
 trusted devices or an available SMS number before accepting a code. The backend

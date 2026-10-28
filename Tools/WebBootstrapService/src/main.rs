@@ -426,25 +426,45 @@ async fn teams(
     State(app): State<Arc<App>>,
     Path(id): Path<String>,
     headers: HeaderMap,
-) -> ApiResult<Json<serde_json::Value>> {
+) -> Result<Json<serde_json::Value>, TeamsError> {
     let session = lookup(&app, &id, &headers).await?;
     let operation = async {
         let mut developer = session.developer.lock().await;
         let dev = developer
             .as_mut()
             .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))?;
-        let teams = dev
-            .list_teams()
-            .await
-            .map_err(|_| ApiError(StatusCode::BAD_GATEWAY, ErrorCode::AppleRequestFailed))?;
+        let teams = dev.list_teams().await.map_err(TeamsError::upstream)?;
         Ok(Json(
             json!({"teams":teams.into_iter().map(|t| json!({"id":t.team_id,"name":t.name,"type":t.r#type,"status":t.status})).collect::<Vec<_>>()}),
         ))
     };
-    tokio::select! {
-        _ = session.cancel.cancelled() => Err(ApiError(StatusCode::GONE, ErrorCode::Expired)),
-        result = tokio::time::timeout(UPSTREAM_TIMEOUT, operation) => result.map_err(|_| ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::AppleRequestFailed))?,
+    teams_read(&session, UPSTREAM_TIMEOUT, operation).await
+}
+
+/// Preserve the original two-minute bound, cancellation and session lifetime.
+/// The timeout is injectable only by local tests; clients cannot alter it.
+async fn teams_read<T>(
+    session: &Session,
+    timeout: Duration,
+    operation: impl std::future::Future<Output = Result<T, TeamsError>>,
+) -> Result<T, TeamsError> {
+    if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+        return Err(ApiError(StatusCode::GONE, ErrorCode::Expired).into());
     }
+    if session.view.lock().await.state != "authenticated" {
+        return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState).into());
+    }
+    let remaining = TTL.saturating_sub(session.created.elapsed());
+    let result = tokio::select! {
+        biased;
+        _ = session.cancel.cancelled() => Err(ApiError(StatusCode::GONE, ErrorCode::Expired).into()),
+        result = tokio::time::timeout(timeout.min(remaining), operation) =>
+            result.unwrap_or_else(|_| Err(TeamsError::timeout())),
+    };
+    if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+        return Err(ApiError(StatusCode::GONE, ErrorCode::Expired).into());
+    }
+    result
 }
 /// Bounded read-only work does not extend a session or survive cancellation.
 async fn authenticated_read<T>(
@@ -570,6 +590,168 @@ mod tests {
             provision: Mutex::new(None),
         })
     }
+    #[tokio::test]
+    async fn teams_diagnostics_response_is_private_safe_and_timeout_is_distinct() {
+        use rootcause::prelude::*;
+        let error = TeamsError::upstream(
+            report!(isideload::SideloadError::DeveloperError(
+                1100,
+                "SYNTHETIC_ACCOUNT_TOKEN_BODY".into()
+            ))
+            .context("SYNTHETIC_CONTEXT")
+            .into(),
+        );
+        let response = error.into_response();
+        assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+        let body = axum::body::to_bytes(response.into_body(), 4096)
+            .await
+            .unwrap();
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            json!({
+                "error":"appleRequestFailed", "diagnostic": {
+                    "stage":"developerTeams", "kind":"developerRejected", "upstream":"apple", "appleCode":1100
+                }
+            })
+        );
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        let error = teams_read(
+            &session,
+            Duration::ZERO,
+            std::future::pending::<Result<(), TeamsError>>(),
+        )
+        .await
+        .unwrap_err();
+        let response = error.into_response();
+        assert_eq!(response.status(), StatusCode::GATEWAY_TIMEOUT);
+        let body = axum::body::to_bytes(response.into_body(), 4096)
+            .await
+            .unwrap();
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            json!({
+                "error":"appleRequestFailed", "diagnostic": {
+                    "stage":"developerTeams", "kind":"upstreamTimeout", "upstream":"unknown"
+                }
+            })
+        );
+        assert_eq!(session.view.lock().await.state, "authenticated");
+    }
+
+    #[tokio::test]
+    async fn teams_read_preserves_expiry_wrong_state_and_cancellation_without_diagnostics() {
+        for (state, age, cancel, status, code) in [
+            ("authenticated", TTL, false, StatusCode::GONE, "expired"),
+            (
+                "authenticated",
+                Duration::ZERO,
+                true,
+                StatusCode::GONE,
+                "expired",
+            ),
+            (
+                "starting",
+                Duration::ZERO,
+                false,
+                StatusCode::CONFLICT,
+                "wrongState",
+            ),
+        ] {
+            let session = synthetic_session(state, age);
+            if cancel {
+                session.cancel.cancel();
+            }
+            let error = teams_read(&session, UPSTREAM_TIMEOUT, async {
+                panic!("inadmissible teams read must not execute");
+                #[allow(unreachable_code)]
+                Ok::<_, TeamsError>(())
+            })
+            .await
+            .unwrap_err();
+            let response = error.into_response();
+            assert_eq!(response.status(), status);
+            let body = axum::body::to_bytes(response.into_body(), 4096)
+                .await
+                .unwrap();
+            assert_eq!(
+                serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+                json!({"error":code})
+            );
+        }
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        let cancel = session.cancel.clone();
+        let error = teams_read(&session, UPSTREAM_TIMEOUT, async move {
+            cancel.cancel();
+            Ok::<_, TeamsError>("late response must not escape")
+        })
+        .await
+        .unwrap_err();
+        assert!(matches!(
+            error.error,
+            ApiError(StatusCode::GONE, ErrorCode::Expired)
+        ));
+        assert!(error.diagnostic.is_none());
+    }
+
+    #[tokio::test]
+    async fn teams_waiting_read_is_cancelled_and_dropped_not_retried() {
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        let (entered_tx, entered_rx) = tokio::sync::oneshot::channel();
+        let worker = session.clone();
+        let task = tokio::spawn(async move {
+            teams_read(&worker, UPSTREAM_TIMEOUT, async {
+                entered_tx.send(()).unwrap();
+                std::future::pending::<Result<(), TeamsError>>().await
+            })
+            .await
+        });
+        entered_rx.await.unwrap();
+        session.cancel.cancel();
+        let error = task.await.unwrap().unwrap_err();
+        assert!(matches!(
+            error.error,
+            ApiError(StatusCode::GONE, ErrorCode::Expired)
+        ));
+        assert!(error.diagnostic.is_none());
+    }
+
+    #[tokio::test]
+    async fn teams_route_preserves_authentication_status_codes_and_no_store() {
+        use tower::ServiceExt;
+        let app = test_app();
+        app.sessions
+            .write()
+            .await
+            .insert("id".into(), synthetic_session("starting", Duration::ZERO));
+        for (id, token, expected, code) in [
+            (
+                "absent",
+                "synthetic-bearer",
+                StatusCode::NOT_FOUND,
+                "notFound",
+            ),
+            ("id", "wrong", StatusCode::UNAUTHORIZED, "unauthorized"),
+            ("id", "synthetic-bearer", StatusCode::CONFLICT, "wrongState"),
+        ] {
+            let request = axum::http::Request::builder()
+                .uri(format!("/v1/sessions/{id}/teams"))
+                .header("host", "127.0.0.1:8787")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .body(axum::body::Body::empty())
+                .unwrap();
+            let response = routes(app.clone()).oneshot(request).await.unwrap();
+            assert_eq!(response.status(), expected);
+            assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+            let body = axum::body::to_bytes(response.into_body(), 4096)
+                .await
+                .unwrap();
+            assert_eq!(
+                serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+                json!({"error":code})
+            );
+        }
+    }
+
     #[tokio::test]
     async fn unknown_two_factor_rejects_code_without_consuming_challenge() {
         let app = test_app();

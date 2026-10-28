@@ -45,6 +45,56 @@ impl IntoResponse for ApiError {
         (self.0, Json(serde_json::json!({"error": self.1}))).into_response()
     }
 }
+/// Diagnostics are intentionally restricted to the read-only teams endpoint.
+/// Existing authentication/admission errors retain their old status and body.
+#[derive(Clone, Copy, Debug)]
+pub struct TeamsError {
+    pub error: ApiError,
+    pub diagnostic: Option<crate::login_diagnostics::LoginDiagnostic>,
+}
+impl From<ApiError> for TeamsError {
+    fn from(error: ApiError) -> Self {
+        Self {
+            error,
+            diagnostic: None,
+        }
+    }
+}
+impl IntoResponse for TeamsError {
+    fn into_response(self) -> Response {
+        match self.diagnostic {
+            Some(diagnostic) => (
+                self.error.0,
+                Json(serde_json::json!({
+                    "error": self.error.1, "diagnostic": diagnostic,
+                })),
+            )
+                .into_response(),
+            None => self.error.into_response(),
+        }
+    }
+}
+impl TeamsError {
+    pub fn upstream(report: rootcause::Report) -> Self {
+        Self {
+            error: ApiError(StatusCode::BAD_GATEWAY, ErrorCode::AppleRequestFailed),
+            diagnostic: Some(crate::login_diagnostics::classify(
+                crate::login_diagnostics::LoginStage::DeveloperTeams,
+                report,
+            )),
+        }
+    }
+    pub fn timeout() -> Self {
+        Self {
+            error: ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::AppleRequestFailed),
+            diagnostic: Some(crate::login_diagnostics::LoginDiagnostic::new(
+                crate::login_diagnostics::LoginStage::DeveloperTeams,
+                crate::login_diagnostics::LoginFailureKind::UpstreamTimeout,
+            )),
+        }
+    }
+}
+
 pub type ApiResult<T> = Result<T, ApiError>;
 pub fn invalid() -> ApiError {
     ApiError(StatusCode::BAD_REQUEST, ErrorCode::InvalidRequest)

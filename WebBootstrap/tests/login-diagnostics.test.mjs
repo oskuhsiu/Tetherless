@@ -27,3 +27,8 @@ test('upstream attribution accepts only fixed enum labels, never hosts or raw UR
     assert.doesNotMatch(text, /來源：|private|iloader|constructor|__proto__/);
   }
 });
+test('Teams diagnostic labels only disclose bounded codes, not server details', () => {
+  const text = loginDiagnosticText({ stage: 'developerTeams', kind: 'developerRejected', upstream: 'apple', appleCode: 1234, message: 'PRIVATE' });
+  assert.match(text, /讀取 Apple Team／Apple 開發者服務回應拒絕／來源：Apple 服務／Apple 代碼 1234/); assert(!text.includes('PRIVATE'));
+  assert.match(loginDiagnosticText({ stage: 'developerTeams', kind: 'upstreamTimeout' }), /上游操作逾時/);
+});
