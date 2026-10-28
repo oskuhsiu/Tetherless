@@ -83,3 +83,13 @@ test('browser config uses both paths, locked default Chromium, bounded run and r
   assert.equal(config.webServer.reuseExistingServer, false);
   assert.equal(config.testMatch, '**/*.spec.js');
 });
+
+test('enrollment TTL fixture shares a fixed logical time without weakening the exact cap', async () => {
+  const source = await readFile(new URL('./device-enrollment.spec.js', import.meta.url), 'utf8');
+  assert(source.includes('const expiry=now()+120000'));
+  assert(source.includes('Math.floor((expiry-now())/1000)'));
+  assert(source.includes('fixture(context,{now:()=>fixedNow})'));
+  for (const page of ['original', 'callback']) assert(source.includes(`await ${page}.clock.setFixedTime(fixedNow)`));
+  assert(source.includes('expect(stored.expiresAt).toBeLessThanOrEqual(expiry)'));
+  assert(!source.includes('toBeLessThanOrEqual(expiry+'));
+});

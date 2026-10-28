@@ -15,8 +15,8 @@ const dist=resolve('dist');
 test.use({ignoreHTTPSErrors:true});
 let server;
 test.afterEach(async()=>{if(server){const current=server;server=undefined;current.closeAllConnections();await new Promise(r=>current.close(r));}});
-async function fixture(context,{cookie=true}={}) {
-  const calls=[],blocked=[];const expiry=Date.now()+120000;
+async function fixture(context,{cookie=true,now=Date.now}={}) {
+  const calls=[],blocked=[];const expiry=now()+120000;
   const keys=forge.pki.rsa.generateKeyPair(2048),cert=forge.pki.createCertificate();
   cert.publicKey=keys.publicKey;cert.serialNumber='01';cert.validity.notBefore=new Date(Date.now()-60000);cert.validity.notAfter=new Date(Date.now()+3600000);
   cert.setSubject([{name:'commonName',value:'SYNTHETIC LOOPBACK TEST NOT PRODUCTION'}]);cert.setIssuer(cert.subject.attributes);cert.setExtensions([{name:'subjectAltName',altNames:[{type:7,ip:'127.0.0.1'}]}]);cert.sign(keys.privateKey,forge.md.sha256.create());
@@ -34,7 +34,7 @@ async function fixture(context,{cookie=true}={}) {
       calls.push({path,method:req.method});
       if(path!==`/v1/device-enrollments/${id}`)return json(409,{error:'unexpected'});
       const authorized=req.headers.cookie?.split(';').map(v=>v.trim()).includes(`__Secure-tetherless-enrollment=${cookieValue}`);
-      return authorized?json(200,{state:'received',device:{udid},expiresInSeconds:Math.max(0,Math.floor((expiry-Date.now())/1000))}):json(401,{error:'unauthorized'});
+      return authorized?json(200,{state:'received',device:{udid},expiresInSeconds:Math.max(0,Math.floor((expiry-now())/1000))}):json(401,{error:'unauthorized'});
     }
     const file=resolve(dist,'.'+(path==='/'?'/index.html':path));
     if(!file.startsWith(dist+'/'))return json(404,{error:'notFound'});
@@ -50,10 +50,16 @@ async function fixture(context,{cookie=true}={}) {
   return {calls,blocked,expiry,origin};
 }
 for(const order of ['original-first','callback-first']) test(`Settings callback ${order} can read without consuming another tab's result`,async({context})=>{
-  const {calls,blocked,expiry,origin}=await fixture(context);
+  // One logical timestamp for the server TTL and both pages: reconstructing a
+  // remaining TTL after network delay cannot reproduce the exact server clock.
+  // Keep HTTPS, cookies and timers real; do not relax the exact expiry bound.
+  const fixedNow=Date.now();
+  const {calls,blocked,expiry,origin}=await fixture(context,{now:()=>fixedNow});
   const original=await context.newPage();
+  await original.clock.setFixedTime(fixedNow);
   await original.addInitScript(({id,expiry})=>sessionStorage.setItem('tetherless-device-enrollment',JSON.stringify({id,expiresAt:expiry})),{id,expiry});
   const callback=await context.newPage();
+  await callback.clock.setFixedTime(fixedNow);
   const first=order==='original-first'?original:callback,second=order==='original-first'?callback:original;
   const open=async page=>{await page.goto(origin+(page===callback?`/#device-collected=${id}`:'/'));await expect(page.locator('#account-udid')).toHaveValue(udid);};
   await open(first);await open(second);
