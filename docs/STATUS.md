@@ -1,5 +1,32 @@
 # Tetherless development status
 
+## Certificate lifecycle — 2026-10-28 (implementation checkpoint; NOT deployed)
+
+Current work is isolated on `feature/certificate-lifecycle`, based on main
+`c3b8f7c736f2b6c56ab1a20ed085a83ea672573b`. The previous login/Team diagnostics
+are historical entries below. This new candidate is not validated by that main
+commit's green CI.
+
+Scope: explicit encrypted web recovery before issuance; separate certificate
+readback/export from profile creation; same-key recovery across sessions; bounded
+certificate listing and exact, explicitly confirmed revocation; native signing
+material import/export and removal of free-account bulk revocation defaults.
+See [the lifecycle contract](CERTIFICATE_LIFECYCLE.md) for failure and privacy
+boundaries. No real Apple account, signing key or certificate mutation is used in
+tests, and no Render deployment or service-window extension is part of this work.
+
+Local verification after integration:
+
+- Rust: **62/62 tests**, release build, and **7** real loopback HTTP health/origin/session admission checks passed. Reproducible commands and source hashes are in `Tools/WebBootstrapService/VERIFICATION.md` and its lifecycle JSON record.
+- Web: **172/172** unit/DOM/crypto/actual pinned-WASM tests and production build passed. Five new browser scenarios are discovered as ten Chromium/WebKit cases; discovery is NOT execution.
+- Native focused Python: **25 passed, 1 skipped** (26 total, including 20 existing certificate tests). The new suite has five passing source/resource/Node–OpenSSL tests and one macOS-only Swift/JavaScriptCore/Security harness not run here.
+- Full Integration suite: **510 total; 470 passed, 32 skipped, 1 failure and 7 errors**, all eight failures/errors requiring missing `swiftc`. Do not describe the aggregate as green.
+- `swift test` and `swift test -c release` are blocked (`swift: command not found`). Unsigned native Debug/Release, actual JSCore/Security interoperability, app-resource packaging, and actual Chromium/WebKit execution require CI. The official local browser archive URL returned HTML rather than a ZIP.
+- Independent review reproduced the old plaintext native P12 builder, verified new protected output with OpenSSL and the real WASM signer, and checked cancellation/retry/revocation races. No live Apple account operation or iPhone install/launch/readback was tested.
+
+The user authorized publication to an isolated branch and a **draft PR for CI only**. No main/develop update, merge, deployment or live Apple certificate action is authorized by that approval. The existing main-based checkout is intentional: develop is 89 commits behind main; using it as the draft target would add unrelated history. Exact published SHA and CI outcomes must be recorded before reporting those stages passed.
+
+
 ## Apple login diagnostics — 2026-10-28 (local candidate, not deployed)
 
 Base: main `22ed2fa4962eebed156e2747e32b8d7232db8dca`; the current profile

@@ -17,7 +17,7 @@ Retain these dependency notices when distributing. This service's source is AGPL
 - Trusted-device and SMS 2FA: `TwoFactorCallbackParams/Response`
 - Developer session: `DeveloperSession::from_account(...)`
 - Teams: `TeamsApi::list_teams`
-- Certificates: `CertificatesApi::list_ios_certs/submit_development_csr`
+- Certificates: `CertificatesApi::list_ios_certs/submit_development_csr/revoke_development_cert` (revocation requires a fresh, exact, one-use user confirmation)
 - Device registration: `DevicesApi::list_devices/add_device`
 - App IDs and profiles: `AppIdsApi::list_app_ids/add_app_id/update_app_id/download_team_provisioning_profile`
 - Shared App Groups: `AppGroupsApi::list_app_groups/add_app_group/assign_app_group`
@@ -107,7 +107,7 @@ account endpoints require `Authorization: Bearer <sessionToken>`. Never put the 
 password or 2FA code in a URL. Session IDs alone confer no access.
 
 1. `GET /health` returns `protocol:1`, `appleAuthAvailable:true` and
-   `liveAppleAcceptance:false`. `profileServiceAvailable` is true only with a
+   `liveAppleAcceptance:false`, `certificateLifecycle:1`. New clients require this capability before certificate actions. `profileServiceAvailable` is true only with a
    configured HTTPS origin. Available means the real adapter is compiled;
    it is not evidence of a successful Apple login or an installable IPA.
 2. `POST /v1/sessions` with `{appleId,password}` returns HTTP 202 and
@@ -123,13 +123,19 @@ password or 2FA code in a URL. Session IDs alone confer no access.
    - `{action:"sendToDevices"}`
    - `{action:"resendCode"}`
 5. `GET /v1/sessions/{id}/teams` returns `{teams:[{id,name,type,status}]}`.
-6. After the user chooses a team and explicitly approves the listed mutations,
-   `POST /v1/sessions/{id}/provision` accepts:
+6. After the user chooses a team, explicitly downloads an encrypted recovery
+   file containing their key/CSR **locally**, and approves certificate creation,
+   `POST /v1/sessions/{id}/certificate` accepts the following full request. The
+   full device metadata preserves existing-device admission before issuance.
+   `certificateIntent` must be `createOrReuse` for explicit new issuance; missing
+   intent and recovery imports default to `reuseOnly`. No private key, recovery
+   file, export password or P12 is accepted by this API.
 
 ```json
 {
   "consent": "register-device-app-ids-and-issue-certificate",
   "teamId": "EXAMPLE123",
+  "certificateIntent": "createOrReuse",
   "device": {"udid":"0000000000000000000000000000000000000000","name":"My iPhone"},
   "csrPem":"-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
   "machineName":"Tetherless Web Bootstrap",
@@ -137,12 +143,22 @@ password or 2FA code in a URL. Session IDs alone confer no access.
 }
 ```
 
-The example is synthetic, not a request to send it to Apple. The response is
+The example is synthetic, not a request to send it to Apple. This certificate
+stage returns `{teamId,certificateDerBase64,certificateSerial,certificateReused}`
+**before** any device registration, App ID, App Group or profile mutations. The
+browser can therefore immediately export an encrypted P12 even if later profile
+preparation fails. A certificate matching multiple records is rejected as
+ambiguous; the browser also validates the certificate against its local key.
+
+After receiving/exporting the certificate, the client explicitly calls
+`POST /v1/sessions/{id}/provision` with the same full request. This stage NEVER
+issues a certificate, including for older clients. It requires the exact CSR
+public key to match a currently listed owned-Team certificate. Its response is
 `{teamId,certificateDerBase64,certificateSerial,certificateReused,
 appGroupIdentifier,profiles:[{bundleId,profileBase64,profileId}],
 verification:"cmsSignatureAndMetadataOnly"}`.
 The service reuses an existing selected-team certificate when its public key
-matches the CSR, otherwise submits exactly one development CSR. Returned
+matches the CSR. Only the separate certificate endpoint with explicit create intent can submit a development CSR. Returned
 certificate public key and validity are checked with the existing `x509-cert`
 library. Optional `appGroup:{identifier,name}` requires the separate consent
 `register-device-app-ids-app-group-and-issue-certificate`. It lists/creates that
@@ -159,13 +175,52 @@ label reflects that limited evidence. These checks do not modify or replace
 native signing admission/parsers and do not establish Apple chain trust or
 physical launch acceptance.
 
-An identical repeat returns the same stored result or `busy`. A changed request
-in that session is rejected. HTTP disconnect does not restart the mutation.
-No certificate is automatically revoked. Capacity yields `certificateLimit`.
-Timeout/cancellation can leave an Apple mutation committed: treat
-`provisioningUncertain` as requiring inspection, not permission to issue again.
-There is no durable crash-recovery journal for this transient service. Keep the
-browser's original key/CSR until the user resolves an uncertain result.
+An identical successful profile repeat returns the stored result; a running
+attempt returns `busy`. A failed identical profile request can explicitly resume,
+re-reading resources before mutation. Changed requests within the same session
+are rejected. This is safe against duplicate certificate issuance because the
+profile endpoint cannot submit a CSR. No certificate is automatically revoked.
+Capacity yields `certificateLimit`; missing readback yields `certificateMissing`,
+which **does not prove that no earlier CSR is pending**.
+
+Certificate operations and profile mutations are serialized across all sessions
+in this process. A write-ahead, Team-scoped issuance guard is set before CSR
+submission. Uncertain transport, timeout and cancellation results permit only
+readback/reuse, including from another tab, another session or a different key.
+Only a typed capacity rejection of THIS request removes its newly created guard;
+this says nothing about earlier pending requests. Revoking an unrelated existing
+certificate cannot clear an uncertain submission. Guards are bounded and never
+silently evicted. They are **not durable across a service restart or shared across
+multiple instances**: do not deploy this candidate as a multi-instance issuer.
+Imported recovery files always use `reuseOnly`; creating a new identity requires
+a separate explicit action and a new encrypted backup. There is no automatic issuance/revocation retry loop.
+
+### Explicit certificate catalog and revocation
+
+- `GET /v1/sessions/{id}/teams/{teamId}/certificates` rechecks authenticated Team
+  ownership and returns `{teamId,certificates:[{id,serial,name,machineName,
+  expiresAt,status,confirmationToken}]}`. All metadata fields can be null. It is
+  the current Apple directory, not issuance history or a pending-CSR inventory.
+  It contains no certificate bytes, private keys, machine ID or raw Apple error.
+  Unsafe/oversized strings are omitted; maximum 128 certificates/128 Teams.
+- After displaying the selected certificate ID, serial, Team and the effect on
+  all profiles/apps using it, the user must explicitly confirm revocation.
+  `POST /v1/sessions/{id}/teams/{teamId}/certificates/revoke` accepts
+  `{certificateId,certificateSerial,confirmationToken,
+  consent:"revoke-selected-development-certificate"}`.
+- Confirmation expires in five minutes, is bound to session/Team/exact public
+  record, and is replaced by a new catalog read. The server re-reads the directory
+  before mutation; changed or duplicate identity records fail closed. The token
+  is consumed before the single revocation call. Uncertain revocations cannot
+  be replayed even using a fresh token. Success requires absence on readback and
+  returns `{revoked:true,certificateId,teamId}`. It NEVER issues a replacement.
+- A fresh explicit creation action is required after revocation. Revocation may
+  invalidate existing profiles and break already-installed apps. Lost private
+  keys cannot be recovered from this catalog, a `.cer`, or an IPA.
+- All routes retain bearer/Origin/Host protections, no-store responses, the
+  original session deadline, fixed error codes and bounded operation deadlines.
+  Tests use synthetic certificates and injected adapters only; no account,
+  revocation, Apple login or real installation acceptance is claimed.
 
 7. `DELETE /v1/sessions/{id}` cancels work and removes the session. Cancellation
    does not undo a mutation already committed by Apple. Expiry likewise does not

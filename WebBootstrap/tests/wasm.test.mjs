@@ -1,6 +1,7 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs'; import vm from 'node:vm';
 import { ZipReader, Uint8ArrayReader, Uint8ArrayWriter } from '@zip.js/zip.js';
+import { importP12, exportP12 } from '../src/certificate-recovery.js';
 import { makeIpa, makeMaterial } from './fixtures.mjs';
 async function module() {
   const sandbox = { console, WebAssembly, TextDecoder, TextEncoder, URL, performance, setTimeout, clearTimeout, crypto, process };
@@ -21,4 +22,14 @@ test('real WASM performs certificate-backed signing and archives synthetic input
   const executable = await entries.find((e) => e.filename === 'Payload/Fixture.app/Fixture').getData(new Uint8ArrayWriter());
   assert(!Buffer.from(executable).equals(readFileSync(new URL('./fixtures/demo1.dylib', import.meta.url))));
   await reader.close();
+});
+
+test('real pinned WASM accepts the lifecycle AES-256 encrypted P12 export', async () => {
+  const { mod, logs } = await module(); const material = makeMaterial();
+  const identity = await importP12(new File([material.p12], 'synthetic.p12'), material.password, 'TESTTEAM01');
+  const password = 'synthetic-export-password'; const exported = exportP12(identity, password);
+  mod.FS.mkdir('/work'); mod.FS.chdir('/work'); mod.FS.writeFile('/work/input.ipa', await makeIpa());
+  mod.FS.writeFile('/work/signing.p12', new Uint8Array(await exported.arrayBuffer())); mod.FS.writeFile('/work/profile.mobileprovision', material.profile);
+  assert.equal(mod.callMain(['-k','/work/signing.p12','-p',password,'-m','/work/profile.mobileprovision','-o','/work/signed.ipa','/work/input.ipa']), 0, logs.join('\n'));
+  assert(mod.FS.readFile('/work/signed.ipa').length > 0); assert(logs.join('\n').includes('Archive OK'));
 });

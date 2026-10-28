@@ -1,6 +1,8 @@
 // DOM emulation + mocked worker/service. These are not browser or Apple acceptance tests.
 import test from 'node:test'; import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs'; import { JSDOM } from 'jsdom';
 import forge from 'node-forge';
+import { resolveObjectURL } from 'node:buffer';
+import { importRecovery, importP12 } from '../src/certificate-recovery.js';
 import { makeIpa, makeMaterial, makeSignedFixture } from './fixtures.mjs';
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const tick = () => new Promise((r) => setTimeout(r, 10));
@@ -9,8 +11,10 @@ async function environment({ service = false, profileService = service, config =
   const dom = new JSDOM(html, { url: pageUrl, pretendToBeVisual: true });
   for (const key of ['document', 'location', 'DOMParser', 'window', 'sessionStorage']) globalThis[key] = key === 'window' ? dom.window : dom.window[key];
   if (storedEnrollment !== undefined) dom.window.sessionStorage.setItem('tetherless-device-enrollment', storedEnrollment);
+  const downloads = [];
+  dom.window.HTMLAnchorElement.prototype.click = function () { downloads.push({ name: this.download, blob: resolveObjectURL(this.href) }); }; // synthetic download only; browser suite verifies actual download
   const calls = [];
-  const fakeFetch = async (url, options = {}) => { calls.push({ url: String(url), options }); if (fetcher) { const result = await fetcher(String(url), options); if (result) return result; } if (String(url).endsWith('/health')) return Response.json({ protocol: 1, appleAuthAvailable: service, profileServiceAvailable: profileService }); if (String(url).endsWith('/config.json')) return Response.json(config); return Response.json({ error:'unexpected' }, { status: 404 }); };
+  const fakeFetch = async (url, options = {}) => { calls.push({ url: String(url), options }); if (fetcher) { const result = await fetcher(String(url), options); if (result) return result; } if (String(url).endsWith('/health')) return Response.json({ protocol: 1, certificateLifecycle: 1, appleAuthAvailable: service, profileServiceAvailable: profileService }); if (String(url).endsWith('/config.json')) return Response.json(config); return Response.json({ error:'unexpected' }, { status: 404 }); };
   globalThis.fetch = async (url, options) => { const response = await fakeFetch(url, options); if (!response.url) Object.defineProperty(response, 'url', { value: String(url) }); return response; };
   class MockWorker { static all=[]; constructor() { MockWorker.all.push(this); } postMessage(data) { this.data=data; } terminate() { this.terminated=true; } succeed() { this.onmessage?.({data:{phase:'done',bytes:fixture.signed}}); } }
   globalThis.Worker = MockWorker;
@@ -18,7 +22,7 @@ async function environment({ service = false, profileService = service, config =
   if (service && deviceRoute === 'new') { dom.window.document.getElementById('device-route').value='new'; dom.window.document.getElementById('device-route').dispatchEvent(new dom.window.Event('change')); }
   const $ = (id) => dom.window.document.getElementById(id);
   const setFiles = (id, values) => Object.defineProperty($(id), 'files', { configurable:true, value:values });
-  return { dom, $, calls, MockWorker, setFiles, dispose() { $('clear').click(); dom.window.close(); } };
+  return { dom, $, calls, downloads, MockWorker, setFiles, dispose() { $('clear').click(); dom.window.close(); } };
 }
 let fixture;
 test.before(async()=>{const m=makeMaterial();fixture={ipa:new File([await makeIpa()],'Fixture.ipa'),p12:new File([m.p12],'test.p12'),profile:new File([m.profile],'test.mobileprovision'),password:m.password, material:m};fixture.signed=await makeSignedFixture(fixture.ipa,m);});
@@ -32,11 +36,26 @@ test('DOM mock: empty 202 two-factor response succeeds but cannot overwrite late
 test('DOM mock: enrollment keeps only ID/expiry, survives pagehide, and resumes after persisted pageshow', async()=>{let received=false;const id='11111111-2222-3333-4444-555555555555';const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/device-enrollments')&&opts.method==='POST')return Response.json({enrollmentId:id,profileUrl:`http://127.0.0.1:8787/v1/device-enrollments/${id}/profile/synthetic-capability`,expiresInSeconds:600},{status:201});if(url.includes('/v1/device-enrollments/')&&opts.method!=='DELETE')return Response.json({state:received?'received':'awaitingDevice',device:received?{udid:'00000000-0000000000000000'}:null,verification:'untrustedDeviceMetadata'});if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);const stored=JSON.parse(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert.deepEqual(Object.keys(stored).sort(),['expiresAt','id']);e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));assert(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')&&c.options.method==='DELETE'));received=true;e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pageshow',{persisted:true}));await until(()=>e.$('account-udid').value==='00000000-0000000000000000');assert.equal(e.dom.window.sessionStorage.length,1);assert(e.calls.filter(c=>c.url.includes('/device-enrollments/')).every(c=>c.options.credentials==='same-origin' && c.options.redirect==='error'));}finally{e.dispose();}});
 function submit(e, id) { e.$(id).dispatchEvent(new e.dom.window.Event('submit', { cancelable:true })); }
 function loginInputs(e) { e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid'; e.$('apple-password').value='synthetic-not-a-secret'; e.$('login-consent').checked=true; }
+async function prepareIdentity(e) {
+  e.$('identity-export-password').value = 'synthetic-backup-password';
+  e.$('prepare-identity').click(); await until(() => !e.$('recovery-saved').disabled);
+  e.$('recovery-saved').checked = true; e.$('identity-create-consent').checked = true;
+}
+function syntheticCertificate(body) {
+  const csr = forge.pki.certificationRequestFromPem(JSON.parse(body).csrPem);
+  const certificate = forge.pki.createCertificate(); certificate.publicKey = csr.publicKey; certificate.serialNumber = '01';
+  certificate.validity.notBefore = new Date('2020-01-01'); certificate.validity.notAfter = new Date('2035-01-01');
+  certificate.setSubject([{name:'commonName',value:'Synthetic NOT APPLE'}, {name:'organizationalUnitName',value:JSON.parse(body).teamId}]); certificate.setIssuer(certificate.subject.attributes);
+  const p12 = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(fixture.material.p12.toString('binary')),false,fixture.password);
+  certificate.sign(p12.getBags({bagType:forge.pki.oids.pkcs8ShroudedKeyBag})[forge.pki.oids.pkcs8ShroudedKeyBag][0].key, forge.md.sha256.create());
+  return {teamId:JSON.parse(body).teamId,certificateDerBase64:forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(certificate)).getBytes())};
+}
 function sessionFetcher(extra = () => {}, teams = [{id:'TESTTEAM01',name:'Test Team',type:'personal'}]) { return async (url, opts) => {
   const result = await extra(url, opts); if (result) return result;
   if (url.endsWith('/v1/sessions') && opts.method === 'POST') return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',expiresInSeconds:600});
   if (url.endsWith('/v1/sessions/synthetic-id') && opts.method !== 'DELETE') return Response.json({state:'authenticated'});
   if (url.endsWith('/teams')) return Response.json({teams});
+  if (url.endsWith('/certificate')) return Response.json(syntheticCertificate(opts.body));
   if (opts.method === 'DELETE') return new Response(null,{status:204});
 }; }
 test('DOM mock: progressive default hides technical fields and unconfigured login is guarded even if submitted directly', async()=>{
@@ -81,7 +100,7 @@ test('DOM mock: manual mode and return preserve chosen files but invalidate outp
 test('DOM mock: provisioning retry keeps original CSR, IPA and selection; return cancels and clears it',async()=>{
   let bodies=[];
   const e=await environment({service:true,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/provision')){bodies.push(opts.body); return Response.json({error:'provisioningUncertain'},{status:503});}})});try{
-    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); e.$('account-udid').value='00000000-0000000000000000'; e.$('provision-consent').checked=true; submit(e,'provision-form'); await until(()=>bodies.length===1 && !e.$('provision-button').disabled);
+    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); e.$('account-udid').value='00000000-0000000000000000'; await prepareIdentity(e); e.$('provision-consent').checked=true; submit(e,'provision-form'); await until(()=>bodies.length===1 && !e.$('provision-button').disabled);
     assert(e.$('ipa').disabled); assert(e.$('app-source').disabled); assert(e.$('team').disabled); assert(e.$('provision-button').textContent.includes('同一私鑰'));
     submit(e,'provision-form'); await until(()=>bodies.length===2 && !e.$('provision-button').disabled); assert.equal(bodies[0],bodies[1]);
     e.$('logout').click(); assert(e.$('provision-form').hidden); assert(!e.$('prelogin-device').hidden); assert.equal(e.$('apple-id').value,''); assert(!e.$('provision-consent').checked); assert(!e.$('ipa').disabled);
@@ -94,7 +113,7 @@ test('DOM mock: approved provisioning automatically starts local signing without
   const cert=forge.pki.certificateFromPem(fixture.material.certPem);
   forge.pki.rsa.generateKeyPair=(_opts,callback)=>callback(null,{privateKey,publicKey:cert.publicKey});
   const e=await environment({service:true,fetcher:sessionFetcher((url)=>{if(url.endsWith('/provision'))return Response.json({certificateDerBase64:forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes()),profiles:[{profileBase64:fixture.material.profile.toString('base64')}]});})});try{
-    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); e.$('account-udid').value='00000000-0000000000000000'; e.$('provision-consent').checked=true; submit(e,'provision-form'); await until(()=>e.MockWorker.all.length===1);
+    loginInputs(e); submit(e,'account-form'); await until(()=>!e.$('provision-form').hidden); e.$('account-udid').value='00000000-0000000000000000'; await prepareIdentity(e); e.$('provision-consent').checked=true; submit(e,'provision-form'); await until(()=>e.MockWorker.all.length===1);
     assert(e.$('account-panel').hidden); assert(!e.$('signing-panel').hidden); assert(e.$('cancel').hidden===false);
     e.MockWorker.all[0].succeed(); await until(()=>!e.$('result').hidden); assert(!e.$('install-panel').hidden); assert(e.$('install-panel').textContent.includes('尚未實機驗證')); assert(e.$('install-link').hidden);
     e.$('clear').click(); assert(e.$('result').hidden); assert(e.$('install-panel').hidden);
@@ -141,7 +160,7 @@ test('DOM mock: exact inspected bundle IDs/App Group are shown before consent an
     loginInputs(e);e.setFiles('ipa',[new File([await makeIpa({bundleId:'org.tetherless.Tetherless'})],'Tetherless.ipa')]);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);
     assert(e.$('provision-plan').textContent.includes('App IDs：\norg.tetherless.Tetherless'));assert(e.$('provision-plan').textContent.includes('App Group：group.org.tetherless.Tetherless'));assert(e.$('ipa').disabled);assert(e.$('app-source').disabled);assert.equal(body,undefined);
     // Even a synthetic DOM replacement cannot change the reviewed session IPA.
-    e.setFiles('ipa',[fixture.ipa]);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>body);
+    e.setFiles('ipa',[fixture.ipa]);await prepareIdentity(e); e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>body);
     assert.equal(body.apps[0].bundleId,'org.tetherless.Tetherless');assert.equal(body.appGroup.identifier,'group.org.tetherless.Tetherless');
   }finally{e.dispose();}
 });
@@ -156,7 +175,7 @@ test('DOM mock: existing-device default logs in first, requires explicit active 
   })});try{
     assert(!e.$('account-form').hidden);assert(e.$('prelogin-device').hidden);assert.equal(e.$('device-route').value,'existing');existingLogin(e);await until(()=>e.$('existing-device').options.length===2);
     assert.equal(e.$('existing-device').value,'');assert(e.$('provision-button').disabled);assert(e.$('provision-consent').disabled);submit(e,'provision-form');assert.equal(provision,undefined);
-    chooseExisting(e);assert(e.$('existing-device-summary').textContent.includes('未驗證'));assert(!e.$('provision-consent').checked);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>provision);
+    chooseExisting(e);assert(e.$('existing-device-summary').textContent.includes('未驗證'));assert(!e.$('provision-consent').checked);await prepareIdentity(e); e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>provision);
     assert.equal(provision.device.existingOnly,true);assert.equal(provision.device.udid,registeredDevice.udid);assert.equal(provision.device.name,registeredDevice.name);assert.equal(provision.consent,'use-existing-device-register-app-ids-and-issue-certificate');
     await until(()=>!e.$('provision-button').disabled);assert(e.$('account-status').textContent.includes('不會改成新增裝置'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments')));
   }finally{e.dispose();}
@@ -191,7 +210,7 @@ test('DOM mock: existing-device App Group consent and uncertain retry preserve t
     if(url.endsWith('/devices'))return Response.json({teamId:'TESTTEAM01',devices:[registeredDevice]});
     if(url.endsWith('/provision')){bodies.push(opts.body);return Response.json({error:'provisioningUncertain'},{status:503});}
   })});try{
-    existingLogin(e,new File([await makeIpa({bundleId:'org.tetherless.Tetherless'})],'Tetherless.ipa'));await until(()=>!e.$('existing-device').disabled);chooseExisting(e);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>bodies.length===1&&!e.$('provision-button').disabled);
+    existingLogin(e,new File([await makeIpa({bundleId:'org.tetherless.Tetherless'})],'Tetherless.ipa'));await until(()=>!e.$('existing-device').disabled);chooseExisting(e);await prepareIdentity(e); e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>bodies.length===1&&!e.$('provision-button').disabled);
     assert(e.$('existing-device').disabled);assert(e.$('team').disabled);assert(e.$('reload-devices').disabled);const body=JSON.parse(bodies[0]);assert.equal(body.consent,'use-existing-device-register-app-ids-app-group-and-issue-certificate');assert.equal(body.device.existingOnly,true);assert.equal(body.appGroup.identifier,'group.org.tetherless.Tetherless');
     submit(e,'provision-form');await until(()=>bodies.length===2&&!e.$('provision-button').disabled);assert.equal(bodies[0],bodies[1]);
   }finally{e.dispose();}
@@ -203,7 +222,7 @@ test('DOM mock: switching from an empty new-device name to existing route passes
     if(url.endsWith('/provision')){posted=true;return Response.json({error:'provisioningUncertain'},{status:503});}
   })});try{
     e.$('device-name').value='';e.$('device-route').value='existing';e.$('device-route').dispatchEvent(new e.dom.window.Event('change'));
-    existingLogin(e);await until(()=>!e.$('existing-device').disabled);chooseExisting(e);e.$('provision-consent').checked=true;
+    existingLogin(e);await until(()=>!e.$('existing-device').disabled);chooseExisting(e);await prepareIdentity(e); e.$('provision-consent').checked=true;
     assert(e.$('device-name').disabled);assert(e.$('account-udid').disabled);assert(e.$('provision-form').checkValidity());e.$('provision-form').requestSubmit();await until(()=>posted);
     e.$('logout').click();e.$('device-route').value='new';e.$('device-route').dispatchEvent(new e.dom.window.Event('change'));loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('provision-consent').checked=true;
     assert(!e.$('device-name').disabled);assert(!e.$('provision-form').checkValidity());e.$('device-name').value='My iPhone';assert(e.$('provision-form').checkValidity());
@@ -230,7 +249,7 @@ test('DOM mock: a new document rejects malformed, expired, nonfinite or over-TTL
 test('DOM mock: discovery cancellation fences a late health reply and recheck preserves a newer active session', async () => {
   let release, attempts = 0; const pending = new Promise(resolve => release = resolve);
   const e = await environment({ deviceRoute: 'existing', fetcher: sessionFetcher(async url => {
-    if (url.endsWith('/health')) { if (++attempts === 1) await pending; return Response.json({ protocol: 1, appleAuthAvailable: true }); }
+    if (url.endsWith('/health')) { if (++attempts === 1) await pending; return Response.json({ protocol: 1, certificateLifecycle: 1, appleAuthAvailable: true }); }
     if (url.endsWith('/devices')) return Response.json({ teamId: 'TESTTEAM01', devices: [registeredDevice] });
   }) });
   try {
@@ -243,7 +262,7 @@ test('DOM mock: discovery cancellation fences a late health reply and recheck pr
 test('DOM mock: pagehide fences pending discovery; persisted pageshow rechecks after interrupted failure', async () => {
   let release, attempts = 0; const pending = new Promise(resolve => release = resolve);
   const e = await environment({ deviceRoute: 'existing', fetcher: async url => {
-    if (url.endsWith('/health')) { if (++attempts === 1) await pending; return Response.json({ protocol: 1, appleAuthAvailable: true }); }
+    if (url.endsWith('/health')) { if (++attempts === 1) await pending; return Response.json({ protocol: 1, certificateLifecycle: 1, appleAuthAvailable: true }); }
   } });
   try {
     e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide', { persisted: true })); release(); await tick(); assert(e.$('account-form').hidden);
@@ -252,7 +271,7 @@ test('DOM mock: pagehide fences pending discovery; persisted pageshow rechecks a
 });
 test('DOM mock: manual route cancellation prevents stale discovery from reopening credentials', async () => {
   let release; const pending = new Promise(resolve => release = resolve);
-  const e = await environment({ fetcher: async url => { if (url.endsWith('/health')) { await pending; return Response.json({ protocol: 1, appleAuthAvailable: true }); } } });
+  const e = await environment({ fetcher: async url => { if (url.endsWith('/health')) { await pending; return Response.json({ protocol: 1, certificateLifecycle: 1, appleAuthAvailable: true }); } } });
   try { e.$('files-mode').click(); release(); await tick(); assert(!e.$('manual-panel').hidden); assert(e.$('account-form').hidden); e.$('account-mode').click(); assert(e.$('account-form').hidden); assert(!e.$('recheck-service').hidden); }
   finally { release(); e.dispose(); }
 });
@@ -422,5 +441,79 @@ test('DOM mock: late 2FA response cannot overwrite terminal Teams failure or ree
     loginInputs(e);submit(e,'account-form');await until(()=>!e.$('two-factor').hidden);e.$('verification-code').value='123456';submit(e,'two-factor');submit(e,'two-factor');
     await until(()=>e.$('journey-title').textContent==='Team 讀取失敗');const failure=e.$('account-status').textContent;release();await tick();await tick();
     assert.equal(submissions,1);assert.equal(e.$('account-status').textContent,failure);assert(e.$('verify-button').disabled);assert(e.$('two-factor').hidden);
+  }finally{release();e.dispose();}
+});
+
+test('certificate lifecycle: no request before explicit backup download AND saved acknowledgement; double prepare reuses new identity', async () => {
+  const e=await environment({service:true,fetcher:sessionFetcher()});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);
+    e.$('provision-consent').checked=true;submit(e,'provision-form');await tick();assert(!e.calls.some(c=>c.url.endsWith('/certificate')));
+    e.$('identity-export-password').value='synthetic-backup-password';e.$('prepare-identity').click();e.$('prepare-identity').click();await until(()=>!e.$('recovery-saved').disabled);
+    assert.equal(e.downloads.length,1);assert.equal(e.downloads[0].name,'tetherless-recovery.json');
+    submit(e,'provision-form');await tick();assert(!e.calls.some(c=>c.url.endsWith('/certificate')));
+    e.$('prepare-identity').click();await until(()=>e.downloads.length===2);
+    const first=await importRecovery(e.downloads[0].blob,'synthetic-backup-password'),second=await importRecovery(e.downloads[1].blob,'synthetic-backup-password');assert.equal(first.csrPem,second.csrPem);
+    assert.equal(e.dom.window.localStorage.length,0);assert.equal(e.dom.window.sessionStorage.length,0);
+  }finally{e.dispose();}
+});
+test('certificate lifecycle: profile failure preserves immediate encrypted P12 export; retry sends exact CSR without secret upload',async()=>{
+  const bodies=[];const e=await environment({service:true,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/provision')){bodies.push(opts.body);return Response.json({error:'profileMismatch'},{status:409});}})});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);await prepareIdentity(e);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>bodies.length===1&&!e.$('provision-button').disabled);
+    assert(!e.$('export-signing-p12').hidden);e.$('export-signing-p12').click();await until(()=>e.downloads.some(d=>d.name.endsWith('.p12')));
+    const restored=await importP12(e.downloads.find(d=>d.name.endsWith('.p12')).blob,'synthetic-backup-password','TESTTEAM01');
+    assert.equal(forge.pki.certificationRequestFromPem(JSON.parse(bodies[0]).csrPem).publicKey.n.toString(16),restored.keys.publicKey.n.toString(16));
+    submit(e,'provision-form');await until(()=>bodies.length===2&&!e.$('provision-button').disabled);assert.equal(bodies[0],bodies[1]);
+    const requests=e.calls.filter(c=>c.url.endsWith('/certificate')||c.url.endsWith('/provision'));assert(requests.every(c=>!c.options.body.includes('PRIVATE KEY')&&!c.options.body.includes('synthetic-backup-password')&&!c.options.body.includes('privateKey')));
+    assert(!e.calls.some(c=>c.url.endsWith('/revoke')));
+  }finally{e.dispose();}
+});
+test('certificate lifecycle: reload/import recovers exact original CSR and forces reuse-only even if create checkbox manipulated',async()=>{
+  let originalCsr,backup;
+  const e=await environment({service:true,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/certificate')){originalCsr=JSON.parse(opts.body).csrPem;return Response.json({error:'provisioningUncertain'},{status:503});}})});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);await prepareIdentity(e);backup=e.downloads[0].blob;e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>originalCsr&&!e.$('provision-button').disabled);
+    e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:false}));assert(e.$('export-recovery').hidden);assert.equal(e.$('identity-export-password').value,'');assert.equal(e.dom.window.localStorage.length,0);
+  }finally{e.dispose();}
+  let resumed;
+  const f=await environment({service:true,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/certificate')){resumed=JSON.parse(opts.body);return Response.json({error:'certificateMissing'},{status:409});}})});try{
+    loginInputs(f);submit(f,'account-form');await until(()=>!f.$('provision-form').hidden);f.$('identity-source').value='recovery';f.$('identity-source').dispatchEvent(new f.dom.window.Event('change'));f.setFiles('identity-file',[backup]);f.$('identity-import-password').value='synthetic-backup-password';await prepareIdentity(f);
+    f.$('provision-consent').checked=true;submit(f,'provision-form');await until(()=>resumed&&!f.$('provision-button').disabled);assert.equal(resumed.csrPem,originalCsr);assert.equal(resumed.certificateIntent,'reuseOnly');assert(f.$('account-status').textContent.includes('待處理'));assert(!f.calls.some(c=>c.url.endsWith('/provision')));
+  }finally{f.dispose();}
+});
+test('certificate lifecycle: late certificate reply after cancel cannot restore key exports or start profiles',async()=>{
+  let release,requested=false;const held=new Promise(r=>release=r);
+  const e=await environment({service:true,fetcher:sessionFetcher(async(url,opts)=>{if(url.endsWith('/certificate')){requested=true;await held;return Response.json(syntheticCertificate(opts.body));}})});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);await prepareIdentity(e);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>requested);e.$('logout').click();release();await tick();await tick();
+    assert(e.$('export-signing-p12').hidden);assert(e.$('export-recovery').hidden);assert(!e.calls.some(c=>c.url.endsWith('/provision')));assert.equal(e.$('identity-export-password').value,'');
+  }finally{release();e.dispose();}
+});
+test('certificate lifecycle: exact selected certificate requires fresh explicit consent and only one revoke; missing metadata is read-only',async()=>{
+  const records=[{id:'CERT1',serial:'01',name:'Synthetic NOT APPLE',machineName:'Tetherless Web',expiresAt:null,status:null,confirmationToken:'one-use-synthetic'},{id:'CERT2',serial:null,name:null,machineName:null,expiresAt:null,status:null,confirmationToken:null}];let revoke;
+  const e=await environment({service:true,fetcher:sessionFetcher((url,opts)=>{if(url.endsWith('/certificates'))return Response.json({teamId:'TESTTEAM01',certificates:records});if(url.endsWith('/revoke')){revoke=JSON.parse(opts.body);return Response.json({revoked:true,certificateId:'CERT1',teamId:'TESTTEAM01'});}})});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('list-certificates').click();await until(()=>!e.$('certificate-choice').disabled);assert(!revoke);assert.equal(e.$('certificate-choice').value,'');
+    e.$('certificate-choice').value='CERT2';e.$('certificate-choice').dispatchEvent(new e.dom.window.Event('change'));assert(e.$('revoke-consent').disabled);
+    e.$('certificate-choice').value='CERT1';e.$('certificate-choice').dispatchEvent(new e.dom.window.Event('change'));assert(e.$('revoke-certificate').disabled);assert(e.$('certificate-description').textContent.includes('serial 01'));assert(e.$('certificate-description').textContent.includes('不是建立者'));
+    e.$('revoke-consent').checked=true;e.$('revoke-consent').dispatchEvent(new e.dom.window.Event('change'));e.$('revoke-certificate').click();e.$('revoke-certificate').click();await until(()=>revoke);await tick();
+    assert.deepEqual(revoke,{certificateId:'CERT1',certificateSerial:'01',confirmationToken:'one-use-synthetic',consent:'revoke-selected-development-certificate'});assert.equal(e.calls.filter(c=>c.url.endsWith('/revoke')).length,1);assert(!e.calls.some(c=>c.url.endsWith('/certificate')));assert(e.$('provision-form').hidden);assert(e.$('account-status').textContent.includes('沒有自動發新憑證'));
+  }finally{e.dispose();}
+});
+test('certificate lifecycle: switching identity source while P12 worker pending cancels it and permits a new preparation',async()=>{
+  const e=await environment({service:true,fetcher:sessionFetcher()});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('identity-source').value='p12';e.$('identity-source').dispatchEvent(new e.dom.window.Event('change'));e.setFiles('identity-file',[fixture.p12]);e.$('identity-import-password').value=fixture.password;e.$('identity-export-password').value='synthetic-backup-password';e.$('prepare-identity').click();await until(()=>e.MockWorker.all.length===1);
+    e.$('identity-source').value='new';e.$('identity-source').dispatchEvent(new e.dom.window.Event('change'));assert(e.MockWorker.all[0].terminated);await prepareIdentity(e);assert.equal(e.downloads.length,1);assert.equal(e.$('identity-source').value,'new');
+  }finally{e.dispose();}
+});
+test('certificate lifecycle: wrong successful revoke response is uncertain, never claims deletion or automatically retries',async()=>{
+  const e=await environment({service:true,fetcher:sessionFetcher((url)=>{if(url.endsWith('/certificates'))return Response.json({teamId:'TESTTEAM01',certificates:[{id:'CERT1',serial:'01',confirmationToken:'synthetic-token'}]});if(url.endsWith('/revoke'))return Response.json({revoked:true,certificateId:'OTHER',teamId:'TESTTEAM01'});})});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);e.$('list-certificates').click();await until(()=>!e.$('certificate-choice').disabled);e.$('certificate-choice').value='CERT1';e.$('certificate-choice').dispatchEvent(new e.dom.window.Event('change'));e.$('revoke-consent').checked=true;e.$('revoke-consent').dispatchEvent(new e.dom.window.Event('change'));e.$('revoke-certificate').click();await until(()=>e.$('certificate-status').textContent.includes('結果不確定'));
+    assert(!e.$('provision-form').hidden);assert(!e.$('account-status').textContent.includes('已撤銷'));assert(e.$('revoke-certificate').disabled);assert.equal(e.calls.filter(c=>c.url.endsWith('/revoke')).length,1);
+  }finally{e.dispose();}
+});
+test('certificate lifecycle: held revoke serializes list, identity preparation and provisioning until cancellation',async()=>{
+  let release,revoking=false;const held=new Promise(r=>release=r);
+  const e=await environment({service:true,fetcher:sessionFetcher(async(url)=>{if(url.endsWith('/provision'))return Response.json({error:'profileMismatch'},{status:409});if(url.endsWith('/certificates'))return Response.json({teamId:'TESTTEAM01',certificates:[{id:'CERT1',serial:'01',confirmationToken:'synthetic-token'}]});if(url.endsWith('/revoke')){revoking=true;await held;return Response.json({revoked:true,certificateId:'CERT1',teamId:'TESTTEAM01'});}})});try{
+    loginInputs(e);submit(e,'account-form');await until(()=>!e.$('provision-form').hidden);await prepareIdentity(e);e.$('provision-consent').checked=true;submit(e,'provision-form');await until(()=>!e.$('provision-button').disabled&&e.calls.some(c=>c.url.endsWith('/provision')));e.$('list-certificates').click();await until(()=>!e.$('certificate-choice').disabled);e.$('certificate-choice').value='CERT1';e.$('certificate-choice').dispatchEvent(new e.dom.window.Event('change'));e.$('revoke-consent').checked=true;e.$('revoke-consent').dispatchEvent(new e.dom.window.Event('change'));e.$('revoke-certificate').click();await until(()=>revoking);
+    assert(e.$('list-certificates').disabled);assert(e.$('certificate-choice').disabled);assert(e.$('identity-source').disabled);assert(e.$('prepare-identity').disabled);assert(e.$('team').disabled);
+    e.$('list-certificates').click();e.$('revoke-certificate').click();e.$('provision-consent').checked=true;submit(e,'provision-form');assert.equal(e.calls.filter(c=>c.url.endsWith('/certificate')).length,1);assert.equal(e.calls.filter(c=>c.url.endsWith('/provision')).length,1);assert.equal(e.calls.filter(c=>c.url.endsWith('/certificates')).length,1);
+    e.$('logout').click();release();await tick();assert(e.$('provision-form').hidden);assert(e.$('account-status').textContent.includes('已取消'));assert(!e.$('account-status').textContent.includes('已撤銷'));
   }finally{release();e.dispose();}
 });

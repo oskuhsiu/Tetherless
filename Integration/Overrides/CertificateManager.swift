@@ -120,6 +120,11 @@ public final class CertificateManager: @unchecked Sendable {
             return cert
         } catch { UserDefaults.standard.set(true, forKey: "tetherless.certificate.storageFailed"); return nil }
     }
+    public func getAllLocalCertificatesVerified() throws -> [ALTCertificate] {
+        let serials = getImportedCertificateSerials()
+        guard serials.count <= 4096 else { throw AuthenticationStorageFailure.invalidRecord }
+        return try serials.compactMap { try getLocalCertificateVerified(serialNumber: $0) }
+    }
     public func getAllLocalCertificates() -> [ALTCertificate] {
         getImportedCertificateSerials().compactMap { getLocalCertificate(serialNumber: $0) }
     }

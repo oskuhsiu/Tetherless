@@ -97,14 +97,17 @@ final class CertificateProvisioningFlow: @unchecked Sendable {
             switch decision {
             case .keepExisting: throw error
             case .revokeSelected(let selected):
-                guard !selected.isEmpty, selected.count <= current.count,
+                guard selected.count == 1, selected.count <= current.count,
                       Set(selected.map { $0.serialNumber.lowercased() }).count == selected.count else {
                     throw AuthenticationStorageFailure.invalidRecord
                 }
+                let confirmedSnapshot = try await DeveloperPortalProxy.shared.fetchCertificates(team: team)
+                try Task.checkCancellation()
                 // Confirmation refers to the exact public certificate, not just a
                 // stale identifier captured under a different account/Team.
                 for cert in selected {
-                    guard current.contains(where: {
+                    guard confirmedSnapshot.filter({ $0.serialNumber.caseInsensitiveCompare(cert.serialNumber) == .orderedSame }).count == 1,
+                          confirmedSnapshot.contains(where: {
                         $0.serialNumber.caseInsensitiveCompare(cert.serialNumber) == .orderedSame && $0.data == cert.data
                     }) else { throw AuthenticationStorageFailure.staleAttempt }
                 }

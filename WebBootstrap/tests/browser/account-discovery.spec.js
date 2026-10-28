@@ -30,8 +30,8 @@ for (const failure of ['network', '503']) test(`service discovery: initial ${fai
 for (const [name, response, expected] of [
   ['HTML', { contentType: 'text/html', body: '<html>Synthetic gateway</html>' }, '回應類型不是 JSON'],
   ['broken JSON', { contentType: 'application/json', body: '{' }, 'JSON 格式無效'],
-  ['wrong protocol', { contentType: 'application/json', body: JSON.stringify({ protocol: 2, appleAuthAvailable: true }) }, '服務協定'],
-  ['disabled account', { contentType: 'application/json', body: JSON.stringify({ protocol: 1, appleAuthAvailable: false }) }, '未啟用'],
+  ['wrong protocol', { contentType: 'application/json', body: JSON.stringify({ protocol: 2, certificateLifecycle: 1, appleAuthAvailable: true }) }, '服務協定'],
+  ['disabled account', { contentType: 'application/json', body: JSON.stringify({ protocol: 1, certificateLifecycle: 1, appleAuthAvailable: false }) }, '未啟用'],
   ['forbidden', { status: 403, contentType: 'text/plain', body: 'Synthetic forbidden' }, 'HTTP 403'],
 ]) test(`service discovery: ${name} remains closed and exposes safe diagnostics`, async ({ page, context, baseURL, guided }) => {
   let attempts = 0;

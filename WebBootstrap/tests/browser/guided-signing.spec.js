@@ -21,7 +21,7 @@ async function authenticate(page, { selectDevice = true } = {}) {
   if (await page.locator('#device-route').inputValue() === 'existing') { await expect(page.locator('#existing-device')).toBeEnabled(); await page.locator('#existing-device').selectOption(SYNTHETIC.udid); }
   else await page.locator('#account-udid').fill(SYNTHETIC.udid);
 }
-async function approveProvision(page) { await page.locator('#provision-consent').check(); await page.locator('#provision-button').click(); }
+async function approveProvision(page) { await page.locator('#identity-export-password').fill('synthetic-backup-password'); const download = page.waitForEvent('download'); await page.locator('#prepare-identity').click(); await download; await page.locator('#recovery-saved').check(); await page.locator('#identity-create-consent').check(); await page.locator('#provision-consent').check(); await page.locator('#provision-button').click(); }
 async function assertRealOutput(page, guided) {
   await expect(page.locator('#download')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('#install-unavailable')).toBeDisabled(); await expect(page.locator('#install-link')).toBeHidden();

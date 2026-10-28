@@ -14,10 +14,10 @@ async function authenticated(appName) {
   const path = `v1/sessions/${login.sessionId}`, auth = `Bearer ${login.sessionToken}`;
   await service.handle(path + '/2fa', 'POST', JSON.stringify({ action: 'submitCode', code: SYNTHETIC.code }), auth);
   await service.handle(path + `/teams/${SYNTHETIC.teamId}/devices`, 'GET', '', auth);
-  return { service, provision: body => service.handle(path + '/provision', 'POST', JSON.stringify(body), auth) };
+  return { service, provision: async body => { await service.handle(path + '/certificate', 'POST', JSON.stringify(body), auth); return service.handle(path + '/provision', 'POST', JSON.stringify(body), auth); } };
 }
 function requestFor(appName, csrPem = '') {
-  return { apps: [GUIDED_APPS[appName]], teamId: SYNTHETIC.teamId, device: { udid: SYNTHETIC.udid, name: 'My iPhone', existingOnly: true }, machineName: 'Tetherless Web', consent: 'use-existing-device-register-app-ids-and-issue-certificate', csrPem };
+  return { certificateIntent: 'createOrReuse', apps: [GUIDED_APPS[appName]], teamId: SYNTHETIC.teamId, device: { udid: SYNTHETIC.udid, name: 'My iPhone', existingOnly: true }, machineName: 'Tetherless Web', consent: 'use-existing-device-register-app-ids-and-issue-certificate', csrPem };
 }
 
 test('owned IPA: exact unsigned native input, source archive and BuildIdentity remain pinned', async () => {

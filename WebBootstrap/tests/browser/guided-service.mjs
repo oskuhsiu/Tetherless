@@ -34,7 +34,7 @@ export function guidedApiPath(raw, method, baseURL) {
     if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?$/.test(path) && ['GET', 'DELETE'].includes(method)) return path;
     if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/teams\/[A-Za-z0-9]{1,64}\/devices$/.test(path) && method === 'GET') return path;
     if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/teams$/.test(path) && method === 'GET') return path;
-    if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/(2fa|provision)$/.test(path) && method === 'POST') return path;
+    if (/^v1\/sessions\/synthetic-session-[1-9][0-9]?\/(2fa|certificate|provision)$/.test(path) && method === 'POST') return path;
     return null;
   } catch { return null; }
 }
@@ -47,7 +47,7 @@ export function createGuidedService(appName = 'synthetic') {
       assert(text.length <= 32 * 1024); const body = text ? JSON.parse(text) : {};
       const name = path.endsWith('/devices') ? `devices:${path.split('/')[4]}` : path === 'v1/sessions' ? 'login' : path.endsWith('/provision') ? 'provision' : path.endsWith('/2fa') ? 'twoFactor' : path;
       service.calls.push({ path, method, name }); let response;
-      if (path === 'health') response = { protocol: 1, appleAuthAvailable: true, profileServiceAvailable: false };
+      if (path === 'health') response = { protocol: 1, certificateLifecycle: 1, appleAuthAvailable: true, profileServiceAvailable: false };
       else if (path === 'config.json') response = { accountServiceUrl: null, officialRelease: null };
       else if (path === 'v1/sessions') {
         assert.equal(method, 'POST'); assert.deepEqual(body, { appleId: SYNTHETIC.appleId, password: SYNTHETIC.password }); assert(counter < 10);
@@ -64,11 +64,16 @@ export function createGuidedService(appName = 'synthetic') {
         }
         else if (action === 'teams' && path.endsWith('/devices')) { assert.equal(session.state, 'authenticated'); const teamId = path.split('/')[4]; assert(service.teams.some(team => team.id === teamId)); session.listedTeams ||= new Set(); session.listedTeams.add(teamId); if (service.failNextDevices) { service.failNextDevices = false; response = { status: 502, error: 'appleRequestFailed' }; } else response = { teamId, devices: service.deviceLists.get(teamId) || [] }; }
         else if (action === 'teams') { assert.equal(session.state, 'authenticated'); response = service.teamErrors.shift() || { teams: service.teams }; }
+        else if (action === 'certificate') {
+          assert.equal(session.state, 'authenticated'); assert.equal(body.teamId, SYNTHETIC.teamId);
+          if (!session.material) { assert.equal(body.certificateIntent, 'createOrReuse'); session.material = syntheticProvision(body.csrPem, appName); service.profiles.push(session.material.profile); }
+          response = { teamId: body.teamId, certificateDerBase64: session.material.response.certificateDerBase64 };
+        }
         else if (action === 'provision') {
-          assert.equal(session.state, 'authenticated'); assert.deepEqual(Object.keys(body).sort(), ['apps', 'consent', 'csrPem', 'device', 'machineName', 'teamId']);
+          assert.equal(session.state, 'authenticated'); assert.deepEqual(Object.keys(body).sort(), ['apps', 'certificateIntent', 'consent', 'csrPem', 'device', 'machineName', 'teamId']);
           const existing = body.device.existingOnly === true; assert.equal(body.consent, existing ? 'use-existing-device-register-app-ids-and-issue-certificate' : 'register-device-app-ids-and-issue-certificate'); if (existing) assert(session.listedTeams?.has(body.teamId)); assert.equal(body.teamId, SYNTHETIC.teamId); assert.equal(body.device.udid, SYNTHETIC.udid); assert.equal(body.device.name, 'My iPhone'); assert.equal(body.machineName, 'Tetherless Web'); assert.deepEqual(body.apps, [app]);
           service.provisioningBodies.push(text);
-          if (session.provisionBody) assert.equal(text, session.provisionBody); else { session.provisionBody = text; session.material = syntheticProvision(body.csrPem, appName); service.profiles.push(session.material.profile); }
+          if (session.provisionBody) assert.equal(text, session.provisionBody); else { session.provisionBody = text; assert(session.material, 'certificate stage must finish first'); }
           if (service.failNextProvision) { service.failNextProvision = false; response = { status: 503, error: 'provisioningUncertain' }; } else response = session.material.response;
         } else throw new Error('Unexpected synthetic API action');
       }

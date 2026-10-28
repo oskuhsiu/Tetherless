@@ -41,6 +41,7 @@ test('owned unsigned UIKit IPA: visible custom selection and synthetic consent f
   await page.locator('#provision-button').click();
   expect(guided.provisioningBodies).toHaveLength(0);
   await testInfo.attach('owned-ipa-synthetic-mutation-preview', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  await page.locator('#identity-export-password').fill('synthetic-backup-password'); const backup = page.waitForEvent('download'); await page.locator('#prepare-identity').click(); await backup; await page.locator('#recovery-saved').check(); await page.locator('#identity-create-consent').check();
   await page.locator('#provision-consent').check();
   await page.locator('#provision-button').click();
 

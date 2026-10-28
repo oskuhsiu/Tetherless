@@ -1,4 +1,6 @@
 import forge from 'node-forge';
+import { acceptCertificate, exportP12 } from './certificate-recovery.js';
+import { setupCertificateControls } from './certificate-controls.js';
 import { inspectIpa } from './material.js';
 import { discoverAccountService } from './account-discovery.js';
 import { tetherlessGroup } from './tetherless-identity.js';
@@ -6,7 +8,7 @@ import { setupRegisteredDevices } from './registered-devices.js';
 import { setupDeviceEnrollment } from './device-enrollment.js';
 import { loginDiagnosticText } from './login-diagnostics.js';
 const $ = (id) => document.getElementById(id);
-const safeErrors = { deviceNotAvailable: '所選裝置不再可用或不屬於此 Team。請取消原申請後重新選擇；不會改成新增裝置', invalidRequest: '請求或 Team 無效，請重新確認選擇', appleAuthenticationFailed: 'Apple 登入未完成', expired: '登入 session 已到期，請重新登入', certificateLimit: '憑證名額不足。此服務不會自動撤銷其他憑證', busy: '原申請仍在處理中，請稍後只查詢原申請結果', profileMismatch: 'Apple profile 與 Team、裝置、App 或共享群組不符，未提供簽署資料', certificateMismatch: 'Apple 憑證與此分頁 CSR 不符', appleRequestFailed: 'Apple 請求未完成，請確認帳號狀態', authenticationFailed: 'Apple 登入未完成', sessionExpired: '登入 session 已到期，請重新登入', wrongState: '這次操作的狀態已改變。請先取消 session 再重新開始；不要重複建立憑證', certificateCapacity: '憑證名額不足。此服務不會自動撤銷其他憑證', provisioningUncertain: 'Apple 操作結果不確定。保留此分頁的原私鑰；此服務不會再次建立憑證', provisioningFailed: 'Apple provisioning 未完成。請檢查 Team 與裝置狀態；若結果不確定，不要重複送出' };
+const safeErrors = { certificateMissing: 'Apple 目前未回傳與原私鑰相符的憑證；這不代表沒有待處理申請。未重新發證。請保留恢復檔，稍後以同一檔案重讀', deviceNotAvailable: '所選裝置不再可用或不屬於此 Team。請取消原申請後重新選擇；不會改成新增裝置', invalidRequest: '請求或 Team 無效，請重新確認選擇', appleAuthenticationFailed: 'Apple 登入未完成', expired: '登入 session 已到期，請重新登入', certificateLimit: '憑證名額不足。此服務不會自動撤銷其他憑證', busy: '原申請仍在處理中，請稍後只查詢原申請結果', profileMismatch: 'Apple profile 與 Team、裝置、App 或共享群組不符，未提供簽署資料', certificateMismatch: 'Apple 憑證與此分頁 CSR 不符', appleRequestFailed: 'Apple 請求未完成，請確認帳號狀態', authenticationFailed: 'Apple 登入未完成', sessionExpired: '登入 session 已到期，請重新登入', wrongState: '這次操作的狀態已改變。請先取消 session 再重新開始；不要重複建立憑證', certificateCapacity: '憑證名額不足。此服務不會自動撤銷其他憑證', provisioningUncertain: 'Apple 操作結果不確定。保留此分頁的原私鑰；此服務不會再次建立憑證', provisioningFailed: 'Apple provisioning 未完成。請檢查 Team 與裝置狀態；若結果不確定，不要重複送出' };
 export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMaterial, onState = () => {}, onInvalidate = () => {}, canSubmit = () => true }) {
   let session, aborter, generation = 0, expiryTimer, busy = false, pendingProvision, serviceAvailable = false, profileAvailable = false, phase = 'checking', selectedPlan, teamIds = new Set();
   let discovery, discoveryGeneration = 0, twoFactorUnknown = false, codeSubmitting = false, sessionDeadline = 0, teamsRetryUsed = false, teamSessionInvalid = false;
@@ -45,19 +47,21 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
       const code = body.error || body.code;
       const safeMessage = `${Object.hasOwn(safeErrors, code) ? safeErrors[code] : `簽署服務回應 ${response.status}。請檢查狀態，勿重複提交不確定的操作。`}${loginDiagnosticText(body.diagnostic)}`;
       const error = new Error(safeMessage); error.safeMessage = safeMessage;
+      error.code = code;
       error.sessionInvalid = [401, 404, 410].includes(response.status) || ['expired', 'sessionExpired', 'unauthorized', 'notFound'].includes(code);
       throw error;
     }
     return body;
   }
+  const certificates = setupCertificateControls({ request, getSession: () => session?.sessionId, getTeam: () => teamIds.has($('team').value) ? $('team').value : '', canPrepare: () => Boolean(session) && phase === 'authenticated' && !pendingProvision, isMutating: () => phase === 'provisioning', onRevoked: () => { clear(); say('指定憑證已撤銷，沒有自動發新憑證。請重新登入、選擇新的簽署身分並保存備份，再另行授權。'); } });
   const registered = setupRegisteredDevices({ request, getSessionId: () => session?.sessionId, getTeamId: () => teamIds.has($('team').value) ? $('team').value : '', onSelection: (device) => { $('provision-consent').checked = false; if (existingRoute()) { $('provision-consent').disabled = !device; $('provision-button').disabled = !device; } } });
   $('device-route').onchange = () => { if ($('device-route').disabled) return; clear(); };
-  $('team').onchange = () => { if ($('team').disabled || pendingProvision) return; $('provision-consent').checked = false; if (existingRoute()) void registered.load(); };
+  $('team').onchange = () => { if ($('team').disabled || pendingProvision) return; certificates.reset(); $('provision-consent').checked = false; if (existingRoute()) void registered.load(); };
   function clear({ preserveEnrollment = false, preserveDevice = false } = {}) {
     cancelDiscovery();
     const retainedUdid = preserveDevice ? $('account-udid').value : '';
     if (preserveEnrollment) devices.pause(); else { devices.clear(); $('device-status').textContent = ''; }
-    pendingProvision = undefined; selectedPlan = undefined; teamIds.clear(); registered.freeze(false); registered.clear(); onInvalidate();
+    certificates.reset(); pendingProvision = undefined; selectedPlan = undefined; teamIds.clear(); registered.freeze(false); registered.clear(); onInvalidate();
     generation++; aborter?.abort(); aborter = undefined; busy = false; clearTimeout(expiryTimer);
     if (session) { const { sessionId, sessionToken } = session; fetch(route(`v1/sessions/${encodeURIComponent(sessionId)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${sessionToken}` }, credentials: 'same-origin', redirect: 'error', keepalive: true, referrerPolicy: 'no-referrer' }).catch(() => {}); }
     session = undefined; twoFactorUnknown = false; codeSubmitting = false; sessionDeadline = 0; teamsRetryUsed = false; teamSessionInvalid = false;
@@ -142,7 +146,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
       if (current !== generation) { if (started.sessionId && started.sessionToken) fetch(route(`v1/sessions/${encodeURIComponent(started.sessionId)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${started.sessionToken}` }, credentials: 'same-origin', redirect: 'error' }).catch(() => {}); return; }
       if (!started.sessionId || !started.sessionToken) throw new Error('服務未提供有效 session');
       session = started; sessionDeadline = Date.now() + Math.min(600, started.expiresInSeconds || 600) * 1000; $('logout').hidden = false; $('account-form').inert = true; $('account-form').hidden = true;
-      expiryTimer = setTimeout(() => { clear(); say('登入 session 已到期，原私鑰與未完成申請資料已清除。如 Apple 操作結果不確定，請先檢查帳號中的憑證狀態，不要直接建立新申請。'); }, Math.min(600, started.expiresInSeconds || 600) * 1000);
+      expiryTimer = setTimeout(() => { clear(); say('登入 session 已到期，此分頁私鑰已清除。請重新登入後匯入先前下載的加密恢復檔，重用同一私鑰；不要直接建立新身分。'); }, Math.min(600, started.expiresInSeconds || 600) * 1000);
       await poll(current);
     } catch (error) { if (current === generation) say(error.name === 'AbortError' ? '已取消' : error.message); }
     finally { if (current === generation) { busy = false; if (!session) { $('login-button').disabled = false; $('logout').hidden = true; showLogin(); } } }
@@ -166,6 +170,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
   };
   $('provision-form').onsubmit = async (event) => {
     event.preventDefault(); if (!session || !['authenticated', 'provisioning', 'provisionRetry'].includes(phase) || !$('provision-consent').checked || $('provision-button').disabled) return;
+    if (certificates.isManaging) return say('請先等待憑證清單／撤銷操作完成；未開始或重試申請');
     const ipa = pendingProvision?.ipa || selectedPlan?.ipa; if (!ipa) return say('請先選擇 IPA');
     let selection = pendingProvision?.selection;
     if (!selection) {
@@ -178,33 +183,36 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
         selection = { teamId: $('team').value, deviceName: $('device-name').value.trim(), udid, existingOnly: false };
       }
     }
-    registered.freeze(true);
+    let identitySelection;
+    try { identitySelection = pendingProvision ? { identity: pendingProvision.identity } : certificates.selection(); } catch (error) { return say(error.message); }
+    registered.freeze(true); certificates.freeze(true);
     $('provision-button').disabled = true; state('provisioning'); const current = generation;
     for (const id of ['team', 'device-name', 'account-udid', 'provision-consent']) $(id).disabled = true;
     try {
       if (!pendingProvision) {
         const { bundles, appGroup } = selectedPlan;
         if (current !== generation) return;
-        say(appGroup ? `使用原本的 bundle IDs 與 ${appGroup.identifier}，正在本機產生 CSR…` : '在瀏覽器產生私鑰與 CSR…');
-        const keys = await new Promise((resolve, reject) => forge.pki.rsa.generateKeyPair({ bits: 2048, workers: 0 }, (error, pair) => error ? reject(error) : resolve(pair)));
-        if (current !== generation) return;
-        const csr = forge.pki.createCertificationRequest(); csr.publicKey = keys.publicKey; csr.setSubject([{ name: 'commonName', value: 'Tetherless browser signing' }]); csr.sign(keys.privateKey, forge.md.sha256.create());
-        pendingProvision = { keys, ipa, udid: selection.udid, selection, body: JSON.stringify({ consent: selection.existingOnly ? (appGroup ? 'use-existing-device-register-app-ids-app-group-and-issue-certificate' : 'use-existing-device-register-app-ids-and-issue-certificate') : (appGroup ? 'register-device-app-ids-app-group-and-issue-certificate' : 'register-device-app-ids-and-issue-certificate'), ...(appGroup ? { appGroup } : {}), teamId: selection.teamId, device: { udid: selection.udid, name: selection.deviceName, ...(selection.existingOnly ? { existingOnly: true } : {}) }, csrPem: forge.pki.certificationRequestToPem(csr), machineName: 'Tetherless Web', apps: bundles.map((b) => ({ bundleId: b.id, name: Array.from(b.name.replace(/[\x00-\x1f\x7f]/g, '')).slice(0, 32).join('') || b.id })) }) };
+        const { identity, certificateIntent } = identitySelection;
+        pendingProvision = { identity, keys: identity.keys, ipa, udid: selection.udid, selection, body: JSON.stringify({ certificateIntent, consent: selection.existingOnly ? (appGroup ? 'use-existing-device-register-app-ids-app-group-and-issue-certificate' : 'use-existing-device-register-app-ids-and-issue-certificate') : (appGroup ? 'register-device-app-ids-app-group-and-issue-certificate' : 'register-device-app-ids-and-issue-certificate'), ...(appGroup ? { appGroup } : {}), teamId: selection.teamId, device: { udid: selection.udid, name: selection.deviceName, ...(selection.existingOnly ? { existingOnly: true } : {}) }, csrPem: identity.csrPem, machineName: 'Tetherless Web', apps: bundles.map((b) => ({ bundleId: b.id, name: Array.from(b.name.replace(/[\x00-\x1f\x7f]/g, '')).slice(0, 32).join('') || b.id })) }) };
       }
-      const retained = pendingProvision, keys = retained.keys;
-      say(`取得原申請結果：Team ${retained.selection.teamId}，裝置 ${retained.selection.deviceName}，UDID 結尾 ${retained.udid.slice(-4)}。請保留此分頁`);
-      const response = await request(`v1/sessions/${session.sessionId}/provision`, { method: 'POST', body: retained.body });
+      const retained = pendingProvision;
+      say(`取得原簽署身分：Team ${retained.selection.teamId}，裝置 ${retained.selection.deviceName}，UDID 結尾 ${retained.udid.slice(-4)}。已備份的恢復檔可供下次匯入`);
+      // Stage one returns the public certificate before any profile work can fail.
+      const certificate = await request(`v1/sessions/${session.sessionId}/certificate`, { method: 'POST', body: retained.body, maxResponseBytes: 1024 * 1024 });
       if (current !== generation) return;
-      const cert = forge.pki.certificateFromAsn1(forge.asn1.fromDer(forge.util.decode64(response.certificateDerBase64)));
-      if (!cert.publicKey.n.equals(keys.publicKey.n) || !cert.publicKey.e.equals(keys.publicKey.e)) throw new Error('服務傳回的憑證不符合此分頁的私鑰');
+      if (certificate.teamId !== retained.selection.teamId) throw new Error('憑證回應的 Team 不符');
+      acceptCertificate(retained.identity, certificate.certificateDerBase64); certificates.certificateReady();
+      const response = await request(`v1/sessions/${session.sessionId}/provision`, { method: 'POST', body: retained.body, maxResponseBytes: 8 * 1024 * 1024 });
+      if (current !== generation) return;
+      acceptCertificate(retained.identity, response.certificateDerBase64);
+      if (!Array.isArray(response.profiles) || !response.profiles.length || response.profiles.length > 16 || response.profiles.some(p => typeof p.profileBase64 !== 'string' || p.profileBase64.length > 3 * 1024 * 1024)) throw new Error('profiles 回應格式或大小無效');
       const password = forge.util.encode64(forge.util.binary.raw.encode(crypto.getRandomValues(new Uint8Array(32))));
-      const p12bytes = forge.util.binary.raw.decode(forge.asn1.toDer(forge.pkcs12.toPkcs12Asn1(keys.privateKey, [cert], password, { algorithm: '3des' })).getBytes());
-      const p12 = new File([p12bytes], 'session.p12', { type: 'application/x-pkcs12' });
+      const p12 = exportP12(retained.identity, password);
       const profiles = response.profiles.map((p, i) => new File([forge.util.binary.raw.decode(forge.util.decode64(p.profileBase64))], `session-${i}.mobileprovision`));
-      pendingProvision = undefined; $('provision-form').hidden = true; state('material');
-      say('已取得簽署資料，正在本機準備 App。私鑰只留在這個分頁。');
+      pendingProvision = undefined; $('provision-form').hidden = true; certificates.materialReady(profiles); state('material');
+      say('已取得簽署資料，正在本機準備 App。請下載加密 P12 與 profiles 備份；記憶體資料仍會在 session 到期時清除。');
       onMaterial({ p12, profiles, password, udid: retained.udid }, ipa);
-    } catch (error) { if (current === generation) { state(pendingProvision ? 'provisionRetry' : 'authenticated'); if (!pendingProvision) { registered.freeze(false); } if (!pendingProvision) { for (const id of ['team', 'provision-consent']) $(id).disabled = false; $('device-name').disabled = existingRoute(); $('account-udid').disabled = existingRoute(); } $('provision-button').disabled = false; $('provision-button').textContent = pendingProvision ? '查詢原申請結果（保留同一私鑰）' : '同意並準備 App'; say(`${error.message}\n原私鑰與申請內容僅留在此分頁。再次按鈕只傳送相同申請以取得快取結果；不會產生另一把私鑰或自動重新申請憑證。取消、分頁關閉或 10 分鐘 session 到期後會遺失這把私鑰。`); } }
+    } catch (error) { if (current === generation) { state(pendingProvision ? 'provisionRetry' : 'authenticated'); if (!pendingProvision) { registered.freeze(false); certificates.freeze(false); } if (!pendingProvision) { for (const id of ['team', 'provision-consent']) $(id).disabled = false; $('device-name').disabled = existingRoute(); $('account-udid').disabled = existingRoute(); } $('provision-button').disabled = false; $('provision-button').textContent = pendingProvision ? '查詢原申請結果（保留同一私鑰）' : '同意並準備 App'; if (['certificateLimit', 'certificateCapacity'].includes(error.code)) $('certificate-management').open = true; say(`${error.message}\n請保留已下載的加密恢復檔。重試使用同一 CSR，先讀回原憑證，再繼續 profiles；不會自動撤銷。若換回已有 P12／恢復檔，請先取消這次 session 再匯入。取消或到期後可從恢復檔重用私鑰。`); } }
   };
   function cancelDiscovery() {
     if (!discovery) return;

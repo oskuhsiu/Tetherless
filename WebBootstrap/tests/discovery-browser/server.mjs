@@ -1,7 +1,7 @@
 // Local synthetic HTTP faults only. No proxy, credentials, or outbound traffic.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-const health = JSON.stringify({ protocol: 1, appleAuthAvailable: true, profileServiceAvailable: true });
+const health = JSON.stringify({ protocol: 1, certificateLifecycle: 1, appleAuthAvailable: true, profileServiceAvailable: true });
 export function createDiscoveryFixture() {
   const cases = new Map(); let next = 0, redirected = 0;
   const server = createServer(async (req, res) => {

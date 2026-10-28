@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 mod apple;
+mod certificates;
 mod devices;
 mod enrollment;
 mod login_diagnostics;
@@ -56,6 +57,7 @@ struct ProvisionAttempt {
     result: Option<ApiResult<ProvisionOutput>>,
 }
 struct App {
+    certificate_state: Mutex<certificates::CertificateState>,
     sessions: RwLock<HashMap<String, Arc<Session>>>,
     last_start: Mutex<Option<Instant>>,
     enrollments: RwLock<HashMap<String, Arc<enrollment::Enrollment>>>,
@@ -88,6 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("Invalid public host".into());
     }
     let app = Arc::new(App {
+        certificate_state: Mutex::new(certificates::CertificateState::default()),
         sessions: RwLock::new(HashMap::new()),
         last_start: Mutex::new(None),
         enrollments: RwLock::new(HashMap::new()),
@@ -156,7 +159,7 @@ fn routes(app: Arc<App>) -> Router {
     let origin = HeaderValue::from_str(&app.allowed_origin).expect("origin validated at startup");
     let profile_service_available = app.allowed_origin.starts_with("https://");
     Router::new()
-        .route("/health", get(move || async move { Json(json!({"protocol":1,"appleAuthAvailable":true,"profileServiceAvailable":profile_service_available,"service":"tetherless-web-bootstrap", "accountBackend":"isideload", "accountBackendPin":"8ca39b6203263e539408986e546c42e7c1cc3699", "accountBackendPatch":"bounded-no-redirect-anisette-transport", "liveAppleAcceptance":false})) }))
+        .route("/health", get(move || async move { Json(json!({"protocol":1,"appleAuthAvailable":true,"profileServiceAvailable":profile_service_available,"service":"tetherless-web-bootstrap", "accountBackend":"isideload", "accountBackendPin":"8ca39b6203263e539408986e546c42e7c1cc3699", "accountBackendPatch":"bounded-no-redirect-anisette-transport", "liveAppleAcceptance":false,"certificateLifecycle":1})) }))
         .route("/v1/device-enrollments", post(enrollment::create))
         .route("/v1/device-enrollments/{id}", get(enrollment::status).delete(enrollment::cancel))
         .route("/v1/device-enrollments/{id}/profile/{ticket}", get(enrollment::profile))
@@ -166,6 +169,9 @@ fn routes(app: Arc<App>) -> Router {
         .route("/v1/sessions/{id}/2fa", post(two_factor))
         .route("/v1/sessions/{id}/teams", get(teams))
         .route("/v1/sessions/{id}/teams/{team_id}/devices", get(registered_devices))
+        .route("/v1/sessions/{id}/certificate", post(prepare_certificate))
+        .route("/v1/sessions/{id}/teams/{team_id}/certificates", get(list_certificates))
+        .route("/v1/sessions/{id}/teams/{team_id}/certificates/revoke", post(revoke_certificate))
         .route("/v1/sessions/{id}/provision", post(provision))
         .fallback_service(ServeDir::new(std::env::var("TETHERLESS_FRONTEND_DIR").unwrap_or_else(|_| "../../WebBootstrap/dist".into())))
         .layer(DefaultBodyLimit::max(32 * 1024))
@@ -514,6 +520,129 @@ async fn registered_devices(
     .await
 }
 
+// Mutations use the same admission/deadline boundary as reads, but a timeout
+// cannot be described as a known failure: Apple may already have accepted it.
+async fn authenticated_mutation<T>(
+    session: &Session,
+    operation: impl std::future::Future<Output = ApiResult<T>>,
+) -> ApiResult<T> {
+    authenticated_read(session, operation)
+        .await
+        .map_err(|error| match error {
+            ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::AppleRequestFailed) => ApiError(
+                StatusCode::GATEWAY_TIMEOUT,
+                ErrorCode::ProvisioningUncertain,
+            ),
+            // lookup already rejects expired sessions before admission. Once an
+            // admitted operation might have dispatched, expiry/cancel cannot
+            // establish that Apple did not commit it.
+            ApiError(StatusCode::GONE, ErrorCode::Expired) => {
+                ApiError(StatusCode::GONE, ErrorCode::ProvisioningUncertain)
+            }
+            other => other,
+        })
+}
+
+async fn prepare_certificate(
+    State(app): State<Arc<App>>,
+    Path(id): Path<String>,
+    headers: HeaderMap,
+    Json(input): Json<ProvisionRequest>,
+) -> ApiResult<Json<certificates::CertificateOutput>> {
+    let session = lookup(&app, &id, &headers).await?;
+    let public_key = input.validate()?;
+    authenticated_mutation(&session, async {
+        // Shared across sessions and all mutations (including profile mutations).
+        // The guards contain only public identifiers, never account credentials.
+        let mut state = app.certificate_state.lock().await;
+        let mut developer = session.developer.lock().await;
+        let dev = developer
+            .as_mut()
+            .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))?;
+        certificates::prepare(dev, &mut state, &input, &public_key)
+            .await
+            .map(Json)
+    })
+    .await
+}
+
+async fn list_certificates(
+    State(app): State<Arc<App>>,
+    Path((id, team_id)): Path<(String, String)>,
+    headers: HeaderMap,
+) -> ApiResult<Json<certificates::CertificateCatalog>> {
+    let session = lookup(&app, &id, &headers).await?;
+    if !valid_team_id(&team_id) {
+        return Err(invalid());
+    }
+    authenticated_read(&session, async {
+        let mut state = app.certificate_state.lock().await;
+        let mut developer = session.developer.lock().await;
+        let dev = developer
+            .as_mut()
+            .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))?;
+        certificates::list(dev, &mut state, &id, &team_id)
+            .await
+            .map(Json)
+    })
+    .await
+}
+
+async fn revoke_certificate(
+    State(app): State<Arc<App>>,
+    Path((id, team_id)): Path<(String, String)>,
+    headers: HeaderMap,
+    Json(input): Json<certificates::RevokeRequest>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let session = lookup(&app, &id, &headers).await?;
+    if !valid_team_id(&team_id) {
+        return Err(invalid());
+    }
+    input.validate()?;
+    authenticated_mutation(&session, async {
+        let mut state = app.certificate_state.lock().await;
+        let mut developer = session.developer.lock().await;
+        let dev = developer
+            .as_mut()
+            .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))?;
+        certificates::revoke(dev, &mut state, &id, &team_id, &input).await?;
+        Ok(Json(
+            json!({"revoked":true, "certificateId":input.certificate_id, "teamId":team_id}),
+        ))
+    })
+    .await
+}
+
+async fn begin_profiles(
+    session: &Session,
+    fingerprint: [u8; 32],
+) -> ApiResult<Option<ProvisionOutput>> {
+    if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+        return Err(ApiError(StatusCode::GONE, ErrorCode::Expired));
+    }
+    let mut attempt = session.provision.lock().await;
+    if let Some(existing) = attempt.as_ref() {
+        if existing.fingerprint != fingerprint {
+            return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState));
+        }
+        match &existing.result {
+            Some(Ok(output)) => return Ok(Some(output.clone())),
+            None => return Err(ApiError(StatusCode::CONFLICT, ErrorCode::Busy)),
+            // This stage cannot issue certificates. Explicit retries read
+            // existing resources before resuming profile preparation.
+            Some(Err(_)) => {}
+        }
+    }
+    if session.view.lock().await.state != "authenticated" {
+        return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState));
+    }
+    *attempt = Some(ProvisionAttempt {
+        fingerprint,
+        result: None,
+    });
+    Ok(None)
+}
+
 async fn provision(
     State(app): State<Arc<App>>,
     Path(id): Path<String>,
@@ -523,25 +652,8 @@ async fn provision(
     let session = lookup(&app, &id, &headers).await?;
     let public_key = input.validate()?;
     let fingerprint = input.fingerprint()?;
-    {
-        let mut attempt = session.provision.lock().await;
-        if let Some(existing) = attempt.as_ref() {
-            if existing.fingerprint != fingerprint {
-                return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState));
-            }
-            return existing
-                .result
-                .clone()
-                .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::Busy))?
-                .map(Json);
-        }
-        if session.view.lock().await.state != "authenticated" {
-            return Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState));
-        }
-        *attempt = Some(ProvisionAttempt {
-            fingerprint,
-            result: None,
-        });
+    if let Some(output) = begin_profiles(&session, fingerprint).await? {
+        return Ok(Json(output));
     }
     // Own the operation independently of an HTTP disconnect. Repeated identical
     // requests return the stored result; they never issue a second certificate.
@@ -549,22 +661,30 @@ async fn provision(
     let (tx, rx) = tokio::sync::oneshot::channel();
     let operation_task = tokio::spawn(async move {
         let operation = async {
+            let _team_mutations = app.certificate_state.lock().await;
             let mut developer = worker.developer.lock().await;
+            if worker.cancel.is_cancelled() || worker.created.elapsed() >= TTL {
+                return Err(ApiError(StatusCode::GONE, ErrorCode::ProvisioningUncertain));
+            }
             let dev = developer
                 .as_mut()
                 .ok_or(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))?;
             apple::provision(dev, &input, &public_key).await
         };
         tokio::select! {
+            biased;
             _ = worker.cancel.cancelled() => Err(ApiError(StatusCode::GONE, ErrorCode::ProvisioningUncertain)),
-            result = tokio::time::timeout(UPSTREAM_TIMEOUT, operation) => result.unwrap_or(Err(ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::ProvisioningUncertain))),
+            result = tokio::time::timeout(UPSTREAM_TIMEOUT.min(TTL.saturating_sub(worker.created.elapsed())), operation) => result.unwrap_or(Err(ApiError(StatusCode::GATEWAY_TIMEOUT, ErrorCode::ProvisioningUncertain))),
         }
     });
     tokio::spawn(async move {
-        let result = operation_task.await.unwrap_or(Err(ApiError(
+        let mut result = operation_task.await.unwrap_or(Err(ApiError(
             StatusCode::BAD_GATEWAY,
             ErrorCode::ProvisioningUncertain,
         )));
+        if session.cancel.is_cancelled() || session.created.elapsed() >= TTL {
+            result = Err(ApiError(StatusCode::GONE, ErrorCode::ProvisioningUncertain));
+        }
         if let Some(attempt) = session.provision.lock().await.as_mut() {
             attempt.result = Some(result.clone());
         }
@@ -589,6 +709,142 @@ mod tests {
             two_factor: tx,
             provision: Mutex::new(None),
         })
+    }
+    #[tokio::test]
+    async fn mutation_cancel_or_expiry_after_admission_never_reports_known_failure_or_success() {
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        let cancel = session.cancel.clone();
+        let result = authenticated_mutation(&session, async move {
+            cancel.cancel();
+            Ok::<_, ApiError>(())
+        })
+        .await;
+        assert!(matches!(
+            result,
+            Err(ApiError(StatusCode::GONE, ErrorCode::ProvisioningUncertain))
+        ));
+        let session = synthetic_session("authenticated", TTL - Duration::from_millis(50));
+        let entered = std::sync::atomic::AtomicBool::new(false);
+        let result = authenticated_mutation(&session, async {
+            entered.store(true, std::sync::atomic::Ordering::SeqCst);
+            std::future::pending::<ApiResult<()>>().await
+        })
+        .await;
+        assert!(entered.load(std::sync::atomic::Ordering::SeqCst));
+        assert!(matches!(
+            result,
+            Err(ApiError(StatusCode::GONE, ErrorCode::ProvisioningUncertain))
+        ));
+    }
+    #[tokio::test]
+    async fn failed_profile_stage_resumes_same_request_then_caches_success() {
+        let session = synthetic_session("authenticated", Duration::ZERO);
+        assert!(begin_profiles(&session, [1; 32]).await.unwrap().is_none());
+        assert!(matches!(
+            begin_profiles(&session, [1; 32]).await,
+            Err(ApiError(_, ErrorCode::Busy))
+        ));
+        session.provision.lock().await.as_mut().unwrap().result = Some(Err(ApiError(
+            StatusCode::BAD_GATEWAY,
+            ErrorCode::ProfileMismatch,
+        )));
+        // This exact production admission path reopens ONLY the profile stage;
+        // certificate issuance is no longer reachable from that stage.
+        assert!(begin_profiles(&session, [1; 32]).await.unwrap().is_none());
+        session.provision.lock().await.as_mut().unwrap().result = Some(Ok(ProvisionOutput {
+            team_id: "SYNTHETIC".into(),
+            certificate_der_base64: "public synthetic certificate".into(),
+            certificate_serial: Some("ABC123".into()),
+            certificate_reused: true,
+            app_group_identifier: None,
+            profiles: vec![],
+            verification: "cmsSignatureAndMetadataOnly",
+        }));
+        let output = begin_profiles(&session, [1; 32]).await.unwrap().unwrap();
+        assert_eq!(output.certificate_serial.as_deref(), Some("ABC123"));
+        assert!(output.certificate_reused);
+        assert!(matches!(
+            begin_profiles(&session, [2; 32]).await,
+            Err(ApiError(_, ErrorCode::WrongState))
+        ));
+    }
+    #[tokio::test]
+    async fn certificate_routes_preserve_bearer_origin_state_and_no_store() {
+        use tower::ServiceExt;
+        let prepare_body=json!({"consent":"register-device-app-ids-and-issue-certificate","teamId":"SYNTHETIC","certificateIntent":"createOrReuse","device":{"udid":"0000000000000000000000000000000000000000","name":"Synthetic"},"csrPem":include_str!("../tests/fixtures/request.pem"),"machineName":"Synthetic","apps":[{"bundleId":"org.example.synthetic","name":"Synthetic"}]}).to_string();
+        let revoke_body=json!({"certificateId":"SYNTHETICID","certificateSerial":"ABC123","confirmationToken":"00000000-0000-4000-8000-000000000000","consent":"revoke-selected-development-certificate"}).to_string();
+        for (method, path, body) in [
+            ("POST", "/v1/sessions/id/certificate", prepare_body.as_str()),
+            ("GET", "/v1/sessions/id/teams/SYNTHETIC/certificates", ""),
+            (
+                "POST",
+                "/v1/sessions/id/teams/SYNTHETIC/certificates/revoke",
+                revoke_body.as_str(),
+            ),
+        ] {
+            for (token, origin, state, age, expected) in [
+                (
+                    false,
+                    "http://127.0.0.1:8787",
+                    "authenticated",
+                    Duration::ZERO,
+                    StatusCode::UNAUTHORIZED,
+                ),
+                (
+                    true,
+                    "https://evil.example",
+                    "authenticated",
+                    Duration::ZERO,
+                    StatusCode::FORBIDDEN,
+                ),
+                (
+                    true,
+                    "http://127.0.0.1:8787",
+                    "starting",
+                    Duration::ZERO,
+                    StatusCode::CONFLICT,
+                ),
+                (
+                    true,
+                    "http://127.0.0.1:8787",
+                    "authenticated",
+                    TTL,
+                    StatusCode::GONE,
+                ),
+                (
+                    true,
+                    "http://127.0.0.1:8787",
+                    "authenticated",
+                    Duration::ZERO,
+                    StatusCode::CONFLICT,
+                ),
+            ] {
+                let app = test_app();
+                app.sessions
+                    .write()
+                    .await
+                    .insert("id".into(), synthetic_session(state, age));
+                let mut request = axum::http::Request::builder()
+                    .method(method)
+                    .uri(path)
+                    .header("host", "127.0.0.1:8787")
+                    .header("origin", origin)
+                    .header("content-type", "application/json");
+                if token {
+                    request = request.header("authorization", "Bearer synthetic-bearer");
+                }
+                let response = routes(app)
+                    .oneshot(
+                        request
+                            .body(axum::body::Body::from(body.to_string()))
+                            .unwrap(),
+                    )
+                    .await
+                    .unwrap();
+                assert_eq!(response.status(), expected, "{path}");
+                assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+            }
+        }
     }
     #[tokio::test]
     async fn teams_diagnostics_response_is_private_safe_and_timeout_is_distinct() {
@@ -983,6 +1239,7 @@ mod tests {
     #[tokio::test]
     async fn unknown_session_does_not_contact_apple() {
         let app = App {
+            certificate_state: Mutex::new(certificates::CertificateState::default()),
             sessions: RwLock::new(HashMap::new()),
             last_start: Mutex::new(None),
             enrollments: RwLock::new(HashMap::new()),
@@ -997,6 +1254,7 @@ mod tests {
     }
     fn test_app() -> Arc<App> {
         Arc::new(App {
+            certificate_state: Mutex::new(certificates::CertificateState::default()),
             sessions: RwLock::new(HashMap::new()),
             last_start: Mutex::new(None),
             enrollments: RwLock::new(HashMap::new()),
@@ -1076,7 +1334,7 @@ mod tests {
         ));
     }
     #[tokio::test]
-    async fn uncertain_or_running_provision_is_never_reissued() {
+    async fn failed_profiles_can_resume_but_changed_or_running_requests_are_rejected() {
         // Synthetic local state only: no Apple session/transport is installed.
         let request = || {
             serde_json::from_value::<ProvisionRequest>(json!({
@@ -1123,10 +1381,7 @@ mod tests {
                     Json(request())
                 )
                 .await,
-                Err(ApiError(
-                    StatusCode::GATEWAY_TIMEOUT,
-                    ErrorCode::ProvisioningUncertain
-                ))
+                Err(ApiError(StatusCode::CONFLICT, ErrorCode::WrongState))
             ));
         }
         let mut changed = request();
