@@ -46,7 +46,7 @@ private struct NativeSigningMaterialScreen: View {
                     .accessibilityIdentifier("signingMaterial.importPassword")
                 SwiftUI.Button("Import existing P12") { showImport = true }
                     .disabled(working).accessibilityIdentifier("signingMaterial.import")
-                Text("The file and password stay on this device. Import saves the matching private key in Keychain; it does not contact Apple, revoke anything, select an active signer or enable automatic renewal. Continue setup afterwards to verify the selected Team and reuse it.")
+                Text("Use a P12 containing exactly one leaf certificate and its RSA private key (2048–4096 bits); CA-chain bundles are not supported. The file and password stay on this device. Import saves the matching private key in Keychain; it does not contact Apple, revoke anything, select an active signer or enable automatic renewal. Continue setup afterwards to verify the selected Team and reuse it.")
             } header: { Text("Already have a certificate?") }
             SwiftUI.Section {
                 SwiftUI.Picker("Certificate", selection: $selected) {
@@ -58,12 +58,12 @@ private struct NativeSigningMaterialScreen: View {
                 if let certificate = certificates.first(where: { $0.serialNumber == selected }) {
                     Text("Expires \(certificate.x509.expiryDate.formatted())")
                 }
-                SecureField("New backup password (12+ characters)", text: $exportPassword)
+                SecureField("New backup password (12+ ASCII characters)", text: $exportPassword)
                     .accessibilityIdentifier("signingMaterial.exportPassword")
                 SecureField("Repeat backup password", text: $confirmationPassword)
                 SwiftUI.Button("Save encrypted P12 and available profiles") { exportBackup() }
                     .disabled(working || selected.isEmpty).accessibilityIdentifier("signingMaterial.export")
-                Text("The backup includes an encrypted private key and matching profiles from this running app only. Profiles may contain device identifiers and may be expired. Choose the destination yourself and keep the password separately. Cancelling Save creates no user backup; the original Keychain entry is retained.")
+                Text("Use only ASCII letters, numbers and symbols for the backup password; Chinese and emoji passwords are not supported. The backup includes an encrypted private key and matching profiles from this running app only. Profiles may contain device identifiers and may be expired. Choose the destination yourself and keep the password separately. Cancelling Save creates no user backup; the original Keychain entry is retained.")
             } header: { Text("Back up before leaving setup") }
             SwiftUI.Section {
                 Text(status).accessibilityIdentifier("signingMaterial.status")

@@ -10,12 +10,13 @@ import CryptoKit
 /// key, password or context is retained on success or failure.
 enum NativeEncryptedP12 {
     private static let forgeSHA256 = "d9b9074e6861200d676e25dcfe97889db5e8f4150bb766d29c491ad709a51b58"
-    private static let adapterSHA256 = "80881a595fb287373f1bb6d771b96aec500f947da15509c274af678dd546c296"
+    private static let adapterSHA256 = "f1d1809536939e5b4b63ae82d83ddb5e0b0a9fbbcad41d110ad960a5ff77a694"
     private static let environmentSHA256 = "2b7eb0137ba46b90f0fa7533710091221f650db47ac7e30ec00fcfbda759f226"
     static func export(certificateDER: Data, privateKeyDER: Data, password: String) throws -> Data {
         guard !certificateDER.isEmpty, certificateDER.count <= 16_384,
               !privateKeyDER.isEmpty, privateKeyDER.count <= 16_384,
               password.utf8.count <= 1024 else { throw CertificateExportFailure.invalidIdentity }
+        try CertificateExportPolicy.validate(password: password, confirmation: password, serial: "")
         let encoded = try call("tetherlessEncryptP12", arguments: [certificateDER.base64EncodedString(), privateKeyDER.base64EncodedString(), password])
         guard encoded.utf8.count <= 65_536, let bytes = Data(base64Encoded: encoded), !bytes.isEmpty, bytes.count <= 32_768 else {
             throw CertificateExportFailure.encryptedExportUnavailable
@@ -69,6 +70,8 @@ enum NativeEncryptedP12 {
         }
         let result = function.call(withArguments: arguments)
         guard context.exception == nil, let encoded = result?.toString(), encoded.utf8.count <= 65_536 else {
+            // Never expose JavaScript exception text or secret arguments.
+            if functionName == "tetherlessValidateP12" { throw CertificateExportFailure.invalidIdentity }
             throw CertificateExportFailure.encryptedExportUnavailable
         }
         try Task.checkCancellation()

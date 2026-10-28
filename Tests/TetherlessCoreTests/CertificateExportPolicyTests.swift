@@ -9,7 +9,8 @@ struct CertificateExportPolicyTests {
     }
     @Test func emptyShortMismatchedSerialAndOversizedRejected() {
         for (password, confirmation) in [("", ""), ("too-short", "too-short"),
-            ("long-but-different", "different-password"), ("abcdef0123456789", "abcdef0123456789"),
+            ("long-but-different", "different-password"), ("合成測試密碼不能用於匯出", "合成測試密碼不能用於匯出"),
+            ("synthetic-emoji-🔒", "synthetic-emoji-🔒"), ("abcdef0123456789", "abcdef0123456789"),
             (String(repeating: " ", count: 30), String(repeating: " ", count: 30)),
             (String(repeating: "a", count: 1025), String(repeating: "a", count: 1025))] {
             #expect(throws: CertificateExportFailure.passwordRequirements) {

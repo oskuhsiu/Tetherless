@@ -74,6 +74,7 @@ class NativeLifecycleTests(unittest.TestCase):
         self.assertNotIn('debugLog', bridge)
         helper = (ROOT / 'Native/NativeSigningMaterial.swift').read_text()
         self.assertIn('SecPKCS12Import', helper)
+        self.assertIn('SigningKeyProof.requireMatch', helper)
         self.assertIn('password: password + "-incorrect"', helper)
         export = helper.split('static func encryptedP12', 1)[1].split('static func backup', 1)[0]
         self.assertNotIn('CertificateManager.convert', export)
@@ -194,6 +195,15 @@ const seed=vm.createContext({nativeSecureRandom:n=>Array.from({length:n},(_,i)=>
 const c=context('ok'), pfx=c.tetherlessEncryptP12(cert,key,password);
 fs.writeFileSync('identity.p12',Buffer.from(pfx,'base64'));
 if(c.tetherlessValidateP12(pfx,password)!=='valid')throw Error('validImportRejected');
+for(const unicode of ['合成測試密碼不能用於匯出','synthetic-emoji-🔒']) { let rejected=false;try{c.tetherlessEncryptP12(cert,key,unicode)}catch{rejected=true}if(!rejected)throw Error('unicodePasswordNotRejected'); }
+c.noMACSource=pfx;const noMAC=vm.runInContext("var a=forge.asn1.fromDer(forge.util.decode64(noMACSource));a.value.pop();forge.util.encode64(forge.asn1.toDer(a).getBytes())",c);let noMACRejected=false;try{c.tetherlessValidateP12(noMAC,password)}catch{noMACRejected=true}if(!noMACRejected)throw Error('missingMACNotRejected');
+// Authenticated but unreasonable RSA parameters are rejected before Security work.
+c.keyFixture=key;c.certFixture=cert;c.testPassword=password;
+for (const mutation of ['oversized', 'exponent']) {
+ c.mutation=mutation;
+ const unreasonable=vm.runInContext(`(function(){const k=forge.pki.privateKeyFromAsn1(forge.asn1.fromDer(forge.util.decode64(keyFixture))); const cert=forge.pki.certificateFromAsn1(forge.asn1.fromDer(forge.util.decode64(certFixture))); if(mutation==='oversized')k.n=new forge.jsbn.BigInteger('1'+'0'.repeat(1100),16);else k.e=new forge.jsbn.BigInteger('2'); return forge.util.encode64(forge.asn1.toDer(forge.pkcs12.toPkcs12Asn1(k,[cert],testPassword,{algorithm:'aes256',prfAlgorithm:'sha256',count:1})).getBytes());})()`,c);
+ let rejected=false;try{c.tetherlessValidateP12(unreasonable,password)}catch(e){rejected=String(e).includes('rsaWorkLimit')}if(!rejected)throw Error('rsaWorkLimitMissing');
+}
 for(const bad of ['', 'wrong']) {let rejected=false;try{c.tetherlessValidateP12(pfx,bad)}catch{rejected=true}if(!rejected)throw Error('badPasswordImport');}
 // Rebuild a valid-MAC PFX with a cheap encrypted outer SafeContents and an
 // attacker-controlled expensive inner shrouded-key KDF. Only a full decoder
@@ -226,6 +236,7 @@ for(const mode of ['fail','short']) {let rejected=false;try{context(mode).tether
             info = result.stderr.decode()
             self.assertIn('Shrouded Keybag', info)
             self.assertIn('AES-256-CBC', info)
+            self.assertIn('PRF hmacWithSHA256', info)
             self.assertIn('Iteration 100000', info)
             self.assertIn('MAC:', info)
             self.assertNotIn((root/'key.der').read_bytes(), (root/'identity.p12').read_bytes())

@@ -18,11 +18,13 @@ tests, and no Render deployment or service-window extension is part of this work
 Local verification after integration:
 
 - Rust: **62/62 tests**, release build, and **7** real loopback HTTP health/origin/session admission checks passed. Reproducible commands and source hashes are in `Tools/WebBootstrapService/VERIFICATION.md` and its lifecycle JSON record.
-- Web: **172/172** unit/DOM/crypto/actual pinned-WASM tests and production build passed. Five new browser scenarios are discovered as ten Chromium/WebKit cases; discovery is NOT execution.
+- Web: **174/174** unit/DOM/crypto/actual pinned-WASM tests and production build passed. Five new browser scenarios are discovered as ten Chromium/WebKit cases; discovery is NOT execution.
 - Native focused Python: **25 passed, 1 skipped** (26 total, including 20 existing certificate tests). The new suite has five passing source/resource/Node–OpenSSL tests and one macOS-only Swift/JavaScriptCore/Security harness not run here.
 - Full Integration suite: **510 total; 470 passed, 32 skipped, 1 failure and 7 errors**, all eight failures/errors requiring missing `swiftc`. Do not describe the aggregate as green.
 - `swift test` and `swift test -c release` are blocked (`swift: command not found`). Unsigned native Debug/Release, actual JSCore/Security interoperability, app-resource packaging, and actual Chromium/WebKit execution require CI. The official local browser archive URL returned HTML rather than a ZIP.
 - Independent review reproduced the old plaintext native P12 builder, verified new protected output with OpenSSL and the real WASM signer, and checked cancellation/retry/revocation races. No live Apple account operation or iPhone install/launch/readback was tested.
+
+Confirmed compatibility repair: native diagnostics proved Forge's default AES PBKDF2-SHA1 PRF mismatched Apple's and pinned CodeSignKit's SHA256 decoder behavior. Both exports now explicitly use SHA256 PRF, retaining AES256/100000/MAC and native Security readback. New P12 export passwords are printable ASCII only; Unicode recovery passwords remain supported. Native import accepts one leaf certificate plus its matching RSA 2048–4096 key, not CA-chain bundles. A dedicated pinned CodeSignKit signing/native Security consumer job is added and remains pending until its actual CI result. See [CI decisions](CERTIFICATE_CI_DECISIONS.md) for evidence and unchanged gates.
 
 The user authorized publication to an isolated branch and a **draft PR for CI only**. No main/develop update, merge, deployment or live Apple certificate action is authorized by that approval. The existing main-based checkout is intentional: develop is 89 commits behind main; using it as the draft target would add unrelated history. Exact published SHA and CI outcomes must be recorded before reporting those stages passed.
 

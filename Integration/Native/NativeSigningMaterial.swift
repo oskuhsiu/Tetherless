@@ -26,11 +26,8 @@ enum NativeSigningMaterial {
         var privateKey: SecKey?
         guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess,
               SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
-              let certificate, let privateKey, let derived = SecKeyCopyPublicKey(privateKey),
-              let publicKey = SecCertificateCopyKey(certificate),
-              let derivedBytes = SecKeyCopyExternalRepresentation(derived, nil) as Data?,
-              let publicBytes = SecKeyCopyExternalRepresentation(publicKey, nil) as Data?,
-              derivedBytes == publicBytes else { throw CertificateExportFailure.invalidIdentity }
+              let certificate, let privateKey else { throw CertificateExportFailure.invalidIdentity }
+        try SigningKeyProof.requireMatch(privateKey: privateKey, certificate: certificate)
         let parsed = try CertificateManager.parse(bytes, password: password)
         guard !parsed.privateKey.isEmpty, parsed.data == SecCertificateCopyData(certificate) as Data else {
             throw CertificateExportFailure.invalidIdentity

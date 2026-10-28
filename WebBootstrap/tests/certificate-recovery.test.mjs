@@ -60,3 +60,22 @@ test('P12: rejects pathological MAC and KDF iteration counts before decrypting',
   assert.throws(() => checkP12Work(node(a.Type.SEQUENCE, [node(a.Type.INTEGER,'\x03'),node(a.Type.SEQUENCE,[]),node(a.Type.SEQUENCE,[node(a.Type.SEQUENCE,[]),node(a.Type.OCTETSTRING,'salt'),tooMuch])])));
   assert.throws(() => checkP12Work(node(a.Type.SEQUENCE,[node(a.Type.OID,a.oidToDer('1.2.840.113549.1.5.12').getBytes()),node(a.Type.SEQUENCE,[node(a.Type.OCTETSTRING,'salt'),tooMuch])])));
 });
+test('P12: emitted PBES2 explicitly uses HMAC-SHA256 PRF and 100000 iterations for Apple interoperability', async () => {
+  acceptCertificate(identity,certificate());
+  const file=exportP12(identity,password),root=forge.asn1.fromDer(forge.util.binary.raw.encode(new Uint8Array(await file.arrayBuffer()))),params=[];
+  function walk(node){
+    if(Array.isArray(node.value)){
+      if(node.value[0]?.type===forge.asn1.Type.OID&&forge.asn1.derToOid(node.value[0].value)==='1.2.840.113549.1.5.12')params.push(node.value[1]);
+      node.value.forEach(walk);
+    }else if(node.type===forge.asn1.Type.OCTETSTRING&&typeof node.value==='string'&&node.value.charCodeAt(0)===48){let nested;try{nested=forge.asn1.fromDer(node.value);}catch{return;}walk(nested);}
+  }
+  walk(root);assert.equal(params.length,1);
+  assert.equal(forge.asn1.derToInteger(params[0].value[1].value),100000);
+  assert.equal(forge.asn1.derToOid(params[0].value[3].value[0].value),'1.2.840.113549.2.9');
+});
+test('P12: new exports reject non-ASCII/control passwords; Unicode recovery still round trips unchanged',async()=>{
+  acceptCertificate(identity,certificate());
+  for(const rejected of ['合成測試密碼非真實使用者','synthetic-password-🔐','synthetic-password-\n'])assert.throws(()=>exportP12(identity,rejected),/ASCII/);
+  const unicode='合成測試密碼非真實使用者';const restored=await importRecovery(await exportRecovery(identity,unicode),unicode);
+  assert.equal(restored.csrPem,identity.csrPem);assert.equal(restored.teamId,identity.teamId);
+});

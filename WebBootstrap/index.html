@@ -36,7 +36,7 @@
           <label for="identity-source">簽署身分</label><select id="identity-source"><option value="new">建立新身分（會使用憑證名額）</option><option value="recovery">匯入加密恢復檔，優先重用</option><option value="p12">匯入已有 P12，僅重用</option></select>
           <label for="identity-file">恢復檔或 P12（匯入時選擇）</label><input type="file" id="identity-file">
           <label for="identity-import-password">原檔案密碼（只在本機解密）</label><input id="identity-import-password" type="password" autocomplete="off">
-          <label for="identity-export-password">備份／P12 匯出密碼（至少 12 個字元）</label><input id="identity-export-password" type="password" autocomplete="new-password">
+          <label for="identity-export-password">備份／P12 匯出密碼（至少 12 個字元；P12 僅限英文、數字或 ASCII 符號）</label><input id="identity-export-password" type="password" autocomplete="new-password"><p class="hint">P12 密碼暫不支援中文／Unicode，以確保 iOS 與簽署器可匯入；加密恢復檔仍可使用 Unicode。若更改此欄位，已下載恢復檔仍使用原密碼。</p>
           <button id="prepare-identity" type="button" class="secondary">準備身分並下載加密恢復檔</button>
           <label class="check"><input id="recovery-saved" type="checkbox" disabled>我已確認恢復檔已儲存，並另行保存密碼；下載按鈕本身不代表檔案保存成功</label>
           <label class="check"><input id="identity-create-consent" type="checkbox">這是本頁新建且尚未提交的身分，我明確同意申請一張新憑證（匯入的恢復檔／P12 一律只重用）</label>

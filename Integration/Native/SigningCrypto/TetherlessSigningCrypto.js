@@ -37,27 +37,38 @@
   forge.pbe.generatePkcs12Key = limitedPKCS12;
   forge.pki.pbe.generatePkcs12Key = limitedPKCS12;
   forge.pkcs12.generateKey = limitedPKCS12;
+  function boundRSA(key) {
+    if (!key || !key.n || !key.e || key.n.bitLength() < 2048 || key.n.bitLength() > 4096 ||
+        key.e.bitLength() > 32 || key.e.compareTo(new forge.jsbn.BigInteger('3')) < 0 || key.e.isEven()) throw new Error('rsaWorkLimit');
+    for (const name of ['d', 'p', 'q', 'dP', 'dQ', 'qInv']) {
+      if (!key[name] || key[name].signum() <= 0 || key[name].bitLength() > 4096) throw new Error('rsaWorkLimit');
+    }
+  }
   globalThis.tetherlessValidateP12 = function (base64, password) {
     work = 0;
     if (typeof password !== 'string' || password.length > 1024 || base64.length > 65536) throw new Error('invalidInput');
-    const parsed = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(forge.util.decode64(base64), {strict:true, maxDepth:32}), true, password);
+    const root = forge.asn1.fromDer(forge.util.decode64(base64), {strict:true, maxDepth:32});
+    if (!Array.isArray(root.value) || root.value.length !== 3 || !root.value[2]) throw new Error('unauthenticatedContainer');
+    const parsed = forge.pkcs12.pkcs12FromAsn1(root, true, password);
     const keys = [...(parsed.getBags({bagType:forge.pki.oids.pkcs8ShroudedKeyBag})[forge.pki.oids.pkcs8ShroudedKeyBag] || []),
       ...(parsed.getBags({bagType:forge.pki.oids.keyBag})[forge.pki.oids.keyBag] || [])];
     const certs = parsed.getBags({bagType:forge.pki.oids.certBag})[forge.pki.oids.certBag] || [];
-    if (keys.length !== 1 || !keys[0].key || certs.length > 32) throw new Error('invalidIdentity');
+    if (keys.length !== 1 || !keys[0].key || certs.length !== 1) throw new Error('invalidIdentity');
     const key = keys[0].key;
+    boundRSA(key);
     const matches = certs.filter(b => b.cert && !b.cert.publicKey.n.compareTo(key.n) && !b.cert.publicKey.e.compareTo(key.e));
     if (matches.length !== 1) throw new Error('invalidIdentity');
     return 'valid';
   };
   globalThis.tetherlessEncryptP12 = function (certificateBase64, privateKeyBase64, password) {
     work = 0;
-    if (typeof password !== 'string' || password.length < 12 || password.length > 1024) throw new Error('invalidInput');
+    if (typeof password !== 'string' || password.length < 12 || password.length > 1024 || !/^[\x20-\x7e]+$/.test(password)) throw new Error('invalidInput');
     const cert = forge.pki.certificateFromAsn1(forge.asn1.fromDer(forge.util.decode64(certificateBase64), true));
     const key = forge.pki.privateKeyFromAsn1(forge.asn1.fromDer(forge.util.decode64(privateKeyBase64), true));
+    boundRSA(key);
     if (key.n.compareTo(cert.publicKey.n) || key.e.compareTo(cert.publicKey.e)) throw new Error('keyMismatch');
     const pfx = forge.pkcs12.toPkcs12Asn1(key, [cert], password,
-      {algorithm: 'aes256', count: 100000, saltSize: 16, useMac: true, generateLocalKeyId: true});
+      {algorithm: 'aes256', count: 100000, prfAlgorithm: 'sha256', saltSize: 16, useMac: true, generateLocalKeyId: true});
     const bytes = forge.asn1.toDer(pfx).getBytes();
     // A successful same-password parse alone does not prove encryption.
     // Require the encrypted bag; no unencrypted keyBag is acceptable.

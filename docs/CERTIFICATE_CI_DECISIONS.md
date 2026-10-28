@@ -62,3 +62,45 @@ Local fixture generation and OpenSSL decoding for all three Forge controls passe
 Product AES256/100000 output, native readback assertions, negative tests and all
 workflow/environment settings remain unchanged. No cipher downgrade, custom
 cryptography or bypass of failed validation is introduced.
+
+## 2026-10-28 — confirmed PRF compatibility repair, not a cipher downgrade
+
+Third source `6dfa507fb59ac6b6272443bc932835342a30ea74`, native run
+`40661458274`, Release job `122725231922`, produced discriminating native results:
+
+| Synthetic P12 | macOS Security import |
+| --- | --- |
+| Product Forge AES256 / 100000 / default SHA1 PRF | -26275 decode |
+| Forge AES256 / 2048 / SHA1 PRF | -26275 decode |
+| Forge AES256 / 100000 / explicit SHA256 PRF | 0 success |
+| Forge 3DES / 100000 | 0 success |
+| OpenSSL AES / SHA256 PRF and 3DES controls | 0 success |
+| Product wrong / empty password | -25293 authentication failure |
+
+This establishes a PRF compatibility issue rather than an iteration limit or a
+general prohibition on AES. Apple's fixed source
+[`p12import.c:212–225`](https://github.com/apple-oss-distributions/Security/blob/3dab46a11f45f2ffdbd70e2127cc5a8ce4a1f222/OSX/sec/Security/p12import.c#L212-L225)
+hardcodes SHA256 for the AES path. The pinned CodeSignKit parser likewise defaults
+to SHA256 if the PRF is omitted. Forge's default is SHA1. The candidate repair
+explicitly chooses SHA256 through the mature library option in BOTH web and native
+exports, retaining AES256, 100000 iterations, MAC and the original Security gate.
+There is no replacement of that gate with JavaScript self-verification.
+
+A separate synthetic interoperability check found that non-ASCII P12 passwords
+can pass Forge self-decryption yet fail actual OpenSSL/WASM private-key use. New
+P12 exports therefore explicitly require 12–1024 printable ASCII characters;
+AES-GCM recovery files retain Unicode password support. No ad-hoc encoding
+transformation or weakening of encryption is used.
+
+The native-consumer fixture must additionally execute the exact pinned CodeSignKit
+parser and sign/verify a synthetic challenge; its parser alone does not verify
+PFX MAC and cannot replace the preceding authentication check.
+
+The ASCII export policy changes Core source/tests, so one new automatic Simulator
+core run is appropriate for that new assertion. Before publication the existing
+read-only classifier was run against prior successful run `40658248822`, attempt
+1, job `122714490071`, source `c1219b0`: `job_passed`, no failed stage, not product
+acceptance. Actual log: 341 Core tests passed, macos-15-arm64 image
+20260907.0337.1, macOS 15.7.9/24G830, Xcode16.4/16F6, iPhone SE3 runtime26.2.
+The workflow/environment/destination selection and all original assertions remain
+unchanged; no reset, SDK substitution or retry of an unchanged failure is requested.

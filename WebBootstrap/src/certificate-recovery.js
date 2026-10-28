@@ -114,7 +114,8 @@ export async function importP12(file, password, teamId) {
 }
 export function exportP12(identity, password) {
   if (!identity.cert || typeof password !== 'string' || password.length < 12 || password.length > 1024) throw new Error('請先取得相符憑證，並輸入至少 12 個字元的匯出密碼');
-  const encoded = forge.asn1.toDer(forge.pkcs12.toPkcs12Asn1(identity.keys.privateKey, [identity.cert], password, { algorithm: 'aes256', count: 100000 })).getBytes();
+  if (!/^[\x20-\x7e]{12,1024}$/.test(password)) throw new Error('P12 匯出密碼請使用至少 12 個可列印英文字母、數字或 ASCII 符號；中文／Unicode 密碼目前與 iOS 匯入不相容。恢復檔原密碼不受影響');
+  const encoded = forge.asn1.toDer(forge.pkcs12.toPkcs12Asn1(identity.keys.privateKey, [identity.cert], password, { algorithm: 'aes256', count: 100000, prfAlgorithm: 'sha256' })).getBytes();
   return new File([forge.util.binary.raw.decode(encoded)], 'tetherless-signing.p12', { type: 'application/x-pkcs12' });
 }
 export function downloadLocal(blob, name) {
