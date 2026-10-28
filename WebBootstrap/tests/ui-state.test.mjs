@@ -346,11 +346,12 @@ test('DOM mock: unknown 2FA blocks code and direct submit until a method is requ
   try {
     loginInputs(e); submit(e, 'account-form'); await until(() => !e.$('two-factor').hidden);
     assert(e.$('verification-code').disabled); assert(e.$('verify-button').disabled); assert(e.$('account-status').textContent.includes('尚未確定驗證方式'));
+    assert(e.$('two-factor').querySelector('details').open); assert.equal(e.$('resend-code').closest('details').open, true); assert(!e.$('resend-code').hidden);
     e.$('verification-code').value = '123456'; submit(e, 'two-factor'); await tick(); assert.deepEqual(actions, []);
     e.$('resend-code').click(); await until(() => !e.$('verification-code').disabled);
     assert.deepEqual(actions, ['sendToDevices']); e.$('verification-code').value = '123456'; submit(e, 'two-factor'); await until(() => actions.length === 2);
     assert.deepEqual(actions, ['sendToDevices', 'submitCode']);
-    e.$('logout').click(); assert(!e.$('verification-code').disabled); assert.equal(e.$('verification-code').value, ''); assert(e.$('two-factor').hidden);
+    e.$('logout').click(); assert(!e.$('verification-code').disabled); assert.equal(e.$('verification-code').value, ''); assert(e.$('two-factor').hidden); assert.equal(e.$('two-factor').querySelector('details').open, false);
   } finally { e.dispose(); }
 });
 test('DOM mock: safe diagnostic is visible on failed login and cancellation clears it', async () => {

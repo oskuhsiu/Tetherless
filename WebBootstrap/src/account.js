@@ -55,6 +55,7 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
     generation++; aborter?.abort(); aborter = undefined; busy = false; clearTimeout(expiryTimer);
     if (session) { const { sessionId, sessionToken } = session; fetch(route(`v1/sessions/${encodeURIComponent(sessionId)}`), { method: 'DELETE', headers: { Authorization: `Bearer ${sessionToken}` }, credentials: 'same-origin', redirect: 'error', keepalive: true, referrerPolicy: 'no-referrer' }).catch(() => {}); }
     session = undefined; twoFactorUnknown = false; codeSubmitting = false;
+    $('two-factor').querySelector('details').open = false;
     for (const id of ['apple-password', 'verification-code', 'apple-id', 'account-udid']) $(id).value = '';
     $('account-udid').value = retainedUdid;
     for (const id of ['login-consent', 'provision-consent']) $(id).checked = false;
@@ -86,7 +87,10 @@ export function setupAccount({ getIpa, ensureIpa = async () => getIpa(), onMater
         $('account-form').hidden = true; $('two-factor').hidden = false; state('twoFactor');
         twoFactorUnknown = result.challenge?.unknown === true;
         $('verification-code').disabled = twoFactorUnknown; $('verify-button').disabled = twoFactorUnknown || codeSubmitting;
-        if (twoFactorUnknown) $('verification-code').value = '';
+        if (twoFactorUnknown) {
+          $('verification-code').value = '';
+          $('two-factor').querySelector('details').open = true;
+        }
         const numbers = result.challenge?.numbers || []; const selected = $('phone-choice').value;
         $('sms-options').hidden = !numbers.length;
         $('phone-choice').replaceChildren(...numbers.map((number) => { const option = document.createElement('option'); option.value = String(number.id); option.textContent = `電話號碼末兩碼 ${number.lastTwoDigits}`; return option; }));

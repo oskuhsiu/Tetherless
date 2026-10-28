@@ -114,6 +114,8 @@ test('synthetic unknown 2FA blocks direct code submission until a method is sele
   await expect(page.locator('#two-factor')).toBeVisible();
   await expect(page.locator('#verification-code')).toBeDisabled(); await expect(page.locator('#verify-button')).toBeDisabled();
   await expect(page.locator('#account-status')).toContainText('尚未確定驗證方式');
+  await expect(page.locator('#two-factor details')).toHaveAttribute('open', '');
+  await expect(page.locator('#resend-code')).toBeVisible();
   // A synthetic programmatic submit must not bypass the disabled button.
   await page.locator('#two-factor').evaluate(form => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
   expect(guided.twoFactorActions).toEqual([]);
@@ -125,6 +127,7 @@ test('synthetic unknown 2FA blocks direct code submission until a method is sele
   await page.locator('#logout').click();
   await expect(page.locator('#account-form')).toBeVisible(); await expect(page.locator('#verification-code')).toBeEnabled();
   await expect(page.locator('#verification-code')).toHaveValue('');
+  await expect(page.locator('#two-factor details')).not.toHaveAttribute('open', '');
 });
 
 test('synthetic login failure shows only safe diagnostic labels and numeric codes', async ({ page, guided }) => {
