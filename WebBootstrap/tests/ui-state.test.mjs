@@ -5,8 +5,8 @@ import { makeIpa, makeMaterial, makeSignedFixture } from './fixtures.mjs';
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const tick = () => new Promise((r) => setTimeout(r, 10));
 async function until(fn) { for (let i=0;i<200;i++) { if(fn()) return; await tick(); } throw new Error('Condition did not become true'); }
-async function environment({ service = false, profileService = service, config = { accountServiceUrl: null, officialRelease: null }, deviceRoute = 'new', storedEnrollment, fetcher } = {}) {
-  const dom = new JSDOM(html, { url: 'http://127.0.0.1:8787/', pretendToBeVisual: true });
+async function environment({ service = false, profileService = service, config = { accountServiceUrl: null, officialRelease: null }, deviceRoute = 'new', pageUrl = 'http://127.0.0.1:8787/', storedEnrollment, fetcher } = {}) {
+  const dom = new JSDOM(html, { url: pageUrl, pretendToBeVisual: true });
   for (const key of ['document', 'location', 'DOMParser', 'window', 'sessionStorage']) globalThis[key] = key === 'window' ? dom.window : dom.window[key];
   if (storedEnrollment !== undefined) dom.window.sessionStorage.setItem('tetherless-device-enrollment', storedEnrollment);
   const calls = [];
@@ -29,7 +29,7 @@ test('DOM mock: cancel terminates worker and stale completion cannot resurrect o
 test('DOM mock: repeated click starts only one worker and clear removes output', async()=>{const e=await environment();try{fill(e);e.$('sign').click();e.$('sign').click();await until(()=>e.MockWorker.all.length===1);e.MockWorker.all[0].succeed();await until(()=>!e.$('result').hidden);assert.equal(e.MockWorker.all.length,1);assert(e.$('status').textContent.includes('尚未驗證'));e.$('clear').click();assert(e.$('result').hidden);assert.equal(e.$('password').value,'');}finally{e.dispose();}});
 test('DOM mock: same-origin service health exposes explicit consent, and cancellation deletes a late session', async()=>{let release;const start=new Promise(r=>release=r);const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/sessions')&&opts.method==='POST'){await start;return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',state:'starting',expiresInSeconds:600},{status:202});}if(opts.method==='DELETE')return Response.json({ok:true});}});try{assert(!e.$('prelogin-device').hidden);e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid';e.$('apple-password').value='synthetic-not-a-secret';e.$('login-consent').checked=true;e.$('account-form').dispatchEvent(new e.dom.window.Event('submit',{cancelable:true}));await until(()=>e.calls.some(c=>c.url.endsWith('/v1/sessions')&&c.options.method==='POST'));assert.equal(e.$('apple-password').value,'');e.$('clear').click();release();await until(()=>e.calls.some(c=>c.options.method==='DELETE'));assert(e.$('provision-form').hidden);assert(e.calls.every(c=>!c.url.includes('synthetic-token')));assert(e.calls.filter(c=>c.options.method==='DELETE').every(c=>c.options.redirect==='error' && c.options.credentials==='same-origin'));}finally{release();e.dispose();}});
 test('DOM mock: empty 202 two-factor response succeeds but cannot overwrite later cancellation', async()=>{let release;const pending=new Promise(r=>release=r);const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/sessions')&&opts.method==='POST')return Response.json({sessionId:'synthetic-id',sessionToken:'synthetic-token',state:'starting',expiresInSeconds:600},{status:202});if(url.endsWith('/v1/sessions/synthetic-id')&&(!opts.method||opts.method==='GET'))return Response.json({state:'awaitingTwoFactor',challenge:{retry:false}});if(url.endsWith('/2fa')){await pending;return new Response(null,{status:202});}if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid';e.$('apple-password').value='synthetic-not-a-secret';e.$('login-consent').checked=true;e.$('account-form').dispatchEvent(new e.dom.window.Event('submit',{cancelable:true}));await until(()=>!e.$('two-factor').hidden);e.$('verification-code').value='123456';e.$('two-factor').dispatchEvent(new e.dom.window.Event('submit',{cancelable:true}));await tick();e.$('clear').click();release();await tick();assert(e.$('account-status').textContent.includes('已取消'));assert(!e.$('account-status').textContent.includes('等待 Apple'));}finally{release();e.dispose();}});
-test('DOM mock: enrollment keeps only ID/expiry, survives pagehide, and resumes after persisted pageshow', async()=>{let received=false;const id='11111111-2222-3333-4444-555555555555';const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/device-enrollments')&&opts.method==='POST')return Response.json({enrollmentId:id,profileUrl:`http://127.0.0.1:8787/v1/device-enrollments/${id}/profile/synthetic-capability`,expiresInSeconds:600},{status:201});if(url.includes('/v1/device-enrollments/')&&opts.method!=='DELETE')return Response.json({state:received?'received':'awaitingDevice',device:received?{udid:'00000000-0000000000000000'}:null,verification:'untrustedDeviceMetadata'});if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);const stored=JSON.parse(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert.deepEqual(Object.keys(stored).sort(),['expiresAt','id']);e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));assert(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')&&c.options.method==='DELETE'));received=true;e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pageshow',{persisted:true}));await until(()=>e.$('account-udid').value==='00000000-0000000000000000');assert.equal(e.dom.window.sessionStorage.length,0);assert(e.calls.filter(c=>c.url.includes('/device-enrollments/')).every(c=>c.options.credentials==='same-origin' && c.options.redirect==='error'));}finally{e.dispose();}});
+test('DOM mock: enrollment keeps only ID/expiry, survives pagehide, and resumes after persisted pageshow', async()=>{let received=false;const id='11111111-2222-3333-4444-555555555555';const e=await environment({service:true,fetcher:async(url,opts)=>{if(url.endsWith('/v1/device-enrollments')&&opts.method==='POST')return Response.json({enrollmentId:id,profileUrl:`http://127.0.0.1:8787/v1/device-enrollments/${id}/profile/synthetic-capability`,expiresInSeconds:600},{status:201});if(url.includes('/v1/device-enrollments/')&&opts.method!=='DELETE')return Response.json({state:received?'received':'awaitingDevice',device:received?{udid:'00000000-0000000000000000'}:null,verification:'untrustedDeviceMetadata'});if(opts.method==='DELETE')return new Response(null,{status:204});}});try{e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);const stored=JSON.parse(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert.deepEqual(Object.keys(stored).sort(),['expiresAt','id']);e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));assert(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')&&c.options.method==='DELETE'));received=true;e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pageshow',{persisted:true}));await until(()=>e.$('account-udid').value==='00000000-0000000000000000');assert.equal(e.dom.window.sessionStorage.length,1);assert(e.calls.filter(c=>c.url.includes('/device-enrollments/')).every(c=>c.options.credentials==='same-origin' && c.options.redirect==='error'));}finally{e.dispose();}});
 function submit(e, id) { e.$(id).dispatchEvent(new e.dom.window.Event('submit', { cancelable:true })); }
 function loginInputs(e) { e.$('app-source').value='custom'; e.$('app-source').dispatchEvent(new e.dom.window.Event('change')); e.setFiles('ipa',[fixture.ipa]); e.$('account-udid').value='00000000-0000000000000000'; e.$('continue-device').click(); e.$('apple-id').value='test@example.invalid'; e.$('apple-password').value='synthetic-not-a-secret'; e.$('login-consent').checked=true; }
 function sessionFetcher(extra = () => {}, teams = [{id:'TESTTEAM01',name:'Test Team',type:'personal'}]) { return async (url, opts) => {
@@ -125,7 +125,7 @@ test('DOM mock: profile round trip completes before credentials, resumes to logi
   }});try{
     assert(!e.$('prelogin-device').hidden);assert(e.$('account-form').hidden);e.$('device-consent').checked=true;e.$('collect-device').click();await until(()=>!e.$('device-profile-link').hidden);
     e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pagehide',{persisted:true}));received=true;e.dom.window.dispatchEvent(new e.dom.window.PageTransitionEvent('pageshow',{persisted:true}));await until(()=>!e.$('account-form').hidden);
-    assert(e.$('prelogin-device').hidden);assert.equal(e.$('account-udid').value,'00000000-0000000000000000');assert(!e.calls.some(c=>c.url.endsWith('/v1/sessions')));assert.equal(e.dom.window.sessionStorage.length,0);
+    assert(e.$('prelogin-device').hidden);assert.equal(e.$('account-udid').value,'00000000-0000000000000000');assert(!e.calls.some(c=>c.url.endsWith('/v1/sessions')));assert.equal(e.dom.window.sessionStorage.length,1);
   }finally{e.dispose();}
 });
 test('DOM mock: protected same-origin service requests carry same-origin cookies and reject redirects',async()=>{
@@ -215,7 +215,7 @@ test('DOM mock: a new document resumes only a valid previously-started enrollmen
     if(url.includes(`/device-enrollments/${id}`)&&opts.method!=='DELETE')return Response.json({state:'received',device:{udid:registeredDevice.udid}});
     if(opts.method==='DELETE')return new Response(null,{status:204});
   }});try{
-    await until(()=>e.$('account-udid').value===registeredDevice.udid);assert.equal(e.$('device-route').value,'new');assert(!e.$('account-form').hidden);assert.equal(e.dom.window.sessionStorage.length,0);
+    await until(()=>e.$('account-udid').value===registeredDevice.udid);assert.equal(e.$('device-route').value,'new');assert(!e.$('account-form').hidden);assert.equal(e.dom.window.sessionStorage.length,1);
     assert(e.calls.some(c=>c.url.includes(`/device-enrollments/${id}`)&&!c.options.method));assert(!e.calls.some(c=>c.options.method==='POST'));
   }finally{e.dispose();}
 });
@@ -292,4 +292,47 @@ test('DOM mock: both IPA pickers allow unknown provider types and explain Action
     assert(e.$('app-selection').textContent.includes('不是外層 ZIP'));
     assert(e.$('login-button').disabled);
   } finally { e.dispose(); }
+});
+
+test('DOM mock: legacy callback without lookup ID gives recovery guidance, never defaults to existing', async()=>{
+  const e=await environment({service:true,deviceRoute:'existing',pageUrl:'http://127.0.0.1:8787/#device-collected'});
+  try {
+    assert.equal(e.dom.window.location.hash,'');
+    assert.equal(e.$('device-route').value,'new');
+    assert(e.$('account-form').hidden);
+    assert(!e.$('prelogin-device').hidden);
+    assert(e.$('device-status').textContent.includes('原瀏覽器'));
+    assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')));
+  } finally {e.dispose();}
+});
+test('DOM mock: new callback tab reads with cookie authorization, keeps server TTL and never starts Apple requests', async()=>{
+  const id='11111111-2222-3333-4444-555555555555';
+  const e=await environment({service:true,deviceRoute:'existing',pageUrl:`http://127.0.0.1:8787/#device-collected=${id}`,fetcher:async(url,opts)=>{
+    if(url.endsWith(`/device-enrollments/${id}`)&&!opts.method)return Response.json({state:'received',device:{udid:registeredDevice.udid},expiresInSeconds:123});
+    if(opts.method==='DELETE')return new Response(null,{status:204});
+  }});try{
+    await until(()=>e.$('account-udid').value===registeredDevice.udid);
+    assert.equal(e.dom.window.location.hash,'');assert.equal(e.$('device-route').value,'new');assert(!e.$('account-form').hidden);
+    const stored=JSON.parse(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'));
+    assert.deepEqual(Object.keys(stored).sort(),['expiresAt','id']);assert(stored.expiresAt<=Date.now()+123000);
+    assert.equal(e.$('ipa').files.length,0);assert(e.$('login-button').disabled);assert(e.$('account-status').textContent.includes('重新選取'));
+    assert(!e.calls.some(c=>c.options.method==='POST'||c.options.method==='DELETE'));
+    const reads=e.calls.filter(c=>c.url.includes('/device-enrollments/'));assert.equal(reads.length,1);assert.equal(reads[0].options.credentials,'same-origin');
+  }finally{e.dispose();}
+});
+test('DOM mock: callback cookie failure and expired result explain original browser rather than silently restarting',async()=>{
+  const id='11111111-2222-3333-4444-555555555555';
+  for(const status of [401,404,410]){
+    const e=await environment({service:true,deviceRoute:'existing',pageUrl:`http://127.0.0.1:8787/#device-collected=${id}`,fetcher:async(url)=>url.includes('/device-enrollments/')?Response.json({error:'unavailable'},{status}):undefined});
+    try{await until(()=>e.$('device-status').textContent.includes(String(status)));assert(e.$('device-status').textContent.includes('原瀏覽器'));assert.equal(e.$('device-route').value,'new');assert(e.$('account-form').hidden);assert(!e.calls.some(c=>c.options.method==='POST'));assert.equal(e.dom.window.sessionStorage.length,0);}finally{e.dispose();}
+  }
+});
+test('DOM mock: invalid callback fragments and conflicting pending ID never read or cancel another enrollment',async()=>{
+  const id='11111111-2222-3333-4444-555555555555';
+  for(const hash of ['#device-collected=not-a-uuid',`#device-collected=${id}&token=malicious`,`#device-collected=${id}`]){
+    const conflict=hash===`#device-collected=${id}`;
+    const stored=conflict?JSON.stringify({id:'99999999-2222-3333-4444-555555555555',expiresAt:Date.now()+120000}):undefined;
+    const e=await environment({service:true,deviceRoute:'existing',pageUrl:`http://127.0.0.1:8787/${hash}`,storedEnrollment:stored});
+    try{assert.equal(e.dom.window.location.hash,'');assert(!e.calls.some(c=>c.url.includes('/device-enrollments/')));assert(e.$('account-form').hidden);assert(e.$('device-status').textContent.includes('原瀏覽器'));if(conflict)assert.equal(e.dom.window.sessionStorage.getItem('tetherless-device-enrollment'),stored);}finally{e.dispose();}
+  }
 });

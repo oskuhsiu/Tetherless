@@ -1,5 +1,28 @@
 # Tetherless development status
 
+## Settings callback recovery — 2026-10-27 (local verification)
+
+The reported return-to-start is reproduced synthetically when Settings opens the
+old generic `/#device-collected` callback in a fresh tab: no sessionStorage lookup
+ID is available, so the old frontend silently chooses the existing-device route.
+This is a confirmed code path, not proof of the user's actual iOS tab behavior.
+
+The repair returns only a non-secret enrollment ID in the fragment (303), scrubs
+it, and reads through the existing HttpOnly cookie authorization. Successful reads
+are repeatable across tabs until the **original** server TTL; they do not DELETE
+another tab's result. Read failures provide a GET-only retry, never a new enrollment
+or Apple operation. No cookie/token/UDID/account data is persisted or put in URLs.
+Only ID/expiry are retained after the server confirms its remaining lifetime.
+Wrong browser/cookie, expired results, malformed fragments and conflicting pending
+IDs remain blocked with recovery guidance. IPA reselection is explicitly explained.
+
+Local after rebasing onto main `760e7ae`: 142 frontend tests and production build passed; independent source/security
+review plus 4 new DOM tests passed. Added production-build Chromium/WebKit two-tab
+and cookie-isolation specs and backend repeated-read/expiry tests are **not yet
+executed here** (browser dependencies and Rust toolchain unavailable). Exact-commit
+CI and iOS/Apple acceptance remain pending. This local change is not publication,
+merge, deployment, or extension of the existing service window authorization.
+
 ## IPA picker compatibility — 2026-10-27
 
 Both IPA file inputs now omit the OS file-type filter: iOS providers may not
